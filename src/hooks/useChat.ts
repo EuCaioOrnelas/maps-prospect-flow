@@ -819,11 +819,9 @@ export function useChat() {
         status: "pending",
         metadata: { forwarded: true, forwarded_from_message_id: m.id },
       };
-      const { data: inserted } = await supabase.from("chat_messages").insert(insertBody).select().single();
-      if (!inserted) continue;
       await supabase.functions.invoke("send-chat-message", {
         body: {
-          message_id: (inserted as any).id,
+          conversation_id: conv.id,
           phone_number_id: connection.phone_number_id,
           to: clean,
           type: m.message_type,
@@ -831,25 +829,12 @@ export function useChat() {
           media_url: m.media_url || undefined,
           caption: m.media_caption || undefined,
           filename: m.media_filename || undefined,
+          media_mime_type: m.media_mime_type || undefined,
+          metadata: insertBody.metadata,
           waba_connection_id: connection.id,
         },
       });
     }
-
-    // Update conversation snapshot
-    const lastMsg = msgs[msgs.length - 1];
-    const lastText = lastMsg.message_type === "text"
-      ? (lastMsg.content || "")
-      : lastMsg.message_type === "image" ? "📷 Imagem"
-      : lastMsg.message_type === "video" ? "🎥 Vídeo"
-      : lastMsg.message_type === "audio" ? "🎤 Áudio"
-      : `📄 ${lastMsg.media_filename || "Arquivo"}`;
-    await supabase.from("chat_conversations").update({
-      last_message_text: lastText,
-      last_message_at: new Date().toISOString(),
-      last_message_type: lastMsg.message_type,
-      last_message_direction: "outbound",
-    }).eq("id", conv.id);
 
     return {};
   }, [user, accountOwnerId, activeConnectionId, conversations, connections]);
@@ -871,24 +856,14 @@ export function useChat() {
       return;
     }
     try {
-      const { data: inserted } = await supabase.from("chat_messages").insert({
-        conversation_id: activeConversation.id,
-        user_id: user.id,
-        owner_user_id: accountOwnerId || user.id,
-        direction: "outbound",
-        message_type: "text",
-        content: `[Template] ${templateName}`,
-        status: "pending",
-        metadata: { template_name: templateName, reopen: true },
-      } as any).select().single();
-
       const { error } = await supabase.functions.invoke("send-chat-message", {
         body: {
-          message_id: (inserted as any)?.id,
+          conversation_id: activeConversation.id,
           phone_number_id: connection.phone_number_id,
           to,
           type: "template",
           template_name: templateName,
+          metadata: { template_name: templateName, reopen: true },
           waba_connection_id: connection.id,
         },
       });
