@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Cookie, Shield, Info, X, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Cookie, Shield, Info, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ALL_GRANTED,
   ConsentPrefs,
-  DEFAULT_PREFS,
   getConsent,
   hasConsentDecision,
   saveConsent,
@@ -16,7 +15,7 @@ interface CookiePanelProps {
   title?: string;
   message?: string;
   acceptText?: string;
-  rejectText?: string;
+
   customizeText?: string;
   icon?: "cookie" | "shield" | "info";
   className?: string;
@@ -60,7 +59,7 @@ const CookiePanel = (props: CookiePanelProps) => {
     message =
       "Usamos cookies para operar a plataforma, manter sua sessão segura, medir o uso e melhorar sua experiência.",
     acceptText = "Aceitar todos",
-    rejectText = "Apenas essenciais",
+
     customizeText = "Personalizar",
     icon = "cookie",
     className,
