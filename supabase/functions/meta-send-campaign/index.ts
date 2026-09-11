@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { encryptConversationPreview, encryptMessageFields } from "../_shared/messageCrypto.ts";
 
 // Inline E.164 formatter para Meta Cloud API (sem "+"). Suporta global (BR + intl).
 function formatPhoneForMeta(phone: string): string {
@@ -270,7 +271,7 @@ Deno.serve(async (req) => {
         if (!convId) {
           const { data: created } = await db
             .from("chat_conversations")
-            .insert({
+            .insert(await encryptConversationPreview({
               user_id: user.id,
               owner_user_id: accountOwnerId,
               waba_connection_id: connection_id,
@@ -281,19 +282,19 @@ Deno.serve(async (req) => {
               last_message_type: "text",
               last_message_direction: "outbound",
               unread_count: 0,
-            })
+            }))
             .select("id")
             .single();
           convId = created?.id;
         } else {
           await db
             .from("chat_conversations")
-            .update({
+            .update(await encryptConversationPreview({
               last_message_text: renderedPreview,
               last_message_at: nowIso,
               last_message_type: "text",
               last_message_direction: "outbound",
-            })
+            }))
             .eq("id", convId);
         }
 
@@ -308,7 +309,7 @@ Deno.serve(async (req) => {
           if (existing) return;
         }
 
-        await db.from("chat_messages").insert({
+        await db.from("chat_messages").insert(await encryptMessageFields({
           conversation_id: convId,
           user_id: user.id,
           owner_user_id: accountOwnerId,
@@ -328,7 +329,7 @@ Deno.serve(async (req) => {
             template_variables: template_variables || {},
           },
           billing_category: templateCategory,
-        });
+        }));
 
       } catch (e) {
         console.error("[meta-send-campaign] persistOutboundChat failed:", e);

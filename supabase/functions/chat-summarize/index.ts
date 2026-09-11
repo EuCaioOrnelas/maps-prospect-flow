@@ -2,6 +2,7 @@
 // Enforces a per-user daily limit to protect margin.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decryptMessageFields } from "../_shared/messageCrypto.ts";
 // ---- Registro de custo de IA (inline; sem módulo compartilhado) ----
 const AI_PRICES: Record<string, { in: number; out: number }> = {
   "gpt-4o-mini": { in: 0.15 / 1_000_000, out: 0.6 / 1_000_000 },
@@ -123,7 +124,7 @@ serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(MAX_MESSAGES);
 
-    const ordered = (msgs ?? []).reverse();
+    const ordered = (await Promise.all((msgs ?? []).map(decryptMessageFields))).reverse();
     if (ordered.length === 0) {
       return new Response(JSON.stringify({ summary: "Conversa sem mensagens." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

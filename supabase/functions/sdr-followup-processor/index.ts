@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { encryptMessageFields } from "../_shared/messageCrypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -252,7 +253,7 @@ Deno.serve(async (req) => {
         continue;
       }
       if (session.conversation_id) {
-        await backend.from("chat_messages").insert({
+        await backend.from("chat_messages").insert(await encryptMessageFields({
           conversation_id: session.conversation_id,
           user_id: session.user_id || session.owner_user_id,
           owner_user_id: session.owner_user_id,
@@ -260,7 +261,7 @@ Deno.serve(async (req) => {
           message_type: "template",
           content: template.body || `[${template.name}]`,
           status: "sent",
-        });
+        }));
       }
       await backend.from("sdr_sessions").update({
         followups_sent: (session.followups_sent ?? 0) + 1,
