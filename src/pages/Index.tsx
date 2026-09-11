@@ -1,14 +1,15 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 import { SEO, siteNavigationSchema, homeBreadcrumbSchema } from "@/components/SEO";
-import { faqJsonLd } from "@/components/landing/FAQSection";
+import { faqJsonLd } from "@/components/landing/faqData";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
-import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
+import { DeferredSection } from "@/components/landing/DeferredSection";
 import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
 import { ProblemSection } from "@/components/sales/ProblemSection";
+
 
 /**
  * Performance: above the fold (Navbar + Hero + TrustedBy + Footer básico)
