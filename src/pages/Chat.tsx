@@ -158,7 +158,9 @@ const Chat = () => {
   };
 
   const isLoading = chat.loading || showApiDialog === null;
-  const shouldShowDialog = isLoading ? false : hasNoConnection ? true : !!showApiDialog;
+  // O chat está liberado para todos os usuários. A tela de apresentação só
+  // aparece quando ainda não existe nenhum número conectado à conta.
+  const shouldShowDialog = isLoading ? false : hasNoConnection;
 
   useEffect(() => {
     if (isLoading || shouldShowDialog || !hasConnection) return;
@@ -267,23 +269,20 @@ const Chat = () => {
 
                     <div className="relative">
                       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-wider mb-6">
-                        <Sparkles size={11} /> Em breve
+                        <Sparkles size={11} /> Chat liberado
                       </div>
 
                       <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.05] mb-6 max-w-3xl">
-                        Chat integrado <span className="text-primary">em desenvolvimento</span>
+                        Conecte um número para <span className="text-primary">começar a atender</span>
                       </h2>
 
                       <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-10 max-w-2xl">
-                        Estamos finalizando a experiência completa de chat da Wiize para que você responda leads sem sair da plataforma, com histórico unificado, contexto comercial e operação mais profissional.
+                        O chat da Wiize está disponível na sua conta. Conecte um número de WhatsApp para responder seus leads sem sair da plataforma, com histórico unificado e contexto comercial.
                       </p>
 
                       <div className="flex flex-col sm:flex-row gap-3">
-                        <Button asChild size="lg" className="gap-2 h-12 px-6 text-sm shadow-md">
-                          <a href="https://business.facebook.com/wa/manage/home" target="_blank" rel="noopener noreferrer">
-                            Acessar Meta Business Suite
-                            <ExternalLink size={14} />
-                          </a>
+                        <Button size="lg" className="gap-2 h-12 px-6 text-sm shadow-md" onClick={() => navigate("/numeros")}>
+                          Conectar número
                         </Button>
                         <Button variant="outline" size="lg" className="h-12 px-6 text-sm" onClick={() => navigate("/dashboard")}>
                           Voltar ao dashboard
@@ -291,6 +290,8 @@ const Chat = () => {
                       </div>
                     </div>
                   </div>
+
+
 
                   {/* Feature cards */}
                   <div className="mb-10">
