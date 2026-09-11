@@ -158,7 +158,9 @@ const Chat = () => {
   };
 
   const isLoading = chat.loading || showApiDialog === null;
-  const shouldShowDialog = isLoading ? false : hasNoConnection ? true : !!showApiDialog;
+  // O chat está liberado para todos os usuários. A tela de apresentação só
+  // aparece quando ainda não existe nenhum número conectado à conta.
+  const shouldShowDialog = isLoading ? false : hasNoConnection;
 
   useEffect(() => {
     if (isLoading || shouldShowDialog || !hasConnection) return;
