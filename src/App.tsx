@@ -23,6 +23,8 @@ import { PartnerTrackingProvider } from "@/components/partners/PartnerTrackingPr
 const CookieConsent = lazyWithRetry(() => import("@/components/CookieConsent").then((m) => ({ default: m.CookieConsent })), "CookieConsent");
 const TrackingTags = lazyWithRetry(() => import("@/components/TrackingTags").then((m) => ({ default: m.TrackingTags })), "TrackingTags");
 import { PageVisitTracker } from "@/components/tracking/PageVisitTracker";
+import { AfterPaint } from "@/components/AfterPaint";
+
 
 // Eager load critical pages
 import Index from "./pages/Index";
