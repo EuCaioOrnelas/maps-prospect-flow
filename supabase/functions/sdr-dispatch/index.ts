@@ -178,18 +178,17 @@ Deno.serve(async (req) => {
         .eq("conversation_id", convId)
         .eq("direction", "inbound")
         .eq("message_type", "audio")
-        .is("content", null)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (lastAudio?.id) {
+        const encryptedTranscript = await encryptMessageFields({
+          content: audioTranscript ? `🎤 ${audioTranscript}` : "🎤 Áudio recebido (não foi possível transcrever)",
+          media_caption: null,
+        });
         await supabase
           .from("chat_messages")
-          .update({
-            content: audioTranscript
-              ? `🎤 ${audioTranscript}`
-              : "🎤 Áudio recebido (não foi possível transcrever)",
-          })
+          .update({ content: encryptedTranscript.content })
           .eq("id", lastAudio.id);
       }
     }
