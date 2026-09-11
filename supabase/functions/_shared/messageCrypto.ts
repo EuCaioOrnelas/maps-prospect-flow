@@ -15,6 +15,12 @@ function base64ToBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
+function bytesToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
 const keyPromises = new Map<string, Promise<CryptoKey>>();
 
 function encryptionKey(): Promise<CryptoKey> {
@@ -54,9 +60,9 @@ export async function decryptMessage(value: string): Promise<string> {
   if (parts.length !== 2) throw new Error("Invalid encrypted message format");
   try {
     const plaintext = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: base64ToBytes(parts[0]) },
+      { name: "AES-GCM", iv: bytesToArrayBuffer(base64ToBytes(parts[0])) },
       await encryptionKey(),
-      base64ToBytes(parts[1]),
+      bytesToArrayBuffer(base64ToBytes(parts[1])),
     );
     return decoder.decode(plaintext);
   } catch {
