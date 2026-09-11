@@ -272,6 +272,22 @@ export default function AdminUsuarios() {
                           </Badge>
                         )}
 
+                        {(() => {
+                          const end = user.trial_end_at || user.trial_will_charge_at;
+                          const inTrial = !!end && new Date(end).getTime() > Date.now();
+                          if (!inTrial) return null;
+                          const days = Math.max(0, Math.ceil((new Date(end).getTime() - Date.now()) / 86400000));
+                          const cancelled = !!user.trial_auto_charge_cancelled;
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] px-1.5 py-0 ${cancelled ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"}`}
+                              title={`Trial ${cancelled ? "com cobrança automática cancelada" : "ativo"} · termina em ${new Date(end).toLocaleDateString("pt-BR")}`}
+                            >
+                              Trial · {days}d{cancelled ? " · cancelado" : ""}
+                            </Badge>
+                          );
+                        })()}
                         {user.is_archived && (
                           <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground border-border px-1.5 py-0">
                             Arquivado
