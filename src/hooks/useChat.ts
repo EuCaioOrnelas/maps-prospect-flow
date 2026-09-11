@@ -687,7 +687,7 @@ export function useChat() {
         : m));
       const { error } = await supabase
         .from("chat_messages")
-        .update({ deleted_for_all_at: ts, content: null, media_url: null, media_caption: null } as any)
+        .update({ deleted_for_all_at: ts, media_url: null } as any)
         .in("id", messageIds);
       if (error) throw error;
     } else {
