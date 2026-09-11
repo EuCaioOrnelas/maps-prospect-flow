@@ -117,7 +117,7 @@ export const ImpactNumbersSection = () => {
  <div className="w-7 h-7 rounded-sm bg-primary/10 flex items-center justify-center flex-shrink-0">
  <Icon size={14} className="text-primary" />
  </div>
- <span className="text-muted-foreground text-base leading-relaxed">
+ <span className="text-muted-foreground text-sm sm:text-base leading-relaxed">
  {stat.label}
  </span>
  </div>

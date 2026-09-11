@@ -65,7 +65,7 @@ export const SectionHeading = ({
  </span>
  </h2>
  {description && (
- <p className={`text-base sm:text-lg text-muted-foreground leading-relaxed ${align === "center" ? "max-w-2xl mx-auto" : ""}`}>
+ <p className={`text-base sm:text-sm sm:text-lg text-muted-foreground leading-relaxed ${align === "center" ? "max-w-2xl mx-auto" : ""}`}>
  {description}
  </p>
  )}

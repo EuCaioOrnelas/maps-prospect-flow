@@ -63,7 +63,7 @@ export const HowItWorksSection = () => {
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
  Como Funciona
  </h2>
- <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+ <p className="text-muted-foreground text-sm sm:text-base sm:text-lg max-w-2xl mx-auto">
  Em apenas 3 passos, transforme sua prospecção e alcance mais clientes
  </p>
  </div>

@@ -38,7 +38,7 @@ export const ProblemSection = () => {
  <span className="sm:hidden"> </span>
  <span className="text-muted-foreground">depender de várias ferramentas</span>
  </h2>
- <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+ <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto">
  Prospecção em uma ferramenta, WhatsApp em outra, CRM em outra, agenda em outra. A operação fica espalhada e o trabalho manual consome o dia do seu time.
  </p>
  </motion.div>
