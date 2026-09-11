@@ -104,6 +104,14 @@ export function useInactivityLogout({
       const now = Date.now();
       if (now - lastHandledActivityRef.current < ACTIVITY_THROTTLE_MS) return;
       lastHandledActivityRef.current = now;
+      const current = readActivity(sharedActivityKey);
+      if (
+        current?.sessionStartedAt === sessionStartedAt &&
+        now - current.lastActivityAt >= INACTIVITY_LIMIT_MS
+      ) {
+        void performLogoutOnce();
+        return;
+      }
       window.localStorage.setItem(
         sharedActivityKey,
         JSON.stringify({ sessionStartedAt, lastActivityAt: now } satisfies ActivityState),
