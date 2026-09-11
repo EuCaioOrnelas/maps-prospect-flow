@@ -61,12 +61,17 @@ export const ProblemSection = () => {
  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] sm:h-[60%] overflow-hidden z-0">
  <img
  src={whatsappPhoneMockup}
+ srcSet={`${whatsappPhoneMockupSm} 474w, ${whatsappPhoneMockup} 948w`}
+ sizes="(max-width: 640px) 380px, 560px"
+ width={948}
+ height={800}
  alt="Ilustração de conversa no WhatsApp"
- loading="eager"
- fetchPriority="high"
+ loading="lazy"
+ fetchPriority="low"
  decoding="async"
  className="absolute left-[62%] top-[11%] w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
  />
+
  </div>
  </div>
  }
