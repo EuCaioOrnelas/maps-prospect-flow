@@ -49,22 +49,26 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (!blocked) return <>{children}</>;
+
   return (
-    <>
-      {!blocked && children}
-      <Dialog open={blocked}>
-        <DialogContent className="max-w-sm [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              Verificação em duas etapas
-            </DialogTitle>
-            <DialogDescription>
-              {recovery
-                ? "Informe um dos seus códigos de recuperação."
-                : "Digite o código de 6 dígitos do seu aplicativo autenticador."}
-            </DialogDescription>
-          </DialogHeader>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-6 overflow-x-hidden">
+      <div className="absolute inset-0 bg-gradient-glow opacity-30" />
+      <div className="w-full max-w-md relative z-10">
+        <div className="glass rounded-2xl p-6 sm:p-8">
+          <div className="flex justify-center mb-6">
+            <span className="inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <ShieldCheck className="h-6 w-6" />
+            </span>
+          </div>
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
+            Verificação em duas etapas
+          </h1>
+          <p className="text-muted-foreground text-center mb-6 text-sm">
+            {recovery
+              ? "Informe um dos seus códigos de recuperação."
+              : "Digite o código de 6 dígitos do seu aplicativo autenticador."}
+          </p>
 
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">
