@@ -37,6 +37,11 @@ Deno.serve(async (req) => {
   const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
   const suppliedCronSecret = req.headers.get("x-cron-secret");
   let authorized = Boolean(expected && suppliedCronSecret === expected);
+  if (!authorized && suppliedCronSecret) {
+    const { data: internalToken } = await db.from("internal_cron_tokens")
+      .select("token").eq("name", "migrate-chat-encryption").maybeSingle();
+    authorized = Boolean(internalToken?.token && internalToken.token === suppliedCronSecret);
+  }
   if (!authorized) {
     const bearer = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
     if (bearer) {
