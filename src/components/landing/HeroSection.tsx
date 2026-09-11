@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
-import { VideoModal } from "./VideoModal";
+// O modal de vídeo (e o YouTube) só é baixado quando o visitante abre o vídeo.
+const VideoModal = lazy(() => import("./VideoModal").then((m) => ({ default: m.VideoModal })));
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -116,30 +117,6 @@ export const HeroSection = ({
  if (demoRef.current) obs.observe(demoRef.current);
  return () => obs.disconnect();
  }, []);
-
- // Pré-aquece o YouTube apenas quando o visitante demonstra intenção
- // (hover/toque no botão de vídeo). Antes isso rodava no carregamento e
- // trazia ~62 KiB do YouTube para o caminho inicial.
- const warmedRef = useRef(false);
- const warmYouTube = () => {
- if (warmedRef.current) return;
- warmedRef.current = true;
- const links: Array<[string, string]> = [
- ["preconnect", "https://www.youtube.com"],
- ["preconnect", "https://i.ytimg.com"],
- ["dns-prefetch", "https://www.googlevideo.com"],
- ["prefetch", "https://www.youtube.com/embed/ZRzK42SYNFc?vq=hd1080&hd=1"],
- ];
- links.forEach(([rel, href]) => {
- if (document.querySelector(`link[data-yt-warm="${href}"]`)) return;
- const l = document.createElement("link");
- l.rel = rel;
- l.href = href;
- if (rel === "preconnect") l.crossOrigin = "";
- l.setAttribute("data-yt-warm", href);
- document.head.appendChild(l);
- });
- };
 
  const handleStageClick = (index: number) => {
  setJumpTarget(index);
@@ -328,11 +305,15 @@ export const HeroSection = ({
  </div>
  </a>
 
-      <VideoModal
-        open={videoOpen}
-        onOpenChange={setVideoOpen}
-        onSignupClick={onSignupClick}
-      />
+      {videoOpen && (
+        <Suspense fallback={null}>
+          <VideoModal
+            open={videoOpen}
+            onOpenChange={setVideoOpen}
+            onSignupClick={onSignupClick}
+          />
+        </Suspense>
+      )}
 
  {/* Keyframe animations */}
  <style>{`
