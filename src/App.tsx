@@ -12,26 +12,28 @@ import { MetricStateCacheProvider } from "@/hooks/useMetricStateCache";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ActivationChecklist } from "@/components/dashboard/ActivationChecklist";
+const ActivationChecklist = lazyWithRetry(() => import("@/components/dashboard/ActivationChecklist").then((m) => ({ default: m.ActivationChecklist })), "ActivationChecklist");
 import { GuidedTourProvider } from "@/hooks/useGuidedTour";
-import { GuidedTour } from "@/components/onboarding/GuidedTour";
+const GuidedTour = lazyWithRetry(() => import("@/components/onboarding/GuidedTour").then((m) => ({ default: m.GuidedTour })), "GuidedTour");
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
 import { lazyWithRetry } from "@/lib/runtimeRecovery";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+const AdminLayout = lazyWithRetry(() => import("@/components/admin/AdminLayout").then((m) => ({ default: m.AdminLayout })), "AdminLayout");
 import { PartnerTrackingProvider } from "@/components/partners/PartnerTrackingProvider";
-import { CookieConsent } from "@/components/CookieConsent";
-import { TrackingTags } from "@/components/TrackingTags";
+const CookieConsent = lazyWithRetry(() => import("@/components/CookieConsent").then((m) => ({ default: m.CookieConsent })), "CookieConsent");
+const TrackingTags = lazyWithRetry(() => import("@/components/TrackingTags").then((m) => ({ default: m.TrackingTags })), "TrackingTags");
 import { PageVisitTracker } from "@/components/tracking/PageVisitTracker";
+import { AfterPaint } from "@/components/AfterPaint";
+
 
 // Eager load critical pages
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+const Login = lazyWithRetry(() => import("./pages/Login"), "Login");
+const Signup = lazyWithRetry(() => import("./pages/Signup"), "Signup");
 const SignupChoosePlan = lazyWithRetry(() => import("./pages/SignupChoosePlan"), "SignupChoosePlan");
 const SignupWithCard = lazyWithRetry(() => import("./pages/SignupWithCard"), "SignupWithCard");
-import NotFound from "./pages/NotFound";
-import Upgrade from "./pages/Upgrade";
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"), "NotFound");
+const Upgrade = lazyWithRetry(() => import("./pages/Upgrade"), "Upgrade");
 const Users = lazyWithRetry(() => import("./pages/Users"), "Users");
 const AccessDenied = lazyWithRetry(() => import("./pages/AccessDenied"), "AccessDenied");
 const Demonstracao = lazyWithRetry(() => import("./pages/Demonstracao"), "Demonstracao");
@@ -95,13 +97,13 @@ const OpportunitiesManagement = lazyWithRetry(() => import("./pages/Opportunitie
 const SDRInteligente = lazyWithRetry(() => import("./pages/SDRInteligente"), "SDRInteligente");
 const SDRWizardPage = lazyWithRetry(() => import("./pages/SDRWizardPage"), "SDRWizardPage");
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
-import { ChatComingSoonGate } from "./components/chat/ChatComingSoonGate";
+const ChatComingSoonGate = lazyWithRetry(() => import("./components/chat/ChatComingSoonGate").then((m) => ({ default: m.ChatComingSoonGate })), "ChatComingSoonGate");
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
-import ChatSettings from "./pages/ChatSettings";
-import ChatQuickReplies from "./pages/ChatQuickReplies";
-import ChatAutoReply from "./pages/ChatAutoReply";
+const ChatSettings = lazyWithRetry(() => import("./pages/ChatSettings"), "ChatSettings");
+const ChatQuickReplies = lazyWithRetry(() => import("./pages/ChatQuickReplies"), "ChatQuickReplies");
+const ChatAutoReply = lazyWithRetry(() => import("./pages/ChatAutoReply"), "ChatAutoReply");
 
 // Meta Platforms module
 const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), "MetaDashboard");
@@ -554,10 +556,17 @@ const App = () => (
               </Routes>
               </PartnerTrackingProvider>
             </Suspense>
-            <ActivationChecklist />
-            <TrackingTags />
-            <CookieConsent />
-            <GuidedTour />
+            {/* Overlays globais: montam depois do primeiro paint (idle) e em
+                chunks próprios — não competem com o conteúdo crítico. */}
+            <AfterPaint>
+              <Suspense fallback={null}>
+                <ActivationChecklist />
+                <TrackingTags />
+                <CookieConsent />
+                <GuidedTour />
+              </Suspense>
+            </AfterPaint>
+
             </GuidedTourProvider>
             </MetricStateCacheProvider>
           </AuthProvider>

@@ -1,20 +1,26 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense } from "react";
 import { SEO, siteNavigationSchema, homeBreadcrumbSchema } from "@/components/SEO";
-import { faqJsonLd } from "@/components/landing/FAQSection";
+import { faqJsonLd } from "@/components/landing/faqData";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
-import { LandingPageSkeleton } from "@/components/landing/LandingPageSkeleton";
-import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
-import { ProblemSection } from "@/components/sales/ProblemSection";
+import { DeferredSection } from "@/components/landing/DeferredSection";
+import { AfterPaint } from "@/components/AfterPaint";
+
 
 /**
  * Performance: above the fold (Navbar + Hero + TrustedBy + Footer básico)
  * carrega imediatamente. Tudo abaixo é lazy via dynamic import — reduz JS inicial,
  * melhora LCP/INP e elimina jank de animações que rodavam fora da tela.
  */
+const ProblemSection = lazy(() =>
+  import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
+);
+const FloatingChatButton = lazy(() =>
+  import("@/components/landing/FloatingChatButton").then((m) => ({ default: m.FloatingChatButton })),
+);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
@@ -48,34 +54,13 @@ const CTASection = lazy(() =>
 const SectionFallback = () => <div className="h-[40vh] w-full" aria-hidden="true" />;
 
 const Index = () => {
-  const [isReady, setIsReady] = useState(false);
+  // Antes a página esperava document.fonts.ready (até 1,5 s) antes de pintar
+  // qualquer conteúdo — era a causa principal do atraso de renderização do LCP.
+  // Agora o conteúdo acima da dobra é pintado imediatamente; as fontes trocam
+  // sozinhas via font-display: swap.
   const { trackSignupClick } = useLandingPageTracking("index");
 
-  useEffect(() => {
-    // Timeout fallback to prevent infinite loading
-    const timeout = setTimeout(() => setIsReady(true), 1500);
 
-    if (document.fonts) {
-      document.fonts.ready
-        .then(() => {
-          clearTimeout(timeout);
-          setIsReady(true);
-        })
-        .catch(() => {
-          clearTimeout(timeout);
-          setIsReady(true);
-        });
-    } else {
-      clearTimeout(timeout);
-      setIsReady(true);
-    }
-
-    return () => clearTimeout(timeout);
-  }, []);
-
-  if (!isReady) {
-    return <LandingPageSkeleton />;
-  }
 
   return (
     <>
@@ -135,27 +120,48 @@ const Index = () => {
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
 
-          {/* A primeira seção pós-hero não fica dentro de Suspense/lazy:
-              evita fallback curto mostrar o Footer antes do bloco de dor. */}
-          <ProblemSection />
+          {/* Primeira seção pós-hero: carregada assim que se aproxima da viewport.
+              Tira framer-motion do bundle inicial sem mudar o conteúdo. */}
+          <DeferredSection minHeight="90vh" rootMargin="900px 0px">
+            <Suspense fallback={<SectionFallback />}>
+              <ProblemSection />
+            </Suspense>
+          </DeferredSection>
 
-          <Suspense fallback={<SectionFallback />}>
-            {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta */}
-            <MechanismSection />
-            <OpportunitySection />
-            <PlatformModulesSection />
-            <WhyItWorksSection />
-            <TestimonialsSection />
-            <PricingSection />
-            <FAQSection />
-            <CTASection onSignupClick={trackSignupClick} />
-          </Suspense>
-
-
-
+          {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta.
+              Cada bloco só monta quando chega perto da viewport: menos JS, menos DOM inicial. */}
+          <DeferredSection minHeight="80vh">
+            <Suspense fallback={<SectionFallback />}>
+              <MechanismSection />
+              <OpportunitySection />
+            </Suspense>
+          </DeferredSection>
+          <DeferredSection minHeight="80vh">
+            <Suspense fallback={<SectionFallback />}>
+              <PlatformModulesSection />
+              <WhyItWorksSection />
+            </Suspense>
+          </DeferredSection>
+          <DeferredSection minHeight="80vh">
+            <Suspense fallback={<SectionFallback />}>
+              <TestimonialsSection />
+              <PricingSection />
+            </Suspense>
+          </DeferredSection>
+          <DeferredSection minHeight="60vh">
+            <Suspense fallback={<SectionFallback />}>
+              <FAQSection />
+              <CTASection onSignupClick={trackSignupClick} />
+            </Suspense>
+          </DeferredSection>
 
           <Footer />
-          <FloatingChatButton />
+          <AfterPaint>
+            <Suspense fallback={null}>
+              <FloatingChatButton />
+            </Suspense>
+          </AfterPaint>
+
         </div>
       </main>
     </>

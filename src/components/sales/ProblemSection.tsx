@@ -1,15 +1,13 @@
 import { motion } from "framer-motion";
 import { Clock, UserX, MessageSquareOff, AlertTriangle, BarChart3, TrendingDown } from "lucide-react";
 import { BentoGridShowcase } from "@/components/ui/bento-product-features";
-import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup-v2.png";
+import whatsappPhoneMockup from "@/assets/whatsapp-phone-mockup-v2.webp";
+import whatsappPhoneMockupSm from "@/assets/whatsapp-phone-mockup-v2-sm.webp";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
-// Preload the image immediately
-const preloadLink = document.createElement('link');
-preloadLink.rel = 'preload';
-preloadLink.as = 'image';
-preloadLink.href = whatsappPhoneMockup;
-document.head.appendChild(preloadLink);
+// A imagem fica abaixo da dobra: nada de preload/eager — ela competia com o
+// conteúdo crítico do hero (elemento LCP é o texto do hero).
+
 
 export const ProblemSection = () => {
  const { ref, isVisible } = useScrollAnimation();
@@ -63,12 +61,17 @@ export const ProblemSection = () => {
  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] sm:h-[60%] overflow-hidden z-0">
  <img
  src={whatsappPhoneMockup}
+ srcSet={`${whatsappPhoneMockupSm} 474w, ${whatsappPhoneMockup} 948w`}
+ sizes="(max-width: 640px) 380px, 560px"
+ width={948}
+ height={800}
  alt="Ilustração de conversa no WhatsApp"
- loading="eager"
- fetchPriority="high"
+ loading="lazy"
+ fetchPriority="low"
  decoding="async"
  className="absolute left-[62%] top-[11%] w-[146%] sm:w-[148%] min-w-[360px] max-w-none -translate-x-1/2 drop-shadow-2xl"
  />
+
  </div>
  </div>
  }

@@ -78,7 +78,16 @@ export const useLandingPageTracking = (pageSlug: string = 'index') => {
       }
     };
 
-    trackPageView();
+    // Performance: o page view não faz parte do conteúdo crítico. Roda em idle,
+    // depois do primeiro paint, para não competir com a renderização do hero.
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(() => void trackPageView(), { timeout: 3000 });
+    } else {
+      window.setTimeout(() => void trackPageView(), 1200);
+    }
   }, [pageSlug, sessionId]);
 
   // Track signup button click
