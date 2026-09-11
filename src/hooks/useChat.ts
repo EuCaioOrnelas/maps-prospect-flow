@@ -199,14 +199,10 @@ export function useChat() {
     const isFirstLoadForConn = loadedConvForConnRef.current !== activeConnectionId;
     const loadConversations = async () => {
       if (isFirstLoadForConn) setLoading(true);
-      const { data } = await supabase
-        .from("chat_conversations")
-        .select("*")
-        .eq("owner_user_id", accountOwnerId)
-        .eq("waba_connection_id", activeConnectionId)
-        .eq("is_archived", false)
-        .order("is_pinned", { ascending: false })
-        .order("last_message_at", { ascending: false, nullsFirst: false });
+      const { data: secureData, error } = await supabase.functions.invoke("chat-secure-read", {
+        body: { action: "conversations", connection_id: activeConnectionId },
+      });
+      const data = error ? [] : secureData?.conversations;
 
       setConversations(hydrateProfilePics((data as ChatConversation[]) || []));
       loadedConvForConnRef.current = activeConnectionId;
@@ -222,12 +218,10 @@ export function useChat() {
 
     const loadMessages = async () => {
       if (isFirstLoadForConv) setLoadingMessages(true);
-      const { data: rawData } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .eq("conversation_id", activeConversationId)
-        .order("created_at", { ascending: true })
-        .limit(200);
+      const { data: secureData, error } = await supabase.functions.invoke("chat-secure-read", {
+        body: { action: "messages", conversation_id: activeConversationId, limit: 200 },
+      });
+      const rawData = error ? [] : secureData?.messages;
       // Media lives in a private bucket: swap stored paths for short-lived signed URLs.
       const signedMap = await resolveStorageUrls(((rawData as any[]) || []).map((m) => m.media_url));
       const data = ((rawData as any[]) || []).map((m) =>
@@ -285,12 +279,14 @@ export function useChat() {
         if (nextRow?.waba_connection_id && activeConnectionId && nextRow.waba_connection_id !== activeConnectionId) return;
         if (payload.eventType === "INSERT") {
           setConversations(prev => {
-            const next = payload.new as ChatConversation;
+            const encrypted = payload.new as ChatConversation;
+            const next = { ...encrypted, last_message_text: null };
             if (prev.some(c => c.id === next.id)) return prev;
             return [next, ...prev];
           });
         } else if (payload.eventType === "UPDATE") {
-          const updatedConv = payload.new as ChatConversation;
+          const encryptedConv = payload.new as ChatConversation;
+          const updatedConv = { ...encryptedConv, last_message_text: null };
           const isOpen = updatedConv.id === activeConversationIdRef.current;
           // A conversa aberta na tela nunca mostra contador de não lidas:
           // se o webhook incrementar, zeramos de novo no banco.
@@ -298,7 +294,7 @@ export function useChat() {
             supabase.from("chat_conversations").update({ unread_count: 0 }).eq("id", updatedConv.id).then(() => {});
           }
           setConversations(prev =>
-            prev.map(c => c.id === updatedConv.id ? (isOpen ? { ...updatedConv, unread_count: 0 } : updatedConv) : c)
+            prev.map(c => c.id === updatedConv.id ? (isOpen ? { ...updatedConv, last_message_text: c.last_message_text, unread_count: 0 } : { ...updatedConv, last_message_text: c.last_message_text }) : c)
               .sort((a, b) => {
                 if (a.is_pinned && !b.is_pinned) return -1;
                 if (!a.is_pinned && b.is_pinned) return 1;
@@ -314,7 +310,8 @@ export function useChat() {
         schema: "public",
         table: "chat_messages",
       }, (payload) => {
-        const newMsg = payload.new as ChatMessage;
+        const encryptedMsg = payload.new as ChatMessage;
+        const newMsg = { ...encryptedMsg, content: null, media_caption: null };
         if ((newMsg as any).owner_user_id && (newMsg as any).owner_user_id !== accountOwnerId) return;
         const currentActive = activeConversationIdRef.current;
         if (newMsg.conversation_id === currentActive) {
@@ -328,14 +325,13 @@ export function useChat() {
             }
             return [...prev, msg];
           });
-          if (newMsg.media_url) {
-            // Private bucket: render through a short-lived signed URL.
-            resolveStorageUrl(newMsg.media_url).then(signed =>
-              applyMsg(signed ? { ...newMsg, media_url: signed } : newMsg)
-            );
-          } else {
-            applyMsg(newMsg);
-          }
+          supabase.functions.invoke("chat-secure-read", { body: { action: "message", message_id: newMsg.id } })
+            .then(async ({ data }) => {
+              const secureMsg = data?.messages?.[0] as ChatMessage | undefined;
+              if (!secureMsg) return;
+              const signed = secureMsg.media_url ? await resolveStorageUrl(secureMsg.media_url) : null;
+              applyMsg(signed ? { ...secureMsg, media_url: signed } : secureMsg);
+            });
           // Conversa aberta: zera o aviso de não lidas em tempo real, sem
           // precisar sair e voltar da conversa.
           if (newMsg.direction === "inbound") {
@@ -363,9 +359,10 @@ export function useChat() {
         schema: "public",
         table: "chat_messages",
       }, (payload) => {
-        const updated = payload.new as ChatMessage;
+        const encrypted = payload.new as ChatMessage;
+        const updated = { ...encrypted, content: null, media_caption: null };
         if ((updated as any).owner_user_id && (updated as any).owner_user_id !== accountOwnerId) return;
-        setMessages(prev => prev.map(m => m.id === updated.id ? updated : m));
+        setMessages(prev => prev.map(m => m.id === updated.id ? { ...updated, content: m.content, media_caption: m.media_caption } : m));
         // Also reflect the new status on the sidebar conversation row, in case
         // the chat_conversations realtime UPDATE is delayed or dropped.
         if (updated.direction === "outbound") {
@@ -423,52 +420,23 @@ export function useChat() {
     };
     setMessages(prev => [...prev, tempMsg]);
 
-    // Insert in DB (with client_token in metadata for dedupe)
-    const { data: inserted } = await supabase.from("chat_messages").insert({
-      conversation_id: activeConversationId,
-      user_id: user.id,
-      owner_user_id: accountOwnerId || user.id,
-      direction: "outbound",
-      message_type: "text",
-      content: text,
-      status: "pending",
-      reply_to_message_id: replyToId || null,
-      metadata: { client_token: tempId },
-    }).select().single();
-
-    if (inserted) {
-      setMessages(prev => {
-        // If realtime already swapped tempId for inserted.id, skip
-        if (prev.some(m => m.id === (inserted as any).id)) {
-          return prev.filter(m => m.id !== tempId || m.id === (inserted as any).id);
-        }
-        return prev.map(m => m.id === tempId ? inserted as ChatMessage : m);
-      });
-    }
-
-    // Fire conversation update & Meta send in parallel (no await — speeds up perceived latency)
-    supabase.from("chat_conversations").update({
-      last_message_text: text,
-      last_message_at: new Date().toISOString(),
-      last_message_type: "text",
-      last_message_direction: "outbound",
-    }).eq("id", activeConversationId).then(() => {});
-
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
-    if (connection && inserted) {
+    if (connection) {
       supabase.functions.invoke("send-chat-message", {
         body: {
-          message_id: (inserted as any).id,
+          conversation_id: activeConversationId,
           phone_number_id: connection.phone_number_id,
           to: conversation.contact_phone,
           type: "text",
           text: text,
+          reply_to_message_id: replyToId || null,
+          client_token: tempId,
           waba_connection_id: connection.id,
         },
       }).then(({ error: fnError }) => {
         if (fnError) {
           console.error("send-chat-message error:", fnError);
-          setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
+          setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
         }
       });
     }
@@ -516,57 +484,25 @@ export function useChat() {
     const signedUrl = (await resolveStorageUrl(publicUrl)) || publicUrl;
 
     const tempId = crypto.randomUUID();
-    const { data: inserted, error: insertError } = await supabase.from("chat_messages").insert({
-      conversation_id: activeConversationId,
-      user_id: user.id,
-      owner_user_id: accountOwnerId || user.id,
-      direction: "outbound",
-      message_type: messageType,
-      content: caption || null,
-      media_url: publicUrl,
-      media_mime_type: file.type,
-      media_filename: file.name,
-      media_caption: caption || null,
-      status: "pending",
-      metadata: { client_token: tempId },
-    }).select().single();
-
-    if (insertError) {
-      console.error("[sendMedia] insert failed", insertError);
-      toast.error("Falha ao registrar mensagem", { description: insertError.message });
-      return;
-    }
-
-    const lastText = messageType === "image" ? "📷 Imagem"
-      : messageType === "video" ? "🎥 Vídeo"
-      : messageType === "audio" ? "🎤 Áudio"
-      : `📄 ${file.name}`;
-
-    // Fire conversation update and Meta send in parallel
-    supabase.from("chat_conversations").update({
-      last_message_text: lastText,
-      last_message_at: new Date().toISOString(),
-      last_message_type: messageType,
-      last_message_direction: "outbound",
-    }).eq("id", activeConversationId).then(() => {});
-
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
-    if (connection && inserted) {
+    if (connection) {
       supabase.functions.invoke("send-chat-message", {
         body: {
-          message_id: (inserted as any).id,
+          conversation_id: activeConversationId,
           phone_number_id: connection.phone_number_id,
           to: conversation.contact_phone,
           type: messageType,
           media_url: publicUrl,
           caption: caption || "",
           filename: file.name,
+          media_mime_type: file.type,
+          client_token: tempId,
           waba_connection_id: connection.id,
         },
       }).then(({ error: fnError }) => {
         if (fnError) {
           console.error("[sendMedia] send-chat-message error:", fnError);
-          setMessages(prev => prev.map(m => m.id === (inserted as any).id ? { ...m, status: "failed" } : m));
+          setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
           toast.error("Falha ao enviar mídia", { description: fnError.message });
         }
       });

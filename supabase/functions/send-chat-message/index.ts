@@ -318,7 +318,7 @@ Deno.serve(async (req) => {
         console.error('[send-chat-message] Revenue event error (non-blocking):', revErr);
       }
 
-      return new Response(JSON.stringify({ success: true, waba_message_id: wabaMessageId }), {
+      return new Response(JSON.stringify({ success: true, message_id, waba_message_id: wabaMessageId }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else {
