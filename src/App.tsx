@@ -554,10 +554,17 @@ const App = () => (
               </Routes>
               </PartnerTrackingProvider>
             </Suspense>
-            <ActivationChecklist />
-            <TrackingTags />
-            <CookieConsent />
-            <GuidedTour />
+            {/* Overlays globais: montam depois do primeiro paint (idle) e em
+                chunks próprios — não competem com o conteúdo crítico. */}
+            <AfterPaint>
+              <Suspense fallback={null}>
+                <ActivationChecklist />
+                <TrackingTags />
+                <CookieConsent />
+                <GuidedTour />
+              </Suspense>
+            </AfterPaint>
+
             </GuidedTourProvider>
             </MetricStateCacheProvider>
           </AuthProvider>
