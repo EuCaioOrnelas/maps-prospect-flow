@@ -17,6 +17,27 @@ versionado `enc:v1:<iv>:<ciphertext+tag>`.
 `migrate-chat-encryption` processa lotes idempotentes, sem trocar IDs, timestamps,
 relacionamentos ou metadados. A rotina pode ser repetida e ignora valores já criptografados.
 
+Ela é uma operação administrativa única, não um cron recorrente. Autorize com
+`x-cron-secret` usando `WIIZE_API_CRON_SECRET`, ou com uma sessão de administrador.
+Execute até retornar zero itens migrados e confirme no banco que não existem valores
+fora do prefixo `enc:v1:`.
+
+## Instalação em banco externo
+
+1. Cadastre `WIIZE_MESSAGE_ENCRYPTION_KEY` com pelo menos 32 caracteres em todas as
+   Edge Functions. A mesma chave deve ser mantida durante toda a vida dos dados.
+2. Cadastre `WIIZE_API_CRON_SECRET` somente se a migração administrativa for chamada
+   por automação externa. Não é necessário criar cron para o funcionamento diário.
+3. Publique todas as Edge Functions atualizadas antes de ativar os bloqueios do banco.
+4. Execute `migrate-chat-encryption` até não restarem registros antigos.
+5. Aplique `drizzle/migrations/0001_enforce_encrypted_chat_content.sql` para impedir
+   definitivamente novas gravações em texto puro.
+6. Valide envio e recebimento real pela Meta e Evolution, incluindo texto, mídia,
+   template, resposta, automação, resumo, Inteligência e Realtime.
+
+Nunca aplique os bloqueios do banco antes de cadastrar a chave e publicar todas as
+funções: isso interromperia os caminhos antigos que ainda tentassem gravar texto puro.
+
 ## Rotação da chave
 
 Uma rotação exige manter temporariamente a chave anterior, decifrar com ela e cifrar

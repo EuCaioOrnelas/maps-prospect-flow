@@ -127,6 +127,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
     const userId = claims.claims.sub as string;
+    const { data: ownerId } = await supabase.rpc("get_account_owner", { _uid: userId });
+    const accountOwnerId = ownerId || userId;
 
     const { conversation_id } = await req.json();
     if (!conversation_id) {
@@ -136,9 +138,9 @@ serve(async (req) => {
     // Verify ownership
     const { data: conv } = await supabase
       .from("chat_conversations")
-      .select("id, user_id, contact_name, contact_phone")
+      .select("id, user_id, owner_user_id, contact_name, contact_phone")
       .eq("id", conversation_id)
-      .eq("user_id", userId)
+      .eq("owner_user_id", accountOwnerId)
       .single();
     if (!conv) return new Response(JSON.stringify({ error: "not found" }), { status: 404, headers: corsHeaders });
 
