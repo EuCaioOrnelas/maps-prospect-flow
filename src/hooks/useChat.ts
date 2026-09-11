@@ -202,7 +202,12 @@ export function useChat() {
       const { data: secureData, error } = await supabase.functions.invoke("chat-secure-read", {
         body: { action: "conversations", connection_id: activeConnectionId },
       });
-      const data = error ? [] : secureData?.conversations;
+      if (error) {
+        console.error("[chat] secure conversation load failed", error);
+        setLoading(false);
+        return;
+      }
+      const data = secureData?.conversations;
 
       setConversations(hydrateProfilePics((data as ChatConversation[]) || []));
       loadedConvForConnRef.current = activeConnectionId;
@@ -221,7 +226,12 @@ export function useChat() {
       const { data: secureData, error } = await supabase.functions.invoke("chat-secure-read", {
         body: { action: "messages", conversation_id: activeConversationId, limit: 200 },
       });
-      const rawData = error ? [] : secureData?.messages;
+      if (error) {
+        console.error("[chat] secure message load failed", error);
+        setLoadingMessages(false);
+        return;
+      }
+      const rawData = secureData?.messages;
       // Media lives in a private bucket: swap stored paths for short-lived signed URLs.
       const signedMap = await resolveStorageUrls(((rawData as any[]) || []).map((m) => m.media_url));
       const data = ((rawData as any[]) || []).map((m) =>
@@ -278,12 +288,13 @@ export function useChat() {
         if (nextRow?.owner_user_id && nextRow.owner_user_id !== accountOwnerId) return;
         if (nextRow?.waba_connection_id && activeConnectionId && nextRow.waba_connection_id !== activeConnectionId) return;
         if (payload.eventType === "INSERT") {
-          setConversations(prev => {
-            const encrypted = payload.new as ChatConversation;
-            const next = { ...encrypted, last_message_text: null };
-            if (prev.some(c => c.id === next.id)) return prev;
-            return [next, ...prev];
-          });
+          const encrypted = payload.new as ChatConversation;
+          supabase.functions.invoke("chat-secure-read", { body: { action: "conversation", conversation_id: encrypted.id } })
+            .then(({ data }) => {
+              const next = data?.conversation as ChatConversation | undefined;
+              if (!next) return;
+              setConversations(prev => prev.some(c => c.id === next.id) ? prev : [next, ...prev]);
+            });
         } else if (payload.eventType === "UPDATE") {
           const encryptedConv = payload.new as ChatConversation;
           const updatedConv = { ...encryptedConv, last_message_text: null };
@@ -301,6 +312,11 @@ export function useChat() {
                 return new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime();
               })
           );
+          supabase.functions.invoke("chat-secure-read", { body: { action: "conversation", conversation_id: updatedConv.id } })
+            .then(({ data }) => {
+              const secure = data?.conversation as ChatConversation | undefined;
+              if (secure) setConversations(prev => prev.map(c => c.id === secure.id ? { ...c, last_message_text: secure.last_message_text } : c));
+            });
         } else if (payload.eventType === "DELETE") {
           setConversations(prev => prev.filter(c => c.id !== (payload.old as any).id));
         }
@@ -421,6 +437,11 @@ export function useChat() {
     setMessages(prev => [...prev, tempMsg]);
 
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
+    if (!connection) {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+      toast.error("Conexão não encontrada");
+      return;
+    }
     if (connection) {
       supabase.functions.invoke("send-chat-message", {
         body: {
@@ -484,7 +505,21 @@ export function useChat() {
     const signedUrl = (await resolveStorageUrl(publicUrl)) || publicUrl;
 
     const tempId = crypto.randomUUID();
+    const tempMsg: ChatMessage = {
+      id: tempId, conversation_id: activeConversationId, user_id: user.id,
+      waba_message_id: null, direction: "outbound", message_type: messageType,
+      content: caption || null, media_url: signedUrl, media_mime_type: file.type,
+      media_filename: file.name, media_caption: caption || null, status: "pending",
+      status_updated_at: null, reply_to_message_id: null,
+      metadata: { client_token: tempId }, created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, tempMsg]);
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
+    if (!connection) {
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+      toast.error("Conexão não encontrada");
+      return;
+    }
     if (connection) {
       supabase.functions.invoke("send-chat-message", {
         body: {
@@ -794,6 +829,7 @@ export function useChat() {
     if (templateName) {
       await supabase.functions.invoke("send-chat-message", {
         body: {
+          conversation_id: conv.id,
           phone_number_id: connection.phone_number_id,
           to: clean,
           type: "template",
@@ -805,20 +841,6 @@ export function useChat() {
 
     // Forward each message
     for (const m of msgs) {
-      const insertBody: any = {
-        conversation_id: conv.id,
-        user_id: user.id,
-        owner_user_id: accountOwnerId || user.id,
-        direction: "outbound",
-        message_type: m.message_type,
-        content: m.content,
-        media_url: m.media_url,
-        media_mime_type: m.media_mime_type,
-        media_filename: m.media_filename,
-        media_caption: m.media_caption,
-        status: "pending",
-        metadata: { forwarded: true, forwarded_from_message_id: m.id },
-      };
       await supabase.functions.invoke("send-chat-message", {
         body: {
           conversation_id: conv.id,
@@ -830,7 +852,7 @@ export function useChat() {
           caption: m.media_caption || undefined,
           filename: m.media_filename || undefined,
           media_mime_type: m.media_mime_type || undefined,
-          metadata: insertBody.metadata,
+          metadata: { forwarded: true, forwarded_from_message_id: m.id },
           waba_connection_id: connection.id,
         },
       });

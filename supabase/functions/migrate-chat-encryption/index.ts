@@ -51,10 +51,12 @@ Deno.serve(async (req) => {
   if (!authorized) return new Response("Unauthorized", { status: 401 });
   let migratedMessages = 0;
   let migratedConversations = 0;
+  const failures: Array<{ table: string; id: string }> = [];
   try {
     for (;;) {
-      const { data } = await db.from("chat_messages").select("id, content, media_caption")
-        .or("content.not.like.enc:v1:%,media_caption.not.like.enc:v1:%").limit(100);
+      const { data, error: readError } = await db.from("chat_messages").select("id, content, media_caption")
+        .or("content.not.like.enc:v1:%,media_caption.not.like.enc:v1:%").order("id").limit(100);
+      if (readError) throw readError;
       const rows = (data || []).filter((row) =>
         (row.content && !String(row.content).startsWith(MESSAGE_PREFIX)) || (row.media_caption && !String(row.media_caption).startsWith(MESSAGE_PREFIX))
       );
@@ -62,22 +64,25 @@ Deno.serve(async (req) => {
       for (const row of rows) {
         const encrypted = await encryptMessageFields(row);
         const { error } = await db.from("chat_messages").update({ content: encrypted.content, media_caption: encrypted.media_caption }).eq("id", row.id);
-        if (error) throw error;
-        migratedMessages++;
+        if (error) failures.push({ table: "chat_messages", id: String(row.id) });
+        else migratedMessages++;
       }
+      if (failures.length) break;
     }
     for (;;) {
-      const { data } = await db.from("chat_conversations").select("id, last_message_text")
-        .not("last_message_text", "is", null).not("last_message_text", "like", "enc:v1:%").limit(100);
+      const { data, error: readError } = await db.from("chat_conversations").select("id, last_message_text")
+        .not("last_message_text", "is", null).not("last_message_text", "like", "enc:v1:%").order("id").limit(100);
+      if (readError) throw readError;
       if (!data?.length) break;
       for (const row of data) {
         const encrypted = await encryptConversationPreview(row);
         const { error } = await db.from("chat_conversations").update({ last_message_text: encrypted.last_message_text }).eq("id", row.id);
-        if (error) throw error;
-        migratedConversations++;
+        if (error) failures.push({ table: "chat_conversations", id: String(row.id) });
+        else migratedConversations++;
       }
+      if (failures.length) break;
     }
-    return Response.json({ ok: true, migrated_messages: migratedMessages, migrated_conversations: migratedConversations });
+    return Response.json({ ok: failures.length === 0, migrated_messages: migratedMessages, migrated_conversations: migratedConversations, failures }, { status: failures.length ? 500 : 200 });
   } catch (error) {
     console.error("[migrate-chat-encryption] migration failed", error instanceof Error ? error.message : "unknown");
     return Response.json({ error: "Migration failed", migrated_messages: migratedMessages, migrated_conversations: migratedConversations }, { status: 500 });

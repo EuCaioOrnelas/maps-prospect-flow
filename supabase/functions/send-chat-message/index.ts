@@ -90,12 +90,17 @@ Deno.serve(async (req) => {
     }
 
     if (!connection) {
-      if (message_id) await supabase.from('chat_messages').update({ status: 'failed' }).eq('id', message_id);
       return new Response(JSON.stringify({ error: 'Connection not found' }), { status: 404, headers: corsHeaders });
     }
 
+    const connOwner = connection.owner_user_id || connection.user_id;
+    if (message_id) {
+      const { data: existingMessage } = await supabase.from('chat_messages').select('id, conversation_id')
+        .eq('id', message_id).eq('owner_user_id', connOwner).maybeSingle();
+      if (!existingMessage) return new Response(JSON.stringify({ error: 'Message not found' }), { status: 404, headers: corsHeaders });
+    }
+
     if (!message_id) {
-      const connOwner = connection.owner_user_id || connection.user_id;
       const { data: conversation } = await supabase.from('chat_conversations').select('id')
         .eq('id', conversation_id).eq('owner_user_id', connOwner).eq('waba_connection_id', waba_connection_id).maybeSingle();
       if (!conversation) return new Response(JSON.stringify({ error: 'Conversation not found' }), { status: 404, headers: corsHeaders });
@@ -146,6 +151,7 @@ Deno.serve(async (req) => {
           .from('chat_messages')
           .select('waba_message_id, direction')
           .eq('id', replyId)
+          .eq('owner_user_id', connOwner)
           .maybeSingle();
         if (quoted?.waba_message_id) {
           quotedWabaId = quoted.waba_message_id as string;
@@ -180,6 +186,13 @@ Deno.serve(async (req) => {
     } else if (type === "audio") {
       messagePayload.type = "audio";
       messagePayload.audio = { link: mediaLink };
+    } else if (type === "template") {
+      messagePayload.type = "template";
+      messagePayload.template = {
+        name: body.template_name,
+        language: { code: body.template_language || "pt_BR" },
+        ...(Array.isArray(body.template_components) ? { components: body.template_components } : {}),
+      };
     }
 
     console.log(`[send-chat-message] Sending ${type} to ${to} via ${phone_number_id}`);
