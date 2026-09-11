@@ -43,6 +43,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // Etapa 2: verificação em duas etapas dentro do próprio login
+  const [mfaPending, setMfaPending] = useState(false);
+  const [mfaChecking, setMfaChecking] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaRecovery, setMfaRecovery] = useState(false);
+  const [mfaSubmitting, setMfaSubmitting] = useState(false);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const mfaBlockRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
