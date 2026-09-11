@@ -33,10 +33,10 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
   <Zap size={14} className="text-primary" />
   <span className="text-[11px] sm:text-sm text-muted-foreground">Venda B2B com uma operação mais eficiente</span>
   </div>
-  <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-foreground">
- Tudo para vender B2B.<br />
- <span className="text-shimmer-highlight">Em um só lugar.</span>
- </h2>
+  <h2 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold mb-6 text-foreground">
+  <span className="block whitespace-nowrap">Tudo para vender B2B.</span>
+  <span className="block whitespace-nowrap text-shimmer-highlight">Em um só lugar.</span>
+  </h2>
  <p className="text-sm sm:text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
  Capte oportunidades, automatize o trabalho comercial e transforme conversas em reuniões e vendas com uma única plataforma.
  </p>

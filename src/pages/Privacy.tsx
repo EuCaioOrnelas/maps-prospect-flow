@@ -150,6 +150,13 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6.1. Integrações oficiais e responsabilidade sobre canais</h2>
+              <p>
+                A Wiize utiliza integrações oficiais e recomenda o uso da plataforma em conformidade com as políticas dos canais de comunicação utilizados. O cliente é o único responsável pelos contatos e conteúdos enviados através da plataforma.
+              </p>
+            </section>
+
+            <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">7. Integrações Google (Sheets, Calendar, Gmail, Drive)</h2>
               <p>
                 Quando o cliente conecta uma conta Google, solicitamos apenas os escopos mínimos
