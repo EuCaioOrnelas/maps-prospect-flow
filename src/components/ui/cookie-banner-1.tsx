@@ -126,17 +126,7 @@ const CookiePanel = (props: CookiePanelProps) => {
       <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden max-h-[inherit] overflow-y-auto">
         <div className="h-1 w-full bg-primary" />
         <div className="relative p-4 sm:p-5">
-          <button
-            type="button"
-            onClick={() => decide(DEFAULT_PREFS)}
-            className="absolute right-2.5 top-2.5 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground/30 transition-colors hover:bg-muted hover:text-muted-foreground/60"
-            aria-label="Recusar cookies opcionais e usar apenas essenciais"
-            title="Usar apenas cookies essenciais"
-          >
-            <X className="size-3.5" />
-          </button>
-
-          <div className="pr-6">
+          <div>
             <div className="flex items-center gap-2.5">
               <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 sm:size-9">
                 <IconEl className="size-4" />
