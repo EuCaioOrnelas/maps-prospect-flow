@@ -134,6 +134,7 @@ const AdminChurn = lazyWithRetry(() => import("./pages/admin/AdminChurn"), "Admi
 const AdminForecast = lazyWithRetry(() => import("./pages/admin/AdminForecast"), "AdminForecast");
 const AdminUsuarios = lazyWithRetry(() => import("./pages/admin/AdminUsuarios"), "AdminUsuarios");
 const AdminUserDetail = lazyWithRetry(() => import("./pages/admin/AdminUserDetail"), "AdminUserDetail");
+const AdminTrials = lazyWithRetry(() => import("./pages/admin/AdminTrials"), "AdminTrials");
 const AdminAtivacao = lazyWithRetry(() => import("./pages/admin/AdminAtivacao"), "AdminAtivacao");
 const AdminRetencao = lazyWithRetry(() => import("./pages/admin/AdminRetencao"), "AdminRetencao");
 const AdminIAAgentes = lazyWithRetry(() => import("./pages/admin/AdminIAAgentes"), "AdminIAAgentes");
@@ -417,6 +418,7 @@ const App = () => (
                   {/* Produto */}
                   <Route path="usuarios" element={<AdminUsuarios />} />
                   <Route path="usuarios/:userId" element={<AdminUserDetail />} />
+                  <Route path="trials" element={<AdminTrials />} />
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
                   <Route path="landing-pages" element={<AdminLandingPages />} />
