@@ -15,3 +15,4 @@
 - [x] Reescrita da comunicação (hero, SEO, FAQ, planos, seções de vendas) para inteligência comercial
 - [ ] Validação E2E com conversa real de ponta a ponta (depende de volume de mensagens reais na conta)
 - [x] Corrigir oportunidades vazias após prospecção em contas recém-criadas (validação autenticada depende de login na prévia)
+- [ ] Implementar criptografia AES-256-GCM centralizada para chat_messages e previews, migrar legado sem destruição e auditar todos os caminhos de leitura/gravação.
