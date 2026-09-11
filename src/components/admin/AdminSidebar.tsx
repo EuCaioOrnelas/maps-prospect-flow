@@ -83,6 +83,7 @@ const NAV_SECTIONS: NavSection[] = [
     icon: Users,
     items: [
       { title: "Usuários", url: "/admin/usuarios", icon: Users },
+      { title: "Trials", url: "/admin/trials", icon: Activity },
       { title: "Ativação", url: "/admin/ativacao", icon: UserCheck },
       { title: "Retenção", url: "/admin/retencao", icon: Activity },
       { title: "Onboarding", url: "/admin/onboarding", icon: ClipboardList },
