@@ -241,6 +241,87 @@ const Login = () => {
               <Logo size="lg" />
             </div>
 
+            {mfaPending ? (
+              <>
+                <div className="flex justify-center mb-4">
+                  <span className="inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <ShieldCheck className="h-6 w-6" />
+                  </span>
+                </div>
+                <h1 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
+                  Verificação em duas etapas
+                </h1>
+                <p className="text-muted-foreground text-center mb-6 sm:mb-8 text-sm sm:text-base">
+                  {mfaRecovery
+                    ? "Informe um dos seus códigos de recuperação."
+                    : "Digite o código de 6 dígitos do seu aplicativo autenticador."}
+                </p>
+
+                <form onSubmit={handleMfaSubmit} className="space-y-4 sm:space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="mfa-code" className="text-sm sm:text-base">
+                      {mfaRecovery ? "Código de recuperação" : "Código"}
+                    </Label>
+                    <Input
+                      id="mfa-code"
+                      autoFocus
+                      autoComplete="one-time-code"
+                      inputMode={mfaRecovery ? "text" : "numeric"}
+                      maxLength={mfaRecovery ? 20 : 6}
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      placeholder={mfaRecovery ? "XXXX-XXXX" : "000000"}
+                      className={`h-11 sm:h-12 bg-secondary border-border text-sm sm:text-base ${mfaRecovery ? "" : "text-center text-lg tracking-[0.4em]"}`}
+                    />
+                    {mfaError && <p className="text-xs text-destructive">{mfaError}</p>}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="hero"
+                    size="lg"
+                    className="w-full h-11 sm:h-12 text-sm sm:text-base"
+                    disabled={mfaSubmitting || mfaCode.trim().length < 6}
+                  >
+                    {mfaSubmitting ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2" size={18} />
+                        Verificando...
+                      </>
+                    ) : (
+                      "Verificar"
+                    )}
+                  </Button>
+
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => {
+                        setMfaRecovery((v) => !v);
+                        setMfaCode("");
+                        setMfaError(null);
+                      }}
+                    >
+                      <KeyRound className="h-3.5 w-3.5" />
+                      {mfaRecovery ? "Usar aplicativo" : "Usar código de recuperação"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground"
+                      onClick={handleMfaCancel}
+                    >
+                      Voltar
+                    </Button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <>
             <h1 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
               Bem-vindo de volta
             </h1>
