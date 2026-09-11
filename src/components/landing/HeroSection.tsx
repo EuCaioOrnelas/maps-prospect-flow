@@ -117,13 +117,16 @@ export const HeroSection = ({
  return () => obs.disconnect();
  }, []);
 
- // Pré-aquece o YouTube para abrir o vídeo instantaneamente em qualidade máxima
- useEffect(() => {
- const warm = () => {
+ // Pré-aquece o YouTube apenas quando o visitante demonstra intenção
+ // (hover/toque no botão de vídeo). Antes isso rodava no carregamento e
+ // trazia ~62 KiB do YouTube para o caminho inicial.
+ const warmedRef = useRef(false);
+ const warmYouTube = () => {
+ if (warmedRef.current) return;
+ warmedRef.current = true;
  const links: Array<[string, string]> = [
  ["preconnect", "https://www.youtube.com"],
  ["preconnect", "https://i.ytimg.com"],
- ["preconnect", "https://yt3.ggpht.com"],
  ["dns-prefetch", "https://www.googlevideo.com"],
  ["prefetch", "https://www.youtube.com/embed/ZRzK42SYNFc?vq=hd1080&hd=1"],
  ];
@@ -137,13 +140,6 @@ export const HeroSection = ({
  document.head.appendChild(l);
  });
  };
- const w = window as Window & { requestIdleCallback?: (cb: () => void) => number; cancelIdleCallback?: (id: number) => void };
- const id = w.requestIdleCallback ? w.requestIdleCallback(warm) : window.setTimeout(warm, 1500);
- return () => {
- if (w.cancelIdleCallback) w.cancelIdleCallback(id as number);
- else clearTimeout(id as number);
- };
- }, []);
 
  const handleStageClick = (index: number) => {
  setJumpTarget(index);
