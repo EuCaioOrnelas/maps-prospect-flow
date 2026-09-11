@@ -3,6 +3,7 @@
 //  1) inbound  -> chamado pelo meta-webhook a cada mensagem recebida
 //  2) tick     -> chamado pelo cron (wa-flow-scheduler) para nós de espera / inatividade
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { encryptConversationPreview, encryptMessageFields } from "../_shared/messageCrypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -145,7 +146,7 @@ async function logOutbound(ctx: SendCtx, content: string, type: string, wamid: s
   // (botões/listas) do fluxo eram gravadas como "interactive" e apareciam
   // quebradas — gravamos como texto para exibirem o conteúdo enviado.
   const uiType = type === "text" || type === "interactive" || type === "button" || type === "list" ? "text" : type;
-  const { error } = await supabase.from("chat_messages").insert({
+  const { error } = await supabase.from("chat_messages").insert(await encryptMessageFields({
     conversation_id: ctx.convId,
     user_id: ctx.userId,
     owner_user_id: ctx.ownerId,
@@ -155,17 +156,17 @@ async function logOutbound(ctx: SendCtx, content: string, type: string, wamid: s
     content,
     status: ok ? "sent" : "failed",
     metadata: { source: "wa_flow", original_type: type },
-  });
+  }));
   if (error) console.error("[wa-flow-runner] logOutbound insert falhou:", error.message);
   if (ok) {
     await supabase
       .from("chat_conversations")
-      .update({
+      .update(await encryptConversationPreview({
         last_message_text: content,
         last_message_at: new Date().toISOString(),
         last_message_type: uiType,
         last_message_direction: "outbound",
-      })
+      }))
       .eq("id", ctx.convId);
   }
 }

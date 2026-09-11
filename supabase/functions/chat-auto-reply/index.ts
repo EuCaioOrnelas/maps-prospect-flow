@@ -6,6 +6,7 @@
 //  - (optional) once_per_day was not already used for this conversation today
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encryptConversationPreview, encryptMessageFields } from "../_shared/messageCrypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -168,7 +169,7 @@ serve(async (req) => {
     }
 
     // Persist outbound message
-    await supabase.from("chat_messages").insert({
+    await supabase.from("chat_messages").insert(await encryptMessageFields({
       conversation_id: conv.id,
       user_id: conv.user_id,
       owner_user_id: conv.user_id,
@@ -179,17 +180,17 @@ serve(async (req) => {
       status: metaRes.ok ? "sent" : "failed",
       status_updated_at: new Date().toISOString(),
       metadata: { auto_reply: true },
-    });
+    }));
 
     await supabase
       .from("chat_conversations")
-      .update({
+      .update(await encryptConversationPreview({
         last_auto_reply_at: new Date().toISOString(),
         last_message_text: resolvedMessage,
         last_message_at: new Date().toISOString(),
         last_message_direction: "outbound",
         last_message_type: "text",
-      })
+      }))
       .eq("id", conv.id);
 
     return new Response(JSON.stringify({ ok: true, meta: metaJson }), {

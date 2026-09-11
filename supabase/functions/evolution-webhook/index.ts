@@ -1,6 +1,7 @@
 // Evolution API webhook — "Número de Atendimento"
 // Recebe eventos da instância (QR, conexão, mensagens) e alimenta Chat/CRM/SDR.
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { encryptConversationPreview, encryptMessageFields } from "../_shared/messageCrypto.ts";
 // Identidade estável de uma linha WhatsApp (Número de Atendimento).
 // Chave = DDD + 8 últimos dígitos (ignora o "9" extra e o DDI 55).
 function lineKey(phone: string | null | undefined): string | null {
@@ -366,7 +367,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!conversation) {
-          const { data: newConv } = await supabase.from("chat_conversations").insert({
+          const { data: newConv } = await supabase.from("chat_conversations").insert(await encryptConversationPreview({
             user_id: userId,
             owner_user_id: ownerId,
             waba_connection_id: connectionId,
@@ -378,21 +379,21 @@ Deno.serve(async (req) => {
             last_message_type: parsed.type,
             last_message_direction: direction,
             unread_count: fromMe ? 0 : 1,
-          }).select("id, unread_count").single();
+          })).select("id, unread_count").single();
           conversation = newConv;
         } else {
-          await supabase.from("chat_conversations").update({
+          await supabase.from("chat_conversations").update(await encryptConversationPreview({
             contact_name: contactName || undefined,
             last_message_text: lastText,
             last_message_at: msgTime,
             last_message_type: parsed.type,
             last_message_direction: direction,
             unread_count: fromMe ? 0 : (conversation.unread_count || 0) + 1,
-          }).eq("id", conversation.id);
+          })).eq("id", conversation.id);
         }
         if (!conversation) continue;
 
-        await supabase.from("chat_messages").insert({
+        await supabase.from("chat_messages").insert(await encryptMessageFields({
           conversation_id: conversation.id,
           user_id: userId,
           owner_user_id: ownerId,
@@ -407,7 +408,7 @@ Deno.serve(async (req) => {
           status: fromMe ? "sent" : "delivered",
           created_at: msgTime,
           metadata: { provider: "evolution", source: item.source || null },
-        });
+        }));
 
         await updateLeadStatus(userId, contactPhone, direction, msgTime);
 
