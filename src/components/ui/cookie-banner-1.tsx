@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Cookie, Shield, Info, X, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Cookie, Shield, Info, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ALL_GRANTED,
   ConsentPrefs,
-  DEFAULT_PREFS,
   getConsent,
   hasConsentDecision,
   saveConsent,
@@ -16,7 +15,7 @@ interface CookiePanelProps {
   title?: string;
   message?: string;
   acceptText?: string;
-  rejectText?: string;
+
   customizeText?: string;
   icon?: "cookie" | "shield" | "info";
   className?: string;
@@ -60,7 +59,7 @@ const CookiePanel = (props: CookiePanelProps) => {
     message =
       "Usamos cookies para operar a plataforma, manter sua sessão segura, medir o uso e melhorar sua experiência.",
     acceptText = "Aceitar todos",
-    rejectText = "Apenas essenciais",
+
     customizeText = "Personalizar",
     icon = "cookie",
     className,
@@ -126,17 +125,7 @@ const CookiePanel = (props: CookiePanelProps) => {
       <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden max-h-[inherit] overflow-y-auto">
         <div className="h-1 w-full bg-primary" />
         <div className="relative p-4 sm:p-5">
-          <button
-            type="button"
-            onClick={() => decide(DEFAULT_PREFS)}
-            className="absolute right-2.5 top-2.5 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground/30 transition-colors hover:bg-muted hover:text-muted-foreground/60"
-            aria-label="Recusar cookies opcionais e usar apenas essenciais"
-            title="Usar apenas cookies essenciais"
-          >
-            <X className="size-3.5" />
-          </button>
-
-          <div className="pr-6">
+          <div>
             <div className="flex items-center gap-2.5">
               <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 sm:size-9">
                 <IconEl className="size-4" />
@@ -157,13 +146,6 @@ const CookiePanel = (props: CookiePanelProps) => {
           </div>
 
           <div className="mt-4 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => decide(DEFAULT_PREFS)}
-              className="flex-1 rounded-xl border border-border bg-muted/60 px-3 py-2.5 text-xs sm:text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              {rejectText}
-            </button>
             <button
               type="button"
               onClick={() => decide(ALL_GRANTED)}
@@ -188,56 +170,20 @@ const CookiePanel = (props: CookiePanelProps) => {
             style={{ height: prefsHeight ? `${prefsHeight}px` : "0px" }}
           >
             <div ref={prefsRef} className="pt-3 space-y-2.5">
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Estas são as categorias de cookies utilizadas na plataforma:
+              </p>
               {CATEGORIES.map((c) => (
                 <div key={c.field} className="flex items-start gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      !c.locked && setPrefs((p) => ({ ...p, [c.field]: !p[c.field] }))
-                    }
-                    className={cn(
-                      "mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded border",
-                      c.locked
-                        ? "cursor-not-allowed border-border bg-primary/15 text-primary"
-                        : prefs[c.field]
-                          ? "cursor-pointer border-primary bg-primary text-primary-foreground"
-                          : "cursor-pointer border-border bg-background hover:bg-accent",
-                    )}
-                    aria-pressed={prefs[c.field]}
-                    aria-label={`Preferência de cookies: ${c.title}`}
-                  >
-                    {prefs[c.field] && <Check className="size-3.5" />}
-                  </button>
+                  <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded border border-border bg-primary/15 text-primary">
+                    <Check className="size-3.5" />
+                  </span>
                   <div>
-                    <p className="text-xs font-medium">
-                      {c.title}{" "}
-                      {c.locked && (
-                        <span className="text-[10px] font-normal text-muted-foreground">
-                          (obrigatório)
-                        </span>
-                      )}
-                    </p>
+                    <p className="text-xs font-medium">{c.title}</p>
                     <p className="text-[11px] leading-relaxed text-muted-foreground">{c.desc}</p>
                   </div>
                 </div>
               ))}
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowPrefs(false)}
-                  className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80"
-                >
-                  Voltar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => decide(prefs)}
-                  className="rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80"
-                >
-                  Salvar escolhas
-                </button>
-              </div>
             </div>
           </div>
         </div>
