@@ -7,8 +7,7 @@ import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { Footer } from "@/components/landing/Footer";
 import { useLandingPageTracking } from "@/hooks/useLandingPageTracking";
 import { DeferredSection } from "@/components/landing/DeferredSection";
-import { FloatingChatButton } from "@/components/landing/FloatingChatButton";
-import { ProblemSection } from "@/components/sales/ProblemSection";
+import { AfterPaint } from "@/components/AfterPaint";
 
 
 /**
@@ -16,6 +15,12 @@ import { ProblemSection } from "@/components/sales/ProblemSection";
  * carrega imediatamente. Tudo abaixo é lazy via dynamic import — reduz JS inicial,
  * melhora LCP/INP e elimina jank de animações que rodavam fora da tela.
  */
+const ProblemSection = lazy(() =>
+  import("@/components/sales/ProblemSection").then((m) => ({ default: m.ProblemSection })),
+);
+const FloatingChatButton = lazy(() =>
+  import("@/components/landing/FloatingChatButton").then((m) => ({ default: m.FloatingChatButton })),
+);
 const OpportunitySection = lazy(() =>
   import("@/components/sales/OpportunitySection").then((m) => ({ default: m.OpportunitySection })),
 );
@@ -115,9 +120,13 @@ const Index = () => {
           <HeroSection onSignupClick={trackSignupClick} />
           <TrustedBySection />
 
-          {/* A primeira seção pós-hero não fica dentro de Suspense/lazy:
-              evita fallback curto mostrar o Footer antes do bloco de dor. */}
-          <ProblemSection />
+          {/* Primeira seção pós-hero: carregada assim que se aproxima da viewport.
+              Tira framer-motion do bundle inicial sem mudar o conteúdo. */}
+          <DeferredSection minHeight="90vh" rootMargin="900px 0px">
+            <Suspense fallback={<SectionFallback />}>
+              <ProblemSection />
+            </Suspense>
+          </DeferredSection>
 
           {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta.
               Cada bloco só monta quando chega perto da viewport: menos JS, menos DOM inicial. */}
@@ -147,7 +156,11 @@ const Index = () => {
           </DeferredSection>
 
           <Footer />
-          <FloatingChatButton />
+          <AfterPaint>
+            <Suspense fallback={null}>
+              <FloatingChatButton />
+            </Suspense>
+          </AfterPaint>
 
         </div>
       </main>
