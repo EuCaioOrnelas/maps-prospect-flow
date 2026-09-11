@@ -8,6 +8,13 @@
       "when": 1789147158075,
       "tag": "0000_fix_admin_user_operational_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789152755590,
+      "tag": "0001_enforce_encrypted_chat_content",
+      "breakpoints": true
     }
   ]
 }

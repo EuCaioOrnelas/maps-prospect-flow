@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { decryptMessageFields, encryptConversationPreview, encryptMessageFields } from "../_shared/messageCrypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -177,18 +178,17 @@ Deno.serve(async (req) => {
         .eq("conversation_id", convId)
         .eq("direction", "inbound")
         .eq("message_type", "audio")
-        .is("content", null)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (lastAudio?.id) {
+        const encryptedTranscript = await encryptMessageFields({
+          content: audioTranscript ? `🎤 ${audioTranscript}` : "🎤 Áudio recebido (não foi possível transcrever)",
+          media_caption: null,
+        });
         await supabase
           .from("chat_messages")
-          .update({
-            content: audioTranscript
-              ? `🎤 ${audioTranscript}`
-              : "🎤 Áudio recebido (não foi possível transcrever)",
-          })
+          .update({ content: encryptedTranscript.content })
           .eq("id", lastAudio.id);
       }
     }
@@ -392,7 +392,8 @@ Deno.serve(async (req) => {
         .eq("conversation_id", convId)
         .order("created_at", { ascending: false })
         .limit(20);
-      history = (msgs || [])
+      const decryptedMsgs = await Promise.all((msgs || []).map(decryptMessageFields));
+      history = decryptedMsgs
         .reverse()
         .filter((m: any) => m.content)
         .map((m: any) => ({
@@ -579,7 +580,7 @@ Deno.serve(async (req) => {
       if (!sendResult.ok) {
         console.error("[sdr-dispatch] envio falhou:", isEvolution ? "evolution" : "meta", JSON.stringify(metaJson));
         if (convId) {
-          await supabase.from("chat_messages").insert({
+          await supabase.from("chat_messages").insert(await encryptMessageFields({
             conversation_id: convId,
             user_id: user_id || owner_user_id,
             owner_user_id,
@@ -587,14 +588,14 @@ Deno.serve(async (req) => {
             message_type: "text",
             content: text,
             status: "failed",
-          });
+          }));
         }
         break;
       }
       sent++;
 
       if (convId) {
-        await supabase.from("chat_messages").insert({
+        await supabase.from("chat_messages").insert(await encryptMessageFields({
           conversation_id: convId,
           user_id: user_id || owner_user_id,
           owner_user_id,
@@ -603,19 +604,19 @@ Deno.serve(async (req) => {
           message_type: "text",
           content: text,
           status: "sent",
-        });
+        }));
       }
     }
 
     if (convId && sent > 0) {
       await supabase
         .from("chat_conversations")
-        .update({
+        .update(await encryptConversationPreview({
           last_message_text: messages[sent - 1],
           last_message_at: new Date().toISOString(),
           last_message_type: "text",
           last_message_direction: "outbound",
-        })
+        }))
         .eq("id", convId);
     }
 

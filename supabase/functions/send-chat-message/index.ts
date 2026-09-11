@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { encryptConversationPreview, encryptMessageFields } from "../_shared/messageCrypto.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,9 +29,10 @@ Deno.serve(async (req) => {
     const userId = claims.claims.sub as string;
 
     const body = await req.json();
-    const { message_id, phone_number_id, to, type, text, media_url, caption, filename, waba_connection_id } = body;
+    let { message_id } = body;
+    const { conversation_id, phone_number_id, to, type, text, media_url, caption, filename, waba_connection_id } = body;
 
-    if (!message_id || !phone_number_id || !to || !type || !waba_connection_id) {
+    if ((!message_id && !conversation_id) || !to || !type || !waba_connection_id) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400, headers: corsHeaders });
     }
 
@@ -57,8 +59,31 @@ Deno.serve(async (req) => {
     }
 
     if (!connection) {
-      await supabase.from('chat_messages').update({ status: 'failed' }).eq('id', message_id);
+      if (message_id) await supabase.from('chat_messages').update({ status: 'failed' }).eq('id', message_id);
       return new Response(JSON.stringify({ error: 'Connection not found' }), { status: 404, headers: corsHeaders });
+    }
+
+    if (!message_id) {
+      const connOwner = connection.owner_user_id || connection.user_id;
+      const { data: conversation } = await supabase.from('chat_conversations').select('id')
+        .eq('id', conversation_id).eq('owner_user_id', connOwner).eq('waba_connection_id', waba_connection_id).maybeSingle();
+      if (!conversation) return new Response(JSON.stringify({ error: 'Conversation not found' }), { status: 404, headers: corsHeaders });
+      const encrypted = await encryptMessageFields({
+        conversation_id, user_id: userId, owner_user_id: connOwner, direction: 'outbound',
+        message_type: type === 'template' ? 'text' : type,
+        content: text || (type === 'template' ? `[Template] ${body.template_name || ''}` : caption) || null,
+        media_url: media_url || null, media_mime_type: body.media_mime_type || null, media_filename: filename || null,
+        media_caption: caption || null, status: 'pending', reply_to_message_id: body.reply_to_message_id || null,
+        metadata: { ...(body.metadata || {}), client_token: body.client_token || null },
+      });
+      const { data: inserted, error: insertError } = await supabase.from('chat_messages').insert(encrypted).select('id').single();
+      if (insertError || !inserted) throw new Error('Unable to persist encrypted message');
+      message_id = inserted.id;
+      const previewText = type === 'text' ? text : type === 'image' ? '📷 Imagem' : type === 'video' ? '🎥 Vídeo' : type === 'audio' ? '🎤 Áudio' : type === 'document' ? `📄 ${filename || 'Documento'}` : `[Template] ${body.template_name || ''}`;
+      await supabase.from('chat_conversations').update(await encryptConversationPreview({
+        last_message_text: previewText, last_message_at: new Date().toISOString(), last_message_type: type,
+        last_message_direction: 'outbound',
+      })).eq('id', conversation_id);
     }
 
     // Media lives in private buckets. Convert any internal storage reference into a
@@ -293,7 +318,7 @@ Deno.serve(async (req) => {
         console.error('[send-chat-message] Revenue event error (non-blocking):', revErr);
       }
 
-      return new Response(JSON.stringify({ success: true, waba_message_id: wabaMessageId }), {
+      return new Response(JSON.stringify({ success: true, message_id, waba_message_id: wabaMessageId }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else {

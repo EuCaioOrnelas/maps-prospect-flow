@@ -4,6 +4,7 @@
 // Regras: nao recalcula engajamento (reutiliza revenue_leads), IA so devolve
 // sinais, o motor decide o score. Tudo isolado por conta (owner_user_id).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { decryptMessageFields } from "../_shared/messageCrypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -313,7 +314,7 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
       .gte("created_at", since90)
       .order("created_at", { ascending: false })
       .limit(200);
-    messages = msgs || [];
+    messages = await Promise.all((msgs || []).map(decryptMessageFields));
   }
 
   // ---------------- SINAIS ----------------

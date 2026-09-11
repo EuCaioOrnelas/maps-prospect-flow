@@ -143,14 +143,16 @@ export function useLeadIntelligenceDetail(phone?: string | null, crmLeadId?: str
       const mine = (convs || []).filter((c: any) => key8(c.contact_phone) === target);
       if (!mine.length) return null;
 
-      const { data: msgs } = await supabase
-        .from("chat_messages")
-        .select("direction, content, message_type, created_at, metadata")
-        .in("conversation_id", mine.map((c: any) => c.id))
-        .order("created_at", { ascending: true })
-        .limit(500);
+      const secureBatches = await Promise.all(mine.map((c: any) =>
+        supabase.functions.invoke("chat-secure-read", {
+          body: { action: "messages", conversation_id: c.id, limit: 500 },
+        })
+      ));
+      const msgs = secureBatches.flatMap(({ data }) => data?.messages || [])
+        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .slice(-500);
 
-      const rows = msgs || [];
+      const rows = msgs;
       if (!rows.length) return null;
 
       const inboundRows = rows.filter((m: any) => m.direction === "inbound");

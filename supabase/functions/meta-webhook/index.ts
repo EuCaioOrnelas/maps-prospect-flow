@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { encryptConversationPreview, encryptMessageFields } from "../_shared/messageCrypto.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -651,7 +652,7 @@ Deno.serve(async (req) => {
                   : textContent || msgType;
 
                 if (!conversation) {
-                  const { data: newConv } = await supabase.from('chat_conversations').insert({
+                  const { data: newConv } = await supabase.from('chat_conversations').insert(await encryptConversationPreview({
                     user_id: userId,
                     owner_user_id: ownerUserId,
                     waba_connection_id: connectionId,
@@ -663,17 +664,17 @@ Deno.serve(async (req) => {
                     last_message_type: msgType,
                     last_message_direction: 'inbound',
                     unread_count: 1,
-                  }).select('id, unread_count').single();
+                  })).select('id, unread_count').single();
                   conversation = newConv;
                 } else {
-                  await supabase.from('chat_conversations').update({
+                  await supabase.from('chat_conversations').update(await encryptConversationPreview({
                     contact_name: contactName || undefined,
                     last_message_text: lastText,
                     last_message_at: msgTime,
                     last_message_type: msgType,
                     last_message_direction: 'inbound',
                     unread_count: (conversation.unread_count || 0) + 1,
-                  }).eq('id', conversation.id);
+                  })).eq('id', conversation.id);
                 }
 
                 if (conversation) {
@@ -687,7 +688,7 @@ Deno.serve(async (req) => {
                     : { data: null } as any;
 
                   if (!existingInbound) {
-                    await supabase.from('chat_messages').insert({
+                    await supabase.from('chat_messages').insert(await encryptMessageFields({
                       conversation_id: conversation.id,
                       user_id: userId,
                       owner_user_id: ownerUserId,
@@ -700,7 +701,7 @@ Deno.serve(async (req) => {
                       media_filename: mediaFilename,
                       media_caption: msgType !== 'text' ? (textContent || null) : null,
                       status: 'delivered',
-                    });
+                    }));
                     console.log(`[meta-webhook] ✅ Chat message saved for conversation ${conversation.id}`);
                   } else {
                     console.log(`[meta-webhook] ↩️ Duplicate inbound message ignored ${msg.id}`);
