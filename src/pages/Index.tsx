@@ -48,34 +48,13 @@ const CTASection = lazy(() =>
 const SectionFallback = () => <div className="h-[40vh] w-full" aria-hidden="true" />;
 
 const Index = () => {
-  const [isReady, setIsReady] = useState(false);
+  // Antes a página esperava document.fonts.ready (até 1,5 s) antes de pintar
+  // qualquer conteúdo — era a causa principal do atraso de renderização do LCP.
+  // Agora o conteúdo acima da dobra é pintado imediatamente; as fontes trocam
+  // sozinhas via font-display: swap.
   const { trackSignupClick } = useLandingPageTracking("index");
 
-  useEffect(() => {
-    // Timeout fallback to prevent infinite loading
-    const timeout = setTimeout(() => setIsReady(true), 1500);
 
-    if (document.fonts) {
-      document.fonts.ready
-        .then(() => {
-          clearTimeout(timeout);
-          setIsReady(true);
-        })
-        .catch(() => {
-          clearTimeout(timeout);
-          setIsReady(true);
-        });
-    } else {
-      clearTimeout(timeout);
-      setIsReady(true);
-    }
-
-    return () => clearTimeout(timeout);
-  }, []);
-
-  if (!isReady) {
-    return <LandingPageSkeleton />;
-  }
 
   return (
     <>
