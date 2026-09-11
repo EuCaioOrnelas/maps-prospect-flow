@@ -101,6 +101,9 @@ const Login = () => {
       return;
     }
 
+    // Aguarda a etapa de 2FA antes de redirecionar
+    if (mfaBlockRef.current) return;
+
     // Wait for profile to load before redirecting
     if (user && !loading) {
       if (sessionStorage.getItem("email_confirmed_force_login") === "true") {
