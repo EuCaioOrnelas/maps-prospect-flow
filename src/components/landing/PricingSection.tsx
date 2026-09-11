@@ -429,7 +429,7 @@ export const PricingSection = () => {
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-foreground">
  Planos que <br className="md:hidden" /><span className="text-shimmer-highlight">cabem no bolso</span>
  </h2>
- <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+ <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
  Um único cliente fechado já paga o plano inteiro.
  Invista em prospecção previsível.
  </p>

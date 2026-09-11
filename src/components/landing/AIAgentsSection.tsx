@@ -87,7 +87,7 @@ export const AIAgentsSection = () => {
  <div className="w-12 h-12 rounded-card bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
  <pillar.icon className="w-6 h-6 text-primary" />
  </div>
- <h3 className="font-display text-lg font-semibold text-foreground mb-1">{pillar.title}</h3>
+ <h3 className="font-display text-base sm:text-lg font-semibold text-foreground mb-1">{pillar.title}</h3>
  <p className="text-sm text-primary/80 font-medium mb-3">{pillar.subtitle}</p>
  <p className="text-sm text-muted-foreground leading-relaxed">{pillar.description}</p>
  </motion.div>

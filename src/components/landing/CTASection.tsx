@@ -37,7 +37,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  Tudo para vender B2B.<br />
  <span className="text-shimmer-highlight">Em um só lugar.</span>
  </h2>
- <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+ <p className="text-sm sm:text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
  Capte oportunidades, automatize o trabalho comercial e transforme conversas em reuniões e vendas com uma única plataforma.
  </p>
  {TRIAL_DISABLED ? (
