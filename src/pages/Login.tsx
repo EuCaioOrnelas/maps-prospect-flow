@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/Logo";
-import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Loader2, ShieldCheck, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEO } from "@/components/SEO";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
+import { call2FA } from "@/hooks/use2FA";
 import googleLogo from "@/assets/icons/google-logo.png";
 
 const getLoginErrorMessage = (error: Error): { title: string; description: string } => {
@@ -42,6 +43,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // Etapa 2: verificação em duas etapas dentro do próprio login
+  const [mfaPending, setMfaPending] = useState(false);
+  const [mfaChecking, setMfaChecking] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaRecovery, setMfaRecovery] = useState(false);
+  const [mfaSubmitting, setMfaSubmitting] = useState(false);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const mfaBlockRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -92,6 +101,9 @@ const Login = () => {
       return;
     }
 
+    // Aguarda a etapa de 2FA antes de redirecionar
+    if (mfaBlockRef.current) return;
+
     // Wait for profile to load before redirecting
     if (user && !loading) {
       if (sessionStorage.getItem("email_confirmed_force_login") === "true") {
@@ -112,7 +124,7 @@ const Login = () => {
         navigate("/dashboard");
       }
     }
-  }, [user, loading, isTrialExpired, profile, navigate, toast]);
+  }, [user, loading, isTrialExpired, profile, navigate, toast, mfaChecking]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,12 +166,56 @@ const Login = () => {
       await supabase.rpc("reset_rate_limit", { p_identifier: rlKey, p_endpoint: "login" });
     }
 
+    // Verifica se a conta exige 2FA: se sim, mostra a segunda etapa aqui mesmo
+    mfaBlockRef.current = true;
+    setMfaChecking(true);
+    const { data: mfaStatus } = await call2FA("status");
+    if (mfaStatus?.two_factor_enabled && !mfaStatus.session_verified) {
+      setIsLoading(false);
+      setMfaPending(true);
+      setMfaCode("");
+      setMfaError(null);
+      setMfaRecovery(false);
+      return;
+    }
+    mfaBlockRef.current = false;
+    setMfaChecking(false);
+
     toast({
       title: "Login realizado!",
       description: "Redirecionando...",
     });
     // Redirect will be handled by useEffect based on trial status
     setIsLoading(false);
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mfaSubmitting) return;
+    setMfaSubmitting(true);
+    setMfaError(null);
+    const { error: err } = await call2FA(
+      "challenge_verify",
+      mfaRecovery ? { recovery_code: mfaCode.trim() } : { code: mfaCode.trim() },
+    );
+    setMfaSubmitting(false);
+    if (err) {
+      setMfaError(err);
+      return;
+    }
+    mfaBlockRef.current = false;
+    setMfaPending(false);
+    setMfaChecking(false);
+    toast({ title: "Login realizado!", description: "Redirecionando..." });
+  };
+
+  const handleMfaCancel = async () => {
+    await supabase.auth.signOut();
+    mfaBlockRef.current = false;
+    setMfaPending(false);
+    setMfaChecking(false);
+    setMfaCode("");
+    setMfaError(null);
   };
 
   return (
@@ -185,6 +241,87 @@ const Login = () => {
               <Logo size="lg" />
             </div>
 
+            {mfaPending ? (
+              <>
+                <div className="flex justify-center mb-4">
+                  <span className="inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <ShieldCheck className="h-6 w-6" />
+                  </span>
+                </div>
+                <h1 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
+                  Verificação em duas etapas
+                </h1>
+                <p className="text-muted-foreground text-center mb-6 sm:mb-8 text-sm sm:text-base">
+                  {mfaRecovery
+                    ? "Informe um dos seus códigos de recuperação."
+                    : "Digite o código de 6 dígitos do seu aplicativo autenticador."}
+                </p>
+
+                <form onSubmit={handleMfaSubmit} className="space-y-4 sm:space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="mfa-code" className="text-sm sm:text-base">
+                      {mfaRecovery ? "Código de recuperação" : "Código"}
+                    </Label>
+                    <Input
+                      id="mfa-code"
+                      autoFocus
+                      autoComplete="one-time-code"
+                      inputMode={mfaRecovery ? "text" : "numeric"}
+                      maxLength={mfaRecovery ? 20 : 6}
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      placeholder={mfaRecovery ? "XXXX-XXXX" : "000000"}
+                      className={`h-11 sm:h-12 bg-secondary border-border text-sm sm:text-base ${mfaRecovery ? "" : "text-center text-lg tracking-[0.4em]"}`}
+                    />
+                    {mfaError && <p className="text-xs text-destructive">{mfaError}</p>}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="hero"
+                    size="lg"
+                    className="w-full h-11 sm:h-12 text-sm sm:text-base"
+                    disabled={mfaSubmitting || mfaCode.trim().length < 6}
+                  >
+                    {mfaSubmitting ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2" size={18} />
+                        Verificando...
+                      </>
+                    ) : (
+                      "Verificar"
+                    )}
+                  </Button>
+
+                  <div className="flex items-center justify-between">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => {
+                        setMfaRecovery((v) => !v);
+                        setMfaCode("");
+                        setMfaError(null);
+                      }}
+                    >
+                      <KeyRound className="h-3.5 w-3.5" />
+                      {mfaRecovery ? "Usar aplicativo" : "Usar código de recuperação"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground"
+                      onClick={handleMfaCancel}
+                    >
+                      Voltar
+                    </Button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <>
             <h1 className="font-display text-xl sm:text-2xl font-bold text-center mb-2">
               Bem-vindo de volta
             </h1>
@@ -273,7 +410,8 @@ const Login = () => {
               )}
               Entrar com Google
             </Button>
-
+              </>
+            )}
           </div>
         </div>
       </div>
