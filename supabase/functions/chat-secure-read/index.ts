@@ -1,5 +1,47 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { decryptConversationPreview, decryptMessageFields } from "../_shared/messageCrypto.ts";
+
+const MESSAGE_PREFIX = "enc:v1:";
+const messageEncoder = new TextEncoder();
+const messageDecoder = new TextDecoder();
+let messageKeyPromise: Promise<CryptoKey> | null = null;
+function messageBase64ToBuffer(value: string): ArrayBuffer {
+  const binary = atob(value);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+function messageEncryptionKey(): Promise<CryptoKey> {
+  if (messageKeyPromise) return messageKeyPromise;
+  const secret = Deno.env.get("WIIZE_MESSAGE_ENCRYPTION_KEY");
+  if (!secret || secret.length < 32) throw new Error("Message encryption is unavailable");
+  messageKeyPromise = crypto.subtle.digest("SHA-256", messageEncoder.encode(secret)).then((raw) =>
+    crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["decrypt"])
+  );
+  return messageKeyPromise;
+}
+async function decryptMessageValue(value: unknown): Promise<string | null> {
+  if (typeof value !== "string") return null;
+  if (!value.startsWith(MESSAGE_PREFIX)) return value;
+  const parts = value.slice(MESSAGE_PREFIX.length).split(":");
+  if (parts.length !== 2) throw new Error("Invalid encrypted message format");
+  try {
+    const plaintext = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: messageBase64ToBuffer(parts[0]) },
+      await messageEncryptionKey(), messageBase64ToBuffer(parts[1]),
+    );
+    return messageDecoder.decode(plaintext);
+  } catch {
+    throw new Error("Encrypted message could not be authenticated");
+  }
+}
+async function decryptMessageFields<T extends Record<string, unknown>>(row: T): Promise<T> {
+  return { ...row, content: await decryptMessageValue(row.content), media_caption: await decryptMessageValue(row.media_caption) };
+}
+async function decryptConversationPreview<T extends Record<string, unknown>>(row: T): Promise<T> {
+  return { ...row, last_message_text: await decryptMessageValue(row.last_message_text) };
+}
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
