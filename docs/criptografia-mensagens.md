@@ -5,6 +5,7 @@ O conteúdo textual de `chat_messages.content`, `chat_messages.media_caption` e
 versionado `enc:v1:<iv>:<ciphertext+tag>`.
 
 - A chave `WIIZE_MESSAGE_ENCRYPTION_KEY` existe somente nos secrets das Edge Functions.
+- Não existe módulo `_shared`: cada Edge Function contém somente no próprio `index.ts` a implementação criptográfica mínima exigida pelo seu fluxo.
 - Cada valor usa um IV aleatório de 96 bits. O tag de autenticação do GCM detecta adulteração e chave incorreta.
 - O frontend nunca lê o texto diretamente das tabelas. A função `chat-secure-read` valida conta/colaborador e devolve plaintext apenas ao usuário autorizado.
 - Eventos Realtime contêm apenas ciphertext; eles servem como sinal para o frontend buscar a mensagem autorizada.
