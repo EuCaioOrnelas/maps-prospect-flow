@@ -1,56 +1,49 @@
-# Criptografia das mensagens do chat (AES-256-GCM)
+# Criptografia do chat sem arquivos compartilhados
 
-## O que encontrei hoje (análise, sem alterações)
+## Objetivo
 
-**Onde as mensagens vivem**
-- Tabela `chat_messages` — campos de conteúdo: `content` (texto) e `media_caption`. Resto (ids, datas, status, telefone, mídia) é técnico.
-- Tabela `chat_conversations` — guarda uma prévia do último texto em `last_message_text` (também vaza conteúdo num dump).
+Manter a proteção AES-256-GCM de `chat_messages.content`, `chat_messages.media_caption` e `chat_conversations.last_message_text`, sem usar `_shared` ou qualquer arquivo auxiliar entre Edge Functions.
 
-**Quem grava mensagens (todos passariam pela mesma camada)**
-- `evolution-webhook` (recebidas pelo número de atendimento)
-- `meta-webhook` (recebidas pela API oficial)
-- `send-chat-message` / envio pelo app
-- `chat-auto-reply`, `wa-flow-runner`, `sdr-dispatch`, `sdr-followup-processor`, `meta-send-campaign` (automações, Wian, SDR)
-- O próprio app (hook `useChat`) hoje **insere direto no banco** ao enviar mensagem, mídia e template.
+## Alterações
 
-**Quem lê o conteúdo**
-- App: `useChat` lê `chat_messages` direto do banco e recebe as novas por realtime.
-- Backend: `chat-summarize`, `intel-engine`, automações, scoring.
+1. Remover `supabase/functions/_shared/messageCrypto.ts` e seu teste.
+2. Cada Edge Function alterada ficará autocontida em um único `index.ts`:
+   - funções que gravam conteúdo terão a implementação local mínima de criptografia;
+   - funções que leem conteúdo terão a implementação local mínima de descriptografia;
+   - funções que leem e gravam terão ambas no próprio arquivo.
+3. Manter o mesmo formato versionado `enc:v1:<iv>:<ciphertext>`, AES-256-GCM, IV aleatório de 12 bytes e chave somente no backend.
+4. Preservar os bloqueios do banco contra gravações em texto puro.
+5. Manter o navegador sem acesso à chave: leitura autorizada continua por `chat-secure-read`, e Realtime continua apenas sinalizando atualizações.
+6. Manter compatibilidade temporária de leitura com registros antigos em texto puro, sem alterar IDs, datas, relações ou metadados.
+7. Ajustar a rotina administrativa de migração para ser autocontida e processar os registros antigos em lotes.
+8. Atualizar a documentação para registrar explicitamente que não existe módulo compartilhado e que cada Edge Function possui apenas seu `index.ts`.
 
-**Busca**
-- Não existe busca por conteúdo no banco (nada de LIKE/ILIKE/full-text em `chat_messages`).
-- A busca de conversas é por nome/telefone; a busca dentro da conversa acontece na memória do navegador, sobre as mensagens já carregadas.
-- Conclusão: criptografar `content` **não quebra** nenhuma busca existente.
+## Funções que serão atualizadas
 
-**Mídia**
-- Arquivos ficam no Storage privado (`chat-media`), acessados por links assinados temporários. Não há necessidade de mexer nisso agora — só o texto/caption é criptografado.
+- `chat-secure-read`
+- `migrate-chat-encryption`
+- `send-chat-message`
+- `evolution-webhook`
+- `meta-webhook`
+- `chat-auto-reply`
+- `wa-flow-runner`
+- `meta-send-campaign`
+- `sdr-followup-processor`
+- `sdr-dispatch`
+- `chat-summarize`
+- `intel-engine`
 
-## O ponto que precisa da sua decisão
+## Validação
 
-Hoje o app lê as mensagens **direto do banco**. Se o texto for guardado criptografado, o app sozinho não consegue mais lê-lo — e a chave nunca pode ir para o navegador (é exatamente isso que dá a proteção).
+- Confirmar que não existe importação de `_shared/messageCrypto` em todo o repositório.
+- Confirmar que não existe arquivo de criptografia em `_shared`.
+- Executar typecheck e build.
+- Testar localmente ida e volta, IV único, chave errada e conteúdo adulterado em uma função autocontida.
+- Publicar novamente todas as Edge Functions alteradas.
+- Testar `chat-secure-read` após a publicação.
+- Auditar novamente todos os acessos a `content`, `media_caption` e `last_message_text`.
+- Informar no final a lista completa de arquivos criados, editados e removidos.
 
-Ou seja: o caminho de leitura do chat precisa passar a buscar o texto pelo backend. É a única mudança estrutural necessária; nada de design, CRM, automações ou integrações muda.
+## Limitação preservada
 
-Proponho o formato mais conservador:
-
-- Envio: o app deixa de inserir a mensagem direto e passa a criar a mensagem pela função de envio já existente (o texto sai do navegador, é criptografado no backend e só então é gravado).
-- Leitura: uma nova função de backend devolve as mensagens já decifradas, respeitando exatamente as mesmas regras de acesso de hoje (dono da conta e colaboradores ativos).
-- Realtime: continua avisando que chegou mensagem nova; o texto vem decifrado pela função de leitura. Nada de "piscar" na tela.
-- Prévia da conversa (`last_message_text`) também criptografada, decifrada pela mesma função.
-
-## Como será feito
-
-1. **Camada única de criptografia** (backend): funções `encryptMessage` / `decryptMessage` em AES-256-GCM, IV aleatório de 12 bytes por mensagem, formato versionado `{v, alg, iv, data}` guardado em coluna nova. Nenhuma outra parte do sistema implementa cripto.
-2. **Colunas novas, sem remover nada**: `content_enc` e `media_caption_enc` em `chat_messages`, `last_message_enc` em `chat_conversations`. As colunas antigas continuam existindo (vazias para mensagens novas), então nada quebra e a mudança é reversível.
-3. **Todos os pontos de gravação** listados acima passam a chamar a mesma camada antes de inserir. Se a criptografia falhar, a mensagem não é gravada em texto puro — retorna erro controlado, sem conteúdo nem chave em log.
-4. **Todos os pontos de leitura do backend** (Wian, resumos, inteligência, automações, SDR) passam a decifrar pela mesma camada, mantendo o comportamento atual.
-5. **Mensagens antigas**: nada é apagado. Uma rotina administrativa criptografa em lotes, de forma idempotente (pula o que já está criptografado), preservando ids, datas, status e metadados. Até rodar, o sistema lê o campo antigo normalmente.
-6. **Segredo**: o código lê `WIIZE_MESSAGE_ENCRYPTION_KEY` só no backend. Vou pedir o cadastro pelo formulário seguro e te explico como gerar (32 bytes aleatórios em base64) — nenhum valor real entra no código, no banco, no git ou em log.
-7. **Testes**: ida e volta do texto, IV diferente por mensagem, chave errada falhando, ciphertext adulterado falhando, e verificação dos fluxos de WhatsApp oficial, Evolution, envio pelo app, automações, realtime e permissões de colaborador.
-8. **Documentação curta** em `docs/criptografia-mensagens.md` com fluxo, limitações e rotação de chave.
-
-## Limitações honestas
-
-- Protege contra vazamento do banco/backup. Quem obtiver a chave do backend junto com o banco continua conseguindo ler — não é criptografia ponta a ponta.
-- A tela do chat passa a depender do backend para exibir o texto; se a função de leitura cair, o chat não mostra mensagens (hoje ele leria direto do banco).
-- Rotação de chave exige uma rodada de re-criptografia (previsto na documentação).
+A migração dos registros antigos continua dependendo de uma execução administrativa autenticada. Até isso ocorrer, esses registros permanecem intactos e legíveis pela compatibilidade temporária do backend.
