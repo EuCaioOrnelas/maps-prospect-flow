@@ -118,23 +118,36 @@ const Index = () => {
               evita fallback curto mostrar o Footer antes do bloco de dor. */}
           <ProblemSection />
 
-          <Suspense fallback={<SectionFallback />}>
-            {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta */}
-            <MechanismSection />
-            <OpportunitySection />
-            <PlatformModulesSection />
-            <WhyItWorksSection />
-            <TestimonialsSection />
-            <PricingSection />
-            <FAQSection />
-            <CTASection onSignupClick={trackSignupClick} />
-          </Suspense>
-
-
-
+          {/* Hierarquia: solução → ponte (operação conectada) → dentro da plataforma → benefício → prova → oferta.
+              Cada bloco só monta quando chega perto da viewport: menos JS, menos DOM inicial. */}
+          <DeferredSection minHeight="80vh">
+            <Suspense fallback={<SectionFallback />}>
+              <MechanismSection />
+              <OpportunitySection />
+            </Suspense>
+          </DeferredSection>
+          <DeferredSection minHeight="80vh">
+            <Suspense fallback={<SectionFallback />}>
+              <PlatformModulesSection />
+              <WhyItWorksSection />
+            </Suspense>
+          </DeferredSection>
+          <DeferredSection minHeight="80vh">
+            <Suspense fallback={<SectionFallback />}>
+              <TestimonialsSection />
+              <PricingSection />
+            </Suspense>
+          </DeferredSection>
+          <DeferredSection minHeight="60vh">
+            <Suspense fallback={<SectionFallback />}>
+              <FAQSection />
+              <CTASection onSignupClick={trackSignupClick} />
+            </Suspense>
+          </DeferredSection>
 
           <Footer />
           <FloatingChatButton />
+
         </div>
       </main>
     </>
