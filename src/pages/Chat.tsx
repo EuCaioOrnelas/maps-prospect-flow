@@ -291,7 +291,7 @@ const Chat = () => {
                     </div>
                   </div>
 
-                  </div>
+
 
                   {/* Feature cards */}
                   <div className="mb-10">
