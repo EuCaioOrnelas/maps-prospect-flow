@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Encerrar sessões após 30 minutos sem atividade real, com prazo compartilhado e logout coordenado entre abas
 - [x] Atualizar secrets Evolution (URL/KEY)
 - [x] Auditoria Evolution em SDR/chat/CRM/IA (janela 24h, áudio, mídia, leitura, eco fromMe, transcrição)
 - [x] Reconexão automática Evolution (webhook + keepalive 5min), histórico nunca importado, conversas presas à linha DDD+8

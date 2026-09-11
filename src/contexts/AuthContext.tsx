@@ -6,6 +6,7 @@ import { generateFingerprint, getClientIP } from '@/lib/fingerprint';
 import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPageTracking';
 import { attributePartnerLeadOnSignup, getPartnerReferralMetadata } from '@/hooks/usePartnerTracking';
 import { isPublicDemoPath, PUBLIC_DEMO_PROFILE } from '@/lib/publicDemo';
+import { useInactivityLogout } from '@/hooks/useInactivityLogout';
 
 interface Profile {
   id: string;
@@ -667,6 +668,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setProfile(null);
   };
+
+  useInactivityLogout({
+    userId: user?.id ?? null,
+    sessionStartedAt: user?.last_sign_in_at ?? null,
+    disabled: publicDemo,
+    onTimeout: signOut,
+  });
 
   return (
     <AuthContext.Provider
