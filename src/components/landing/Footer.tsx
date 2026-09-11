@@ -37,13 +37,7 @@ export const Footer = () => {
  </p>
  </div>
 
- {/* Selos de qualidade - acima do aviso */}
- <div className="border-t border-border/50 pt-6 w-full">
- <p className="text-[10px] sm:text-xs text-muted-foreground/40 text-center max-w-3xl mx-auto leading-relaxed">
- <strong className="text-muted-foreground/50">Aviso importante:</strong> A Wiize utiliza integrações oficiais e recomenda o uso da plataforma em conformidade com as políticas dos canais de comunicação utilizados. O cliente é responsável pelos contatos e conteúdos enviados através da plataforma.
- </p>
- </div>
- </div>
+  </div>
  </div>
  </footer>
  );

@@ -227,37 +227,37 @@ export const HeroSection = ({
   <p className={`${descriptionClassName ?? "text-sm sm:text-lg md:text-xl"} text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto xl:mx-0 animate-slide-up`} style={{ animationDelay: "0.2s" }}>
   {description}
   </p>
- <div className="flex flex-col sm:flex-row items-center justify-center xl:justify-start gap-3 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
- {TRIAL_DISABLED ? (
- <Button
- variant="hero"
- size="lg"
- className="group rounded-full text-base px-8 h-12 shrink-0 opacity-60 cursor-not-allowed"
- disabled
- aria-disabled="true"
- onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
- >
- <Lock size={16} className="mr-1" />
- Teste grátis em breve
- </Button>
- ) : (
-  <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
-  <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12">
-  Iniciar Teste Grátis
-  <ArrowRight size={14} className="ml-1.5 sm:ml-2 group-hover:translate-x-0.5 transition-transform" />
+  <div className="flex flex-row flex-nowrap items-center justify-center xl:justify-start gap-2 sm:gap-4 mb-8 animate-slide-up" style={{ animationDelay: "0.3s" }}>
+  {TRIAL_DISABLED ? (
+  <Button
+  variant="hero"
+  size="lg"
+  className="group rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11 shrink-0 opacity-60 cursor-not-allowed"
+  disabled
+  aria-disabled="true"
+  onClick={(e) => { e.preventDefault(); notifyTrialDisabled(); }}
+  >
+  <Lock size={14} className="mr-1" />
+  Teste grátis em breve
+  </Button>
+  ) : (
+   <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
+   <Button variant="hero" size="lg" className="group rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11">
+   Iniciar Teste Grátis
+   <ArrowRight size={13} className="ml-1 sm:ml-1.5 group-hover:translate-x-0.5 transition-transform" />
+   </Button>
+   </Link>
+  )}
+  <Link to="/tour-guiado" className="group shrink-0">
+  <Button
+  variant="ghost"
+  size="lg"
+  className="demo-shine rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
+  >
+  Ver Demonstração
   </Button>
   </Link>
- )}
- <Link to="/tour-guiado" className="group shrink-0">
- <Button
- variant="ghost"
- size="lg"
- className="demo-shine rounded-full text-sm sm:text-base px-6 sm:px-8 h-11 sm:h-12 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
- >
- Ver Demonstração
- </Button>
- </Link>
- </div>
+  </div>
  </div>
 
  {/* RIGHT: 8-stage demo (sem parallax — scroll passa liso) */}
