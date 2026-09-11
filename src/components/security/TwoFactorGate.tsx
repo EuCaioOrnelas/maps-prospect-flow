@@ -120,8 +120,8 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </div>
+    </div>
   );
 }
