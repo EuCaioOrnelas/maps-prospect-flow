@@ -166,12 +166,56 @@ const Login = () => {
       await supabase.rpc("reset_rate_limit", { p_identifier: rlKey, p_endpoint: "login" });
     }
 
+    // Verifica se a conta exige 2FA: se sim, mostra a segunda etapa aqui mesmo
+    mfaBlockRef.current = true;
+    setMfaChecking(true);
+    const { data: mfaStatus } = await call2FA("status");
+    if (mfaStatus?.two_factor_enabled && !mfaStatus.session_verified) {
+      setIsLoading(false);
+      setMfaPending(true);
+      setMfaCode("");
+      setMfaError(null);
+      setMfaRecovery(false);
+      return;
+    }
+    mfaBlockRef.current = false;
+    setMfaChecking(false);
+
     toast({
       title: "Login realizado!",
       description: "Redirecionando...",
     });
     // Redirect will be handled by useEffect based on trial status
     setIsLoading(false);
+  };
+
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mfaSubmitting) return;
+    setMfaSubmitting(true);
+    setMfaError(null);
+    const { error: err } = await call2FA(
+      "challenge_verify",
+      mfaRecovery ? { recovery_code: mfaCode.trim() } : { code: mfaCode.trim() },
+    );
+    setMfaSubmitting(false);
+    if (err) {
+      setMfaError(err);
+      return;
+    }
+    mfaBlockRef.current = false;
+    setMfaPending(false);
+    setMfaChecking(false);
+    toast({ title: "Login realizado!", description: "Redirecionando..." });
+  };
+
+  const handleMfaCancel = async () => {
+    await supabase.auth.signOut();
+    mfaBlockRef.current = false;
+    setMfaPending(false);
+    setMfaChecking(false);
+    setMfaCode("");
+    setMfaError(null);
   };
 
   return (
