@@ -174,7 +174,7 @@ export default function SignupChoosePlan() {
                 <img src={avatar3} alt="" className="w-7 h-7 rounded-sm border-2 border-background object-cover" width={28} height={28} />
                 <img src={avatar4} alt="" className="w-7 h-7 rounded-sm border-2 border-background object-cover" width={28} height={28} />
               </div>
-              <span className="text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
+              <span className="text-[10px] sm:text-xs font-medium text-foreground tracking-tight">+500 Empresas já utilizam a Wiize</span>
             </div>
           </div>
 
