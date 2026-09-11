@@ -90,11 +90,10 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("@supabase")) return "vendor-supabase";
           if (id.includes("framer-motion") || id.includes("motion-dom") || id.includes("motion-utils"))
             return "vendor-motion";
-          if (id.includes("@radix-ui")) return "vendor-radix";
           if (id.includes("@tanstack")) return "vendor-query";
-          if (id.includes("lucide-react")) return "vendor-icons";
-          if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
-          return "vendor";
+          // Demais dependências ficam com o code splitting automático do Rollup
+          // (evita chunks gigantes compartilhados entre páginas).
+          return undefined;
         },
       },
     },
