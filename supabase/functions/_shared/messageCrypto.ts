@@ -15,15 +15,17 @@ function base64ToBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
-let keyPromise: Promise<CryptoKey> | null = null;
+const keyPromises = new Map<string, Promise<CryptoKey>>();
 
 function encryptionKey(): Promise<CryptoKey> {
-  if (keyPromise) return keyPromise;
   const secret = Deno.env.get("WIIZE_MESSAGE_ENCRYPTION_KEY");
   if (!secret || secret.length < 32) throw new Error("Message encryption is unavailable");
-  keyPromise = crypto.subtle.digest("SHA-256", encoder.encode(secret)).then((raw) =>
+  const existing = keyPromises.get(secret);
+  if (existing) return existing;
+  const keyPromise = crypto.subtle.digest("SHA-256", encoder.encode(secret)).then((raw) =>
     crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"])
   );
+  keyPromises.set(secret, keyPromise);
   return keyPromise;
 }
 
