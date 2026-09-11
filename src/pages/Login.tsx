@@ -124,7 +124,7 @@ const Login = () => {
         navigate("/dashboard");
       }
     }
-  }, [user, loading, isTrialExpired, profile, navigate, toast]);
+  }, [user, loading, isTrialExpired, profile, navigate, toast, mfaChecking]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
