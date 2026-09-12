@@ -463,16 +463,45 @@ export function ChatMessageArea({
     }
   };
 
-  // On open/conversation switch: jump to last message instantly
+  const scrollToBottomInstant = () => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+    } else if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "auto" });
+    }
+  };
+
+  // On open/conversation switch: jump to last message instantly.
+  // We retry for a short window because media messages / transcripts may
+  // still be mounting and changing the scrollHeight after the first frame.
   useEffect(() => {
     setReplyingTo(null);
     setSelectionMode(false);
     setSelectedIds(new Set());
     isNearBottomRef.current = true;
     setShowScrollDown(false);
-    // Defer to next frame so DOM has rendered
-    requestAnimationFrame(() => scrollToBottom("auto"));
+
+    let rafId = 0;
+    let attempts = 0;
+    const maxAttempts = 20; // ~330ms of retries
+    const scrollLoop = () => {
+      scrollToBottomInstant();
+      attempts++;
+      if (attempts < maxAttempts) {
+        rafId = requestAnimationFrame(scrollLoop);
+      }
+    };
+    rafId = requestAnimationFrame(scrollLoop);
+    return () => cancelAnimationFrame(rafId);
   }, [conversation?.id]);
+
+  // When messages finish loading, ensure we are at the bottom
+  useEffect(() => {
+    if (!loading && conversation?.id) {
+      scrollToBottomInstant();
+    }
+  }, [loading, conversation?.id]);
 
   // On new messages: only auto-scroll if user is near the bottom
   useEffect(() => {
