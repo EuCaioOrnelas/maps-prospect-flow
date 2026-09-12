@@ -1248,20 +1248,20 @@ input::placeholder, textarea::placeholder {
   position: absolute;
   top: -20%;
   left: -15%;
-  width: 60%;
-  height: 60%;
-  background: radial-gradient(circle, rgba(16,185,129,0.008) 0%, transparent 70%);
-  filter: blur(60px);
+  width: 55%;
+  height: 55%;
+  background: radial-gradient(circle, rgba(16,185,129,0.004) 0%, transparent 70%);
+  filter: blur(90px);
 }
 .wa-chat-glow::after {
   content: '';
   position: absolute;
   bottom: -10%;
   right: -10%;
-  width: 50%;
-  height: 50%;
-  background: radial-gradient(circle, rgba(16,185,129,0.005) 0%, transparent 70%);
-  filter: blur(50px);
+  width: 45%;
+  height: 45%;
+  background: radial-gradient(circle, rgba(16,185,129,0.0025) 0%, transparent 70%);
+  filter: blur(80px);
 }
 .landing-light .wa-chat-glow::before {
   background: radial-gradient(circle, rgba(16,185,129,0.012) 0%, transparent 70%);
