@@ -21,7 +21,7 @@ interface Props {
 const SPEEDS = [1, 1.5, 2];
 const BAR_COUNT = 40;
 
-export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "", avatarColorClass = "bg-muted", messageId, initialTranscription }: Props) {
+export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "", avatarColorClass = "bg-muted", messageId, initialTranscription, collapseKey }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const [playableSrc, setPlayableSrc] = useState<string | null>(null);
