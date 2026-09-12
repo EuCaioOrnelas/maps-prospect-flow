@@ -1350,9 +1350,17 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-doc-preview { background-color: #f0f2f5; }
 
 /* ─── Audio waveform bars ─── */
-.wa-audio-bar { background-color: rgba(255,255,255,0.55); }
-.landing-light .wa-audio-bar { background-color: rgba(0,0,0,0.28); }
+.wa-audio-bar { background-color: rgba(255,255,255,0.45); }
+.landing-light .wa-audio-bar { background-color: rgba(0,0,0,0.24); }
 .wa-audio-bar-filled { background-color: #53bdeb; }
+
+/* ─── Long message fade (Ver mais) ─── */
+.wa-fade-bottom { background: linear-gradient(to bottom, rgba(32,44,51,0), var(--wa-fade-color, #202c33)); }
+.wa-bubble-out { --wa-fade-color: #005c4b; }
+.wa-bubble-in { --wa-fade-color: #202c33; }
+.landing-light .wa-bubble-out { --wa-fade-color: #d9fdd3; }
+.landing-light .wa-bubble-in { --wa-fade-color: #ffffff; }
+
 
 /* ─── Transcription inner card ─── */
 .wa-transcription { background-color: rgba(255,255,255,0.08); color: #e9edef; }

@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import logoIconNew from "@/assets/logo-icon-new.png";
 import waChatBgUrl from "@/assets/wa-chat-bg.png";
 import { WhatsAppAudio } from "./WhatsAppAudio";
+import { ExpandableText } from "./ExpandableText";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -1039,9 +1040,10 @@ export function ChatMessageArea({
                             selectionMode && !isOutbound && "pl-2"
                           )}>
                             <div className={cn(
-                              "relative max-w-[65%] w-fit",
-                              isOutbound ? "mr-[8px]" : "ml-[8px]"
+                              "relative max-w-[88%] sm:max-w-[65%] w-fit",
+                              isOutbound ? "mr-[4px] sm:mr-[8px]" : "ml-[4px] sm:ml-[8px]"
                             )}>
+
 
                               {showTail && (isOutbound ? <OutboundTail /> : <InboundTail />)}
                               <div className={cn(
@@ -1086,6 +1088,7 @@ export function ChatMessageArea({
                                       avatarColorClass={!isOutbound ? avatarColor : "bg-[#128c7e]"}
                                       messageId={msg.id}
                                       initialTranscription={(msg.metadata as any)?.transcription || null}
+                                      collapseKey={conversation.id}
                                      />
           </div>
                                 )}
@@ -1098,11 +1101,14 @@ export function ChatMessageArea({
                                 )}
                                 {msg.content && msg.message_type === "text" && (
                                   <div className="px-[9px] pt-[5px] pb-[2px] pr-[36px]">
-                                    <span className="text-[14.2px] wa-text-primary leading-[18px] whitespace-pre-wrap break-words">
-                                      {msg.content}
-                                    </span>
+                                    <ExpandableText
+                                      text={msg.content}
+                                      collapseKey={conversation.id}
+                                      className="text-[14.2px] wa-text-primary leading-[18px]"
+                                    />
                                   </div>
                                 )}
+
                                   </>
                                 )}
                                 <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[3px] -mt-[1px]">

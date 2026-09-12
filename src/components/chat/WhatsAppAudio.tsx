@@ -3,6 +3,7 @@ import { Play, Pause, Mic, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ExpandableText } from "./ExpandableText";
 
 interface Props {
   src: string;
@@ -12,12 +13,15 @@ interface Props {
   avatarColorClass?: string;
   messageId?: string;
   initialTranscription?: string | null;
+  /** Collapses the transcription when it changes (conversation id) */
+  collapseKey?: string | null;
 }
+
 
 const SPEEDS = [1, 1.5, 2];
 const BAR_COUNT = 40;
 
-export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "", avatarColorClass = "bg-muted", messageId, initialTranscription }: Props) {
+export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "", avatarColorClass = "bg-muted", messageId, initialTranscription, collapseKey }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const [playableSrc, setPlayableSrc] = useState<string | null>(null);
@@ -246,8 +250,20 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
+  const renderBars = (filled: boolean) => (
+    <div className="absolute inset-0 flex items-center justify-between gap-[2px]">
+      {bars.map((h, i) => (
+        <span
+          key={i}
+          className={cn("w-[3px] shrink-0 rounded-full", filled ? "wa-audio-bar-filled" : "wa-audio-bar")}
+          style={{ height: `${Math.max(Math.round(h * 22), 3)}px` }}
+        />
+      ))}
+    </div>
+  );
+
   return (
-    <div className="min-w-[260px] max-w-[330px]">
+    <div className="w-full min-w-[230px] sm:min-w-[300px] max-w-[400px]">
       <div className="flex items-center gap-2 px-1 py-1">
         {playableSrc && <audio ref={audioRef} src={playableSrc} preload="metadata" />}
 
@@ -265,30 +281,18 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         <div className="flex-1 min-w-0">
           <div
             onClick={seek}
-            className="relative h-[28px] flex items-center gap-[2px] cursor-pointer select-none"
+            className="relative h-[28px] cursor-pointer select-none"
           >
-            {bars.map((h, i) => {
-              const barStart = i / bars.length;
-              const barEnd = (i + 1) / bars.length;
-              const fillRatio = progress <= barStart ? 0 : progress >= barEnd ? 1 : (progress - barStart) / (barEnd - barStart);
-              const barH = Math.max(h * 24, 3);
-              return (
-                <span
-                  key={i}
-                  className="flex-1 relative rounded-full wa-audio-bar overflow-hidden"
-                  style={{ height: `${barH}px` }}
-                >
-                  {fillRatio > 0 && (
-                    <span
-                      className="absolute inset-y-0 left-0 rounded-full wa-audio-bar-filled"
-                      style={{ width: `${fillRatio * 100}%` }}
-                    />
-                  )}
-                </span>
-              );
-            })}
+            {renderBars(false)}
+            {/* Filled layer clipped exactly at the playback position */}
+            <div
+              className="absolute inset-0 overflow-hidden pointer-events-none"
+              style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}
+            >
+              {renderBars(true)}
+            </div>
             <span
-              className="absolute top-1/2 -translate-y-1/2 w-[11px] h-[11px] rounded-full bg-[#53bdeb] shadow-sm pointer-events-none transition-[left] duration-75 linear"
+              className="absolute top-1/2 -translate-y-1/2 w-[11px] h-[11px] rounded-full bg-[#53bdeb] shadow-sm pointer-events-none"
               style={{ left: `calc(${progress * 100}% - 5px)` }}
             />
           </div>
@@ -296,6 +300,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
             <span className="text-[11px] wa-text-timestamp">{fmt(displayTime)}</span>
           </div>
         </div>
+
 
         <button
           onClick={cycleSpeed}
@@ -328,11 +333,12 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
       <div className="mx-[6px] mb-[6px] mt-[4px]">
         {transcription ? (
-          <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px] whitespace-pre-wrap">
+          <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px]">
             <span className="wa-transcription-label text-[10px] uppercase tracking-wider font-semibold block mb-[2px]">Transcrição</span>
-            {transcription}
+            <ExpandableText text={transcription} collapseKey={collapseKey} collapsedMaxHeight={140} />
           </div>
         ) : (
+
           <button
             onClick={handleTranscribe}
             disabled={transcribing}
