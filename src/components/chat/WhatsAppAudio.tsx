@@ -226,15 +226,8 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         return;
       }
       setTranscription(text);
-      if (messageId) {
-        try {
-          const { data: msg } = await supabase.from("chat_messages").select("metadata").eq("id", messageId).single();
-          const nextMeta = { ...((msg?.metadata as any) || {}), transcription: text };
-          await supabase.from("chat_messages").update({ metadata: nextMeta }).eq("id", messageId);
-        } catch (e) {
-          console.warn("[transcribe] persist failed", e);
-        }
-      }
+      setShowTranscription(true);
+      // A persistência é feita no backend, já criptografada (AES-256-GCM).
     } catch (e: any) {
       console.error("[transcribe] error", e);
       toast.error("Erro ao transcrever: " + (e?.message || "tente novamente"));
