@@ -708,30 +708,43 @@ export function useChat() {
     if (activeConversationId === conversationId) setActiveConversationId(null);
   }, [activeConversationId]);
 
-  // Delete messages. mode 'me' = remove from the current Wiize account (hard delete row).
-  // mode 'all' = soft-delete for every user of the Wiize account. The official Meta API
-  // does not support revoking a delivered message from the contact's WhatsApp.
-  const deleteMessages = useCallback(async (messageIds: string[], mode: "me" | "all" = "me") => {
+  // Delete messages. Both modes remove the row permanently from the database
+  // (hard delete), including any media object stored in the chat-media bucket.
+  // The official Meta API does not support revoking a message already delivered
+  // to the contact's WhatsApp, so "all" only guarantees removal inside Wiize.
+  const deleteMessages = useCallback(async (messageIds: string[], _mode: "me" | "all" = "me") => {
     if (!messageIds.length) return;
     const idSet = new Set(messageIds);
-    if (mode === "all") {
-      const ts = new Date().toISOString();
-      // Optimistic update
-      setMessages(prev => prev.map(m => idSet.has(m.id)
-        ? { ...m, deleted_for_all_at: ts, content: null, media_url: null, media_caption: null }
-        : m));
-      const { error } = await supabase
-        .from("chat_messages")
-        .update({ deleted_for_all_at: ts, media_url: null } as any)
-        .in("id", messageIds);
-      if (error) throw error;
-    } else {
-      // Optimistic removal
-      setMessages(prev => prev.filter(m => !idSet.has(m.id)));
-      const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
-      if (error) throw error;
+    const targets = messages.filter(m => idSet.has(m.id));
+
+    // Optimistic removal
+    setMessages(prev => prev.filter(m => !idSet.has(m.id)));
+
+    // Purge media objects from storage so nothing remains recoverable
+    const paths = targets
+      .map(m => m.media_url || "")
+      .filter(url => url.includes("/chat-media/"))
+      .map(url => url.split("/chat-media/")[1]?.split("?")[0] || "")
+      .filter(Boolean);
+    if (paths.length) {
+      try { await supabase.storage.from("chat-media").remove(paths); } catch { /* ignore */ }
     }
-  }, []);
+
+    const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
+    if (error) throw error;
+
+    // Clear the stored preview of affected conversations so the deleted text
+    // does not survive in chat_conversations.last_message_text
+    const convIds = Array.from(new Set(targets.map(m => m.conversation_id).filter(Boolean)));
+    if (convIds.length) {
+      try {
+        await supabase
+          .from("chat_conversations")
+          .update({ last_message_text: null } as any)
+          .in("id", convIds);
+      } catch { /* ignore */ }
+    }
+  }, [messages]);
 
   // Toggle block: bloqueia/desbloqueia contato; mensagens recebidas ficam silenciadas
   const toggleBlock = useCallback(async (conversationId: string) => {
