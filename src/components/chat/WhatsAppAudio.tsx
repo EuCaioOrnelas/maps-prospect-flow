@@ -172,6 +172,9 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
   useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = speed; }, [speed]);
 
+  // Fecha a transcrição ao trocar de conversa/mensagem (chat mais limpo)
+  useEffect(() => { setShowTranscription(false); }, [collapseKey, messageId]);
+
   const toggle = async () => {
     const a = audioRef.current;
     if (!a || !playableSrc) {
