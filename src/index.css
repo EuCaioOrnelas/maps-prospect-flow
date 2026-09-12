@@ -1304,10 +1304,10 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-search-panel { background-color: #ffffff; }
 
 /* ─── Message bubbles — WhatsApp dark/light ─── */
-.wa-bubble-out { background-color: #005c4b; }
-.landing-light .wa-bubble-out { background-color: #d9fdd3; }
-.wa-bubble-in { background-color: #202c33; }
-.landing-light .wa-bubble-in { background-color: #ffffff; }
+.wa-bubble-out { background-color: #005c4b; --wa-fade-color: #005c4b; }
+.landing-light .wa-bubble-out { background-color: #d9fdd3; --wa-fade-color: #d9fdd3; }
+.wa-bubble-in { background-color: #202c33; --wa-fade-color: #202c33; }
+.landing-light .wa-bubble-in { background-color: #ffffff; --wa-fade-color: #ffffff; }
 .wa-bubble-out-fill { fill: #005c4b; }
 .landing-light .wa-bubble-out-fill { fill: #d9fdd3; }
 .wa-bubble-in-fill { fill: #202c33; }
@@ -1355,7 +1355,7 @@ input::placeholder, textarea::placeholder {
 .wa-audio-bar-filled { background-color: #53bdeb; }
 
 /* ─── Long message fade (Ver mais) ─── */
-.wa-fade-bottom { background: linear-gradient(to bottom, rgba(32,44,51,0), var(--wa-fade-color, #202c33)); }
+.wa-fade-bottom { background: linear-gradient(to bottom, transparent 0%, var(--wa-fade-color, #202c33) 85%); }
 .wa-bubble-out { --wa-fade-color: #005c4b; }
 .wa-bubble-in { --wa-fade-color: #202c33; }
 .landing-light .wa-bubble-out { --wa-fade-color: #d9fdd3; }
