@@ -732,6 +732,18 @@ export function useChat() {
 
     const { error } = await supabase.from("chat_messages").delete().in("id", messageIds);
     if (error) throw error;
+
+    // Clear the stored preview of affected conversations so the deleted text
+    // does not survive in chat_conversations.last_message_text
+    const convIds = Array.from(new Set(targets.map(m => m.conversation_id).filter(Boolean)));
+    if (convIds.length) {
+      try {
+        await supabase
+          .from("chat_conversations")
+          .update({ last_message_text: null } as any)
+          .in("id", convIds);
+      } catch { /* ignore */ }
+    }
   }, [messages]);
 
   // Toggle block: bloqueia/desbloqueia contato; mensagens recebidas ficam silenciadas
