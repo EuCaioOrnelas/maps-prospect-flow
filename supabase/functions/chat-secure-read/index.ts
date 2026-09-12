@@ -35,9 +35,24 @@ async function decryptMessageValue(value: unknown): Promise<string | null> {
     throw new Error("Encrypted message could not be authenticated");
   }
 }
+async function decryptMessageMetadata(metadata: unknown): Promise<unknown> {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return metadata;
+  const meta = metadata as Record<string, unknown>;
+  if (typeof meta.transcription !== "string") return metadata;
+  try {
+    return { ...meta, transcription: await decryptMessageValue(meta.transcription) };
+  } catch {
+    return { ...meta, transcription: null, transcription_error: true };
+  }
+}
 async function decryptMessageFields<T extends Record<string, unknown>>(row: T): Promise<T> {
   try {
-    return { ...row, content: await decryptMessageValue(row.content), media_caption: await decryptMessageValue(row.media_caption) };
+    return {
+      ...row,
+      content: await decryptMessageValue(row.content),
+      media_caption: await decryptMessageValue(row.media_caption),
+      metadata: await decryptMessageMetadata(row.metadata),
+    };
   } catch {
     console.error("[chat-secure-read] corrupted message", String(row.id || "unknown"));
     return { ...row, content: "[Mensagem indisponível]", media_caption: null, decryption_error: true };
