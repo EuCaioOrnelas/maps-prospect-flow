@@ -3,6 +3,7 @@ import { Play, Pause, Mic, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ExpandableText } from "./ExpandableText";
 
 interface Props {
   src: string;
@@ -12,7 +13,10 @@ interface Props {
   avatarColorClass?: string;
   messageId?: string;
   initialTranscription?: string | null;
+  /** Collapses the transcription when it changes (conversation id) */
+  collapseKey?: string | null;
 }
+
 
 const SPEEDS = [1, 1.5, 2];
 const BAR_COUNT = 40;
