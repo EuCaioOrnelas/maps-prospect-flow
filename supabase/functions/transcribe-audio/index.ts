@@ -54,6 +54,37 @@ async function logAiUsage(p: {
 
 const GRAPH_VERSION = "v21.0";
 
+// ---- Criptografia de mensagens (AES-256-GCM, inline; sem módulo compartilhado) ----
+const MESSAGE_PREFIX = "enc:v1:";
+const messageEncoder = new TextEncoder();
+let messageKeyPromise: Promise<CryptoKey> | null = null;
+function messageBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+function messageEncryptionKey(): Promise<CryptoKey> {
+  if (messageKeyPromise) return messageKeyPromise;
+  const secret = Deno.env.get("WIIZE_MESSAGE_ENCRYPTION_KEY");
+  if (!secret || secret.length < 32) throw new Error("Message encryption is unavailable");
+  messageKeyPromise = crypto.subtle.digest("SHA-256", messageEncoder.encode(secret)).then((raw) =>
+    crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt"])
+  );
+  return messageKeyPromise;
+}
+async function encryptMessageValue(value: string): Promise<string> {
+  if (value.startsWith(MESSAGE_PREFIX)) return value;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    await messageEncryptionKey(),
+    messageEncoder.encode(value),
+  );
+  return `${MESSAGE_PREFIX}${messageBufferToBase64(iv.buffer)}:${messageBufferToBase64(ciphertext)}`;
+}
+// ---- fim criptografia ----
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
