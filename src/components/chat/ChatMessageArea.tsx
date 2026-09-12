@@ -1098,11 +1098,14 @@ export function ChatMessageArea({
                                 )}
                                 {msg.content && msg.message_type === "text" && (
                                   <div className="px-[9px] pt-[5px] pb-[2px] pr-[36px]">
-                                    <span className="text-[14.2px] wa-text-primary leading-[18px] whitespace-pre-wrap break-words">
-                                      {msg.content}
-                                    </span>
+                                    <ExpandableText
+                                      text={msg.content}
+                                      collapseKey={conversation.id}
+                                      className="text-[14.2px] wa-text-primary leading-[18px]"
+                                    />
                                   </div>
                                 )}
+
                                   </>
                                 )}
                                 <div className="flex items-center justify-end gap-[4px] px-[7px] pb-[3px] -mt-[1px]">
