@@ -329,11 +329,12 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
       <div className="mx-[6px] mb-[6px] mt-[4px]">
         {transcription ? (
-          <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px] whitespace-pre-wrap">
+          <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px]">
             <span className="wa-transcription-label text-[10px] uppercase tracking-wider font-semibold block mb-[2px]">Transcrição</span>
-            {transcription}
+            <ExpandableText text={transcription} collapseKey={collapseKey} collapsedMaxHeight={140} />
           </div>
         ) : (
+
           <button
             onClick={handleTranscribe}
             disabled={transcribing}
