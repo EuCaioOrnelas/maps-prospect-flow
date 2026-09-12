@@ -61,7 +61,7 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-0 h-10 wa-fade-bottom transition-opacity duration-300",
+            "pointer-events-none absolute inset-x-0 bottom-0 h-12 wa-fade-bottom transition-opacity duration-300",
             collapsed ? "opacity-100" : "opacity-0"
           )}
         />

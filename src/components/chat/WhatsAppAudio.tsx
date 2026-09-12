@@ -260,7 +260,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   );
 
   return (
-    <div className="w-full min-w-[230px] sm:min-w-[300px] max-w-[400px]">
+    <div className="w-[250px] sm:w-[300px] shrink-0">
       <div className="flex items-center gap-2 px-1 py-1">
         {playableSrc && <audio ref={audioRef} src={playableSrc} preload="metadata" />}
 
@@ -328,12 +328,12 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         </button>
       </div>
 
-      <div className="mx-[6px] mb-[6px] mt-[4px]">
+      <div className="mx-[8px] mb-[4px] mt-[2px]">
         {transcription ? (
           <div className="space-y-[4px]">
             <button
               onClick={() => setShowTranscription((v) => !v)}
-              className="px-[8px] py-[4px] flex items-center gap-1 text-[11px] font-medium text-[#53bdeb] hover:opacity-80 transition-opacity"
+              className="flex items-center gap-[5px] rounded-full wa-accent-bg-soft wa-accent-text px-[10px] py-[3px] text-[11px] font-semibold hover:opacity-85 transition-opacity"
               aria-expanded={showTranscription}
             >
               <FileText size={11} />

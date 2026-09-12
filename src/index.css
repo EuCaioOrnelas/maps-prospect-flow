@@ -1355,7 +1355,17 @@ input::placeholder, textarea::placeholder {
 .wa-audio-bar-filled { background-color: #53bdeb; }
 
 /* ─── Long message fade (Ver mais) ─── */
-.wa-fade-bottom { background: linear-gradient(to bottom, transparent 0%, var(--wa-fade-color, #202c33) 85%); }
+.wa-fade-bottom {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--wa-fade-color, #202c33) 25%, transparent) 45%,
+    color-mix(in srgb, var(--wa-fade-color, #202c33) 60%, transparent) 75%,
+    color-mix(in srgb, var(--wa-fade-color, #202c33) 90%, transparent) 100%
+  );
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+}
 .wa-bubble-out { --wa-fade-color: #005c4b; }
 .wa-bubble-in { --wa-fade-color: #202c33; }
 .landing-light .wa-bubble-out { --wa-fade-color: #d9fdd3; }
