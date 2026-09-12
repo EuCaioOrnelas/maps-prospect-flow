@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, Mic, FileText, Loader2 } from "lucide-react";
+import { Play, Pause, Mic, FileText, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   const [hoverAvatar, setHoverAvatar] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(initialTranscription || null);
   const [transcribing, setTranscribing] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(false);
   const [peaks, setPeaks] = useState<number[] | null>(null);
 
   // Fallback pseudo-random bars while real peaks load
@@ -171,6 +172,9 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
   useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = speed; }, [speed]);
 
+  // Fecha a transcrição ao trocar de conversa/mensagem (chat mais limpo)
+  useEffect(() => { setShowTranscription(false); }, [collapseKey, messageId]);
+
   const toggle = async () => {
     const a = audioRef.current;
     if (!a || !playableSrc) {
@@ -225,15 +229,8 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         return;
       }
       setTranscription(text);
-      if (messageId) {
-        try {
-          const { data: msg } = await supabase.from("chat_messages").select("metadata").eq("id", messageId).single();
-          const nextMeta = { ...((msg?.metadata as any) || {}), transcription: text };
-          await supabase.from("chat_messages").update({ metadata: nextMeta }).eq("id", messageId);
-        } catch (e) {
-          console.warn("[transcribe] persist failed", e);
-        }
-      }
+      setShowTranscription(true);
+      // A persistência é feita no backend, já criptografada (AES-256-GCM).
     } catch (e: any) {
       console.error("[transcribe] error", e);
       toast.error("Erro ao transcrever: " + (e?.message || "tente novamente"));
@@ -333,9 +330,22 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
       <div className="mx-[6px] mb-[6px] mt-[4px]">
         {transcription ? (
-          <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px]">
-            <span className="wa-transcription-label text-[10px] uppercase tracking-wider font-semibold block mb-[2px]">Transcrição</span>
-            <ExpandableText text={transcription} collapseKey={collapseKey} collapsedMaxHeight={140} />
+          <div className="space-y-[4px]">
+            <button
+              onClick={() => setShowTranscription((v) => !v)}
+              className="px-[8px] py-[4px] flex items-center gap-1 text-[11px] font-medium text-[#53bdeb] hover:opacity-80 transition-opacity"
+              aria-expanded={showTranscription}
+            >
+              <FileText size={11} />
+              <span>{showTranscription ? "Ocultar transcrição" : "Ver transcrição"}</span>
+              {showTranscription ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            {showTranscription && (
+              <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px]">
+                <span className="wa-transcription-label text-[10px] uppercase tracking-wider font-semibold block mb-[2px]">Transcrição</span>
+                <ExpandableText text={transcription} collapseKey={collapseKey} collapsedMaxHeight={140} />
+              </div>
+            )}
           </div>
         ) : (
 
