@@ -34,6 +34,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   const [hoverAvatar, setHoverAvatar] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(initialTranscription || null);
   const [transcribing, setTranscribing] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(false);
   const [peaks, setPeaks] = useState<number[] | null>(null);
 
   // Fallback pseudo-random bars while real peaks load
