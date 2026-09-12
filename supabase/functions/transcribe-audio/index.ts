@@ -264,7 +264,21 @@ Deno.serve(async (req) => {
     // Whisper é cobrado por minuto (US$ 0.006/min). Estimamos pelo tamanho do áudio.
     const estimatedMinutes = Math.max(0.1, (audioBlob.size / (16 * 1024)) / 60);
     logAiUsage({ feature: 'transcribe-audio', model: 'whisper-1', cost_usd: estimatedMinutes * 0.006, metadata: { estimated_minutes: Number(estimatedMinutes.toFixed(2)), bytes: audioBlob.size } });
-    return new Response(JSON.stringify({ text: data.text || "" }), {
+    const transcript = String(data.text || "");
+
+    // Persistência da transcrição SEMPRE criptografada (AES-256-GCM) no metadata da mensagem
+    if (transcript && message_id) {
+      try {
+        const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        const { data: msg } = await sb.from("chat_messages").select("metadata").eq("id", message_id).maybeSingle();
+        const nextMeta = { ...((msg?.metadata as any) || {}), transcription: await encryptMessageValue(transcript) };
+        await sb.from("chat_messages").update({ metadata: nextMeta }).eq("id", message_id);
+      } catch (e) {
+        console.error("[transcribe-audio] persist encrypted transcription failed", String(e));
+      }
+    }
+
+    return new Response(JSON.stringify({ text: transcript }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
