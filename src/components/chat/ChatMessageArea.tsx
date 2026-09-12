@@ -1088,6 +1088,7 @@ export function ChatMessageArea({
                                       avatarColorClass={!isOutbound ? avatarColor : "bg-[#128c7e]"}
                                       messageId={msg.id}
                                       initialTranscription={(msg.metadata as any)?.transcription || null}
+                                      collapseKey={conversation.id}
                                      />
           </div>
                                 )}
