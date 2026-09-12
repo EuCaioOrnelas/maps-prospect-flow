@@ -49,7 +49,7 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
   return (
     <div className="w-full">
       <div
-        className="relative overflow-hidden transition-[max-height] duration-300 ease-in-out"
+        className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
         style={{ maxHeight }}
       >
         <span
@@ -58,13 +58,6 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
         >
           {text}
         </span>
-        <span
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-0 h-12 wa-fade-bottom transition-opacity duration-300",
-            collapsed ? "opacity-100" : "opacity-0"
-          )}
-        />
       </div>
       {overflowing && (
         <button
