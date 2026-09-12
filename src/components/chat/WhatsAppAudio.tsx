@@ -328,9 +328,9 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
         </button>
       </div>
 
-      <div className="mx-[8px] mb-[4px] mt-[2px]">
+      <div className="mx-2 mt-1">
         {transcription ? (
-          <div className="space-y-[4px]">
+          <div className="space-y-1">
             <button
               onClick={() => setShowTranscription((v) => !v)}
               className="flex items-center gap-[5px] rounded-full wa-accent-bg-soft wa-accent-text px-[10px] py-[3px] text-[11px] font-semibold hover:opacity-85 transition-opacity"
@@ -352,7 +352,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
           <button
             onClick={handleTranscribe}
             disabled={transcribing}
-            className="px-[8px] py-[4px] flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
+            className="px-2 py-1 flex items-center gap-1 text-[11px] opacity-70 hover:opacity-100 transition-opacity disabled:opacity-50"
           >
             {transcribing ? <Loader2 size={11} className="animate-spin" /> : <FileText size={11} />}
             <span>{transcribing ? "Transcrevendo..." : "Transcrever áudio"}</span>
