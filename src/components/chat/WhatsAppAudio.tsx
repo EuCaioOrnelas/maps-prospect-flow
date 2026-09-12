@@ -333,9 +333,22 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
 
       <div className="mx-[6px] mb-[6px] mt-[4px]">
         {transcription ? (
-          <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px]">
-            <span className="wa-transcription-label text-[10px] uppercase tracking-wider font-semibold block mb-[2px]">Transcrição</span>
-            <ExpandableText text={transcription} collapseKey={collapseKey} collapsedMaxHeight={140} />
+          <div className="space-y-[4px]">
+            <button
+              onClick={() => setShowTranscription((v) => !v)}
+              className="px-[8px] py-[4px] flex items-center gap-1 text-[11px] font-medium text-[#53bdeb] hover:opacity-80 transition-opacity"
+              aria-expanded={showTranscription}
+            >
+              <FileText size={11} />
+              <span>{showTranscription ? "Ocultar transcrição" : "Ver transcrição"}</span>
+              {showTranscription ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            {showTranscription && (
+              <div className="wa-transcription rounded-[6px] px-[10px] py-[8px] text-[12.5px] leading-[18px]">
+                <span className="wa-transcription-label text-[10px] uppercase tracking-wider font-semibold block mb-[2px]">Transcrição</span>
+                <ExpandableText text={transcription} collapseKey={collapseKey} collapsedMaxHeight={140} />
+              </div>
+            )}
           </div>
         ) : (
 
