@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare, CalendarPlus, CalendarClock, Zap } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare, CalendarPlus, CalendarClock, LayoutGrid, ContactRound } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
 import { ContactDetailsPanel } from "./ContactDetailsPanel";
