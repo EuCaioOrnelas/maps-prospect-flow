@@ -762,6 +762,12 @@ export default function OpportunitiesManagement() {
     if (filterCity !== "all") {
       result = result.filter(l => l.city === filterCity);
     }
+    if (filterSource !== "all") {
+      result = result.filter(l => (l.source || "maps") === filterSource);
+    }
+    if (filterSearchQuery) {
+      result = result.filter(l => l.search_query === filterSearchQuery);
+    }
     if (responsibleFilter === "me") {
       // Leads sem responsável definido continuam visíveis para quem está usando a conta
       result = result.filter(l => !l.responsible_user_id || l.responsible_user_id === user?.id);
