@@ -234,7 +234,7 @@ function CheckoutCardInner() {
         email: customerData.email,
         phone: customerData.phone,
         address: {
-          postal_code: postalCode.replace(/\D/g, ""),
+          postal_code: cepDigits(postalCode),
           line1: `${addressStreet}, ${addressNumber || "S/N"}`,
           country: "BR",
         },
@@ -252,7 +252,7 @@ function CheckoutCardInner() {
           bumps: bumpsPayload,
           customerData: {
             ...customerData,
-            postalCode: postalCode.replace(/\D/g, ""),
+            postalCode: cepDigits(postalCode),
             address: addressStreet,
             addressNumber: addressNumber || "S/N",
             neighborhood: addressNeighborhood,
