@@ -408,6 +408,7 @@ export function ChatMessageArea({
   const [lightboxOpenId, setLightboxOpenId] = useState<string | null>(null);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [addToCrmOpen, setAddToCrmOpen] = useState(false);
   const dragCounterRef = useRef(0);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
