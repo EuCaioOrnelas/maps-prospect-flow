@@ -27,41 +27,45 @@ const TRIGGER_GROUPS = [
     value: "message",
     label: "Mensagens recebidas",
     description: "Inicia quando o contato fala com você",
+    icon: MessageSquare,
     triggers: [
-      { value: "any_message", label: "Qualquer mensagem" },
-      { value: "keyword", label: "Mensagem com palavra-chave" },
-      { value: "campaign_reply", label: "Resposta de campanha" },
-      { value: "first_message", label: "Primeira mensagem do contato" },
+      { value: "any_message", label: "Qualquer mensagem", icon: MessageSquare },
+      { value: "keyword", label: "Mensagem com palavra-chave", icon: KeyRound },
+      { value: "campaign_reply", label: "Resposta de campanha", icon: Repeat },
+      { value: "first_message", label: "Primeira mensagem do contato", icon: UserPlus },
     ],
   },
   {
     value: "time",
     label: "Tempo e inatividade",
     description: "Inicia automaticamente após um período",
+    icon: Clock,
     triggers: [
-      { value: "no_reply_hours", label: "Contato aguardando resposta" },
-      { value: "no_conversation_days", label: "Conversa sem atividade" },
+      { value: "no_reply_hours", label: "Contato aguardando resposta", icon: Clock },
+      { value: "no_conversation_days", label: "Conversa sem atividade", icon: PowerOff },
     ],
   },
   {
     value: "calendar",
     label: "Compromissos",
     description: "Inicia antes ou depois de um compromisso",
+    icon: Calendar,
     triggers: [
-      { value: "before_appointment", label: "Antes do compromisso" },
-      { value: "after_appointment", label: "Após o compromisso" },
-      { value: "appointment_no_show", label: "Contato não compareceu" },
+      { value: "before_appointment", label: "Antes do compromisso", icon: Clock },
+      { value: "after_appointment", label: "Após o compromisso", icon: CheckCircle2 },
+      { value: "appointment_no_show", label: "Compromisso precisa ser reagendado", icon: Repeat },
     ],
   },
   {
     value: "crm",
     label: "Eventos do CRM",
     description: "Inicia quando um lead muda no CRM",
+    icon: Target,
     triggers: [
-      { value: "lead_created", label: "Novo lead criado" },
-      { value: "stage_entered", label: "Lead entrou em uma etapa" },
-      { value: "score_reached", label: "Lead atingiu um score" },
-      { value: "deal_created", label: "Venda registrada" },
+      { value: "lead_created", label: "Novo lead criado", icon: UserPlus },
+      { value: "stage_entered", label: "Lead entrou em uma etapa", icon: ArrowRight },
+      { value: "score_reached", label: "Lead atingiu um score", icon: Target },
+      { value: "deal_created", label: "Venda registrada", icon: CheckCircle2 },
     ],
   },
 ] as const;
@@ -1288,7 +1292,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           <p className="mt-0.5 text-[10px] text-muted-foreground">Escolha primeiro o tipo de evento e depois a ação específica.</p>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <Label className="text-[10px] font-medium text-muted-foreground">1. Categoria</Label>
           <Select
             value={selectedTriggerGroup?.value || ""}
@@ -1298,13 +1302,31 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
               if (firstTrigger) updateConfig("trigger_type", firstTrigger.value);
             }}
           >
-            <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
-            <SelectContent>
+            <SelectTrigger className="h-10 text-sm">
+              <SelectValue placeholder="Selecione uma categoria">
+                {selectedTriggerGroup && (
+                  <span className="flex min-w-0 items-center gap-2">
+                    <selectedTriggerGroup.icon className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="truncate font-medium">{selectedTriggerGroup.label}</span>
+                  </span>
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="p-1.5">
               {TRIGGER_GROUPS.map((group) => (
-                <SelectItem key={group.value} value={group.value}>
-                  <div className="py-0.5">
-                    <p className="text-xs font-medium text-foreground">{group.label}</p>
-                    <p className="text-[9px] text-muted-foreground">{group.description}</p>
+                <SelectItem
+                  key={group.value}
+                  value={group.value}
+                  className="my-0.5 min-h-12 rounded-md py-2 pl-8 pr-2 focus:bg-muted focus:text-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground group-data-[state=checked]:bg-primary/15 group-data-[state=checked]:text-primary">
+                      <group.icon className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 py-0.5">
+                      <p className="text-xs font-semibold leading-4">{group.label}</p>
+                      <p className="text-[9px] leading-4 text-muted-foreground">{group.description}</p>
+                    </div>
                   </div>
                 </SelectItem>
               ))}
@@ -1313,14 +1335,40 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         </div>
 
         {selectedTriggerGroup && (
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <Label className="text-[10px] font-medium text-muted-foreground">2. Gatilho</Label>
             <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
-              <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Selecione o gatilho" /></SelectTrigger>
-              <SelectContent>
-                {selectedTriggerGroup.triggers.map((trigger) => (
-                  <SelectItem key={trigger.value} value={trigger.value}>{trigger.label}</SelectItem>
-                ))}
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Selecione o gatilho">
+                  {(() => {
+                    const selectedTrigger = selectedTriggerGroup.triggers.find((trigger) => trigger.value === config.trigger_type);
+                    if (!selectedTrigger) return null;
+                    const TriggerIcon = selectedTrigger.icon;
+                    return (
+                      <span className="flex min-w-0 items-center gap-2">
+                        <TriggerIcon className="h-4 w-4 shrink-0 text-primary" />
+                        <span className="truncate font-medium">{selectedTrigger.label}</span>
+                      </span>
+                    );
+                  })()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="p-1.5">
+                {selectedTriggerGroup.triggers.map((trigger) => {
+                  const TriggerIcon = trigger.icon;
+                  return (
+                    <SelectItem
+                      key={trigger.value}
+                      value={trigger.value}
+                      className="my-0.5 h-10 rounded-md pl-8 pr-2 focus:bg-muted focus:text-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-primary"
+                    >
+                      <span className="flex items-center gap-2.5 font-medium">
+                        <TriggerIcon className="h-4 w-4 shrink-0" />
+                        {trigger.label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
