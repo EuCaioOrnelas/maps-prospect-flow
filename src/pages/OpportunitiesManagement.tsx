@@ -123,6 +123,28 @@ export default function OpportunitiesManagement() {
   const [filterSearchQuery, setFilterSearchQuery] = useState<string>(
     () => new URLSearchParams(location.search).get("q") || "",
   );
+  // Mantém a URL em sinc com os filtros de origem/busca para que "Todas"/"IA"
+  // não continuem presos ao ?source=/?q= da última prospecção.
+  const applySourceFilter = (value: string, keepQuery = false) => {
+    setFilterSource(value);
+    if (!keepQuery) setFilterSearchQuery("");
+    setCurrentPage(1);
+    const params = new URLSearchParams(window.location.search);
+    if (value === "all") params.delete("source"); else params.set("source", value);
+    if (!keepQuery) params.delete("q");
+    const qs = params.toString();
+    navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+  };
+
+  const clearSearchQueryFilter = () => {
+    setFilterSearchQuery("");
+    setCurrentPage(1);
+    const params = new URLSearchParams(window.location.search);
+    params.delete("q");
+    const qs = params.toString();
+    navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(20);
   // Padrão "todos": o filtro "meus" escondia oportunidades atribuídas a outras
