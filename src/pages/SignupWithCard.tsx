@@ -728,7 +728,15 @@ function SignupWithCardInner() {
                       <div className="grid sm:grid-cols-[140px_1fr] gap-3">
                         <div className="space-y-1.5">
                           <Label>CEP</Label>
-                          <Input value={postalCode} onChange={(e) => setPostalCode(fmtCep(e.target.value))} required placeholder="00000-000" />
+                          <Input
+                            value={postalCode}
+                            onChange={(e) => setPostalCode(fmtCep(e.target.value))}
+                            onPaste={(e) => { e.preventDefault(); setPostalCode(fmtCep(e.clipboardData.getData("text"))); }}
+                            inputMode="numeric"
+                            maxLength={9}
+                            required
+                            placeholder="00000-000"
+                          />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Endereço</Label>
