@@ -94,6 +94,7 @@ const CancellationFeedback = lazyWithRetry(() => import("./pages/CancellationFee
 const MetaAppDocumentation = lazyWithRetry(() => import("./pages/MetaAppDocumentation"), "MetaAppDocumentation");
 const MetaApiGuide = lazyWithRetry(() => import("./pages/MetaApiGuide"), "MetaApiGuide");
 const OpportunitiesManagement = lazyWithRetry(() => import("./pages/OpportunitiesManagement"), "OpportunitiesManagement");
+const ProspeccaoWeb = lazyWithRetry(() => import("./pages/ProspeccaoWeb"), "ProspeccaoWeb");
 const SDRInteligente = lazyWithRetry(() => import("./pages/SDRInteligente"), "SDRInteligente");
 const SDRWizardPage = lazyWithRetry(() => import("./pages/SDRWizardPage"), "SDRWizardPage");
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
