@@ -1861,7 +1861,7 @@ export default function OpportunitiesManagement() {
 
               {/* Filter Dialog */}
               <Dialog open={showFilters} onOpenChange={setShowFilters}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <SlidersHorizontal size={18} />
@@ -1991,7 +1991,10 @@ export default function OpportunitiesManagement() {
                     {/* Score e Avaliação */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Score mínimo</label>
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <TrendingUp size={14} className="text-primary" />
+                          Score mínimo
+                        </label>
                         <Input
                           type="number"
                           min={0}
@@ -2002,7 +2005,10 @@ export default function OpportunitiesManagement() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Avaliação mínima</label>
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Star size={14} className="text-amber-400" />
+                          Avaliação mínima (0-5)
+                        </label>
                         <Input
                           type="number"
                           min={0}
