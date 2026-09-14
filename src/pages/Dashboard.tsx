@@ -721,6 +721,8 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              <FadedDivider />
+
               {/* Global search info */}
               <div className="flex items-center gap-3 p-3 mb-6 rounded-xl border border-border/40 bg-background/50">
                 <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0">
@@ -733,6 +735,8 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
+
+              <FadedDivider />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6" data-tour="search-fields">
                 <div className="space-y-2" data-tour="search-keyword">
@@ -770,6 +774,8 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
+
+              <FadedDivider />
 
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
               <div className="mb-6">
