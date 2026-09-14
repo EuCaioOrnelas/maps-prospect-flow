@@ -27,6 +27,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   const [playableSrc, setPlayableSrc] = useState<string | null>(null);
   const [loadingSrc, setLoadingSrc] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);
@@ -75,6 +76,15 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
               Authorization: `Bearer ${session?.access_token || anonKey}`,
             },
           });
+          if (res.status === 410 || (res.headers.get("content-type") || "").includes("application/json")) {
+            let payload: any = null;
+            try { payload = await res.json(); } catch { /* ignore */ }
+            if (payload?.expired || payload?.error === "media_expired") {
+              if (!cancelled) setExpired(true);
+              return;
+            }
+            throw new Error(`media ${res.status}`);
+          }
           if (!res.ok) throw new Error(`media ${res.status}`);
           blob = await res.blob();
         } else {
