@@ -88,7 +88,7 @@ serve(async (req) => {
     // Get profile
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
-      .select("email, cpf, plan, payment_provider, subscription_current_period_end, is_custom_subscription, admin_assigned_plan, custom_subscription_id")
+      .select("email, name, cpf, plan, payment_provider, billing_period, subscription_current_period_end, is_custom_subscription, admin_assigned_plan, custom_subscription_id, created_at, searches_used, searches_limit, bonus_searches, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
       .eq("id", userId)
       .single();
 
@@ -137,8 +137,10 @@ serve(async (req) => {
         .limit(5);
 
       if (action === "get-info") {
-        // Try to get Stripe portal URL
+        // Get Stripe customer, portal, active subscription and invoice history.
         let portalUrl = null;
+        let stripeSubscriptions: any[] = [];
+        let stripePayments: any[] = [];
         try {
           const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
           if (stripeKey && email) {
@@ -160,6 +162,43 @@ serve(async (req) => {
               });
               const portalData = await portalRes.json();
               if (portalData.url) portalUrl = portalData.url;
+
+              const [subsRes, invoicesRes] = await Promise.all([
+                fetch(`https://api.stripe.com/v1/subscriptions?customer=${stripeCustomerId}&status=all&limit=10`, {
+                  headers: { "Authorization": `Bearer ${stripeKey}` },
+                }),
+                fetch(`https://api.stripe.com/v1/invoices?customer=${stripeCustomerId}&limit=20`, {
+                  headers: { "Authorization": `Bearer ${stripeKey}` },
+                }),
+              ]);
+              const subsData = await subsRes.json();
+              const invoicesData = await invoicesRes.json();
+              stripeSubscriptions = (subsData.data || []).map((sub: any) => ({
+                id: sub.id,
+                status: String(sub.status || "inactive").toUpperCase(),
+                billingType: "CREDIT_CARD",
+                cycle: sub.items?.data?.[0]?.price?.recurring?.interval === "year" ? "YEARLY" : "MONTHLY",
+                value: Number(sub.items?.data?.reduce((sum: number, item: any) => sum + ((item.price?.unit_amount || 0) * (item.quantity || 1)), 0) || 0) / 100,
+                nextDueDate: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+                description: `Assinatura Wiize ${profile.plan || ""}`.trim(),
+                dateCreated: sub.created ? new Date(sub.created * 1000).toISOString() : null,
+              }));
+              stripePayments = (invoicesData.data || []).map((invoice: any) => ({
+                id: invoice.id,
+                value: Number(invoice.amount_paid || invoice.amount_due || 0) / 100,
+                netValue: Number(invoice.amount_paid || 0) / 100,
+                status: invoice.status === "paid" ? "RECEIVED" : invoice.status === "open" ? "PENDING" : String(invoice.status || "PENDING").toUpperCase(),
+                billingType: "CREDIT_CARD",
+                dueDate: invoice.due_date
+                  ? new Date(invoice.due_date * 1000).toISOString()
+                  : invoice.created ? new Date(invoice.created * 1000).toISOString() : null,
+                paymentDate: invoice.status_transitions?.paid_at ? new Date(invoice.status_transitions.paid_at * 1000).toISOString() : null,
+                description: invoice.description || `Assinatura Wiize ${profile.plan || ""}`.trim(),
+                invoiceUrl: invoice.invoice_pdf || invoice.hosted_invoice_url || null,
+                hostedInvoiceUrl: invoice.hosted_invoice_url || null,
+                installment: null,
+                creditCard: null,
+              }));
             }
           }
         } catch (e) {
@@ -168,8 +207,8 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({
           profile,
-          subscriptions: [],
-          payments: [],
+          subscriptions: stripeSubscriptions,
+          payments: stripePayments,
           paymentMethod: null,
           asaasCustomerFound: false,
           provider: "stripe",

@@ -17,6 +17,7 @@ import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
 import {
   emptyBumpSelection,
   calcBumpsMonthlyCents,
+  profileToBumpSelection,
   type OrderBumpSelection,
 } from "@/config/orderBumps";
 
@@ -513,7 +514,9 @@ const Upgrade = () => {
       }
       await refreshProfile();
       setPreviewOpen(false);
-      setPaymentModalOpen(true);
+      setPendingBumps(profileToBumpSelection(profile as any));
+      if (!isAnnual) setAddOnsOpen(true);
+      else setPaymentModalOpen(true);
     } catch (err: any) {
       toast({ title: "Erro no upgrade", description: err.message || "Tente novamente", variant: "destructive" });
     } finally {
@@ -542,19 +545,20 @@ const Upgrade = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden relative">
-      {/* Botão Sair — fixo no topo, sempre visível */}
-      <div className="fixed top-4 right-4 z-[9999]">
+      {/* Ação de saída discreta e responsiva */}
+      <div className="absolute right-3 top-3 z-30 sm:right-6 sm:top-5">
         <Button
-          variant="destructive"
-          size="lg"
-          className="gap-2 shadow-2xl font-bold"
+          variant="ghost"
+          size="sm"
+          className="h-9 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground sm:px-3"
           onClick={async () => {
             await supabase.auth.signOut();
             window.location.href = "/login";
           }}
         >
-          <LogOut className="h-5 w-5" />
-          Sair da conta
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Sair da conta</span>
+          <span className="sm:hidden">Sair</span>
         </Button>
       </div>
 
