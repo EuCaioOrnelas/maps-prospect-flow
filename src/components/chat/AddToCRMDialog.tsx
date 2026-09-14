@@ -225,7 +225,7 @@ export function AddToCRMDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/10">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <><Loader2 size={15} className="mr-2 animate-spin" /> Adicionando...</> : "Adicionar"}
