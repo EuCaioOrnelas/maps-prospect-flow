@@ -800,7 +800,7 @@ export default function OpportunitiesManagement() {
       });
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, filterSource, filterSearchQuery, responsibleFilter, user?.id]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, filterSource, responsibleFilter, user?.id]);
 
   // Bulk actions handlers
   const toggleSelected = (id: string) => {
