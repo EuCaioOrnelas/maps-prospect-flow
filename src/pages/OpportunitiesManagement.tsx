@@ -45,6 +45,7 @@ import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
 import { OpportunityBulkBar } from "@/components/opportunities/OpportunityBulkBar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE } from "@/lib/opportunitySource";
 
 interface OpportunityLead {
   id: string;
