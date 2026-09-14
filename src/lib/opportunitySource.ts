@@ -31,11 +31,14 @@ export function isValidBRPhone(raw: unknown): boolean {
 export interface OpportunityLike {
   phone?: string | null;
   phone_numbers?: unknown;
+  source?: string | null;
 }
 
 /** Só é possível gerar mensagem quando existe telefone/WhatsApp real. */
 export function canGenerateMessage(opportunity: OpportunityLike | null | undefined): boolean {
   if (!opportunity) return false;
+  // Prospecção Web é apenas descoberta + diagnóstico: não gera abordagem.
+  if (opportunity.source === "web") return false;
   if (isValidBRPhone(opportunity.phone)) return true;
   const list = opportunity.phone_numbers;
   if (Array.isArray(list)) {
