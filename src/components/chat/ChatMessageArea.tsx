@@ -945,9 +945,8 @@ export function ChatMessageArea({
             </button>
             <DropdownMenu open={headerMenuOpen} onOpenChange={(o) => { setHeaderMenuOpen(o); if (!o) setMobileSubOpen(null); }}>
               <DropdownMenuTrigger asChild>
-
-                <button className="wa-icon-button p-1">
-                  <MoreVertical size={20} className="wa-chat-header-icon" />
+                <button className="wa-header-action-btn" aria-label="Mais opções">
+                  <MoreVertical size={20} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[240px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
