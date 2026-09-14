@@ -5696,6 +5696,7 @@ export type Database = {
           contact_name: string | null
           created_at: string
           created_by_user_id: string | null
+          domain: string | null
           drive_folder_id: string | null
           drive_folder_url: string | null
           email: string | null
@@ -5719,7 +5720,7 @@ export type Database = {
           opportunity_level: string | null
           origin: string | null
           owner_user_id: string | null
-          phone: string
+          phone: string | null
           phone_numbers: Json | null
           pipeline_stage_id: string | null
           prospected_at: string | null
@@ -5728,10 +5729,15 @@ export type Database = {
           responded_at: string | null
           responsible_user_id: string | null
           review_count: number | null
+          search_location: string | null
+          search_query: string | null
           social_media: Json | null
+          source: string
           tags: string[] | null
           updated_at: string
           user_id: string
+          web_snippet: string | null
+          web_title: string | null
           website: string | null
           whatsapp_number_id: string | null
           whatsapp_status: string | null
@@ -5752,6 +5758,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by_user_id?: string | null
+          domain?: string | null
           drive_folder_id?: string | null
           drive_folder_url?: string | null
           email?: string | null
@@ -5775,7 +5782,7 @@ export type Database = {
           opportunity_level?: string | null
           origin?: string | null
           owner_user_id?: string | null
-          phone: string
+          phone?: string | null
           phone_numbers?: Json | null
           pipeline_stage_id?: string | null
           prospected_at?: string | null
@@ -5784,10 +5791,15 @@ export type Database = {
           responded_at?: string | null
           responsible_user_id?: string | null
           review_count?: number | null
+          search_location?: string | null
+          search_query?: string | null
           social_media?: Json | null
+          source?: string
           tags?: string[] | null
           updated_at?: string
           user_id: string
+          web_snippet?: string | null
+          web_title?: string | null
           website?: string | null
           whatsapp_number_id?: string | null
           whatsapp_status?: string | null
@@ -5808,6 +5820,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by_user_id?: string | null
+          domain?: string | null
           drive_folder_id?: string | null
           drive_folder_url?: string | null
           email?: string | null
@@ -5831,7 +5844,7 @@ export type Database = {
           opportunity_level?: string | null
           origin?: string | null
           owner_user_id?: string | null
-          phone?: string
+          phone?: string | null
           phone_numbers?: Json | null
           pipeline_stage_id?: string | null
           prospected_at?: string | null
@@ -5840,10 +5853,15 @@ export type Database = {
           responded_at?: string | null
           responsible_user_id?: string | null
           review_count?: number | null
+          search_location?: string | null
+          search_query?: string | null
           social_media?: Json | null
+          source?: string
           tags?: string[] | null
           updated_at?: string
           user_id?: string
+          web_snippet?: string | null
+          web_title?: string | null
           website?: string | null
           whatsapp_number_id?: string | null
           whatsapp_status?: string | null
@@ -8529,32 +8547,44 @@ export type Database = {
       search_history: {
         Row: {
           created_at: string
+          extra_term: string | null
           id: string
           keyword: string
           leads: Json | null
           location: string
           owner_user_id: string | null
+          requested_count: number | null
           results_count: number
+          source: string
+          status: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          extra_term?: string | null
           id?: string
           keyword: string
           leads?: Json | null
           location: string
           owner_user_id?: string | null
+          requested_count?: number | null
           results_count?: number
+          source?: string
+          status?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          extra_term?: string | null
           id?: string
           keyword?: string
           leads?: Json | null
           location?: string
           owner_user_id?: string | null
+          requested_count?: number | null
           results_count?: number
+          source?: string
+          status?: string | null
           user_id?: string
         }
         Relationships: []
