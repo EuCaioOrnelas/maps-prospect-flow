@@ -1108,6 +1108,7 @@ const Profile = () => {
             </CardContent>
             </div>
           </Card>
+          </>)}
 
           {!isSubUser && (
             <CommercialExpansionsSection
