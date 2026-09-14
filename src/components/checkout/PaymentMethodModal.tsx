@@ -20,6 +20,7 @@ import {
   Mail,
   Phone,
   FileText,
+  MapPin,
   Check,
   RefreshCw,
   BadgeCheck,
