@@ -20,3 +20,4 @@
 - [ ] Auditar ponta a ponta a criptografia do chat: secrets, banco externo, writers/readers, Realtime, multitenancy, migração legada e falhas de entrega.
 - [x] Refinar a página Encontre suas próximas oportunidades: título Wiize, card de abordagem premium, conteúdo centralizado e sem scroll horizontal
 - [x] Unificar perfil da empresa e serviços e adicionar expansão rápida de plano, CRM, oportunidades, números e colaboradores
+- [x] Refinar Perfil e Minha Assinatura como painel executivo Wiize, com seletor evidente, troca de plano e adicionais integrados
