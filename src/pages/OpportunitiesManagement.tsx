@@ -115,6 +115,13 @@ export default function OpportunitiesManagement() {
   const [sortOrder, setSortOrder] = useState<"default" | "score_desc" | "score_asc">("default");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterCity, setFilterCity] = useState("all");
+  // Origem da oportunidade: "all" | "web" (Prospecção Web) | "maps" (Prospecção Completa)
+  const [filterSource, setFilterSource] = useState<string>(
+    () => new URLSearchParams(location.search).get("source") || "all",
+  );
+  const [filterSearchQuery, setFilterSearchQuery] = useState<string>(
+    () => new URLSearchParams(location.search).get("q") || "",
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(20);
   // Padrão "todos": o filtro "meus" escondia oportunidades atribuídas a outras
