@@ -53,8 +53,6 @@ const ProspeccaoWeb = () => {
   const [location, setLocation] = useState("");
 
   const [phase, setPhase] = useState<Phase>("idle");
-  const [statusText, setStatusText] = useState("");
-  const [progress, setProgress] = useState(0);
   const [summary, setSummary] = useState<SearchSummary | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -97,9 +95,7 @@ const ProspeccaoWeb = () => {
     inFlight.current = true;
     setErrorText(null);
     setSummary(null);
-    setProgress(0);
     setPhase("searching");
-    setStatusText("Procurando empresas com site na web...");
     clearAutoApproachPrefs();
 
     try {
@@ -134,7 +130,6 @@ const ProspeccaoWeb = () => {
       const saved = payload?.summary?.saved || 0;
       setSummary(payload.summary);
       setPhase("done");
-      setStatusText("");
 
       toast({
         title: "Busca concluída!",
@@ -142,7 +137,9 @@ const ProspeccaoWeb = () => {
       });
 
       if (saved > 0) {
-        navigate("/oportunidades/gestao", { state: { justSearched: true } });
+        const params = new URLSearchParams({ source: "web" });
+        if (payload.searchQuery) params.set("q", payload.searchQuery);
+        navigate(`/oportunidades/gestao?${params.toString()}`, { state: { justSearched: true } });
       }
     } catch (e: any) {
       console.error("[prospeccao-web]", e);

@@ -148,6 +148,17 @@ serve(async (req) => {
     }
 
 
+    // Prospecção Web entrega somente análise e diagnóstico, nunca abordagem.
+    if (lead?.source === "web") {
+      return new Response(
+        JSON.stringify({
+          error: "web_source_no_message",
+          message: "Oportunidades da Prospecção Web não geram mensagem de abordagem.",
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // Regra crítica: sem telefone/WhatsApp válido não há mensagem de abordagem.
     if (!hasContactNumber(lead)) {
       return new Response(
