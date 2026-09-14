@@ -256,7 +256,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
           )}
 
           {(!canPurchase || !planSupportsBumps) && bumps.length > 0 && (
-            <div className="flex items-start gap-2 border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
+            <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-4 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               {!planSupportsBumps
                 ? "Adicionais são contratados nos planos Atendimento, Growth IA e Enterprise. Altere seu plano para ativar esta capacidade."
