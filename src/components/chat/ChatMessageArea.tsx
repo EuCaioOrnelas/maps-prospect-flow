@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare, CalendarPlus, CalendarClock } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
 import { ContactDetailsPanel } from "./ContactDetailsPanel";
@@ -23,6 +23,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useChatPrivacy, PRIVACY_BLUR_CLASS } from "@/hooks/useChatPrivacy";
+import { ChatAppointmentDialog } from "./ChatAppointmentDialog";
+import { ScheduleMessageDialog } from "./ScheduleMessageDialog";
 
 
 
