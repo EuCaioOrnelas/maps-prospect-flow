@@ -18,3 +18,4 @@
 - [x] Corrigir oportunidades vazias após prospecção em contas recém-criadas (validação autenticada depende de login na prévia)
 - [ ] Implementar criptografia AES-256-GCM autocontida em cada Edge Function para chat_messages e previews, migrar legado sem destruição e auditar todos os caminhos de leitura/gravação. Bloqueio: migração legada requer execução administrativa autenticada.
 - [ ] Auditar ponta a ponta a criptografia do chat: secrets, banco externo, writers/readers, Realtime, multitenancy, migração legada e falhas de entrega.
+- [x] Refinar a página Encontre suas próximas oportunidades: título Wiize, card de abordagem premium, conteúdo centralizado e sem scroll horizontal
