@@ -15,10 +15,19 @@ import {
   Lock,
   Settings,
   Target,
+  History,
+  Download,
+  Trash2,
+  CheckSquare,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import * as XLSX from "xlsx";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +51,34 @@ interface SearchSummary {
   withSocial: number;
 }
 
+interface WebHistoryLeadRef {
+  id: string;
+  name: string;
+  domain: string;
+}
+
+interface WebHistoryItem {
+  id: string;
+  keyword: string;
+  location: string | null;
+  results_count: number;
+  created_at: string;
+  status: string | null;
+  leads: WebHistoryLeadRef[];
+}
+
+const HISTORY_PER_PAGE = 20;
+const MAX_HISTORY_ITEMS = 200;
+
+const formatHistoryDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 const ProspeccaoWeb = () => {
   const { user, profile, refreshProfile, accountOwnerId } = useAuth();
   const { toast } = useToast();
@@ -58,6 +95,12 @@ const ProspeccaoWeb = () => {
   const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [showCompanyOnboarding, setShowCompanyOnboarding] = useState(false);
   const inFlight = useRef(false);
+
+  const [webHistory, setWebHistory] = useState<WebHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
+  const [bulkExporting, setBulkExporting] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
 
   const isBusy = phase === "searching" || phase === "diagnosing";
   const hasAccess = hasSDRAccess(profile);
@@ -128,6 +171,7 @@ const ProspeccaoWeb = () => {
       const saved = payload?.summary?.saved || 0;
       setSummary(payload.summary);
       setPhase("done");
+      void fetchWebHistory();
 
       toast({
         title: "Busca concluída!",
@@ -157,6 +201,117 @@ const ProspeccaoWeb = () => {
     const params = new URLSearchParams({ source: "web" });
     if (searchQuery) params.set("q", searchQuery);
     navigate(`/oportunidades/gestao?${params.toString()}`);
+  };
+
+  const fetchWebHistory = async () => {
+    if (!user) return;
+    setLoadingHistory(true);
+    const { data, error } = await supabase
+      .from("search_history")
+      .select("id, keyword, location, results_count, created_at, status, leads")
+      .eq("user_id", user.id)
+      .eq("source", "web")
+      .order("created_at", { ascending: false })
+      .limit(MAX_HISTORY_ITEMS);
+    if (!error && data) {
+      setWebHistory(
+        data.map((item: any) => ({
+          ...item,
+          leads: Array.isArray(item.leads) ? (item.leads as WebHistoryLeadRef[]) : [],
+        })),
+      );
+    }
+    setLoadingHistory(false);
+  };
+
+  useEffect(() => {
+    void fetchWebHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const totalHistoryPages = Math.ceil(webHistory.length / HISTORY_PER_PAGE);
+  const paginatedHistory = webHistory.slice(
+    (historyPage - 1) * HISTORY_PER_PAGE,
+    historyPage * HISTORY_PER_PAGE,
+  );
+
+  const handleHistoryClick = (item: WebHistoryItem) => {
+    const params = new URLSearchParams({ source: "web" });
+    if (item.keyword) params.set("q", item.keyword);
+    navigate(`/oportunidades/gestao?${params.toString()}`);
+  };
+
+  const handleDeleteHistoryItem = async (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    const { error } = await supabase.from("search_history").delete().eq("id", itemId);
+    if (error) {
+      toast({ title: "Erro", description: "Não foi possível excluir o item", variant: "destructive" });
+      return;
+    }
+    setWebHistory((prev) => prev.filter((item) => item.id !== itemId));
+    setSelectedHistoryIds((prev) => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
+    toast({ title: "Removido", description: "Item do histórico excluído" });
+  };
+
+  const handleExportSelected = async () => {
+    const selectedItems = webHistory.filter((h) => selectedHistoryIds.has(h.id));
+    const leadIds = selectedItems.flatMap((item) => item.leads.map((l) => l.id));
+    if (leadIds.length === 0) {
+      toast({ title: "Sem leads", description: "As buscas selecionadas não possuem leads salvos", variant: "destructive" });
+      return;
+    }
+
+    setBulkExporting(true);
+    try {
+      const searchByLeadId = new Map<string, WebHistoryItem>();
+      selectedItems.forEach((item) => item.leads.forEach((l) => searchByLeadId.set(l.id, item)));
+
+      const rows: Record<string, unknown>[] = [];
+      const CHUNK = 100;
+      for (let i = 0; i < leadIds.length; i += CHUNK) {
+        const { data, error } = await supabase
+          .from("leads")
+          .select("id, company_name, phone, email, website, domain, city, address, category")
+          .in("id", leadIds.slice(i, i + CHUNK));
+        if (error) throw error;
+        (data || []).forEach((lead: any) => {
+          const search = searchByLeadId.get(lead.id);
+          rows.push({
+            Busca: search?.keyword || "",
+            "Localização": search?.location || "",
+            Nome: lead.company_name || "",
+            Telefone: lead.phone || "",
+            "E-mail": lead.email || "",
+            Site: lead.website || lead.domain || "",
+            Cidade: lead.city || "",
+            "Endereço": lead.address || "",
+            Categoria: lead.category || "",
+          });
+        });
+      }
+
+      if (rows.length === 0) {
+        toast({ title: "Sem leads", description: "Os leads dessas buscas não foram encontrados", variant: "destructive" });
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [{ wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 18 }, { wch: 28 }, { wch: 28 }, { wch: 18 }, { wch: 30 }, { wch: 25 }];
+      XLSX.utils.book_append_sheet(wb, ws, "Leads Web");
+      XLSX.writeFile(wb, `prospeccao-web-${new Date().toISOString().split("T")[0]}.xlsx`, { compression: true });
+      toast({ title: "Exportado!", description: `${rows.length} leads de ${selectedItems.length} buscas exportados` });
+      setSelectedHistoryIds(new Set());
+    } catch (err) {
+      console.error("[prospeccao-web] export error", err);
+      toast({ title: "Erro", description: "Não foi possível exportar", variant: "destructive" });
+    } finally {
+      setBulkExporting(false);
+    }
   };
 
   return (
@@ -376,7 +531,7 @@ const ProspeccaoWeb = () => {
                   </div>
                 )}
 
-                {phase === "idle" && !summary && (
+                {phase === "idle" && !summary && webHistory.length === 0 && !loadingHistory && (
                   <div className="text-center py-12 sm:py-20">
                     <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/10">
                       <Globe size={40} className="text-primary" />
@@ -385,6 +540,140 @@ const ProspeccaoWeb = () => {
                     <p className="text-muted-foreground max-w-md mx-auto text-base">
                       Informe o nicho, a localização e, se quiser, uma especialidade para encontrarmos o máximo de sites empresariais válidos.
                     </p>
+                  </div>
+                )}
+
+                {/* Histórico de buscas Web — mesma lista de prospecção da Prospecção IA */}
+                {webHistory.length > 0 && (
+                  <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50">
+                    <div className="flex items-center justify-between gap-3 mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                          <History size={20} className="text-muted-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-lg sm:text-xl font-bold">Prospecção Web</h3>
+                          <p className="text-sm text-muted-foreground">{webHistory.length} buscas realizadas</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {selectedHistoryIds.size > 0 && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            disabled={bulkExporting}
+                            onClick={() => void handleExportSelected()}
+                            className="gap-2"
+                          >
+                            {bulkExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                            Exportar {selectedHistoryIds.size} {selectedHistoryIds.size === 1 ? "busca" : "buscas"}
+                          </Button>
+                        )}
+                        {webHistory.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedHistoryIds.size === webHistory.length) {
+                                setSelectedHistoryIds(new Set());
+                              } else {
+                                setSelectedHistoryIds(new Set(webHistory.map((h) => h.id)));
+                              }
+                            }}
+                            className="gap-1.5 text-xs"
+                          >
+                            <CheckSquare size={14} />
+                            {selectedHistoryIds.size === webHistory.length ? "Desmarcar" : "Selecionar tudo"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {loadingHistory ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 size={28} className="animate-spin text-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {paginatedHistory.map((item, index) => (
+                            <div
+                              key={item.id}
+                              onClick={() => handleHistoryClick(item)}
+                              className={`relative group bg-card border rounded-xl p-4 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer animate-fade-in ${selectedHistoryIds.has(item.id) ? "border-primary/50 bg-primary/5" : "border-border/50"}`}
+                              style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
+                            >
+                              <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={selectedHistoryIds.has(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    setSelectedHistoryIds((prev) => {
+                                      const next = new Set(prev);
+                                      if (checked) next.add(item.id);
+                                      else next.delete(item.id);
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              </div>
+
+                              <button
+                                onClick={(e) => void handleDeleteHistoryItem(e, item.id)}
+                                className="absolute top-3 right-3 p-2 rounded-lg bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/20"
+                                title="Excluir"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+
+                              <div className="pl-7 pr-10">
+                                <p className="font-semibold text-foreground truncate text-base">{item.keyword}</p>
+                                <p className="text-sm text-muted-foreground truncate mt-1 flex items-center gap-1.5">
+                                  <MapPin size={12} className="flex-shrink-0 text-primary/60" />
+                                  {item.location || "Brasil"}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <Clock size={12} />
+                                  {formatHistoryDate(item.created_at)}
+                                </div>
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                                  <Globe size={10} />
+                                  {item.leads?.length || item.results_count}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {totalHistoryPages > 1 && (
+                          <div className="flex items-center justify-center gap-4 mt-6">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setHistoryPage((prev) => Math.max(1, prev - 1))}
+                              disabled={historyPage === 1}
+                              className="h-9 px-3"
+                            >
+                              <ChevronLeft size={16} />
+                            </Button>
+                            <span className="text-sm text-muted-foreground">
+                              Página {historyPage} de {totalHistoryPages}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setHistoryPage((prev) => Math.min(totalHistoryPages, prev + 1))}
+                              disabled={historyPage === totalHistoryPages}
+                              className="h-9 px-3"
+                            >
+                              <ChevronRight size={16} />
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
