@@ -96,17 +96,32 @@ serve(async (req) => {
 
     const phone = customerData.phone?.replace(/\D/g, "") || "";
 
+    // CEP: aceita qualquer entrada, normaliza para 8 dígitos; formato Asaas 00000-000
+    const postalDigits = (customerData.postalCode || "").replace(/\D/g, "").slice(0, 8);
+    const formattedPostalCode = postalDigits.length === 8
+      ? `${postalDigits.slice(0, 5)}-${postalDigits.slice(5)}`
+      : "";
+
     // 1. Create or find customer on Asaas
     const findRes = await fetch(`${ASAAS_API}/customers?cpfCnpj=${cpfCnpj}`, {
       headers: { "access_token": apiKey, "Accept": "application/json" },
     });
     const findJson = await findRes.json();
-    
+
     let customerId: string;
-    
+
     if (findJson.data && findJson.data.length > 0) {
       customerId = findJson.data[0].id;
       logStep("Existing customer found", { customerId });
+      // Garante CEP no cliente existente (PIX Automático pode exigir endereço)
+      if (formattedPostalCode && !findJson.data[0].postalCode) {
+        const upRes = await fetch(`${ASAAS_API}/customers/${customerId}`, {
+          method: "POST",
+          headers: { "access_token": apiKey, "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ postalCode: formattedPostalCode }),
+        });
+        if (!upRes.ok) logStep("Customer postalCode update failed (non-blocking)", await upRes.json().catch(() => null));
+      }
     } else {
       const customerRes = await fetch(`${ASAAS_API}/customers`, {
         method: "POST",
@@ -121,17 +136,40 @@ serve(async (req) => {
           cpfCnpj: cpfCnpj,
           mobilePhone: phone,
           notificationDisabled: false,
+          ...(formattedPostalCode ? { postalCode: formattedPostalCode } : {}),
         }),
       });
 
       const customerJson = await customerRes.json();
       if (!customerRes.ok || customerJson.errors) {
         logStep("Customer creation failed", customerJson);
-        throw new Error(`Asaas customer error: ${JSON.stringify(customerJson.errors || customerJson)}`);
+        // Se o Asaas recusar por causa do CEP, tenta novamente sem CEP para nunca travar a venda
+        const desc = JSON.stringify(customerJson.errors || customerJson).toLowerCase();
+        if (formattedPostalCode && (desc.includes("postalcode") || desc.includes("cep"))) {
+          const retryRes = await fetch(`${ASAAS_API}/customers`, {
+            method: "POST",
+            headers: { "access_token": apiKey, "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({
+              name: customerData.name,
+              email: customerData.email,
+              cpfCnpj: cpfCnpj,
+              mobilePhone: phone,
+              notificationDisabled: false,
+            }),
+          });
+          const retryJson = await retryRes.json();
+          if (!retryRes.ok || retryJson.errors) {
+            throw new Error(`Asaas customer error: ${JSON.stringify(retryJson.errors || retryJson)}`);
+          }
+          customerId = retryJson.id;
+          logStep("Customer created without postalCode fallback", { customerId });
+        } else {
+          throw new Error(`Asaas customer error: ${JSON.stringify(customerJson.errors || customerJson)}`);
+        }
+      } else {
+        customerId = customerJson.id;
+        logStep("Customer created", { customerId });
       }
-
-      customerId = customerJson.id;
-      logStep("Customer created", { customerId });
     }
 
     // 2. Determine final price (plano + bumps mensais)
