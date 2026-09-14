@@ -689,9 +689,9 @@ const Dashboard = () => {
           {/* Search Card */}
           <div className="relative mb-10 w-full min-w-0">
             {/* Glow effect behind card */}
-            <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/5 blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/[0.03] blur-3xl" />
             
-            <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-panel border border-border/80 bg-card p-5 shadow-card sm:p-8" data-tour="search-card">
+            <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-5 backdrop-blur-sm sm:p-8" data-tour="search-card">
               {/* Feature badges */}
               <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
