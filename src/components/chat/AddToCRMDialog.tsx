@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, Phone } from "lucide-react";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -31,6 +32,18 @@ const formatCurrencyInput = (input: string) => {
   const digits = input.replace(/\D/g, "");
   if (!digits) return "";
   return (parseInt(digits, 10) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+/** +55 (44) 9 9999-9999 */
+const prettyPhone = (raw: string) => {
+  const d = (raw || "").replace(/\D/g, "");
+  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) {
+    const ddd = d.slice(2, 4);
+    const rest = d.slice(4);
+    if (rest.length === 9) return `+55 (${ddd}) ${rest[0]} ${rest.slice(1, 5)}-${rest.slice(5)}`;
+    return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+  return formatPhoneNumber(d);
 };
 
 const parseCurrency = (value: string) => {
@@ -105,7 +118,6 @@ export function AddToCRMDialog({
           origin: "whatsapp",
           pipeline_stage_id: stageId || sortedStages[0]?.id || null,
           estimated_value: parseCurrency(value),
-          conversation_id: conversationId,
           tags: [],
         })
         .select("id, pipeline_stage_id")
