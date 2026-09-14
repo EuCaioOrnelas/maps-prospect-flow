@@ -1690,7 +1690,7 @@ export default function OpportunitiesManagement() {
                       onClick={() => navigate("/numeros")}
                     >
                       <Wifi size={14} />
-                      Números WhatsApp (Meta)
+                      Números WhatsApp
                     </Button>
                     <Button
                       variant="outline"
