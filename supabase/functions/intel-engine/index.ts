@@ -611,9 +611,26 @@ async function computeProfile(sb: any, owner: string, phone: string, opts: { for
   // RISK: contextual
   const lastActivity = rl.last_activity_at ? new Date(rl.last_activity_at) : null;
   const silenceDays = lastActivity ? daysBetween(now, lastActivity) : 999;
-  const unreplied = Number(conv?.unreplied_inbound_count || 0);
-  const lastInbound = conv?.last_inbound_at ? new Date(conv.last_inbound_at) : null;
-  const lastOutbound = conv?.last_outbound_at ? new Date(conv.last_outbound_at) : null;
+  // Fonte de verdade = mensagens reais do chat (o contador agregado da conversa
+  // fica desatualizado e acumulava mensagens ja respondidas).
+  const msgInboundLast = messages.find((m: any) => m.direction === "inbound");
+  const msgOutboundLast = messages.find((m: any) => m.direction === "outbound");
+  const lastInbound = msgInboundLast?.created_at
+    ? new Date(msgInboundLast.created_at)
+    : (conv?.last_inbound_at ? new Date(conv.last_inbound_at) : null);
+  const lastOutbound = msgOutboundLast?.created_at
+    ? new Date(msgOutboundLast.created_at)
+    : (conv?.last_outbound_at ? new Date(conv.last_outbound_at) : null);
+  // So conta as mensagens do lead que chegaram DEPOIS da nossa ultima resposta.
+  const unreplied = messages.length
+    ? messages.filter(
+        (m: any) =>
+          m.direction === "inbound" &&
+          (!lastOutbound || new Date(m.created_at) > lastOutbound),
+      ).length
+    : (lastInbound && (!lastOutbound || lastInbound > lastOutbound)
+        ? Number(conv?.unreplied_inbound_count || 0)
+        : 0);
   const awaitingUsMin = lastInbound && (!lastOutbound || lastInbound > lastOutbound)
     ? Math.round((now.getTime() - lastInbound.getTime()) / 60000) : 0;
   const riskFactors: any[] = [];
