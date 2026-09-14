@@ -1619,6 +1619,386 @@ async function handleInbound(body: Record<string, any>) {
   return json({ skipped: "nenhum gatilho combinou" });
 }
 
+// ---------- filtros de público (valem para qualquer gatilho) ----------
+interface AudienceLead {
+  id: string;
+  pipeline_stage_id: string | null;
+  ai_score: number | null;
+  tags: string[] | null;
+  archived_at: string | null;
+}
+
+async function findLeadByPhone(ownerId: string, phone: string): Promise<AudienceLead | null> {
+  const tail = digits(phone).slice(-8);
+  if (!tail) return null;
+  const { data } = await supabase
+    .from("leads")
+    .select("id,pipeline_stage_id,ai_score,tags,archived_at")
+    .eq("owner_user_id", ownerId)
+    .ilike("phone", `%${tail}`)
+    .limit(1)
+    .maybeSingle();
+  return (data as AudienceLead) || null;
+}
+
+async function leadIsCustomer(leadId: string): Promise<boolean> {
+  const { data } = await supabase.from("lead_deals").select("status").eq("lead_id", leadId).limit(10);
+  return !!(data || []).some((d: any) => !["cancelled", "canceled", "cancelado"].includes(String(d.status || "").toLowerCase()));
+}
+
+/** Segmentação do gatilho: só entra no fluxo quem passar nos filtros configurados. */
+async function audienceMatches(cfg: Record<string, any>, ownerId: string, phone: string): Promise<boolean> {
+  const aud = (cfg.audience || {}) as Record<string, any>;
+  const crmStatus = String(aud.crm_status || "any");
+  const stageIds: string[] = Array.isArray(aud.stage_ids) ? aud.stage_ids.filter(Boolean) : [];
+  const tags: string[] = Array.isArray(aud.tags) ? aud.tags.filter(Boolean) : [];
+  const customer = String(aud.customer || "any");
+  const minScore = aud.min_score === "" || aud.min_score == null ? null : Number(aud.min_score);
+  const maxScore = aud.max_score === "" || aud.max_score == null ? null : Number(aud.max_score);
+  const skipArchived = aud.exclude_archived !== false;
+
+  const hasFilter =
+    crmStatus !== "any" ||
+    stageIds.length > 0 ||
+    tags.length > 0 ||
+    customer !== "any" ||
+    minScore != null ||
+    maxScore != null;
+  if (!hasFilter) return true;
+
+  const lead = await findLeadByPhone(ownerId, phone);
+
+  if (crmStatus === "not_in_crm") return !lead;
+  if (!lead) return false; // qualquer outro filtro exige um lead no CRM
+  if (skipArchived && lead.archived_at) return false;
+  if (stageIds.length && !stageIds.includes(String(lead.pipeline_stage_id || ""))) return false;
+
+  const score = Number(lead.ai_score ?? 0);
+  if (minScore != null && Number.isFinite(minScore) && score < minScore) return false;
+  if (maxScore != null && Number.isFinite(maxScore) && score > maxScore) return false;
+
+  if (tags.length) {
+    const leadTags = (Array.isArray(lead.tags) ? lead.tags : []).map((t) => String(t).toLowerCase());
+    if (!tags.some((t) => leadTags.includes(String(t).toLowerCase()))) return false;
+  }
+
+  if (customer !== "any") {
+    const isCustomer = await leadIsCustomer(lead.id);
+    if (customer === "only" && !isCustomer) return false;
+    if (customer === "exclude" && isCustomer) return false;
+  }
+
+  return true;
+}
+
+// ---------- gatilhos agendados (rodam no cron, sem mensagem recebida) ----------
+const SCHEDULED_TRIGGERS = [
+  "no_reply_hours",
+  "no_conversation_days",
+  "before_appointment",
+  "after_appointment",
+  "appointment_no_show",
+  "stage_entered",
+  "score_reached",
+  "deal_created",
+  "lead_created",
+];
+
+interface TriggerCandidate {
+  phone: string;
+  name: string | null;
+  refId?: string | null;
+  data?: Record<string, any>;
+}
+
+function hoursAgo(h: number) {
+  return new Date(Date.now() - h * 3600_000).toISOString();
+}
+function minutesFromNow(m: number) {
+  return new Date(Date.now() + m * 60_000).toISOString();
+}
+
+async function collectCandidates(cfg: Record<string, any>, ownerId: string): Promise<TriggerCandidate[]> {
+  const trigger = String(cfg.trigger_type || "");
+  const out: TriggerCandidate[] = [];
+
+  const convCandidates = async (direction: "inbound" | "any", ageHours: number) => {
+    const cutoff = hoursAgo(ageHours);
+    const floor = hoursAgo(ageHours + 24); // janela de 24h para não varrer histórico antigo
+    let q = supabase
+      .from("chat_conversations")
+      .select("id,contact_phone,contact_name,last_message_at,last_message_direction")
+      .eq("owner_user_id", ownerId)
+      .eq("is_archived", false)
+      .lte("last_message_at", cutoff)
+      .gte("last_message_at", floor)
+      .limit(50);
+    if (direction === "inbound") q = q.eq("last_message_direction", "inbound");
+    const { data } = await q;
+    return (data || []).map((c: any) => ({
+      phone: digits(c.contact_phone || ""),
+      name: c.contact_name || null,
+      refId: c.id,
+      data: { conversation_id: c.id, last_message_at: c.last_message_at },
+    }));
+  };
+
+  switch (trigger) {
+    case "no_reply_hours": {
+      const hours = Math.max(1, Number(cfg.no_reply_hours || 24));
+      out.push(...(await convCandidates("inbound", hours)));
+      break;
+    }
+    case "no_conversation_days": {
+      const days = Math.max(1, Number(cfg.no_conversation_days || 7));
+      out.push(...(await convCandidates("any", days * 24)));
+      break;
+    }
+    case "before_appointment": {
+      const minutes = Math.max(5, Number(cfg.appointment_minutes_before || 60));
+      const { data } = await supabase
+        .from("calendar_events")
+        .select("id,contact_phone,contact_name,title,starts_at,status")
+        .eq("owner_user_id", ownerId)
+        .in("status", ["scheduled", "confirmed"])
+        .gte("starts_at", new Date().toISOString())
+        .lte("starts_at", minutesFromNow(minutes))
+        .not("contact_phone", "is", null)
+        .limit(50);
+      out.push(
+        ...(data || []).map((e: any) => ({
+          phone: digits(e.contact_phone || ""),
+          name: e.contact_name || null,
+          refId: e.id,
+          data: { event_id: e.id, event_title: e.title, starts_at: e.starts_at },
+        })),
+      );
+      break;
+    }
+    case "after_appointment":
+    case "appointment_no_show": {
+      const minutes = Math.max(0, Number(cfg.appointment_minutes_after || 30));
+      const upper = new Date(Date.now() - minutes * 60_000).toISOString();
+      const lower = new Date(Date.now() - (minutes + 180) * 60_000).toISOString();
+      const statuses = trigger === "appointment_no_show" ? ["no_show"] : ["confirmed", "completed", "scheduled"];
+      const { data } = await supabase
+        .from("calendar_events")
+        .select("id,contact_phone,contact_name,title,ends_at,status")
+        .eq("owner_user_id", ownerId)
+        .in("status", statuses)
+        .lte("ends_at", upper)
+        .gte("ends_at", lower)
+        .not("contact_phone", "is", null)
+        .limit(50);
+      out.push(
+        ...(data || []).map((e: any) => ({
+          phone: digits(e.contact_phone || ""),
+          name: e.contact_name || null,
+          refId: e.id,
+          data: { event_id: e.id, event_title: e.title, ends_at: e.ends_at, event_status: e.status },
+        })),
+      );
+      break;
+    }
+    case "stage_entered": {
+      const stageId = String(cfg.stage_id || "");
+      if (!stageId) break;
+      const { data } = await supabase
+        .from("leads")
+        .select("id,phone,contact_name,company_name,pipeline_stage_id,updated_at")
+        .eq("owner_user_id", ownerId)
+        .eq("pipeline_stage_id", stageId)
+        .gte("updated_at", hoursAgo(1))
+        .is("archived_at", null)
+        .not("phone", "is", null)
+        .limit(50);
+      out.push(
+        ...(data || []).map((l: any) => ({
+          phone: digits(l.phone || ""),
+          name: l.contact_name || l.company_name || null,
+          refId: l.id,
+          data: { lead_id: l.id, stage_id: l.pipeline_stage_id },
+        })),
+      );
+      break;
+    }
+    case "score_reached": {
+      const min = Number(cfg.score_min || 0);
+      const { data } = await supabase
+        .from("leads")
+        .select("id,phone,contact_name,company_name,ai_score,updated_at")
+        .eq("owner_user_id", ownerId)
+        .gte("ai_score", min)
+        .gte("updated_at", hoursAgo(24))
+        .is("archived_at", null)
+        .not("phone", "is", null)
+        .limit(50);
+      out.push(
+        ...(data || []).map((l: any) => ({
+          phone: digits(l.phone || ""),
+          name: l.contact_name || l.company_name || null,
+          refId: l.id,
+          data: { lead_id: l.id, ai_score: l.ai_score },
+        })),
+      );
+      break;
+    }
+    case "lead_created": {
+      const { data } = await supabase
+        .from("leads")
+        .select("id,phone,contact_name,company_name,created_at")
+        .eq("owner_user_id", ownerId)
+        .gte("created_at", hoursAgo(1))
+        .is("archived_at", null)
+        .not("phone", "is", null)
+        .limit(50);
+      out.push(
+        ...(data || []).map((l: any) => ({
+          phone: digits(l.phone || ""),
+          name: l.contact_name || l.company_name || null,
+          refId: l.id,
+          data: { lead_id: l.id },
+        })),
+      );
+      break;
+    }
+    case "deal_created": {
+      const { data: deals } = await supabase
+        .from("lead_deals")
+        .select("id,lead_id,status,created_at")
+        .eq("owner_user_id", ownerId)
+        .gte("created_at", hoursAgo(6))
+        .limit(50);
+      const valid = (deals || []).filter(
+        (d: any) => !["cancelled", "canceled", "cancelado"].includes(String(d.status || "").toLowerCase()),
+      );
+      if (!valid.length) break;
+      const { data: leads } = await supabase
+        .from("leads")
+        .select("id,phone,contact_name,company_name")
+        .in("id", valid.map((d: any) => d.lead_id).filter(Boolean));
+      const byId = new Map((leads || []).map((l: any) => [l.id, l]));
+      for (const d of valid) {
+        const l: any = byId.get(d.lead_id);
+        if (!l?.phone) continue;
+        out.push({
+          phone: digits(l.phone),
+          name: l.contact_name || l.company_name || null,
+          refId: d.id,
+          data: { lead_id: l.id, deal_id: d.id },
+        });
+      }
+      break;
+    }
+  }
+
+  return out.filter((c) => c.phone && c.phone.length >= 8);
+}
+
+/** Evita disparar o mesmo fluxo duas vezes para o mesmo contato/referência. */
+async function alreadyTriggered(flowId: string, cfg: Record<string, any>, cand: TriggerCandidate): Promise<boolean> {
+  const tail = cand.phone.slice(-8);
+
+  // execução em andamento com esse contato?
+  const { data: running } = await supabase
+    .from("wa_flow_executions")
+    .select("id")
+    .eq("flow_id", flowId)
+    .in("status", ["active", "running", "waiting", "awaiting_input"])
+    .ilike("lead_phone", `%${tail}`)
+    .limit(1)
+    .maybeSingle();
+  if (running) return true;
+
+  // mesma referência (evento/negócio/lead) já processada?
+  if (cand.refId) {
+    const { data: sameRef } = await supabase
+      .from("wa_flow_executions")
+      .select("id")
+      .eq("flow_id", flowId)
+      .contains("trigger_data", { trigger_ref: cand.refId })
+      .limit(1)
+      .maybeSingle();
+    if (sameRef) return true;
+  }
+
+  const cooldown = Number(cfg.retrigger_hours ?? 168); // 0 = nunca repetir
+  let q = supabase.from("wa_flow_executions").select("id").eq("flow_id", flowId).ilike("lead_phone", `%${tail}`).limit(1);
+  if (cooldown > 0) q = q.gte("created_at", hoursAgo(cooldown));
+  const { data: recent } = await q.maybeSingle();
+  return !!recent;
+}
+
+async function handleScheduledTriggers(): Promise<number> {
+  let started = 0;
+  const { data: flows } = await supabase.from("wa_automation_flows").select("*").eq("status", "active").limit(200);
+
+  for (const flow of flows || []) {
+    try {
+      if ((flow.channel || "whatsapp") !== "whatsapp") continue;
+      const { nodes, edges } = await loadFlow(flow.id);
+      const entry = nodes.find((n) => n.node_type === "entry");
+      if (!entry) continue;
+      const cfg = entry.config || {};
+      if (!SCHEDULED_TRIGGERS.includes(String(cfg.trigger_type || ""))) continue;
+
+      const ownerId = flow.owner_user_id || flow.user_id;
+      if (!ownerId) continue;
+
+      const candidates = await collectCandidates(cfg, ownerId);
+      for (const cand of candidates.slice(0, 20)) {
+        if (flow.test_mode && digits(flow.test_phone || "").slice(-8) !== cand.phone.slice(-8)) continue;
+        if (!(await audienceMatches(cfg, ownerId, cand.phone))) continue;
+        if (await alreadyTriggered(flow.id, cfg, cand)) continue;
+
+        const send = await buildSendCtx(flow, cand.phone, cand.name, flow.user_id || ownerId, ownerId);
+        if (!send) continue;
+
+        const { data: execution } = await supabase
+          .from("wa_flow_executions")
+          .insert({
+            flow_id: flow.id,
+            user_id: flow.user_id || ownerId,
+            owner_user_id: ownerId,
+            lead_phone: cand.phone,
+            lead_name: cand.name,
+            status: "active",
+            channel: "whatsapp",
+            contact_ref: cand.phone,
+            trigger_type: cfg.trigger_type,
+            trigger_data: { ...(cand.data || {}), trigger_ref: cand.refId || null, scheduled: true },
+            channel_account_id: send.connectionId || null,
+            current_node_id: entry.id,
+            current_node_name: entry.name,
+            entry_data: { source: "scheduler", trigger_type: cfg.trigger_type },
+          })
+          .select("*")
+          .maybeSingle();
+        if (!execution) continue;
+
+        const vars = { nome: cand.name || "", telefone: cand.phone };
+        await run(
+          {
+            execution,
+            nodes,
+            edges,
+            flow,
+            send,
+            leadId: await findLeadId(ownerId, cand.phone),
+            runtime: { lastUserText: "", lastButtonId: "", lastButtonTitle: "", hasFreshUserInput: false, vars },
+          },
+          entry.id,
+        );
+        started++;
+      }
+    } catch (e) {
+      console.error("[wa-flow-runner] gatilho agendado erro", flow.id, e);
+    }
+  }
+
+  return started;
+}
+
 // ---------- handler tick (cron) ----------
 async function handleTick() {
   const nowIso = new Date().toISOString();
