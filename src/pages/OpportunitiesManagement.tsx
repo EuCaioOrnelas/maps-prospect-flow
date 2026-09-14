@@ -68,6 +68,10 @@ interface OpportunityLead {
   enrichment_data: any;
   created_at: string;
   origin: string | null;
+  source: string | null;
+  domain: string | null;
+  search_query: string | null;
+  email: string | null;
   first_message_sent: boolean | null;
   whatsapp_number_id: string | null;
   responsible_user_id: string | null;
@@ -260,7 +264,7 @@ export default function OpportunitiesManagement() {
     const ownerId = accountOwnerId || user.id;
     setLoading(true);
     try {
-      const baseCols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id";
+      const baseCols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, source, domain, search_query, email, first_message_sent, whatsapp_number_id, responsible_user_id";
       const ownerFilter = `owner_user_id.eq.${ownerId},and(owner_user_id.is.null,user_id.eq.${user.id})`;
       // Linhas antigas podem ter origem nula: elas também são oportunidades.
       const originFilter = "origin.in.(oportunidades,prospeccao),origin.is.null";
