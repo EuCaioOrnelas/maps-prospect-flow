@@ -770,28 +770,16 @@ const Profile = () => {
                   )}
                 </div>
               </div>
-              <div className="mt-5 grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/60 p-1.5 shadow-inner" role="tablist" aria-label="Dados comerciais">
-                <Button
-                  type="button"
-                  variant={businessView === "company" ? "default" : "ghost"}
-                  className="h-10 gap-2 rounded-md text-xs font-semibold shadow-none sm:text-sm"
-                  onClick={() => setBusinessView("company")}
-                  role="tab"
-                  aria-selected={businessView === "company"}
-                >
-                  <Building2 className="h-3.5 w-3.5" /> Perfil da empresa
-                </Button>
-                <Button
-                  type="button"
-                  variant={businessView === "services" ? "default" : "ghost"}
-                  className="h-10 gap-2 rounded-md text-xs font-semibold shadow-none sm:text-sm"
-                  onClick={() => setBusinessView("services")}
-                  role="tab"
-                  aria-selected={businessView === "services"}
-                >
-                  <DollarSign className="h-3.5 w-3.5" /> Serviços e tickets
-                </Button>
-              </div>
+              <Tabs value={businessView} onValueChange={(v) => setBusinessView(v as "company" | "services")} className="mt-5 w-full sm:w-auto">
+                <TabsList className="h-9 w-full bg-muted/50 p-0.5 sm:w-auto">
+                  <TabsTrigger value="company" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <Building2 className="h-3.5 w-3.5" /> Perfil da empresa
+                  </TabsTrigger>
+                  <TabsTrigger value="services" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <DollarSign className="h-3.5 w-3.5" /> Serviços e tickets
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
             <div role="tabpanel" className={businessView === "company" ? "block" : "hidden"}>
             <CardContent>
