@@ -530,7 +530,7 @@ const ProspeccaoWeb = () => {
                   </div>
                 )}
 
-                {phase === "idle" && !summary && (
+                {phase === "idle" && !summary && webHistory.length === 0 && !loadingHistory && (
                   <div className="text-center py-12 sm:py-20">
                     <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/10">
                       <Globe size={40} className="text-primary" />
@@ -539,6 +539,140 @@ const ProspeccaoWeb = () => {
                     <p className="text-muted-foreground max-w-md mx-auto text-base">
                       Informe o nicho, a localização e, se quiser, uma especialidade para encontrarmos o máximo de sites empresariais válidos.
                     </p>
+                  </div>
+                )}
+
+                {/* Histórico de buscas Web — mesma lista de prospecção da Prospecção IA */}
+                {webHistory.length > 0 && (
+                  <div className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border/50">
+                    <div className="flex items-center justify-between gap-3 mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                          <History size={20} className="text-muted-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-lg sm:text-xl font-bold">Prospecção Web</h3>
+                          <p className="text-sm text-muted-foreground">{webHistory.length} buscas realizadas</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {selectedHistoryIds.size > 0 && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            disabled={bulkExporting}
+                            onClick={() => void handleExportSelected()}
+                            className="gap-2"
+                          >
+                            {bulkExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                            Exportar {selectedHistoryIds.size} {selectedHistoryIds.size === 1 ? "busca" : "buscas"}
+                          </Button>
+                        )}
+                        {webHistory.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (selectedHistoryIds.size === webHistory.length) {
+                                setSelectedHistoryIds(new Set());
+                              } else {
+                                setSelectedHistoryIds(new Set(webHistory.map((h) => h.id)));
+                              }
+                            }}
+                            className="gap-1.5 text-xs"
+                          >
+                            <CheckSquare size={14} />
+                            {selectedHistoryIds.size === webHistory.length ? "Desmarcar" : "Selecionar tudo"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {loadingHistory ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 size={28} className="animate-spin text-primary" />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {paginatedHistory.map((item, index) => (
+                            <div
+                              key={item.id}
+                              onClick={() => handleHistoryClick(item)}
+                              className={`relative group bg-card border rounded-xl p-4 hover:border-primary/30 hover:shadow-lg transition-all duration-300 cursor-pointer animate-fade-in ${selectedHistoryIds.has(item.id) ? "border-primary/50 bg-primary/5" : "border-border/50"}`}
+                              style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
+                            >
+                              <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={selectedHistoryIds.has(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    setSelectedHistoryIds((prev) => {
+                                      const next = new Set(prev);
+                                      if (checked) next.add(item.id);
+                                      else next.delete(item.id);
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              </div>
+
+                              <button
+                                onClick={(e) => void handleDeleteHistoryItem(e, item.id)}
+                                className="absolute top-3 right-3 p-2 rounded-lg bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive/20"
+                                title="Excluir"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+
+                              <div className="pl-7 pr-10">
+                                <p className="font-semibold text-foreground truncate text-base">{item.keyword}</p>
+                                <p className="text-sm text-muted-foreground truncate mt-1 flex items-center gap-1.5">
+                                  <MapPin size={12} className="flex-shrink-0 text-primary/60" />
+                                  {item.location || "Brasil"}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <Clock size={12} />
+                                  {formatHistoryDate(item.created_at)}
+                                </div>
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                                  <Globe size={10} />
+                                  {item.leads?.length || item.results_count}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {totalHistoryPages > 1 && (
+                          <div className="flex items-center justify-center gap-4 mt-6">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setHistoryPage((prev) => Math.max(1, prev - 1))}
+                              disabled={historyPage === 1}
+                              className="h-9 px-3"
+                            >
+                              <ChevronLeft size={16} />
+                            </Button>
+                            <span className="text-sm text-muted-foreground">
+                              Página {historyPage} de {totalHistoryPages}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setHistoryPage((prev) => Math.min(totalHistoryPages, prev + 1))}
+                              disabled={historyPage === totalHistoryPages}
+                              className="h-9 px-3"
+                            >
+                              <ChevronRight size={16} />
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
