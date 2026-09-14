@@ -145,29 +145,39 @@ function isMobileBR(e164: string): boolean {
   return e164.length === 13 && e164[4] === "9";
 }
 
-async function serpSearch(query: string, start: number): Promise<any | null> {
+async function serpSearch(
+  query: string,
+  start: number,
+  location?: string | null,
+): Promise<any | null> {
+  // SerpAPI (engine=google) precisa apenas de: q, start/num e, opcionalmente,
+  // location. Se a localização não for reconhecida, refazemos sem ela.
   for (const key of SERP_API_KEYS) {
-    const url =
-      `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}` +
-      `&hl=pt-br&gl=br&google_domain=google.com.br&num=20&start=${start}&api_key=${key}`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        console.error(`[web-search] SERP ${res.status} — tentando próxima chave`);
-        continue;
+    for (const useLocation of location ? [true, false] : [false]) {
+      const url =
+        `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}` +
+        (useLocation ? `&location=${encodeURIComponent(location as string)}` : "") +
+        `&hl=pt-br&gl=br&google_domain=google.com.br&num=20&start=${start}&api_key=${key}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.error(`[web-search] SERP ${res.status} — tentando novamente`);
+          continue;
+        }
+        const data = await res.json();
+        if (data?.error) {
+          console.error(`[web-search] SERP error: ${data.error}`);
+          continue;
+        }
+        return data;
+      } catch (e) {
+        console.error("[web-search] SERP fetch falhou", String(e));
       }
-      const data = await res.json();
-      if (data?.error) {
-        console.error(`[web-search] SERP error: ${data.error}`);
-        continue;
-      }
-      return data;
-    } catch (e) {
-      console.error("[web-search] SERP fetch falhou", String(e));
     }
   }
   return null;
 }
+
 
 type WebCandidate = {
   domain: string;
