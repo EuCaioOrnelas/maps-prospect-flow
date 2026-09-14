@@ -14,7 +14,7 @@ const triggerLabels: Record<string, string> = {
   no_conversation_days: "X dias sem conversa",
   before_appointment: "Antes do compromisso",
   after_appointment: "Após a reunião",
-  appointment_no_show: "Faltou ao compromisso",
+  appointment_no_show: "Compromisso precisa ser reagendado",
   stage_entered: "Entrou na etapa do CRM",
   score_reached: "Score atingido",
   deal_created: "Venda registrada",
