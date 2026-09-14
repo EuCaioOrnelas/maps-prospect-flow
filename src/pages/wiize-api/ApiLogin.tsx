@@ -602,7 +602,7 @@ export default function ApiLogin() {
                             )}
                           </span>
                         </div>
-                        {cepError && <p className="text-[11px] text-destructive">{cepError}</p>}
+                        {cepError && <p className="text-[11px] text-muted-foreground">{cepError}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="api-street">Endereço</Label>
