@@ -16,18 +16,15 @@ import {
   Brain,
   Lock,
   Settings,
+  Target,
+  MessageSquare,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,9 +33,14 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
+import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { hasSDRAccess } from "@/lib/planAccess";
-
-const RESULT_OPTIONS = [10, 20, 30, 50];
+import {
+  AutoApproachPrefs,
+  EMPTY_AUTO_APPROACH,
+  clearAutoApproachPrefs,
+  saveAutoApproachPrefs,
+} from "@/lib/autoApproachPrefs";
 
 type Phase = "idle" | "searching" | "diagnosing" | "done";
 
@@ -52,14 +54,14 @@ interface SearchSummary {
 }
 
 const ProspeccaoWeb = () => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, accountOwnerId } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const [niche, setNiche] = useState("");
   const [location, setLocation] = useState("");
   const [extraTerm, setExtraTerm] = useState("");
-  const [count, setCount] = useState<number>(10);
+  const [autoApproach, setAutoApproach] = useState<AutoApproachPrefs>({ ...EMPTY_AUTO_APPROACH });
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [statusText, setStatusText] = useState("");
@@ -80,10 +82,11 @@ const ProspeccaoWeb = () => {
     supabase
       .from("company_profiles")
       .select("*")
-      .eq("user_id", user.id)
+      .or(`owner_user_id.eq.${accountOwnerId || user.id},user_id.eq.${user.id}`)
+      .limit(1)
       .maybeSingle()
       .then(({ data }) => setCompanyProfile(data));
-  }, [user]);
+  }, [user, accountOwnerId]);
 
   const canSubmit = useMemo(
     () => niche.trim().length >= 2 && location.trim().length >= 2 && !isBusy,
@@ -123,6 +126,8 @@ const ProspeccaoWeb = () => {
     setProgress(0);
     setPhase("searching");
     setStatusText("Procurando empresas com site na web...");
+    if (autoApproach.manual || autoApproach.meta) saveAutoApproachPrefs(autoApproach);
+    else clearAutoApproachPrefs();
 
     try {
       const { data, error } = await supabase.functions.invoke("search-leads-web", {
@@ -130,7 +135,6 @@ const ProspeccaoWeb = () => {
           niche: niche.trim(),
           location: location.trim(),
           extra_term: extraTerm.trim() || undefined,
-          count,
         },
       });
 
@@ -212,8 +216,7 @@ const ProspeccaoWeb = () => {
               </div>
             ) : (
               <div className="mx-auto w-full max-w-4xl min-w-0">
-                {/* Cabeçalho */}
-                <div className="text-center mb-8 relative">
+                <div className="text-center mb-8 sm:mb-12 relative">
                   {companyProfile && (
                     <div className="absolute right-0 top-0 hidden sm:block">
                       <Button
@@ -227,113 +230,202 @@ const ProspeccaoWeb = () => {
                       </Button>
                     </div>
                   )}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-5">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
                     <Globe size={18} className="text-primary" />
-                    <span className="text-sm font-medium text-primary">Prospecção Web</span>
+                    <span className="text-sm font-medium text-primary">Oportunidades Web com IA</span>
                   </div>
-                  <h1 className="mb-3 font-display text-3xl font-bold leading-tight sm:text-4xl">
-                    <span className="text-foreground">Encontre empresas pelo </span>
-                    <span className="text-shimmer-highlight">site delas</span>
+                  <h1 className="mb-4 font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
+                    <span className="text-foreground">Encontre oportunidades pela </span>
+                    <span className="text-shimmer-highlight">web</span>
                   </h1>
-                  <p className="text-muted-foreground max-w-xl mx-auto">
-                    Buscamos empresas com presença na web, extraímos os contatos disponíveis no
-                    site e enviamos tudo para a Gestão de Oportunidades com diagnóstico da IA.
+                  <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+                    Encontramos o máximo de sites empresariais válidos e extraímos os contatos públicos disponíveis
                   </p>
+                  {companyProfile && (
+                    <div className="mt-3 sm:hidden">
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowCompanyOnboarding(true)}>
+                        <Settings size={14} />
+                        Editar Perfil
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Formulário */}
-                <div className="rounded-2xl border border-border bg-card p-5 sm:p-6 mb-6">
-                  <div className="grid gap-4 sm:grid-cols-2">
+                {companyProfile && (
+                  <div className="mb-6">
+                    <IdealAudienceMismatchBanner
+                      accountOwnerId={accountOwnerId}
+                      onEditProfile={() => setShowCompanyOnboarding(true)}
+                    />
+                  </div>
+                )}
+
+                <div className="relative mb-10 w-full min-w-0">
+                  <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/5 blur-3xl" />
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void handleSearch();
+                    }}
+                    className="w-full min-w-0 overflow-hidden rounded-panel border border-border/80 bg-card p-5 shadow-card sm:p-8"
+                  >
+                    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Target size={16} className="text-primary" />
+                        </div>
+                        <span>Sites empresariais</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Sparkles size={16} className="text-primary" />
+                        </div>
+                        <span>Contatos verificados</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Globe size={16} className="text-primary" />
+                        </div>
+                        <span>Busca via SerpAPI</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 mb-6 bg-primary/5 border border-primary/20 rounded-xl">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Globe size={18} className="text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">Prospecção por sites no Google</p>
+                        <p className="text-xs text-muted-foreground">
+                          Buscamos o máximo de sites próprios e removemos redes sociais, marketplaces, diretórios e duplicidades.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
                     <div className="space-y-2">
-                      <Label htmlFor="niche" className="flex items-center gap-2">
+                      <Label htmlFor="niche" className="flex items-center gap-2 text-sm font-medium">
                         <Building2 size={14} className="text-primary" />
-                        Nicho ou segmento
+                        Nicho
                       </Label>
                       <Input
                         id="niche"
-                        placeholder="Ex.: clínicas odontológicas"
+                        placeholder="Ex: clínicas odontológicas, contabilidades..."
                         value={niche}
                         onChange={(e) => setNiche(e.target.value)}
                         disabled={isBusy}
+                        className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="location" className="flex items-center gap-2">
+                      <Label htmlFor="location" className="flex items-center gap-2 text-sm font-medium">
                         <MapPin size={14} className="text-primary" />
                         Localização
+                        <span className="ml-auto flex items-center gap-1 text-xs font-normal text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">
+                          <Globe size={10} />
+                          Global
+                        </span>
                       </Label>
                       <Input
                         id="location"
-                        placeholder="Ex.: Maringá - PR"
+                        placeholder="Ex: Maringá, PR ou Lisboa, Portugal"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         disabled={isBusy}
+                        className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                       />
+                      <p className="text-xs text-muted-foreground/70">Cidade, Estado • Cidade, País • ou qualquer região</p>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="extra" className="flex items-center gap-2">
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="extra" className="flex items-center gap-2 text-sm font-medium">
                         <ListFilter size={14} className="text-primary" />
-                        Termo adicional{" "}
+                        Serviço ou especialidade{" "}
                         <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                       </Label>
                       <Input
                         id="extra"
-                        placeholder="Ex.: implante dentário"
+                        placeholder="Ex: implante dentário, BPO financeiro, energia solar..."
                         value={extraTerm}
                         onChange={(e) => setExtraTerm(e.target.value)}
                         disabled={isBusy}
+                        className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Search size={14} className="text-primary" />
-                        Quantidade de resultados
-                      </Label>
-                      <Select
-                        value={String(count)}
-                        onValueChange={(v) => setCount(Number(v))}
-                        disabled={isBusy}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {RESULT_OPTIONS.map((n) => (
-                            <SelectItem key={n} value={String(n)}>
-                              {n} empresas
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
-                  </div>
 
-                  <Button
-                    className="w-full mt-5"
+                    <div className="mb-6 overflow-hidden rounded-panel border border-border/70 bg-secondary/20">
+                      <div className="flex items-start gap-3 border-b border-border/60 bg-card/70 px-4 py-4 sm:px-5">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover border border-primary/20 bg-primary/10">
+                          <Sparkles size={16} className="text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground">Geração de mensagem p/ abordagem com IA</p>
+                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Gere automaticamente as mensagens após o diagnóstico das empresas com número válido.</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4">
+                        <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
+                          <Checkbox
+                            checked={autoApproach.manual}
+                            onCheckedChange={(checked) => setAutoApproach((previous) => ({ ...previous, manual: !!checked }))}
+                            className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-primary/10">
+                                <MessageSquare size={14} className="text-primary" />
+                              </div>
+                              <span className="text-sm font-medium text-foreground">Envio manual</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground block leading-relaxed">Primeiro contato para copiar ou enviar pelo WhatsApp.</span>
+                          </div>
+                        </label>
+                        <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
+                          <Checkbox
+                            checked={autoApproach.meta}
+                            onCheckedChange={(checked) => setAutoApproach((previous) => ({ ...previous, meta: !!checked }))}
+                            className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-info/10">
+                                <Megaphone size={14} className="text-info" />
+                              </div>
+                              <span className="text-sm font-medium text-foreground">Campanhas Meta</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground block leading-relaxed">Follow-up após resposta ao template aprovado.</span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <Button
+                    type="submit"
+                    className="w-full h-14 text-base font-semibold"
                     size="lg"
                     variant="hero"
                     disabled={!canSubmit}
-                    onClick={handleSearch}
                   >
                     {isBusy ? (
                       <>
                         <Loader2 size={18} className="animate-spin" />
-                        Processando...
+                        Analisando sites e contatos...
                       </>
                     ) : (
                       <>
                         <Search size={18} />
-                        Buscar empresas na web
+                        Buscar Oportunidades
                       </>
                     )}
-                  </Button>
+                    </Button>
 
-                  {errorText && (
+                    {errorText && (
                     <div className="mt-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
                       <AlertCircle size={16} className="mt-0.5 shrink-0" />
                       <span>{errorText}</span>
                     </div>
-                  )}
+                    )}
+                  </form>
                 </div>
 
                 {/* Progresso */}
@@ -379,29 +471,14 @@ const ProspeccaoWeb = () => {
                   </div>
                 )}
 
-                {/* Como funciona */}
                 {phase === "idle" && !summary && (
-                  <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-                    <h2 className="font-display text-lg font-bold mb-4">Como funciona</h2>
-                    <ol className="space-y-3">
-                      {[
-                        "Você informa o nicho e a localização das empresas que quer encontrar.",
-                        "Buscamos sites reais de empresas e descartamos redes sociais, marketplaces e diretórios.",
-                        "Extraímos os contatos publicados no site: telefone, WhatsApp, e-mail, redes e endereço.",
-                        "A IA analisa cada empresa e gera o diagnóstico e o potencial de oportunidade.",
-                        "Tudo aparece na Gestão de Oportunidades com a origem WEB.",
-                      ].map((step, i) => (
-                        <li key={i} className="flex gap-3 text-sm">
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                            {i + 1}
-                          </span>
-                          <span className="text-muted-foreground leading-relaxed">{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      A mensagem de abordagem só é liberada para empresas com telefone ou WhatsApp
-                      encontrado.
+                  <div className="text-center py-12 sm:py-20">
+                    <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/10">
+                      <Globe size={40} className="text-primary" />
+                    </div>
+                    <h3 className="font-display text-xl sm:text-2xl font-bold mb-3">Pronto para prospectar pela web?</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto text-base">
+                      Informe o nicho, a localização e, se quiser, uma especialidade para encontrarmos o máximo de sites empresariais válidos.
                     </p>
                   </div>
                 )}
