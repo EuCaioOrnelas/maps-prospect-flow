@@ -123,6 +123,28 @@ export default function OpportunitiesManagement() {
   const [filterSearchQuery, setFilterSearchQuery] = useState<string>(
     () => new URLSearchParams(location.search).get("q") || "",
   );
+  // Mantém a URL em sinc com os filtros de origem/busca para que "Todas"/"IA"
+  // não continuem presos ao ?source=/?q= da última prospecção.
+  const applySourceFilter = (value: string, keepQuery = false) => {
+    setFilterSource(value);
+    if (!keepQuery) setFilterSearchQuery("");
+    setCurrentPage(1);
+    const params = new URLSearchParams(window.location.search);
+    if (value === "all") params.delete("source"); else params.set("source", value);
+    if (!keepQuery) params.delete("q");
+    const qs = params.toString();
+    navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+  };
+
+  const clearSearchQueryFilter = () => {
+    setFilterSearchQuery("");
+    setCurrentPage(1);
+    const params = new URLSearchParams(window.location.search);
+    params.delete("q");
+    const qs = params.toString();
+    navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(20);
   // Padrão "todos": o filtro "meus" escondia oportunidades atribuídas a outras
@@ -1901,7 +1923,7 @@ export default function OpportunitiesManagement() {
                             type="button"
                             variant={filterSource === opt.value ? "default" : "outline"}
                             className="gap-2 justify-center"
-                            onClick={() => { setFilterSource(opt.value); setCurrentPage(1); }}
+                            onClick={() => applySourceFilter(opt.value)}
                           >
                             {opt.icon}
                             {opt.label}
@@ -1909,6 +1931,21 @@ export default function OpportunitiesManagement() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Filtro herdado da última prospecção */}
+                    {filterSearchQuery && (
+                      <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                        <span className="text-xs text-muted-foreground truncate">
+                          <Search size={12} className="inline mr-1.5 -mt-0.5" />
+                          Somente da busca: <strong className="text-foreground">{filterSearchQuery}</strong>
+                        </span>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0" onClick={clearSearchQueryFilter}>
+                          <X size={12} />
+                          Remover
+                        </Button>
+                      </div>
+                    )}
+
 
                     {/* Ordenação */}
                     <div className="space-y-2">
@@ -2036,7 +2073,7 @@ export default function OpportunitiesManagement() {
                       <Button
                         variant="ghost"
                         className="w-full"
-                        onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setCurrentPage(1); }}
+                        onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setResponsibleFilter("all"); applySourceFilter("all"); }}
                       >
                         Limpar tudo
                       </Button>
