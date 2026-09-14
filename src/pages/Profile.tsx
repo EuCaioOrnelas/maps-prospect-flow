@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SEO } from "@/components/SEO";
 import { TrialCancelCard } from "@/components/profile/TrialCancelCard";
 import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
@@ -70,7 +71,6 @@ import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/l
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
-import { CommercialExpansionsSection } from "@/components/billing/CommercialExpansionsSection";
 
 
 
@@ -685,7 +685,7 @@ const Profile = () => {
                       className="h-10 bg-muted/40"
                     />
                     <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="h-3.5 w-3.5 text-primary" />
                       Verificado
                     </div>
                   </div>
@@ -770,31 +770,19 @@ const Profile = () => {
                   )}
                 </div>
               </div>
-              <div className="mt-5 grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/60 p-1.5 shadow-inner" role="tablist" aria-label="Dados comerciais">
-                <Button
-                  type="button"
-                  variant={businessView === "company" ? "default" : "ghost"}
-                  className="h-10 gap-2 rounded-md text-xs font-semibold shadow-none sm:text-sm"
-                  onClick={() => setBusinessView("company")}
-                  role="tab"
-                  aria-selected={businessView === "company"}
-                >
-                  <Building2 className="h-3.5 w-3.5" /> Perfil da empresa
-                </Button>
-                <Button
-                  type="button"
-                  variant={businessView === "services" ? "default" : "ghost"}
-                  className="h-10 gap-2 rounded-md text-xs font-semibold shadow-none sm:text-sm"
-                  onClick={() => setBusinessView("services")}
-                  role="tab"
-                  aria-selected={businessView === "services"}
-                >
-                  <DollarSign className="h-3.5 w-3.5" /> Serviços e tickets
-                </Button>
-              </div>
+              <Tabs value={businessView} onValueChange={(v) => setBusinessView(v as "company" | "services")} className="mt-5 w-full sm:w-auto">
+                <TabsList className="h-9 w-full bg-muted/50 p-0.5 sm:w-auto">
+                  <TabsTrigger value="company" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <Building2 className="h-3.5 w-3.5" /> Perfil da empresa
+                  </TabsTrigger>
+                  <TabsTrigger value="services" className="gap-1.5 text-xs data-[state=active]:bg-background">
+                    <DollarSign className="h-3.5 w-3.5" /> Serviços e tickets
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </CardHeader>
             <div role="tabpanel" className={businessView === "company" ? "block" : "hidden"}>
-            <CardContent>
+            <CardContent className="pt-6">
               {isLoadingCompanyProfile ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -972,7 +960,7 @@ const Profile = () => {
             </CardContent>
             </div>
             <div role="tabpanel" className={businessView === "services" ? "block" : "hidden"}>
-            <CardContent>
+            <CardContent className="pt-6">
               {isLoadingServices ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1110,19 +1098,6 @@ const Profile = () => {
           </Card>
           </>)}
 
-          {!isSubUser && (
-            <div className="pt-3">
-              <CommercialExpansionsSection
-                profile={profile}
-                provider={(profile as any)?.payment_provider}
-                canPurchase={!isFreePlan && (profile as any)?.billing_period !== "annual" && Boolean(profile?.subscription_current_period_end && new Date(profile.subscription_current_period_end).getTime() > Date.now())}
-                onChanged={() => refreshProfile?.()}
-                showPlanActions
-              />
-            </div>
-          )}
-
-
           {/* Plan Card — Owner vê completo; Admin/Operational vê resumo somente leitura */}
           {isSubUser ? (
             <Card className="border-border/50 shadow-none">
@@ -1166,11 +1141,11 @@ const Profile = () => {
                 Gerencie seu plano e pagamentos
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border shadow-sm">
-                <div className="space-y-1">
+            <CardContent className="space-y-5">
+              <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Plano atual:</span>
+                    <span className="text-sm font-medium text-muted-foreground">Plano atual</span>
                     <span className={`font-bold ${getPlanColor(profile?.plan || 'free')}`}>
                       {planLabel}
                     </span>
@@ -1186,12 +1161,12 @@ const Profile = () => {
                   )}
 
                   {hasOpps && (((profile as any)?.extra_opportunities_packs || 0) > 0) && (
-                    <p className="text-xs text-foreground font-medium">
+                    <p className="text-xs font-medium text-foreground">
                       + {(((profile as any).extra_opportunities_packs) * 1000).toLocaleString('pt-BR')} oportunidades da Expansão Comercial
                     </p>
                   )}
                   {hasOpps && ((profile as any)?.bonus_searches || 0) > 0 && (
-                    <p className="text-xs text-emerald-600 font-medium">
+                    <p className="text-xs font-medium text-primary">
                       + {((profile as any).bonus_searches).toLocaleString('pt-BR')} oportunidades bônus do plano anterior
                     </p>
                   )}
@@ -1213,79 +1188,43 @@ const Profile = () => {
                       </Tooltip>
                     </TooltipProvider>
                   )}
-
                 </div>
-                {profile?.plan === 'scale' ? (
-                  <div className="flex items-center gap-2 text-sm text-emerald-500">
-                    <Check className="h-4 w-4" />
-                    Plano máximo
-                  </div>
-                ) : (
-                  <Link to="/upgrade">
-                    <Button size="sm" variant="outline" className="gap-2">
-                      <Crown className="h-4 w-4" />
-                      Fazer upgrade
-                    </Button>
-                  </Link>
-                )}
+
+                <div className="flex flex-col gap-2 sm:items-end">
+                  {profile?.plan === 'scale' ? (
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                      <Check className="h-4 w-4" />
+                      Plano máximo
+                    </div>
+                  ) : (
+                    <Link to="/upgrade" className="w-full sm:w-auto">
+                      <Button size="sm" variant="outline" className="w-full gap-2 border-primary text-primary hover:bg-primary/10 sm:w-auto">
+                        <Crown className="h-4 w-4" />
+                        Fazer upgrade
+                      </Button>
+                    </Link>
+                  )}
+                  {!isFreePlan && (
+                    <Link to="/minha-assinatura" className="w-full sm:w-auto">
+                      <Button size="sm" variant="outline" className="w-full gap-2 sm:w-auto">
+                        <ExternalLink className="h-4 w-4" />
+                        Gerenciar assinatura
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {!isFreePlan && (
-                <>
-                  {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border shadow-sm">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center">
-                            <span className="text-sm font-bold text-muted-foreground">₱</span>
-                          </div>
-                          <span className="font-medium text-sm">Assinatura via PIX</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Gerencie sua assinatura, cancele ou altere seu plano pelo portal de pagamentos
-                        </p>
-                        {profile?.subscription_current_period_end && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
-                          </p>
-                        )}
-                      </div>
-                      <Link to="/minha-assinatura">
-                        <Button size="sm" variant="outline" className="gap-2">
-                          <ExternalLink className="h-4 w-4" />
-                          Gerenciar
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border shadow-sm">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center">
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <span className="font-medium text-sm">Assinatura via Cartão</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Gerencie sua assinatura, cancele ou altere seu plano pelo portal de pagamentos
-                        </p>
-                        {profile?.subscription_current_period_end && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
-                          </p>
-                        )}
-                      </div>
-                      <Link to="/minha-assinatura">
-                        <Button size="sm" variant="outline" className="gap-2">
-                          <ExternalLink className="h-4 w-4" />
-                          Gerenciar
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </>
+                <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 text-xs text-muted-foreground">
+                  <CreditCard className="h-4 w-4 shrink-0 text-primary" />
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="font-medium text-foreground">Faturamento via {((profile as any)?.payment_provider === 'stripe' || ((profile as any)?.stripe_customer_id)) ? 'cartão' : 'PIX'}</span>
+                    {profile?.subscription_current_period_end && (
+                      <span>Próxima cobrança: {formatDate(profile.subscription_current_period_end)}</span>
+                    )}
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
