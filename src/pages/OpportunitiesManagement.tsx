@@ -45,7 +45,7 @@ import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
 import { OpportunityBulkBar } from "@/components/opportunities/OpportunityBulkBar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE } from "@/lib/opportunitySource";
+import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE, displayRating, isDerivedRating } from "@/lib/opportunitySource";
 
 interface OpportunityLead {
   id: string;
@@ -758,7 +758,7 @@ export default function OpportunitiesManagement() {
     }
     if (minRating) {
       const mr = parseFloat(minRating);
-      if (!isNaN(mr)) result = result.filter(l => (l.rating ?? 0) >= mr);
+      if (!isNaN(mr)) result = result.filter(l => (displayRating(l) ?? 0) >= mr);
     }
     if (onlyHighOpp) {
       result = result.filter(l => (l.ai_score ?? 0) >= 70);
@@ -1327,7 +1327,16 @@ export default function OpportunitiesManagement() {
           <DetailCard icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
           <DetailCard icon={<Phone size={13} />} label="Telefone" value={formatPhoneNumber(lead.phone)} />
           <DetailCard icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
-          <DetailCard icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
+          <DetailCard
+            icon={<Star size={13} className="text-amber-400" />}
+            label={isDerivedRating(lead) ? "Avaliação (IA)" : "Avaliação"}
+            value={displayRating(lead) != null
+              ? (isDerivedRating(lead)
+                ? `${displayRating(lead)}/5`
+                : `${displayRating(lead)}/5 (${lead.review_count || 0})`)
+              : null}
+          />
+
           <DetailCard icon={<Tag size={13} />} label="Categoria" value={lead.category} />
           <DetailCard icon={<MapPin size={13} />} label="Cidade" value={lead.city} />
         </div>
@@ -1852,7 +1861,7 @@ export default function OpportunitiesManagement() {
 
               {/* Filter Dialog */}
               <Dialog open={showFilters} onOpenChange={setShowFilters}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <SlidersHorizontal size={18} />
@@ -1863,7 +1872,10 @@ export default function OpportunitiesManagement() {
                   <div className="space-y-5 pt-2">
                     {/* Responsável */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Responsável</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Users size={14} className="text-primary" />
+                        Responsável
+                      </label>
                       <CRMResponsibleFilter
                         value={responsibleFilter}
                         onChange={(v) => { setResponsibleFilter(v); setCurrentPage(1); clearSelection(); }}
@@ -1872,9 +1884,38 @@ export default function OpportunitiesManagement() {
                       />
                     </div>
 
+                    {/* Origem da prospecção */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Zap size={14} className="text-primary" />
+                        Origem
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { value: "all", label: "Todas", icon: <SlidersHorizontal size={14} /> },
+                          { value: "maps", label: "IA", icon: <Sparkles size={14} /> },
+                          { value: "web", label: "Web", icon: <Globe size={14} /> },
+                        ].map(opt => (
+                          <Button
+                            key={opt.value}
+                            type="button"
+                            variant={filterSource === opt.value ? "default" : "outline"}
+                            className="gap-2 justify-center"
+                            onClick={() => { setFilterSource(opt.value); setCurrentPage(1); }}
+                          >
+                            {opt.icon}
+                            {opt.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Ordenação */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Ordenar por</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <BarChart3 size={14} className="text-primary" />
+                        Ordenar por
+                      </label>
                       <Select value={sortOrder} onValueChange={(v: any) => { setSortOrder(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Ordenar por" />
@@ -1890,7 +1931,10 @@ export default function OpportunitiesManagement() {
 
                     {/* Intenção */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Intenção</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Target size={14} className="text-primary" />
+                        Intenção
+                      </label>
                       <Select value={filterLevel} onValueChange={(v) => { setFilterLevel(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Todas" />
@@ -1906,7 +1950,10 @@ export default function OpportunitiesManagement() {
 
                     {/* Categoria */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Categoria</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Tag size={14} className="text-primary" />
+                        Categoria
+                      </label>
                       <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Todas categorias" />
@@ -1922,7 +1969,10 @@ export default function OpportunitiesManagement() {
 
                     {/* Cidade */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Cidade</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <MapPin size={14} className="text-primary" />
+                        Cidade
+                      </label>
                       <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Todas cidades" />
@@ -1936,26 +1986,15 @@ export default function OpportunitiesManagement() {
                       </Select>
                     </div>
 
-                    {/* Origem da prospecção */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Origem</label>
-                      <Select value={filterSource} onValueChange={(v) => { setFilterSource(v); setCurrentPage(1); }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Todas as origens" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas as origens</SelectItem>
-                          <SelectItem value="maps">Prospecção Completa (MAPS)</SelectItem>
-                          <SelectItem value="web">Prospecção Web (WEB)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
 
 
                     {/* Score e Avaliação */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Score mínimo</label>
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <TrendingUp size={14} className="text-primary" />
+                          Score mínimo
+                        </label>
                         <Input
                           type="number"
                           min={0}
@@ -1966,7 +2005,10 @@ export default function OpportunitiesManagement() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Avaliação mínima</label>
+                        <label className="text-sm font-medium flex items-center gap-2">
+                          <Star size={14} className="text-amber-400" />
+                          Avaliação mínima (0-5)
+                        </label>
                         <Input
                           type="number"
                           min={0}
@@ -2106,13 +2148,25 @@ export default function OpportunitiesManagement() {
                           <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{lead.category || "-"}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{lead.city || "-"}</TableCell>
                           <TableCell className="text-center">
-                            {lead.rating ? (
-                              <div className="flex items-center justify-center gap-1">
-                                <Star size={14} className="text-amber-400 fill-amber-400" />
-                                <span className="text-sm">{lead.rating}</span>
-                                <span className="text-xs text-muted-foreground">({lead.review_count || 0})</span>
-                              </div>
-                            ) : "-"}
+                            {(() => {
+                              const r = displayRating(lead);
+                              if (r == null) return "-";
+                              const derived = isDerivedRating(lead);
+                              return (
+                                <div
+                                  className="flex items-center justify-center gap-1"
+                                  title={derived ? "Avaliação gerada pela análise de IA (0 a 5)" : "Avaliação do Google"}
+                                >
+                                  <Star size={14} className="text-amber-400 fill-amber-400" />
+                                  <span className="text-sm">{r}</span>
+                                  {derived ? (
+                                    <span className="text-[10px] text-muted-foreground">IA</span>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">({lead.review_count || 0})</span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           {/* Célula "Índ. Fech." removida — visível apenas no card do lead */}
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>

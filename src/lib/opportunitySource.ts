@@ -49,3 +49,25 @@ export function canGenerateMessage(opportunity: OpportunityLike | null | undefin
 }
 
 export const NO_NUMBER_MESSAGE = "Número não encontrado";
+
+/**
+ * Avaliação exibida (0 a 5).
+ * Maps: nota real do Google. Web: derivada da análise de IA (score 0-100 → 0-5).
+ */
+export function displayRating(
+  lead: { rating?: number | null; ai_score?: number | null; source?: string | null } | null | undefined,
+): number | null {
+  if (!lead) return null;
+  if (lead.rating != null && lead.rating > 0) return lead.rating;
+  if (lead.ai_score != null && lead.ai_score > 0) {
+    return Math.round((lead.ai_score / 20) * 10) / 10;
+  }
+  return null;
+}
+
+/** true quando a avaliação vem da análise de IA (Web), não do Google. */
+export function isDerivedRating(
+  lead: { rating?: number | null; ai_score?: number | null } | null | undefined,
+): boolean {
+  return !!lead && !(lead.rating != null && lead.rating > 0) && (lead.ai_score ?? 0) > 0;
+}
