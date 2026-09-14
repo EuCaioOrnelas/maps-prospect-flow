@@ -96,6 +96,12 @@ const ProspeccaoWeb = () => {
   const [showCompanyOnboarding, setShowCompanyOnboarding] = useState(false);
   const inFlight = useRef(false);
 
+  const [webHistory, setWebHistory] = useState<WebHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<string>>(new Set());
+  const [bulkExporting, setBulkExporting] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+
   const isBusy = phase === "searching" || phase === "diagnosing";
   const hasAccess = hasSDRAccess(profile);
 
