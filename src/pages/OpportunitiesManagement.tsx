@@ -1314,7 +1314,6 @@ export default function OpportunitiesManagement() {
   };
 
   const renderLeadData = (lead: OpportunityLead) => {
-    const isWebLead = (lead.source || "maps") === "web";
     return (
     <div className="space-y-4">
       {/* Company Info Card */}
@@ -1434,8 +1433,6 @@ export default function OpportunitiesManagement() {
         </>
       )}
 
-      {/* Prospecção Web: sem geração de mensagem de abordagem */}
-      {!isWebLead && (
       <div data-tour="lead-approach-card" className="bg-card border border-border rounded-xl p-4 space-y-3">
         {/* Toggle segmentado full-width */}
         <div className="w-full bg-muted/50 p-1 rounded-full flex items-center gap-1">
@@ -1617,9 +1614,7 @@ export default function OpportunitiesManagement() {
           </>
         )}
       </div>
-      )}
 
-      {!isWebLead && (
       <div className="flex flex-col gap-2 pt-1">
         {messageMode === "meta" && lead.ai_approach_message && !lead.first_message_sent && (
           <Button
