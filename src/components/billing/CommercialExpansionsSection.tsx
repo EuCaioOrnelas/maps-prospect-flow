@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Minus, Plus, Rocket, QrCode, CreditCard, ArrowRight, Check, Crown, ShieldCheck, Sparkles, Zap, Copy, ReceiptText } from "lucide-react";
+import { Loader2, Minus, Plus, Rocket, QrCode, CreditCard, ArrowRight, Check, Crown, ShieldCheck, Zap, Copy, ReceiptText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -162,57 +162,52 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                 const totalPrice = b.monthlyPriceCents * purchaseQty;
                 return (
                   <section key={b.id} className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-card transition-colors hover:border-primary/35">
-                    {b.id === "opportunities" && (
-                      <div className="flex items-center justify-center gap-1.5 border-b border-primary/15 bg-primary/10 px-3 py-1.5 text-[10px] font-semibold text-primary">
-                        <Sparkles className="h-3 w-3" /> Expansão comercial
-                      </div>
-                    )}
                     <div className="flex flex-1 flex-col p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
-                        <b.icon className="h-5 w-5 text-primary" />
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
+                          <b.icon className="h-5 w-5 text-primary" />
+                        </div>
+                        {activeQty > 0 && <Badge variant="outline" className="border-primary/20 bg-primary/5 text-[10px] text-primary">Já contratado</Badge>}
                       </div>
-                      {activeQty > 0 && <Badge variant="outline" className="border-primary/20 bg-primary/5 text-[10px] text-primary">Já contratado</Badge>}
-                    </div>
-                    <div className="mt-5 min-h-[132px]">
-                      <p className="text-base font-semibold text-foreground">{b.title}</p>
-                      <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-primary"><Zap className="h-3.5 w-3.5" />{delivered} por pacote</p>
-                      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{b.description}</p>
-                    </div>
-                    <div className="mt-4 border-t border-border/60 pt-5">
-                      <p className="text-2xl font-bold tabular-nums text-foreground">
-                        {currency(b.monthlyPriceCents)}
-                        <span className="ml-1 text-[11px] font-medium text-muted-foreground">/mês por pacote</span>
-                      </p>
-                      <div className="mt-5 flex items-center justify-between gap-3">
-                        <div className="flex h-10 items-center rounded-md border border-border bg-muted/25 p-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 rounded-sm"
-                            disabled={busy || purchaseQty <= 1}
-                            onClick={() => setPurchaseQuantities((current) => ({ ...current, [b.id]: Math.max(1, current[b.id] - 1) }))}
-                            aria-label={`Diminuir quantidade de ${b.title}`}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm font-bold tabular-nums">{purchaseQty}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 rounded-sm"
-                            disabled={busy || purchaseQty >= 99}
-                            onClick={() => setPurchaseQuantities((current) => ({ ...current, [b.id]: Math.min(99, current[b.id] + 1) }))}
-                            aria-label={`Aumentar quantidade de ${b.title}`}
-                          >
-                            <Plus className="h-3 w-3" />
+                      <div className="mt-5 flex-1">
+                        <p className="text-base font-semibold text-foreground">{b.title}</p>
+                        <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-primary"><Zap className="h-3.5 w-3.5" />{delivered} por pacote</p>
+                        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{b.description}</p>
+                      </div>
+                      <div className="mt-auto border-t border-border/60 pt-5">
+                        <p className="text-2xl font-bold tabular-nums text-foreground">
+                          {currency(b.monthlyPriceCents)}
+                          <span className="ml-1 text-[11px] font-medium text-muted-foreground">/mês por pacote</span>
+                        </p>
+                        <div className="mt-5 flex items-center justify-between gap-3">
+                          <div className="flex h-10 items-center rounded-md border border-border bg-muted/25 p-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 rounded-sm"
+                              disabled={busy || purchaseQty <= 1}
+                              onClick={() => setPurchaseQuantities((current) => ({ ...current, [b.id]: Math.max(1, current[b.id] - 1) }))}
+                              aria-label={`Diminuir quantidade de ${b.title}`}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-8 text-center text-sm font-bold tabular-nums">{purchaseQty}</span>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 rounded-sm"
+                              disabled={busy || purchaseQty >= 99}
+                              onClick={() => setPurchaseQuantities((current) => ({ ...current, [b.id]: Math.min(99, current[b.id] + 1) }))}
+                              aria-label={`Aumentar quantidade de ${b.title}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <Button size="sm" className="h-10 flex-1 gap-1.5 px-3 text-xs" disabled={!canPurchase || !planSupportsBumps || busy} onClick={() => setConfirming(b.id)}>
+                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Adicionar <ArrowRight className="h-3.5 w-3.5" /></>}
                           </Button>
                         </div>
-                        <Button size="sm" className="h-10 flex-1 gap-1.5 px-3 text-xs" disabled={!canPurchase || !planSupportsBumps || busy} onClick={() => setConfirming(b.id)}>
-                          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Adicionar <ArrowRight className="h-3.5 w-3.5" /></>}
-                        </Button>
                       </div>
-                    </div>
                     </div>
                   </section>
                 );
@@ -261,7 +256,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
           )}
 
           {(!canPurchase || !planSupportsBumps) && bumps.length > 0 && (
-            <div className="flex items-start gap-2 border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
+            <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/20 p-4 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               {!planSupportsBumps
                 ? "Adicionais são contratados nos planos Atendimento, Growth IA e Enterprise. Altere seu plano para ativar esta capacidade."
