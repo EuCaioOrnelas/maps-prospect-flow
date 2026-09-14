@@ -1313,7 +1313,9 @@ export default function OpportunitiesManagement() {
     );
   };
 
-  const renderLeadData = (lead: OpportunityLead) => (
+  const renderLeadData = (lead: OpportunityLead) => {
+    const isWebLead = (lead.source || "maps") === "web";
+    return (
     <div className="space-y-4">
       {/* Company Info Card */}
       <div className="bg-card border border-border rounded-xl p-4 space-y-3">
