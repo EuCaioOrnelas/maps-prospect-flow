@@ -1872,7 +1872,10 @@ export default function OpportunitiesManagement() {
                   <div className="space-y-5 pt-2">
                     {/* Responsável */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Responsável</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Users size={14} className="text-primary" />
+                        Responsável
+                      </label>
                       <CRMResponsibleFilter
                         value={responsibleFilter}
                         onChange={(v) => { setResponsibleFilter(v); setCurrentPage(1); clearSelection(); }}
@@ -1881,9 +1884,38 @@ export default function OpportunitiesManagement() {
                       />
                     </div>
 
+                    {/* Origem da prospecção */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Zap size={14} className="text-primary" />
+                        Origem
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { value: "all", label: "Todas", icon: <SlidersHorizontal size={14} /> },
+                          { value: "maps", label: "IA", icon: <Sparkles size={14} /> },
+                          { value: "web", label: "Web", icon: <Globe size={14} /> },
+                        ].map(opt => (
+                          <Button
+                            key={opt.value}
+                            type="button"
+                            variant={filterSource === opt.value ? "default" : "outline"}
+                            className="gap-2 justify-center"
+                            onClick={() => { setFilterSource(opt.value); setCurrentPage(1); }}
+                          >
+                            {opt.icon}
+                            {opt.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Ordenação */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Ordenar por</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <BarChart3 size={14} className="text-primary" />
+                        Ordenar por
+                      </label>
                       <Select value={sortOrder} onValueChange={(v: any) => { setSortOrder(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Ordenar por" />
@@ -1899,7 +1931,10 @@ export default function OpportunitiesManagement() {
 
                     {/* Intenção */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Intenção</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Target size={14} className="text-primary" />
+                        Intenção
+                      </label>
                       <Select value={filterLevel} onValueChange={(v) => { setFilterLevel(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Todas" />
@@ -1915,7 +1950,10 @@ export default function OpportunitiesManagement() {
 
                     {/* Categoria */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Categoria</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Tag size={14} className="text-primary" />
+                        Categoria
+                      </label>
                       <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Todas categorias" />
@@ -1931,7 +1969,10 @@ export default function OpportunitiesManagement() {
 
                     {/* Cidade */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Cidade</label>
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <MapPin size={14} className="text-primary" />
+                        Cidade
+                      </label>
                       <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Todas cidades" />
@@ -1945,20 +1986,6 @@ export default function OpportunitiesManagement() {
                       </Select>
                     </div>
 
-                    {/* Origem da prospecção */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Origem</label>
-                      <Select value={filterSource} onValueChange={(v) => { setFilterSource(v); setCurrentPage(1); }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Todas as origens" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todas as origens</SelectItem>
-                          <SelectItem value="maps">Prospecção Completa (MAPS)</SelectItem>
-                          <SelectItem value="web">Prospecção Web (WEB)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
 
 
                     {/* Score e Avaliação */}
