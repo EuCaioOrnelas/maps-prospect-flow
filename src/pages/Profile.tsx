@@ -1141,11 +1141,11 @@ const Profile = () => {
                 Gerencie seu plano e pagamentos
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border shadow-sm">
-                <div className="space-y-1">
+            <CardContent className="space-y-5">
+              <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Plano atual:</span>
+                    <span className="text-sm font-medium text-muted-foreground">Plano atual</span>
                     <span className={`font-bold ${getPlanColor(profile?.plan || 'free')}`}>
                       {planLabel}
                     </span>
@@ -1161,12 +1161,12 @@ const Profile = () => {
                   )}
 
                   {hasOpps && (((profile as any)?.extra_opportunities_packs || 0) > 0) && (
-                    <p className="text-xs text-foreground font-medium">
+                    <p className="text-xs font-medium text-foreground">
                       + {(((profile as any).extra_opportunities_packs) * 1000).toLocaleString('pt-BR')} oportunidades da Expansão Comercial
                     </p>
                   )}
                   {hasOpps && ((profile as any)?.bonus_searches || 0) > 0 && (
-                    <p className="text-xs text-emerald-600 font-medium">
+                    <p className="text-xs font-medium text-primary">
                       + {((profile as any).bonus_searches).toLocaleString('pt-BR')} oportunidades bônus do plano anterior
                     </p>
                   )}
@@ -1188,79 +1188,43 @@ const Profile = () => {
                       </Tooltip>
                     </TooltipProvider>
                   )}
-
                 </div>
-                {profile?.plan === 'scale' ? (
-                  <div className="flex items-center gap-2 text-sm text-emerald-500">
-                    <Check className="h-4 w-4" />
-                    Plano máximo
-                  </div>
-                ) : (
-                  <Link to="/upgrade">
-                    <Button size="sm" variant="outline" className="gap-2">
-                      <Crown className="h-4 w-4" />
-                      Fazer upgrade
-                    </Button>
-                  </Link>
-                )}
+
+                <div className="flex flex-col gap-2 sm:items-end">
+                  {profile?.plan === 'scale' ? (
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                      <Check className="h-4 w-4" />
+                      Plano máximo
+                    </div>
+                  ) : (
+                    <Link to="/upgrade" className="w-full sm:w-auto">
+                      <Button size="sm" className="w-full gap-2 sm:w-auto">
+                        <Crown className="h-4 w-4" />
+                        Fazer upgrade
+                      </Button>
+                    </Link>
+                  )}
+                  {!isFreePlan && (
+                    <Link to="/minha-assinatura" className="w-full sm:w-auto">
+                      <Button size="sm" variant="outline" className="w-full gap-2 sm:w-auto">
+                        <ExternalLink className="h-4 w-4" />
+                        Gerenciar assinatura
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {!isFreePlan && (
-                <>
-                  {((profile as any)?.payment_provider === 'abacate_pay' || ((profile as any)?.payment_provider == null && !(profile as any)?.stripe_customer_id)) && (profile as any)?.payment_provider !== 'stripe' ? (
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border shadow-sm">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center">
-                            <span className="text-sm font-bold text-muted-foreground">₱</span>
-                          </div>
-                          <span className="font-medium text-sm">Assinatura via PIX</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Gerencie sua assinatura, cancele ou altere seu plano pelo portal de pagamentos
-                        </p>
-                        {profile?.subscription_current_period_end && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
-                          </p>
-                        )}
-                      </div>
-                      <Link to="/minha-assinatura">
-                        <Button size="sm" variant="outline" className="gap-2">
-                          <ExternalLink className="h-4 w-4" />
-                          Gerenciar
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-card border border-border shadow-sm">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center">
-                            <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <span className="font-medium text-sm">Assinatura via Cartão</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Gerencie sua assinatura, cancele ou altere seu plano pelo portal de pagamentos
-                        </p>
-                        {profile?.subscription_current_period_end && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Próxima cobrança: {formatDate(profile.subscription_current_period_end)}
-                          </p>
-                        )}
-                      </div>
-                      <Link to="/minha-assinatura">
-                        <Button size="sm" variant="outline" className="gap-2">
-                          <ExternalLink className="h-4 w-4" />
-                          Gerenciar
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </>
+                <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3 text-xs text-muted-foreground">
+                  <CreditCard className="h-4 w-4 shrink-0 text-primary" />
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="font-medium text-foreground">Faturamento via {((profile as any)?.payment_provider === 'stripe' || ((profile as any)?.stripe_customer_id)) ? 'cartão' : 'PIX'}</span>
+                    {profile?.subscription_current_period_end && (
+                      <span>Próxima cobrança: {formatDate(profile.subscription_current_period_end)}</span>
+                    )}
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
