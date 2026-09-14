@@ -27,6 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useChatPrivacy, PRIVACY_BLUR_CLASS } from "@/hooks/useChatPrivacy";
 import { ChatAppointmentDialog } from "./ChatAppointmentDialog";
 import { ScheduleMessageDialog } from "./ScheduleMessageDialog";
+import { AddToCRMDialog } from "./AddToCRMDialog";
 
 
 
