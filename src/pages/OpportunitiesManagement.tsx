@@ -1923,7 +1923,7 @@ export default function OpportunitiesManagement() {
                             type="button"
                             variant={filterSource === opt.value ? "default" : "outline"}
                             className="gap-2 justify-center"
-                            onClick={() => { setFilterSource(opt.value); setCurrentPage(1); }}
+                            onClick={() => applySourceFilter(opt.value)}
                           >
                             {opt.icon}
                             {opt.label}
