@@ -82,21 +82,6 @@ const ProspeccaoWeb = () => {
     [query, isBusy],
   );
 
-  const runDiagnosis = async (leadIds: string[]) => {
-    setPhase("diagnosing");
-    let done = 0;
-    for (const id of leadIds) {
-      setStatusText(`Analisando empresa ${done + 1} de ${leadIds.length} com IA...`);
-      try {
-        await supabase.functions.invoke("score-opportunity", { body: { lead_id: id } });
-      } catch (e) {
-        console.error("[prospeccao-web] diagnóstico falhou", id, e);
-      }
-      done++;
-      setProgress(Math.round((done / leadIds.length) * 100));
-    }
-  };
-
   const handleSearch = async () => {
     if (!canSubmit || inFlight.current) return;
 
@@ -144,15 +129,21 @@ const ProspeccaoWeb = () => {
       }
 
       setSearchQuery(payload.searchQuery || "");
-      setStatusText(`${payload.summary.saved} empresas registradas. Iniciando diagnóstico...`);
       await refreshProfile();
 
-      const leadIds: string[] = payload.leadIds || [];
-      if (leadIds.length > 0) await runDiagnosis(leadIds);
-
+      const saved = payload?.summary?.saved || 0;
       setSummary(payload.summary);
       setPhase("done");
       setStatusText("");
+
+      toast({
+        title: "Busca concluída!",
+        description: `${saved} empresas encontradas. Abrindo a Gestão de Oportunidades...`,
+      });
+
+      if (saved > 0) {
+        navigate("/oportunidades/gestao", { state: { justSearched: true } });
+      }
     } catch (e: any) {
       console.error("[prospeccao-web]", e);
       setPhase("idle");
@@ -356,21 +347,6 @@ const ProspeccaoWeb = () => {
                     )}
                   </form>
                 </div>
-
-                {/* Progresso */}
-                {isBusy && (
-                  <div className="rounded-2xl border border-border bg-card p-5 mb-6">
-                    <div className="flex items-center gap-2 mb-3 text-sm font-medium">
-                      {phase === "diagnosing" ? (
-                        <Brain size={16} className="text-primary" />
-                      ) : (
-                        <Loader2 size={16} className="animate-spin text-primary" />
-                      )}
-                      {statusText}
-                    </div>
-                    <Progress value={phase === "diagnosing" ? progress : undefined} />
-                  </div>
-                )}
 
                 {/* Resumo */}
                 {phase === "done" && summary && (
