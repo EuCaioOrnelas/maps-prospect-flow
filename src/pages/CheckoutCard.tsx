@@ -445,14 +445,13 @@ function CheckoutCardInner() {
                         id="postal-code"
                         placeholder="00000-000"
                         value={postalCode}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-                          setPostalCode(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
+                        onChange={(e) => setPostalCode(formatCep(e.target.value))}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          setPostalCode(formatCep(e.clipboardData.getData("text")));
                         }}
+                        inputMode="numeric"
                         maxLength={9}
-                        className={cn(
-                          cepValid === false && "border-destructive"
-                        )}
                       />
                       {cepValidating && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
@@ -461,7 +460,7 @@ function CheckoutCardInner() {
                         <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-500" />
                       )}
                     </div>
-                    {cepError && <p className="text-[10px] text-destructive">{cepError}</p>}
+                    {cepError && <p className="text-[10px] text-muted-foreground">{cepError}</p>}
                   </div>
 
                   <div className="space-y-1.5">
