@@ -12,13 +12,10 @@ import {
   Share2,
   CheckCircle2,
   AlertCircle,
-  ListFilter,
   Brain,
   Lock,
   Settings,
   Target,
-  MessageSquare,
-  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
