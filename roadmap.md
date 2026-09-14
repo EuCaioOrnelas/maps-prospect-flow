@@ -24,3 +24,4 @@
 - [x] Consolidar Minha Assinatura: planos com ícones, capacidade operacional, compra direta de adicionais e downloads de faturas Stripe/PIX; refinar saída e adicionais no upgrade
 - [x] Reorganizar Minha Assinatura: plano e alteração em 70/30, capacidade em painel informativo único e catálogo de adicionais visível
 - [x] Refinar compra de capacidade: catálogo premium, seleção apenas de novos pacotes, confirmação e totais operacionais claros
+- [x] Alinhar catálogo de adicionais, adicionar resumo de investimento e cobrar imediatamente no cartão/PIX antes de liberar capacidade

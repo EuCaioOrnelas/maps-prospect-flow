@@ -52,7 +52,7 @@ serve(async (req) => {
     if (!userData.user) throw new Error("Unauthorized");
     const userId = userData.user.id;
 
-    const { bumps } = await req.json();
+    const { bumps, mode, paymentId } = await req.json();
     if (!bumps || typeof bumps !== "object") throw new Error("bumps payload required");
 
     // Carrega profile
@@ -85,6 +85,22 @@ serve(async (req) => {
     log("Updating", { userId, current, desired, provider: profile.payment_provider });
 
     const provider = (profile.payment_provider || "").toLowerCase();
+
+    const persistExpansion = async (activeProvider: string) => {
+      const updates: Record<string, number> = {};
+      for (const [id, qty] of Object.entries(desired)) updates[BUMP_CATALOG[id].column] = qty;
+      const { error: profileError } = await supabase.from("profiles").update(updates).eq("id", userId);
+      if (profileError) throw new Error(`Falha ao atualizar capacidade: ${profileError.message}`);
+      for (const [id, qty] of Object.entries(desired)) {
+        const prev = (current as any)[id] as number;
+        if (qty !== prev) {
+          await supabase.from("order_bump_events").insert({
+            user_id: userId, bump_id: id, delta: qty - prev, new_quantity: qty, source: "subscription_addon",
+            metadata: { plan_key: planKey, provider: activeProvider, charged_immediately: true },
+          });
+        }
+      }
+    };
 
     // === STRIPE ===
     if (provider === "stripe" || !provider) {
@@ -143,7 +159,8 @@ serve(async (req) => {
       if (updates.length > 0) {
         await stripe.subscriptions.update(activeSub.id, {
           items: updates,
-          proration_behavior: "create_prorations",
+          proration_behavior: "always_invoice",
+          payment_behavior: "error_if_incomplete",
           metadata: {
             ...activeSub.metadata,
             bumps_numbers: String(desired.numbers),
@@ -153,6 +170,7 @@ serve(async (req) => {
         });
         log("Stripe sub updated", { subId: activeSub.id, updates: updates.length });
       }
+      await persistExpansion("stripe");
     }
     // === ASAAS ===
     else if (provider === "asaas") {
@@ -188,9 +206,14 @@ serve(async (req) => {
       );
       if (!active) throw new Error("Nenhuma assinatura Asaas mensal ativa encontrada");
 
-      // Calcula novo value
+      // Calcula novo value e a cobrança imediata apenas do que foi adicionado.
       let bumpsTotal = 0;
       for (const [id, qty] of Object.entries(desired)) bumpsTotal += BUMP_CATALOG[id].asaasMonthly * qty;
+      let immediateTotal = 0;
+      for (const [id, qty] of Object.entries(desired)) {
+        immediateTotal += BUMP_CATALOG[id].asaasMonthly * Math.max(0, qty - current[id as keyof typeof current]);
+      }
+      const paymentReference = `addon:${userId}:${desired.numbers}:${desired.contacts}:${desired.opportunities}`;
       // Grandfathering: usa o valor realmente contratado quando disponível
       // (clientes antigos do Growth continuam em R$ 696).
       const contractedCents = Number((profile as any)?.subscription_price_cents) || 0;
@@ -198,6 +221,39 @@ serve(async (req) => {
         ? contractedCents / 100
         : (PLAN_MONTHLY_PRICE[planKey] || 0);
       const newValue = planPrice + bumpsTotal;
+
+      if (mode !== "confirm-pix") {
+        if (immediateTotal <= 0) throw new Error("Selecione ao menos um novo pacote para adicionar.");
+        const dueDate = new Date().toISOString().slice(0, 10);
+        const chargeRes = await fetch(`https://api.asaas.com/v3/payments`, {
+          method: "POST",
+          headers: { access_token: asaasKey, "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            customer: customer.id,
+            billingType: "PIX",
+            value: immediateTotal,
+            dueDate,
+            description: "Capacidade adicional Wiize",
+            externalReference: paymentReference,
+          }),
+        });
+        const charge = await chargeRes.json();
+        if (!chargeRes.ok || charge?.errors) throw new Error(`Asaas payment error: ${JSON.stringify(charge?.errors || charge)}`);
+        const qrRes = await fetch(`https://api.asaas.com/v3/payments/${charge.id}/pixQrCode`, { headers: { access_token: asaasKey, Accept: "application/json" } });
+        const qr = await qrRes.json();
+        if (!qrRes.ok || !qr?.payload) throw new Error("Não foi possível gerar o PIX da expansão.");
+        return new Response(JSON.stringify({ requiresPayment: true, paymentId: charge.id, brCode: qr.payload, brCodeBase64: qr.encodedImage || "" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!paymentId || typeof paymentId !== "string") throw new Error("Pagamento PIX não informado.");
+      const paymentRes = await fetch(`https://api.asaas.com/v3/payments/${encodeURIComponent(paymentId)}`, { headers: { access_token: asaasKey, Accept: "application/json" } });
+      const payment = await paymentRes.json();
+      if (!paymentRes.ok || payment?.externalReference !== paymentReference || payment?.customer !== customer.id) throw new Error("Pagamento PIX inválido para esta conta ou seleção.");
+      if (!["CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH"].includes(String(payment.status).toUpperCase())) {
+        return new Response(JSON.stringify({ success: false, paid: false, status: payment.status }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
 
       const updRes = await fetch(`https://api.asaas.com/v3/pix/automatic/authorizations/${active.id}`, {
         method: "PUT",
@@ -207,33 +263,12 @@ serve(async (req) => {
       const updJson = await updRes.json();
       if (!updRes.ok || updJson?.errors) throw new Error(`Asaas update error: ${JSON.stringify(updJson?.errors || updJson)}`);
       log("Asaas authorization updated", { id: active.id, newValue });
+      await persistExpansion("asaas");
     } else {
       throw new Error(`Provider não suportado para update de bumps: ${provider}`);
     }
 
-    // Persiste no profile
-    const updates: Record<string, number> = {};
-    for (const [id, qty] of Object.entries(desired)) {
-      updates[BUMP_CATALOG[id].column] = qty;
-    }
-    await supabase.from("profiles").update(updates).eq("id", userId);
-
-    // Auditoria
-    for (const [id, qty] of Object.entries(desired)) {
-      const prev = (current as any)[id] as number;
-      if (qty !== prev) {
-        await supabase.from("order_bump_events").insert({
-          user_id: userId,
-          bump_id: id,
-          delta: qty - prev,
-          new_quantity: qty,
-          source: "upgrade",
-          metadata: { plan_key: planKey, provider },
-        });
-      }
-    }
-
-    return new Response(JSON.stringify({ success: true, bumps: desired, provider }), {
+    return new Response(JSON.stringify({ success: true, paid: true, bumps: desired, provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
