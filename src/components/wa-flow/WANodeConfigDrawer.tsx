@@ -1150,7 +1150,12 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
 
       {/* Number selection - only connected */}
       <div className="space-y-2">
-        <Label className="text-xs font-medium">Número do WhatsApp</Label>
+        <Label className="flex items-center gap-1.5 text-xs font-medium">
+          <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-primary">
+            <Smartphone size={12} />
+          </span>
+          Número do WhatsApp
+        </Label>
         <Select
           value={config.whatsapp_number_id || ""}
           onValueChange={(v) => {
@@ -1309,7 +1314,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
               <SelectValue placeholder="Selecione uma categoria">
                 {selectedTriggerGroup && (
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                       <selectedTriggerGroup.icon className="h-4 w-4" />
                     </span>
                     <span className="truncate font-medium">{selectedTriggerGroup.label}</span>
@@ -1325,7 +1330,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
                   className="group my-0.5 min-h-12 rounded-md py-2 pl-10 pr-2 focus:bg-muted focus:text-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground [&>span:first-child]:left-3 [&>span:first-child]:h-4 [&>span:first-child]:w-4 [&>span:first-child]:rounded-[4px] [&>span:first-child]:border [&>span:first-child]:border-border [&>span:first-child]:bg-background data-[state=checked]:[&>span:first-child]:border-primary data-[state=checked]:[&>span:first-child]:bg-primary data-[state=checked]:[&>span:first-child]:text-primary-foreground [&>span:first-child_svg]:h-3 [&>span:first-child_svg]:w-3"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                       <group.icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 py-0.5">
@@ -1351,7 +1356,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
                     const TriggerIcon = selectedTrigger.icon;
                     return (
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                           <TriggerIcon className="h-4 w-4" />
                         </span>
                         <span className="truncate font-medium">{selectedTrigger.label}</span>
@@ -1370,7 +1375,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
                       className="group my-0.5 h-11 rounded-md pl-10 pr-2 focus:bg-muted focus:text-foreground data-[state=checked]:bg-primary/10 data-[state=checked]:text-foreground [&>span:first-child]:left-3 [&>span:first-child]:h-4 [&>span:first-child]:w-4 [&>span:first-child]:rounded-[4px] [&>span:first-child]:border [&>span:first-child]:border-border [&>span:first-child]:bg-background data-[state=checked]:[&>span:first-child]:border-primary data-[state=checked]:[&>span:first-child]:bg-primary data-[state=checked]:[&>span:first-child]:text-primary-foreground [&>span:first-child_svg]:h-3 [&>span:first-child_svg]:w-3"
                     >
                       <span className="flex items-center gap-2.5 font-medium">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                           <TriggerIcon className="h-4 w-4" />
                         </span>
                         {trigger.label}
