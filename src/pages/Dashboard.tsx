@@ -693,7 +693,7 @@ const Dashboard = () => {
             
             <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-2xl border border-border/30 bg-background/60 p-5 backdrop-blur-sm sm:p-8" data-tour="search-card">
               {/* Feature badges */}
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/30">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
                     <Target size={16} className="text-primary" />
