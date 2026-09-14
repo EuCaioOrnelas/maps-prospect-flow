@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare, CalendarPlus, CalendarClock } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare, CalendarPlus, CalendarClock, Zap } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
 import { ContactDetailsPanel } from "./ContactDetailsPanel";
@@ -13,6 +13,7 @@ import { ImageLightbox, downloadFromUrl } from "./ImageLightbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import waChatBgUrl from "@/assets/wa-chat-bg.png";
 import { WhatsAppAudio } from "./WhatsAppAudio";
