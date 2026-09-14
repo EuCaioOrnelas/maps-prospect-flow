@@ -14,6 +14,7 @@ import { ShaderBackground } from "@/components/ui/warmth-ripple";
 import { PasswordField, isStrongPassword } from "@/components/wiize-api/PasswordField";
 import { maskCEP, maskCNPJ, maskCPF, maskPhone, onlyDigits, BR_STATES, isValidCNPJ, isValidCPF } from "@/lib/brMasks";
 import { cn } from "@/lib/utils";
+import { formatCep, isCepComplete, lookupCep } from "@/lib/cepLookup";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 import { createWiizeApiAccess, resolveWiizeApiAccess, type WiizeApiProfileInput } from "@/lib/wiizeApiAuth";
 
