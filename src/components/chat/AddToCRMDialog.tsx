@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Loader2 } from "lucide-react";
+import { UserPlus, Loader2, Phone } from "lucide-react";
+import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -105,7 +106,6 @@ export function AddToCRMDialog({
           origin: "whatsapp",
           pipeline_stage_id: stageId || sortedStages[0]?.id || null,
           estimated_value: parseCurrency(value),
-          conversation_id: conversationId,
           tags: [],
         })
         .select("id, pipeline_stage_id")
