@@ -32,6 +32,7 @@ import {
   Phone,
   RotateCcw,
   CalendarDays,
+  Globe,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { MetaIcon } from "@/components/meta/MetaIcon";
