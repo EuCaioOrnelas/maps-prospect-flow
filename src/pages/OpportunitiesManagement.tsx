@@ -1645,7 +1645,6 @@ export default function OpportunitiesManagement() {
           </Badge>
         )}
       </div>
-      )}
     </div>
   );
   };
