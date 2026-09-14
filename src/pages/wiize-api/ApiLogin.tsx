@@ -586,9 +586,11 @@ export default function ApiLogin() {
                             required
                             inputMode="numeric"
                             value={cep}
-                            onChange={(e) => setCep(maskCEP(e.target.value))}
+                            onChange={(e) => setCep(formatCep(e.target.value))}
+                            onPaste={(e) => { e.preventDefault(); setCep(formatCep(e.clipboardData.getData("text"))); }}
+                            maxLength={9}
                             placeholder="00000-000"
-                            className={cn("pr-9", cepError && "border-destructive focus-visible:!border-destructive")}
+                            className="pr-9"
                           />
                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
                             {cepLoading ? (
