@@ -213,6 +213,7 @@ serve(async (req) => {
       for (const [id, qty] of Object.entries(desired)) {
         immediateTotal += BUMP_CATALOG[id].asaasMonthly * Math.max(0, qty - current[id as keyof typeof current]);
       }
+      const paymentReference = `addon:${userId}:${desired.numbers}:${desired.contacts}:${desired.opportunities}`;
       // Grandfathering: usa o valor realmente contratado quando disponível
       // (clientes antigos do Growth continuam em R$ 696).
       const contractedCents = Number((profile as any)?.subscription_price_cents) || 0;
@@ -233,7 +234,7 @@ serve(async (req) => {
             value: immediateTotal,
             dueDate,
             description: "Capacidade adicional Wiize",
-            externalReference: `addon:${userId}`,
+            externalReference: paymentReference,
           }),
         });
         const charge = await chargeRes.json();
@@ -249,7 +250,7 @@ serve(async (req) => {
       if (!paymentId || typeof paymentId !== "string") throw new Error("Pagamento PIX não informado.");
       const paymentRes = await fetch(`https://api.asaas.com/v3/payments/${encodeURIComponent(paymentId)}`, { headers: { access_token: asaasKey, Accept: "application/json" } });
       const payment = await paymentRes.json();
-      if (!paymentRes.ok || payment?.externalReference !== `addon:${userId}` || payment?.customer !== customer.id) throw new Error("Pagamento PIX inválido para esta conta.");
+      if (!paymentRes.ok || payment?.externalReference !== paymentReference || payment?.customer !== customer.id) throw new Error("Pagamento PIX inválido para esta conta ou seleção.");
       if (!["CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH"].includes(String(payment.status).toUpperCase())) {
         return new Response(JSON.stringify({ success: false, paid: false, status: payment.status }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
