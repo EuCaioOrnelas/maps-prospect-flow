@@ -171,6 +171,7 @@ const ProspeccaoWeb = () => {
       const saved = payload?.summary?.saved || 0;
       setSummary(payload.summary);
       setPhase("done");
+      void fetchWebHistory();
 
       toast({
         title: "Busca concluída!",
