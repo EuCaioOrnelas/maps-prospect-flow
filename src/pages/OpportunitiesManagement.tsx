@@ -1932,6 +1932,21 @@ export default function OpportunitiesManagement() {
                       </div>
                     </div>
 
+                    {/* Filtro herdado da última prospecção */}
+                    {filterSearchQuery && (
+                      <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                        <span className="text-xs text-muted-foreground truncate">
+                          <Search size={12} className="inline mr-1.5 -mt-0.5" />
+                          Somente da busca: <strong className="text-foreground">{filterSearchQuery}</strong>
+                        </span>
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0" onClick={clearSearchQueryFilter}>
+                          <X size={12} />
+                          Remover
+                        </Button>
+                      </div>
+                    )}
+
+
                     {/* Ordenação */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium flex items-center gap-2">
