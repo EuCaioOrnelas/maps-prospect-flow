@@ -910,6 +910,22 @@ export function ChatMessageArea({
                     Agendar mensagem
                   </TooltipContent>
                 </Tooltip>
+                {!leadInfo && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="wa-header-action-btn"
+                        onClick={() => setAddToCrmOpen(true)}
+                        aria-label="Adicionar este contato no CRM"
+                      >
+                        <ContactRound size={20} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="wa-tooltip-subtle">
+                      Adicionar no CRM
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </TooltipProvider>
 
@@ -921,7 +937,7 @@ export function ChatMessageArea({
                     className="wa-header-action-btn"
                     aria-label="Ações rápidas"
                   >
-                    <Zap size={20} />
+                    <LayoutGrid size={20} />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
@@ -937,9 +953,18 @@ export function ChatMessageArea({
                   >
                     <CalendarClock size={16} /> Agendar mensagem
                   </DropdownMenuItem>
+                  {!leadInfo && (
+                    <DropdownMenuItem
+                      onClick={() => setAddToCrmOpen(true)}
+                      className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                    >
+                      <ContactRound size={16} /> Adicionar no CRM
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
 
             <button className="wa-header-action-btn" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar na conversa">
               <Search size={20} />
