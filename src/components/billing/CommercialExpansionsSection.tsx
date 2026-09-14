@@ -25,12 +25,14 @@ interface Props {
   onChanged?: () => void;
   /** Exibe atalhos de troca de plano quando usado no Perfil. */
   showPlanActions?: boolean;
+  /** Renderiza somente o catálogo, sem criar outro card/cabeçalho ao redor. */
+  directCatalog?: boolean;
 }
 
 const currency = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function CommercialExpansionsSection({ profile, provider, canPurchase, onChanged, showPlanActions = false }: Props) {
+export function CommercialExpansionsSection({ profile, provider, canPurchase, onChanged, showPlanActions = false, directCatalog = false }: Props) {
   const { refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [pending, setPending] = useState<OrderBumpId | null>(null);
@@ -70,18 +72,18 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-      <Card className="relative overflow-hidden rounded-lg border-border/70 shadow-sm">
-        <CardHeader className="relative border-b border-border/60 bg-muted/20 pb-5 pt-6">
+      <Card className={directCatalog ? "border-0 bg-transparent shadow-none" : "relative overflow-hidden rounded-md border-border/70 shadow-sm"}>
+        {!directCatalog && <CardHeader className="relative border-b border-border/60 bg-muted/20 pb-5 pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md border border-primary/20 bg-primary/10">
                   <Rocket className="h-4 w-4 text-primary" />
                 </div>
-                Expanda sua operação na Wiize
+                Expanda sua operação
               </CardTitle>
               <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
-                Contrate números, colaboradores, contatos e oportunidades extras. Ao clicar em Adicionar, o recurso entra no seu plano atual e a cobrança é ajustada automaticamente.
+                Compre números, colaboradores, contatos e oportunidades sem trocar de plano. Ajuste a quantidade e confirme para atualizar sua assinatura.
               </p>
             </div>
             {canPurchase && (
@@ -91,9 +93,9 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
               </Badge>
             )}
           </div>
-        </CardHeader>
+        </CardHeader>}
 
-        <CardContent className="relative space-y-5 p-4 sm:p-6">
+        <CardContent className={directCatalog ? "relative space-y-5 p-0" : "relative space-y-5 p-4 sm:p-6"}>
           {bumps.length > 0 && (
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               {bumps.map((b) => {
@@ -103,7 +105,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                   ? "+1 número e +1 colaborador"
                   : `+${b.step.toLocaleString("pt-BR")} ${b.unit}`;
                 return (
-                  <section key={b.id} className="flex min-w-0 flex-col rounded-lg border border-border/70 bg-card p-4 shadow-sm">
+                  <section key={b.id} className="flex min-w-0 flex-col rounded-md border border-border/70 bg-card p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/60">
                         <b.icon className="h-4 w-4 text-primary" />
