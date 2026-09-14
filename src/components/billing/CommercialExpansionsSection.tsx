@@ -70,7 +70,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-      <Card className="relative overflow-hidden rounded-lg border-border/70 shadow-sm">
+      <Card className="relative overflow-hidden rounded-md border-border/70 shadow-sm">
         <CardHeader className="relative border-b border-border/60 bg-muted/20 pb-5 pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
@@ -78,10 +78,10 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                 <div className="flex h-8 w-8 items-center justify-center rounded-md border border-primary/20 bg-primary/10">
                   <Rocket className="h-4 w-4 text-primary" />
                 </div>
-                Expanda sua operação na Wiize
+                Expanda sua operação
               </CardTitle>
               <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
-                Contrate números, colaboradores, contatos e oportunidades extras. Ao clicar em Adicionar, o recurso entra no seu plano atual e a cobrança é ajustada automaticamente.
+                Compre números, colaboradores, contatos e oportunidades sem trocar de plano. Ajuste a quantidade e confirme para atualizar sua assinatura.
               </p>
             </div>
             {canPurchase && (
@@ -103,7 +103,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                   ? "+1 número e +1 colaborador"
                   : `+${b.step.toLocaleString("pt-BR")} ${b.unit}`;
                 return (
-                  <section key={b.id} className="flex min-w-0 flex-col rounded-lg border border-border/70 bg-card p-4 shadow-sm">
+                  <section key={b.id} className="flex min-w-0 flex-col rounded-md border border-border/70 bg-card p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/60">
                         <b.icon className="h-4 w-4 text-primary" />

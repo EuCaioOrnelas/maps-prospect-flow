@@ -16,6 +16,8 @@ import {
   Receipt, Info, ArrowLeft, HelpCircle,
   ExternalLink, Shield, MessageCircle, RefreshCw,
   Calendar, Ban, ArrowRight, Crown, TrendingDown, Boxes,
+  Download, Headphones, TrendingUp, Building2, CircleGauge,
+  MessageSquare, Users, Target, UserRoundPlus,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -23,6 +25,14 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { CommercialExpansionsSection } from "@/components/billing/CommercialExpansionsSection";
+import {
+  getContactLimit,
+  getIncludedOpportunities,
+  getNumbersLimit,
+  getPlanDisplayName,
+  getSeatLimit,
+} from "@/lib/planAccess";
+import { downloadBillingInvoicePdf } from "@/lib/billingInvoicePdf";
 
 interface SubscriptionInfo {
   id: string;
@@ -45,6 +55,7 @@ interface PaymentInfo {
   paymentDate: string | null;
   description: string;
   invoiceUrl: string | null;
+  hostedInvoiceUrl?: string | null;
   installment: string | null;
   creditCard: { creditCardBrand: string; creditCardNumber: string } | null;
 }
@@ -90,6 +101,13 @@ const cycleMap: Record<string, string> = {
   MONTHLY: "Mensal",
   WEEKLY: "Semanal",
 };
+
+const planIcons = {
+  free: CircleGauge,
+  start: Headphones,
+  growth: TrendingUp,
+  scale: Building2,
+} as const;
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
@@ -203,6 +221,18 @@ export default function ManageSubscription() {
   const activeSubscriptions = subscriptions.filter(s => s.status === "ACTIVE");
   const hasActiveSub = activeSubscriptions.length > 0;
   const hasCancellationHistory = cancellations.length > 0;
+  const capacityProfile = addonProfile || profile;
+  const planKey = String(capacityProfile?.plan || "free").toLowerCase() as keyof typeof planIcons;
+  const PlanIcon = planIcons[planKey] || CircleGauge;
+  const extraNumbers = Number(capacityProfile?.extra_numbers) || 0;
+  const extraContactPacks = Number(capacityProfile?.extra_contacts_packs) || 0;
+  const extraOpportunityPacks = Number(capacityProfile?.extra_opportunities_packs) || 0;
+  const numbersLimit = getNumbersLimit(capacityProfile);
+  const seatsLimit = getSeatLimit(capacityProfile);
+  const baseContactLimit = getContactLimit(capacityProfile);
+  const contactsLimit = Number.isFinite(baseContactLimit) ? baseContactLimit + extraContactPacks * 1000 : Infinity;
+  const opportunitiesLimit = getIncludedOpportunities(capacityProfile) + extraOpportunityPacks * 1000;
+  const formatLimit = (value: number) => Number.isFinite(value) ? value.toLocaleString("pt-BR") : "Ilimitado";
 
   if (authLoading || loading) {
     return (
@@ -242,24 +272,26 @@ export default function ManageSubscription() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6 sm:py-10">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
           <div>
             <p className="text-xs font-semibold uppercase text-primary">Conta e faturamento</p>
             <h1 className="mt-1 text-2xl font-bold text-foreground">Painel da assinatura</h1>
             <p className="mt-1 text-sm text-muted-foreground">Acompanhe seu plano, altere a assinatura e expanda a capacidade da operação.</p>
           </div>
-          <Button onClick={() => navigate("/upgrade")} className="w-full gap-2 sm:w-auto">
-            <Crown className="h-4 w-4" /> Comparar planos
-          </Button>
         </div>
 
         {/* Plan Summary */}
         <motion.div {...fadeUp(0)}>
           <Card className="overflow-hidden rounded-lg border-border/70 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-border/60 bg-muted/20 pb-5">
-              <div>
-                <p className="text-xs font-semibold uppercase text-muted-foreground">Plano atual</p>
-                <CardTitle className="mt-1 text-xl capitalize">Wiize {profile?.plan || "Free"}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-border/60 bg-muted/20 pb-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10">
+                  <PlanIcon className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">Plano atual</p>
+                  <CardTitle className="mt-1 truncate text-xl">Wiize {getPlanDisplayName(capacityProfile)}</CardTitle>
+                </div>
               </div>
               <Badge variant="outline" className="gap-1.5 border-primary/25 bg-primary/10 text-primary">
                 <CheckCircle className="h-3.5 w-3.5" /> {cancelled ? "Ativo até o vencimento" : hasActiveSub ? "Ativo" : "Sem renovação ativa"}
@@ -283,11 +315,14 @@ export default function ManageSubscription() {
                   <p className="mt-1 truncate text-xs text-muted-foreground">{profile?.email}</p>
                 </div>
               </div>
-              <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
-                <p className="text-sm font-semibold">Alterar meu plano</p>
+              <div className="space-y-3 rounded-md border border-border/70 bg-muted/30 p-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10"><Crown className="h-4 w-4 text-primary" /></div>
+                  <p className="text-sm font-semibold">Alterar meu plano</p>
+                </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">Upgrade é ativado após a confirmação do pagamento. Downgrade passa a valer na próxima renovação, sem interromper o período já pago.</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button onClick={() => navigate("/upgrade")} className="gap-1.5 text-xs"><ArrowRight className="h-3.5 w-3.5" /> Upgrade</Button>
+                  <Button onClick={() => navigate("/upgrade")} className="gap-1.5 text-xs"><TrendingUp className="h-3.5 w-3.5" /> Fazer upgrade</Button>
                   <Button
                     variant="outline"
                     className="gap-1.5 text-xs"
@@ -305,17 +340,42 @@ export default function ManageSubscription() {
           </Card>
         </motion.div>
 
+        <motion.section {...fadeUp(0.04)} aria-labelledby="capacidade-heading">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/20 bg-primary/10"><CircleGauge className="h-4 w-4 text-primary" /></div>
+            <div><h2 id="capacidade-heading" className="text-base font-semibold">Capacidade operacional</h2><p className="text-xs text-muted-foreground">Limites totais disponíveis na sua conta hoje.</p></div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "Números WhatsApp", value: formatLimit(numbersLimit), detail: extraNumbers ? `Inclui +${extraNumbers} adicional${extraNumbers > 1 ? "is" : ""}` : "Capacidade do plano", icon: MessageSquare },
+              { label: "Colaboradores", value: formatLimit(seatsLimit), detail: extraNumbers ? `+${extraNumbers} liberado${extraNumbers > 1 ? "s" : ""} pelos números extras` : "Dono e equipe", icon: UserRoundPlus },
+              { label: "Contatos no CRM", value: formatLimit(contactsLimit), detail: extraContactPacks ? `Inclui +${(extraContactPacks * 1000).toLocaleString("pt-BR")} contatos` : "Capacidade total", icon: Users },
+              { label: "Oportunidades / mês", value: formatLimit(opportunitiesLimit), detail: extraOpportunityPacks ? `Inclui +${(extraOpportunityPacks * 1000).toLocaleString("pt-BR")} por mês` : "Franquia mensal", icon: Target },
+            ].map((item) => (
+              <Card key={item.label} className="rounded-md border-border/70 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10"><item.icon className="h-4 w-4 text-primary" /></div>
+                    <span className="text-xl font-bold tabular-nums text-foreground">{item.value}</span>
+                  </div>
+                  <p className="mt-4 text-sm font-semibold text-foreground">{item.label}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{item.detail}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </motion.section>
+
         <section aria-labelledby="expansoes-heading">
           <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/10"><Boxes className="h-4 w-4 text-primary" /></div>
-            <div><h2 id="expansoes-heading" className="text-base font-semibold">Capacidade adicional</h2><p className="text-xs text-muted-foreground">Adicione recursos diretamente à sua assinatura atual.</p></div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/20 bg-primary/10"><Boxes className="h-4 w-4 text-primary" /></div>
+            <div><h2 id="expansoes-heading" className="text-base font-semibold">Comprar capacidade adicional</h2><p className="text-xs text-muted-foreground">Escolha a quantidade e adicione diretamente ao seu plano atual.</p></div>
           </div>
           <CommercialExpansionsSection
             profile={addonProfile || profile}
             provider={(addonProfile as any)?.payment_provider || (profile as any)?.payment_provider || provider}
             canPurchase={(isStripe || isPix) && hasActiveSub && (addonProfile?.billing_period || profile?.billing_period) !== "annual"}
             onChanged={() => { fetchAddonProfile(); fetchInfo(); }}
-            showPlanActions
           />
         </section>
 
@@ -489,8 +549,8 @@ export default function ManageSubscription() {
                   )}
                 </div>
               ) : payments.length > 0 ? (
-                <div className="space-y-1.5">
-                  <div className="grid grid-cols-[1fr_100px_80px_60px] gap-3 px-4 py-2 text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+                <div className="space-y-1.5 overflow-x-auto">
+                  <div className="grid min-w-[620px] grid-cols-[1fr_110px_100px_90px] gap-3 px-4 py-2 text-[10px] uppercase text-muted-foreground font-semibold">
                     <span>Cobrança</span>
                     <span className="text-right">Valor</span>
                     <span className="text-center">Status</span>
@@ -505,7 +565,7 @@ export default function ManageSubscription() {
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.03, duration: 0.3 }}
-                        className="grid grid-cols-[1fr_100px_80px_60px] gap-3 items-center bg-muted/20 hover:bg-muted/40 rounded-lg px-4 py-3 border border-border/20 transition-colors"
+                        className="grid min-w-[620px] grid-cols-[1fr_110px_100px_90px] gap-3 items-center bg-muted/20 hover:bg-muted/40 rounded-md px-4 py-3 border border-border/20 transition-colors"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <StIcon className={`h-3.5 w-3.5 shrink-0 ${st.variant.split(" ")[0]}`} />
@@ -525,13 +585,17 @@ export default function ManageSubscription() {
                           <Badge variant="outline" className={`text-[9px] ${st.variant}`}>{st.label}</Badge>
                         </div>
                         <div className="text-right">
-                          {p.invoiceUrl ? (
-                            <a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors">
-                              <ExternalLink className="h-3.5 w-3.5 inline" />
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground/30">—</span>
-                          )}
+                          {isStripe && p.invoiceUrl ? (
+                            <Button asChild variant="ghost" size="sm" className="h-8 gap-1 px-2 text-[11px]">
+                              <a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer"><Download className="h-3.5 w-3.5" /> PDF</a>
+                            </Button>
+                          ) : p.billingType === "PIX" ? (
+                            <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-[11px]" onClick={() => downloadBillingInvoicePdf({ ...p, customerName: profile?.name, customerEmail: profile?.email, planName: getPlanDisplayName(profile) })}>
+                              <Download className="h-3.5 w-3.5" /> PDF
+                            </Button>
+                          ) : p.invoiceUrl ? (
+                            <Button asChild variant="ghost" size="sm" className="h-8 gap-1 px-2 text-[11px]"><a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Abrir</a></Button>
+                          ) : <span className="text-muted-foreground/30">—</span>}
                         </div>
                       </motion.div>
                     );
