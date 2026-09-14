@@ -342,6 +342,89 @@ const fetchPageSummary = async (url: string, label: string, platform?: string): 
   }
 };
 
+// ═══ Sinais de confiança extraídos do próprio site (usado em leads de origem WEB) ═══
+type WebTrustSignals = {
+  hasTestimonials: boolean;
+  testimonialStrength: number; // 0-3
+  clarityStrength: number; // 0-3
+  signals: string[];
+  summary: string;
+};
+
+const analyzeWebTrustSignals = (page: PageSummary | undefined): WebTrustSignals => {
+  if (!page || !page.ok) {
+    return {
+      hasTestimonials: false,
+      testimonialStrength: 0,
+      clarityStrength: 0,
+      signals: [],
+      summary: "Site não pôde ser lido — sem evidências de depoimentos ou clareza de entrega.",
+    };
+  }
+
+  const text = `${page.title} ${page.description} ${page.textSnippet}`.toLowerCase();
+  const signals: string[] = [];
+
+  const testimonialHits = [
+    /depoimento/,
+    /o que (nossos |os )?clientes (dizem|falam)/,
+    /avalia(ç|c)(õ|o)es de clientes/,
+    /cases? de sucesso/,
+    /hist(ó|o)rias? de clientes/,
+    /feedback dos clientes/,
+    /(5|cinco) estrelas/,
+    /google reviews?/,
+  ].filter((re) => re.test(text)).length;
+
+  const socialProofHits = [
+    /clientes atendidos/,
+    /anos de (experi(ê|e)ncia|mercado)/,
+depoimentoPlaceholder
+    /portf(ó|o)lio/,
+    /parceiros/,
+    /antes e depois/,
+  ].filter((re) => re.test(text)).length;
+
+  const testimonialStrength = clamp(testimonialHits * 2 + socialProofHits, 0, 3);
+  if (testimonialHits > 0) signals.push("depoimentos de clientes no site");
+  if (socialProofHits > 0) signals.push("prova social (portfólio, cases, tempo de mercado)");
+
+  const clarityHits = [
+    /(serviç|servic)os?/,
+    /(soluç|soluc)(õ|o)es/,
+    /como funciona/,
+    /o que fazemos/,
+    /planos?|pacotes?|pre(ç|c)os?|investimento/,
+    /(orçamento|orcamento|agendar|agende|fale conosco|solicite)/,
+  ].filter((re) => re.test(text)).length;
+
+  const hasDescription = !!page.description;
+  const hasDepth = page.contentLength >= 700;
+
+  const clarityStrength = clamp(
+    (clarityHits >= 4 ? 2 : clarityHits >= 2 ? 1 : 0) + (hasDescription ? 1 : 0) + (hasDepth ? 1 : 0),
+    0,
+    3,
+  );
+  if (clarityHits >= 2) signals.push("descrição clara de serviços/entrega");
+  if (clarityHits >= 4) signals.push("oferta detalhada com chamada para ação");
+  if (hasDepth) signals.push("conteúdo com profundidade");
+
+  const summary = signals.length > 0
+    ? `Sinais encontrados no site: ${signals.join("; ")}.`
+    : "O site não apresenta depoimentos nem descrição clara da entrega.";
+
+  return {
+    hasTestimonials: testimonialHits > 0,
+    testimonialStrength,
+    clarityStrength,
+    signals,
+    summary,
+  };
+};
+
+
+
 // Social media insights type (kept for type compatibility, no longer uses SerpAPI)
 type SocialMediaInsight = {
   platform: string;
