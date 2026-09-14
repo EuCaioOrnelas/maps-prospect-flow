@@ -15,10 +15,19 @@ import {
   Lock,
   Settings,
   Target,
+  History,
+  Download,
+  Trash2,
+  CheckSquare,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import * as XLSX from "xlsx";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +50,34 @@ interface SearchSummary {
   withEmail: number;
   withSocial: number;
 }
+
+interface WebHistoryLeadRef {
+  id: string;
+  name: string;
+  domain: string;
+}
+
+interface WebHistoryItem {
+  id: string;
+  keyword: string;
+  location: string | null;
+  results_count: number;
+  created_at: string;
+  status: string | null;
+  leads: WebHistoryLeadRef[];
+}
+
+const HISTORY_PER_PAGE = 20;
+const MAX_HISTORY_ITEMS = 200;
+
+const formatHistoryDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 const ProspeccaoWeb = () => {
   const { user, profile, refreshProfile, accountOwnerId } = useAuth();
