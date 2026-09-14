@@ -202,6 +202,117 @@ const ProspeccaoWeb = () => {
     navigate(`/oportunidades/gestao?${params.toString()}`);
   };
 
+  const fetchWebHistory = async () => {
+    if (!user) return;
+    setLoadingHistory(true);
+    const { data, error } = await supabase
+      .from("search_history")
+      .select("id, keyword, location, results_count, created_at, status, leads")
+      .eq("user_id", user.id)
+      .eq("source", "web")
+      .order("created_at", { ascending: false })
+      .limit(MAX_HISTORY_ITEMS);
+    if (!error && data) {
+      setWebHistory(
+        data.map((item: any) => ({
+          ...item,
+          leads: Array.isArray(item.leads) ? (item.leads as WebHistoryLeadRef[]) : [],
+        })),
+      );
+    }
+    setLoadingHistory(false);
+  };
+
+  useEffect(() => {
+    void fetchWebHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const totalHistoryPages = Math.ceil(webHistory.length / HISTORY_PER_PAGE);
+  const paginatedHistory = webHistory.slice(
+    (historyPage - 1) * HISTORY_PER_PAGE,
+    historyPage * HISTORY_PER_PAGE,
+  );
+
+  const handleHistoryClick = (item: WebHistoryItem) => {
+    const params = new URLSearchParams({ source: "web" });
+    if (item.keyword) params.set("q", item.keyword);
+    navigate(`/oportunidades/gestao?${params.toString()}`);
+  };
+
+  const handleDeleteHistoryItem = async (e: React.MouseEvent, itemId: string) => {
+    e.stopPropagation();
+    const { error } = await supabase.from("search_history").delete().eq("id", itemId);
+    if (error) {
+      toast({ title: "Erro", description: "Não foi possível excluir o item", variant: "destructive" });
+      return;
+    }
+    setWebHistory((prev) => prev.filter((item) => item.id !== itemId));
+    setSelectedHistoryIds((prev) => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
+    toast({ title: "Removido", description: "Item do histórico excluído" });
+  };
+
+  const handleExportSelected = async () => {
+    const selectedItems = webHistory.filter((h) => selectedHistoryIds.has(h.id));
+    const leadIds = selectedItems.flatMap((item) => item.leads.map((l) => l.id));
+    if (leadIds.length === 0) {
+      toast({ title: "Sem leads", description: "As buscas selecionadas não possuem leads salvos", variant: "destructive" });
+      return;
+    }
+
+    setBulkExporting(true);
+    try {
+      const searchByLeadId = new Map<string, WebHistoryItem>();
+      selectedItems.forEach((item) => item.leads.forEach((l) => searchByLeadId.set(l.id, item)));
+
+      const rows: Record<string, unknown>[] = [];
+      const CHUNK = 100;
+      for (let i = 0; i < leadIds.length; i += CHUNK) {
+        const { data, error } = await supabase
+          .from("leads")
+          .select("id, company_name, phone, email, website, domain, city, address, category")
+          .in("id", leadIds.slice(i, i + CHUNK));
+        if (error) throw error;
+        (data || []).forEach((lead: any) => {
+          const search = searchByLeadId.get(lead.id);
+          rows.push({
+            Busca: search?.keyword || "",
+            "Localização": search?.location || "",
+            Nome: lead.company_name || "",
+            Telefone: lead.phone || "",
+            "E-mail": lead.email || "",
+            Site: lead.website || lead.domain || "",
+            Cidade: lead.city || "",
+            "Endereço": lead.address || "",
+            Categoria: lead.category || "",
+          });
+        });
+      }
+
+      if (rows.length === 0) {
+        toast({ title: "Sem leads", description: "Os leads dessas buscas não foram encontrados", variant: "destructive" });
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [{ wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 18 }, { wch: 28 }, { wch: 28 }, { wch: 18 }, { wch: 30 }, { wch: 25 }];
+      XLSX.utils.book_append_sheet(wb, ws, "Leads Web");
+      XLSX.writeFile(wb, `prospeccao-web-${new Date().toISOString().split("T")[0]}.xlsx`, { compression: true });
+      toast({ title: "Exportado!", description: `${rows.length} leads de ${selectedItems.length} buscas exportados` });
+      setSelectedHistoryIds(new Set());
+    } catch (err) {
+      console.error("[prospeccao-web] export error", err);
+      toast({ title: "Erro", description: "Não foi possível exportar", variant: "destructive" });
+    } finally {
+      setBulkExporting(false);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full max-w-full bg-background relative overflow-x-hidden">
