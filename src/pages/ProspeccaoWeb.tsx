@@ -411,14 +411,18 @@ const ProspeccaoWeb = () => {
         </div>
       </div>
 
-      <CompanyProfileOnboarding
-        open={showCompanyOnboarding}
-        onOpenChange={setShowCompanyOnboarding}
-        onComplete={(p: any) => {
-          setCompanyProfile(p);
-          setShowCompanyOnboarding(false);
-        }}
-      />
+      {user && (
+        <CompanyProfileOnboarding
+          open={showCompanyOnboarding}
+          userId={user.id}
+          initialData={companyProfile}
+          onClose={() => setShowCompanyOnboarding(false)}
+          onComplete={(p: any) => {
+            setCompanyProfile(p);
+            setShowCompanyOnboarding(false);
+          }}
+        />
+      )}
     </SidebarProvider>
   );
 };
