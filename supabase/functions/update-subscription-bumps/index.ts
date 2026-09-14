@@ -24,9 +24,9 @@ const BUMP_CATALOG: Record<string, {
   column: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
   allowedPlans: string[];
 }> = {
-  numbers:       { stripePriceId: "price_1TYdiXK8CM0R6xMMqnhxGM1V", asaasMonthly: 96.00,  column: "extra_numbers",              allowedPlans: ["start", "growth"] },
-  contacts:      { stripePriceId: "price_1TYdkPK8CM0R6xMMXHTfihdw", asaasMonthly: 48.00,  column: "extra_contacts_packs",       allowedPlans: ["start", "growth"] },
-  opportunities: { stripePriceId: "price_1TYdknK8CM0R6xMM9TXjGFf5", asaasMonthly: 196.00, column: "extra_opportunities_packs",  allowedPlans: ["growth"] },
+  numbers:       { stripePriceId: "price_1TYdiXK8CM0R6xMMqnhxGM1V", asaasMonthly: 96.00,  column: "extra_numbers",              allowedPlans: ["start", "growth", "scale"] },
+  contacts:      { stripePriceId: "price_1TYdkPK8CM0R6xMMXHTfihdw", asaasMonthly: 48.00,  column: "extra_contacts_packs",       allowedPlans: ["start", "growth", "scale"] },
+  opportunities: { stripePriceId: "price_1TYdknK8CM0R6xMM9TXjGFf5", asaasMonthly: 196.00, column: "extra_opportunities_packs",  allowedPlans: ["growth", "scale"] },
 };
 
 const PLAN_MONTHLY_PRICE: Record<string, number> = {
@@ -64,8 +64,8 @@ serve(async (req) => {
     if (!profile) throw new Error("Profile not found");
 
     const planKey = (profile.plan || "").toLowerCase();
-    if (!["start", "growth"].includes(planKey)) {
-      throw new Error("Add-ons disponíveis apenas para planos Atendimento e Growth.");
+    if (!["start", "growth", "scale"].includes(planKey)) {
+      throw new Error("Add-ons disponíveis apenas para planos Atendimento, Growth e Enterprise.");
     }
 
     // Sanitiza desejado

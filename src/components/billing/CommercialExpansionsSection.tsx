@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Minus, Plus, Rocket, QrCode, CreditCard, ArrowRight, Check, Crown, ShieldCheck } from "lucide-react";
+import { Loader2, Minus, Plus, Rocket, QrCode, CreditCard, ArrowRight, Check, Crown, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +47,8 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
   const { refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [pending, setPending] = useState<OrderBumpId | null>(null);
+  const [purchaseQuantities, setPurchaseQuantities] = useState<OrderBumpSelection>({ numbers: 1, contacts: 1, opportunities: 1 });
+  const [confirming, setConfirming] = useState<OrderBumpId | null>(null);
 
   const planKey = (profile?.plan || "free").toLowerCase();
   const planBumps = getBumpsForPlan(planKey);
@@ -44,6 +56,8 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
   const planSupportsBumps = planBumps.length > 0;
   const selection = profileToBumpSelection(profile);
   const isPix = (provider || "").toLowerCase() === "asaas";
+
+  const confirmingBump = useMemo(() => bumps.find((b) => b.id === confirming) || null, [bumps, confirming]);
 
   const applyDelta = async (id: OrderBumpId, delta: number) => {
     const next: OrderBumpSelection = { ...selection, [id]: Math.max(0, selection[id] + delta) };
@@ -67,6 +81,12 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
     } finally {
       setPending(null);
     }
+  };
+
+  const purchase = async (id: OrderBumpId) => {
+    const quantity = purchaseQuantities[id];
+    setConfirming(null);
+    await applyDelta(id, quantity);
   };
 
   const totalExtraCents = bumps.reduce((acc, b) => acc + b.monthlyPriceCents * selection[b.id], 0);
@@ -98,59 +118,70 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
 
         <CardContent className={directCatalog ? "relative space-y-5 p-0" : "relative space-y-5 p-4 sm:p-6"}>
           {bumps.length > 0 && (
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-              {bumps.map((b) => {
-                const qty = selection[b.id];
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {bumps.map((b, index) => {
+                const activeQty = selection[b.id];
+                const purchaseQty = purchaseQuantities[b.id];
                 const busy = pending === b.id;
                 const delivered = b.id === "numbers"
                   ? "+1 número e +1 colaborador"
                   : `+${b.step.toLocaleString("pt-BR")} ${b.unit}`;
+                const dailyPrice = currency(Math.round(b.monthlyPriceCents / 30));
+                const totalPrice = b.monthlyPriceCents * purchaseQty;
                 return (
-                  <section key={b.id} className="flex min-w-0 flex-col rounded-md border border-border/70 bg-card p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/60">
-                        <b.icon className="h-4 w-4 text-primary" />
+                  <section key={b.id} className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-card transition-colors hover:border-primary/35">
+                    {index === 1 && (
+                      <div className="flex items-center justify-center gap-1.5 border-b border-primary/15 bg-primary/10 px-3 py-1.5 text-[10px] font-semibold text-primary">
+                        <Sparkles className="h-3 w-3" /> Expansão prática para o dia a dia
                       </div>
-                      {qty > 0 && <Badge variant="secondary" className="text-[10px]">{qty} ativo{qty > 1 ? "s" : ""}</Badge>}
+                    )}
+                    <div className="flex flex-1 flex-col p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10">
+                        <b.icon className="h-5 w-5 text-primary" />
+                      </div>
+                      {activeQty > 0 && <Badge variant="outline" className="border-primary/20 bg-primary/5 text-[10px] text-primary">Já contratado</Badge>}
                     </div>
-                    <div className="mt-4 min-h-[108px]">
-                      <p className="text-sm font-semibold text-foreground">{b.title}</p>
-                      <p className="mt-1 text-xs font-medium text-primary">{delivered}</p>
-                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{b.description}</p>
+                    <div className="mt-5 min-h-[116px]">
+                      <p className="text-base font-semibold text-foreground">{b.title}</p>
+                      <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-primary"><Zap className="h-3.5 w-3.5" />{delivered} por pacote</p>
+                      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{b.description}</p>
                     </div>
-                    <div className="mt-4 border-t border-border/60 pt-4">
-                      <p className="text-lg font-bold tabular-nums text-foreground">
+                    <div className="mt-4 border-t border-border/60 pt-5">
+                      <p className="text-2xl font-bold tabular-nums text-foreground">
                         {currency(b.monthlyPriceCents)}
-                        <span className="text-[11px] font-medium text-muted-foreground">/mês</span>
+                        <span className="ml-1 text-[11px] font-medium text-muted-foreground">/mês por pacote</span>
                       </p>
-                      <div className="mt-3 flex items-center justify-between gap-2">
-                        <div className="flex h-9 items-center rounded-md border border-border bg-background p-0.5">
+                      <p className="mt-1 text-[10px] text-muted-foreground">Equivale a {dailyPrice} por dia</p>
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <div className="flex h-10 items-center rounded-md border border-border bg-muted/25 p-1">
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 rounded-sm"
-                            disabled={!canPurchase || !planSupportsBumps || busy || qty <= 0}
-                            onClick={() => applyDelta(b.id, -1)}
-                            aria-label={`Remover ${b.title}`}
+                            disabled={busy || purchaseQty <= 1}
+                            onClick={() => setPurchaseQuantities((current) => ({ ...current, [b.id]: Math.max(1, current[b.id] - 1) }))}
+                            aria-label={`Diminuir quantidade de ${b.title}`}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="w-7 text-center text-sm font-bold tabular-nums">{qty}</span>
+                          <span className="w-8 text-center text-sm font-bold tabular-nums">{purchaseQty}</span>
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 rounded-sm"
-                            disabled={!canPurchase || !planSupportsBumps || busy}
-                            onClick={() => applyDelta(b.id, 1)}
-                            aria-label={`Adicionar ${b.title}`}
+                            disabled={busy || purchaseQty >= 99}
+                            onClick={() => setPurchaseQuantities((current) => ({ ...current, [b.id]: Math.min(99, current[b.id] + 1) }))}
+                            aria-label={`Aumentar quantidade de ${b.title}`}
                           >
-                            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                            <Plus className="h-3 w-3" />
                           </Button>
                         </div>
-                        <Button size="sm" className="h-9 gap-1.5 px-3 text-xs" disabled={!canPurchase || !planSupportsBumps || busy} onClick={() => applyDelta(b.id, 1)}>
-                          Adicionar <ArrowRight className="h-3.5 w-3.5" />
+                        <Button size="sm" className="h-10 flex-1 gap-1.5 px-3 text-xs" disabled={!canPurchase || !planSupportsBumps || busy} onClick={() => setConfirming(b.id)}>
+                          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Comprar {currency(totalPrice)} <ArrowRight className="h-3.5 w-3.5" /></>}
                         </Button>
                       </div>
+                    </div>
                     </div>
                   </section>
                 );
@@ -191,8 +222,8 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
           {bumps.length > 0 && (
             <div className="flex flex-col gap-2 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-medium text-foreground">Total de expansões ativas</p>
-                <p className="text-[11px] text-muted-foreground">Valor recorrente somado ao seu plano</p>
+                <p className="text-xs font-medium text-foreground">Investimento atual em capacidade adicional</p>
+                <p className="text-[11px] text-muted-foreground">Valor mensal dos adicionais já contratados</p>
               </div>
               <span className="text-base font-bold tabular-nums text-foreground">{currency(totalExtraCents)}/mês</span>
             </div>
@@ -202,12 +233,30 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
             <div className="flex items-start gap-2 border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               {!planSupportsBumps
-                ? "Adicionais são contratados nos planos Atendimento e Growth IA. Altere seu plano para ativar esta capacidade."
+                ? "Adicionais são contratados nos planos Atendimento, Growth IA e Enterprise. Altere seu plano para ativar esta capacidade."
                 : "Expansões ficam disponíveis para o dono de uma assinatura mensal ativa. Você pode revisar seu plano acima."}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={Boolean(confirmingBump)} onOpenChange={(open) => !open && setConfirming(null)}>
+        <AlertDialogContent className="rounded-lg border-border bg-background">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar capacidade adicional</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmingBump ? `${purchaseQuantities[confirmingBump.id]} pacote(s) de ${confirmingBump.title} serão adicionados ao seu plano por ${currency(confirmingBump.monthlyPriceCents * purchaseQuantities[confirmingBump.id])}/mês.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+            {isPix ? "O novo valor será aplicado à sua cobrança PIX recorrente." : "O cartão receberá o ajuste proporcional deste ciclo; depois, o valor será recorrente."}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmingBump && purchase(confirmingBump.id)}>Confirmar compra</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }
