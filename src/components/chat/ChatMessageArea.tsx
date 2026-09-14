@@ -878,6 +878,23 @@ export function ChatMessageArea({
           </div>
           <div className="flex items-center gap-[10px]">
 
+            <button
+              className="wa-icon-button p-1"
+              onClick={() => setAppointmentOpen(true)}
+              title="Criar compromisso com este contato"
+              aria-label="Criar compromisso"
+            >
+              <CalendarPlus size={20} className="wa-chat-header-icon" />
+            </button>
+            <button
+              className="wa-icon-button p-1"
+              onClick={() => setScheduleOpen(true)}
+              title="Agendar mensagem para este contato"
+              aria-label="Agendar mensagem"
+            >
+              <CalendarClock size={20} className="wa-chat-header-icon" />
+            </button>
+
             <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
               <Search size={20} className="wa-chat-header-icon" />
             </button>
@@ -1092,6 +1109,7 @@ export function ChatMessageArea({
                               <div className={cn(
                                 "inline-block shadow-[0_1px_0.5px_rgba(11,20,26,.13)] relative overflow-hidden",
                                 isOutbound ? "wa-bubble-out rounded-[7.5px]" : "wa-bubble-in rounded-[7.5px]",
+                                privacy.messages && PRIVACY_BLUR_CLASS,
                                 showTail && isOutbound && "!rounded-tr-none",
                                 showTail && !isOutbound && "!rounded-tl-none"
                               )}>
@@ -1394,6 +1412,31 @@ export function ChatMessageArea({
         onDeleteConversation={onDeleteConversation}
         onSaveContact={() => { setContactPanelOpen(false); setAddContactOpen(true); }}
       />
+
+      {conversation && currentUserId && (
+        <ChatAppointmentDialog
+          open={appointmentOpen}
+          onOpenChange={setAppointmentOpen}
+          contactName={conversation.contact_name}
+          contactPhone={conversation.contact_phone}
+          currentUserId={currentUserId}
+          leadId={leadInfo?.id ?? null}
+        />
+      )}
+
+      {conversation && (
+        <ScheduleMessageDialog
+          open={scheduleOpen}
+          onOpenChange={setScheduleOpen}
+          conversationId={conversation.id}
+          wabaConnectionId={conversation.waba_connection_id}
+          contactPhone={conversation.contact_phone}
+          contactName={conversation.contact_name}
+          isEvolution={!!isEvolution}
+          lastInboundAt={lastInboundAt}
+          fetchTemplates={fetchTemplates}
+        />
+      )}
     </div>
   );
 }
