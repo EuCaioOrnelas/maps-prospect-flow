@@ -142,27 +142,35 @@ export function AddToCRMDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-popover">
-        <DialogHeader>
-          <div className="w-12 h-12 rounded-[14px] wa-accent-bg-soft flex items-center justify-center mb-2">
-            <UserPlus size={22} className="wa-accent-text" />
-          </div>
-          <DialogTitle>Adicionar no CRM</DialogTitle>
-          <DialogDescription>
-            Confira os dados do contato e escolha a etapa. Você pode completar o restante depois no CRM.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[520px] bg-popover p-0 overflow-hidden">
+        <div className="px-6 pt-6 pb-4 border-b border-border/60">
+          <DialogHeader className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-11 h-11 shrink-0 rounded-xl wa-accent-bg-soft flex items-center justify-center">
+                <UserPlus size={20} className="wa-accent-text" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-lg leading-tight">Adicionar no CRM</DialogTitle>
+                <DialogDescription className="text-[13px] leading-snug">
+                  Confira os dados do contato e escolha a etapa. Você completa o restante depois no CRM.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
 
-        <div className="space-y-3 py-1 max-h-[60vh] overflow-y-auto pr-1">
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="crm-name">Nome</Label>
-              <Input id="crm-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: João Silva" autoFocus />
+        <div className="space-y-4 px-6 py-5 max-h-[60vh] overflow-y-auto">
+          <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-3.5 py-3">
+            <Phone size={16} className="text-muted-foreground shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Telefone do contato</p>
+              <p className="text-sm font-medium tabular-nums truncate">{prettyPhone(contactPhone)}</p>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="crm-phone">Telefone</Label>
-              <Input id="crm-phone" value={contactPhone} readOnly className="font-mono text-sm bg-muted/40" />
-            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="crm-name">Nome</Label>
+            <Input id="crm-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: João Silva" autoFocus />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-3">
@@ -217,7 +225,7 @@ export function AddToCRMDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/10">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <><Loader2 size={15} className="mr-2 animate-spin" /> Adicionando...</> : "Adicionar"}
