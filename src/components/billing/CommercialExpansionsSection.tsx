@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Minus, Plus, Rocket, QrCode, CreditCard, ArrowRight, Check, Crown, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { Loader2, Minus, Plus, Rocket, QrCode, CreditCard, ArrowRight, Check, Crown, ShieldCheck, Sparkles, Zap, Copy, ReceiptText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
   const [pending, setPending] = useState<OrderBumpId | null>(null);
   const [purchaseQuantities, setPurchaseQuantities] = useState<OrderBumpSelection>({ numbers: 1, contacts: 1, opportunities: 1 });
   const [confirming, setConfirming] = useState<OrderBumpId | null>(null);
+  const [pixCharge, setPixCharge] = useState<{ paymentId: string; brCode: string; brCodeBase64: string; desired: OrderBumpSelection } | null>(null);
 
   const planKey = (profile?.plan || "free").toLowerCase();
   const planBumps = getBumpsForPlan(planKey);
@@ -68,16 +69,48 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
       });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
+      if (data?.requiresPayment) {
+        setPixCharge({
+          paymentId: data.paymentId,
+          brCode: data.brCode,
+          brCodeBase64: data.brCodeBase64,
+          desired: next,
+        });
+        return;
+      }
       try { await refreshProfile(); } catch { /* noop */ }
       toast({
         title: delta > 0 ? "Expansão contratada!" : "Expansão removida",
-        description: isPix
-          ? "Sua cobrança PIX recorrente foi atualizada com o novo valor mensal."
-          : "Sua assinatura no cartão foi atualizada e a cobrança é proporcional.",
+        description: "A cobrança atual foi confirmada e a renovação mensal já inclui a nova capacidade.",
       });
       onChanged?.();
     } catch (e: any) {
       toast({ title: "Não foi possível atualizar", description: e.message, variant: "destructive" });
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const confirmPixPayment = async () => {
+    if (!pixCharge || !confirmingBump) return;
+    setPending(confirmingBump.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("update-subscription-bumps", {
+        body: { mode: "confirm-pix", paymentId: pixCharge.paymentId, bumps: pixCharge.desired },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      if (!data?.paid) {
+        toast({ title: "Pagamento ainda não identificado", description: "Após pagar o PIX, aguarde alguns segundos e tente confirmar novamente." });
+        return;
+      }
+      await refreshProfile().catch(() => undefined);
+      toast({ title: "Capacidade adicionada!", description: "Pagamento confirmado e próximas renovações atualizadas." });
+      setPixCharge(null);
+      setConfirming(null);
+      onChanged?.();
+    } catch (e: any) {
+      toast({ title: "Não foi possível confirmar", description: e.message, variant: "destructive" });
     } finally {
       setPending(null);
     }
@@ -126,13 +159,12 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                 const delivered = b.id === "numbers"
                   ? "+1 número e +1 colaborador"
                   : `+${b.step.toLocaleString("pt-BR")} ${b.unit}`;
-                const dailyPrice = currency(Math.round(b.monthlyPriceCents / 30));
                 const totalPrice = b.monthlyPriceCents * purchaseQty;
                 return (
                   <section key={b.id} className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-card transition-colors hover:border-primary/35">
-                    {index === 1 && (
+                    {b.id === "opportunities" && (
                       <div className="flex items-center justify-center gap-1.5 border-b border-primary/15 bg-primary/10 px-3 py-1.5 text-[10px] font-semibold text-primary">
-                        <Sparkles className="h-3 w-3" /> Expansão prática para o dia a dia
+                        <Sparkles className="h-3 w-3" /> Expansão comercial
                       </div>
                     )}
                     <div className="flex flex-1 flex-col p-5">
@@ -142,7 +174,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                       </div>
                       {activeQty > 0 && <Badge variant="outline" className="border-primary/20 bg-primary/5 text-[10px] text-primary">Já contratado</Badge>}
                     </div>
-                    <div className="mt-5 min-h-[116px]">
+                    <div className="mt-5 min-h-[132px]">
                       <p className="text-base font-semibold text-foreground">{b.title}</p>
                       <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-primary"><Zap className="h-3.5 w-3.5" />{delivered} por pacote</p>
                       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{b.description}</p>
@@ -152,8 +184,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                         {currency(b.monthlyPriceCents)}
                         <span className="ml-1 text-[11px] font-medium text-muted-foreground">/mês por pacote</span>
                       </p>
-                      <p className="mt-1 text-[10px] text-muted-foreground">Equivale a {dailyPrice} por dia</p>
-                      <div className="mt-4 flex items-center justify-between gap-3">
+                      <div className="mt-5 flex items-center justify-between gap-3">
                         <div className="flex h-10 items-center rounded-md border border-border bg-muted/25 p-1">
                           <Button
                             size="icon"
@@ -178,7 +209,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                           </Button>
                         </div>
                         <Button size="sm" className="h-10 flex-1 gap-1.5 px-3 text-xs" disabled={!canPurchase || !planSupportsBumps || busy} onClick={() => setConfirming(b.id)}>
-                          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Comprar {currency(totalPrice)} <ArrowRight className="h-3.5 w-3.5" /></>}
+                          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Adicionar <ArrowRight className="h-3.5 w-3.5" /></>}
                         </Button>
                       </div>
                     </div>
@@ -240,20 +271,39 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
         </CardContent>
       </Card>
 
-      <AlertDialog open={Boolean(confirmingBump)} onOpenChange={(open) => !open && setConfirming(null)}>
+      <AlertDialog open={Boolean(confirmingBump)} onOpenChange={(open) => { if (!open && !pending) { setConfirming(null); setPixCharge(null); } }}>
         <AlertDialogContent className="rounded-lg border-border bg-background">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar capacidade adicional</AlertDialogTitle>
+            <AlertDialogTitle>{pixCharge ? "Pague com PIX para concluir" : "Resumo da expansão"}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmingBump ? `${purchaseQuantities[confirmingBump.id]} pacote(s) de ${confirmingBump.title} serão adicionados ao seu plano por ${currency(confirmingBump.monthlyPriceCents * purchaseQuantities[confirmingBump.id])}/mês.` : ""}
+              {pixCharge ? "A capacidade será liberada assim que o pagamento for confirmado." : "Revise os dados antes de adicionar à sua assinatura."}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {confirmingBump && !pixCharge && (
+            <div className="overflow-hidden rounded-md border border-border">
+              <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-3"><ReceiptText className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">Detalhes da adição</span></div>
+              <dl className="space-y-3 p-4 text-sm">
+                <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Capacidade</dt><dd className="text-right font-medium">{confirmingBump.title}</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Quantidade</dt><dd className="font-medium">{purchaseQuantities[confirmingBump.id]} pacote(s)</dd></div>
+                <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Valor adicionado</dt><dd className="font-medium">{currency(confirmingBump.monthlyPriceCents * purchaseQuantities[confirmingBump.id])}/mês</dd></div>
+                <div className="flex justify-between gap-4 border-t border-border pt-3"><dt className="font-semibold">Novo investimento em adicionais</dt><dd className="font-bold text-primary">{currency(totalExtraCents + confirmingBump.monthlyPriceCents * purchaseQuantities[confirmingBump.id])}/mês</dd></div>
+              </dl>
+            </div>
+          )}
+          {pixCharge && (
+            <div className="space-y-4">
+              {pixCharge.brCodeBase64 && <div className="flex justify-center rounded-md border border-border bg-card p-4"><img src={pixCharge.brCodeBase64.startsWith("data:") ? pixCharge.brCodeBase64 : `data:image/png;base64,${pixCharge.brCodeBase64}`} alt="QR Code PIX da capacidade adicional" className="h-44 w-44" /></div>}
+              <Button variant="outline" className="w-full gap-2" onClick={() => { navigator.clipboard.writeText(pixCharge.brCode); toast({ title: "Código PIX copiado" }); }}><Copy className="h-4 w-4" /> Copiar código PIX</Button>
+            </div>
+          )}
           <div className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-            {isPix ? "O novo valor será aplicado à sua cobrança PIX recorrente." : "O cartão receberá o ajuste proporcional deste ciclo; depois, o valor será recorrente."}
+            {isPix ? "Você paga a adição agora via PIX. Após a confirmação, o novo total também será aplicado às próximas renovações." : "O cartão será cobrado agora pelo ajuste proporcional deste ciclo. Nas próximas renovações, o valor mensal completo será incluído."}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => confirmingBump && purchase(confirmingBump.id)}>Confirmar compra</AlertDialogAction>
+            <AlertDialogCancel disabled={Boolean(pending)}>Voltar</AlertDialogCancel>
+            {pixCharge
+              ? <AlertDialogAction disabled={Boolean(pending)} onClick={(event) => { event.preventDefault(); void confirmPixPayment(); }}>{pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Já paguei, confirmar</AlertDialogAction>
+              : <AlertDialogAction disabled={Boolean(pending)} onClick={(event) => { event.preventDefault(); if (confirmingBump) void purchase(confirmingBump.id); }}>{pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Confirmar e pagar</AlertDialogAction>}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
