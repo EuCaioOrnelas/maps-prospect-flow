@@ -130,6 +130,17 @@ serve(async (req) => {
       lead = leadRow;
     }
 
+    // Regra crítica: sem telefone/WhatsApp válido não há mensagem de abordagem.
+    if (!hasContactNumber(lead)) {
+      return new Response(
+        JSON.stringify({
+          error: "no_contact_number",
+          message: "Número não encontrado para esta empresa.",
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: companyProfile } = await supabase
       .from("company_profiles").select("*").eq("user_id", user.id).single();
 
