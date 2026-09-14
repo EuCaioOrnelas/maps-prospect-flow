@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  ORDER_BUMPS,
   getBumpsForPlan,
   profileToBumpSelection,
   type OrderBumpId,
@@ -38,11 +39,11 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
   const [pending, setPending] = useState<OrderBumpId | null>(null);
 
   const planKey = (profile?.plan || "free").toLowerCase();
-  const bumps = getBumpsForPlan(planKey);
+  const planBumps = getBumpsForPlan(planKey);
+  const bumps = planBumps.length > 0 ? planBumps : ORDER_BUMPS;
+  const planSupportsBumps = planBumps.length > 0;
   const selection = profileToBumpSelection(profile);
   const isPix = (provider || "").toLowerCase() === "asaas";
-
-  if (bumps.length === 0 && !showPlanActions) return null;
 
   const applyDelta = async (id: OrderBumpId, delta: number) => {
     const next: OrderBumpSelection = { ...selection, [id]: Math.max(0, selection[id] + delta) };
@@ -128,7 +129,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 rounded-sm"
-                            disabled={!canPurchase || busy || qty <= 0}
+                            disabled={!canPurchase || !planSupportsBumps || busy || qty <= 0}
                             onClick={() => applyDelta(b.id, -1)}
                             aria-label={`Remover ${b.title}`}
                           >
@@ -139,14 +140,14 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                             size="icon"
                             variant="ghost"
                             className="h-7 w-7 rounded-sm"
-                            disabled={!canPurchase || busy}
+                            disabled={!canPurchase || !planSupportsBumps || busy}
                             onClick={() => applyDelta(b.id, 1)}
                             aria-label={`Adicionar ${b.title}`}
                           >
                             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                           </Button>
                         </div>
-                        <Button size="sm" className="h-9 gap-1.5 px-3 text-xs" disabled={!canPurchase || busy} onClick={() => applyDelta(b.id, 1)}>
+                        <Button size="sm" className="h-9 gap-1.5 px-3 text-xs" disabled={!canPurchase || !planSupportsBumps || busy} onClick={() => applyDelta(b.id, 1)}>
                           Adicionar <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -197,10 +198,12 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
             </div>
           )}
 
-          {!canPurchase && bumps.length > 0 && (
+          {(!canPurchase || !planSupportsBumps) && bumps.length > 0 && (
             <div className="flex items-start gap-2 border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              Expansões ficam disponíveis para o dono de uma assinatura mensal ativa. Você pode revisar seu plano acima.
+              {!planSupportsBumps
+                ? "Adicionais são contratados nos planos Atendimento e Growth IA. Altere seu plano para ativar esta capacidade."
+                : "Expansões ficam disponíveis para o dono de uma assinatura mensal ativa. Você pode revisar seu plano acima."}
             </div>
           )}
         </CardContent>
