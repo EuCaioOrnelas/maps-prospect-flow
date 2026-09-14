@@ -45,7 +45,7 @@ import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
 import { OpportunityBulkBar } from "@/components/opportunities/OpportunityBulkBar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE } from "@/lib/opportunitySource";
+import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE, displayRating, isDerivedRating } from "@/lib/opportunitySource";
 
 interface OpportunityLead {
   id: string;
@@ -758,7 +758,7 @@ export default function OpportunitiesManagement() {
     }
     if (minRating) {
       const mr = parseFloat(minRating);
-      if (!isNaN(mr)) result = result.filter(l => (l.rating ?? 0) >= mr);
+      if (!isNaN(mr)) result = result.filter(l => (displayRating(l) ?? 0) >= mr);
     }
     if (onlyHighOpp) {
       result = result.filter(l => (l.ai_score ?? 0) >= 70);
@@ -1327,7 +1327,16 @@ export default function OpportunitiesManagement() {
           <DetailCard icon={<MapPin size={13} />} label="Endereço" value={lead.address} />
           <DetailCard icon={<Phone size={13} />} label="Telefone" value={formatPhoneNumber(lead.phone)} />
           <DetailCard icon={<Globe size={13} />} label="Site" value={lead.website} isLink />
-          <DetailCard icon={<Star size={13} className="text-amber-400" />} label="Avaliação" value={lead.rating ? `${lead.rating}/5 (${lead.review_count || 0})` : null} />
+          <DetailCard
+            icon={<Star size={13} className="text-amber-400" />}
+            label={isDerivedRating(lead) ? "Avaliação (IA)" : "Avaliação"}
+            value={displayRating(lead) != null
+              ? (isDerivedRating(lead)
+                ? `${displayRating(lead)}/5`
+                : `${displayRating(lead)}/5 (${lead.review_count || 0})`)
+              : null}
+          />
+
           <DetailCard icon={<Tag size={13} />} label="Categoria" value={lead.category} />
           <DetailCard icon={<MapPin size={13} />} label="Cidade" value={lead.city} />
         </div>
