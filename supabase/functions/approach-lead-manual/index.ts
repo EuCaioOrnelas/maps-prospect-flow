@@ -71,6 +71,31 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/** Telefone BR válido (fixo ou celular), com ou sem DDI 55. */
+function isValidBRPhone(raw: unknown): boolean {
+  let d = String(raw ?? "").replace(/\D/g, "");
+  if (!d) return false;
+  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) d = d.slice(2);
+  if (d.length !== 10 && d.length !== 11) return false;
+  const ddd = Number(d.slice(0, 2));
+  if (ddd < 11 || ddd > 99) return false;
+  const rest = d.slice(2);
+  if (/^(\d)\1+$/.test(rest)) return false;
+  if (d.length === 11 && rest[0] !== "9") return false;
+  return true;
+}
+
+/** Regra única: só existe abordagem quando há número de contato real. */
+function hasContactNumber(lead: any): boolean {
+  if (isValidBRPhone(lead?.phone)) return true;
+  const list = lead?.phone_numbers;
+  if (Array.isArray(list)) {
+    return list.some((p: any) => isValidBRPhone(typeof p === "string" ? p : p?.number ?? p?.phone));
+  }
+  return false;
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -128,6 +153,17 @@ serve(async (req) => {
         });
       }
       lead = leadRow;
+    }
+
+    // Regra crítica: sem telefone/WhatsApp válido não há mensagem de abordagem.
+    if (!hasContactNumber(lead)) {
+      return new Response(
+        JSON.stringify({
+          error: "no_contact_number",
+          message: "Número não encontrado para esta empresa.",
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const { data: companyProfile } = await supabase

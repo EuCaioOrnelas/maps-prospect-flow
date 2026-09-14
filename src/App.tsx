@@ -94,6 +94,7 @@ const CancellationFeedback = lazyWithRetry(() => import("./pages/CancellationFee
 const MetaAppDocumentation = lazyWithRetry(() => import("./pages/MetaAppDocumentation"), "MetaAppDocumentation");
 const MetaApiGuide = lazyWithRetry(() => import("./pages/MetaApiGuide"), "MetaApiGuide");
 const OpportunitiesManagement = lazyWithRetry(() => import("./pages/OpportunitiesManagement"), "OpportunitiesManagement");
+const ProspeccaoWeb = lazyWithRetry(() => import("./pages/ProspeccaoWeb"), "ProspeccaoWeb");
 const SDRInteligente = lazyWithRetry(() => import("./pages/SDRInteligente"), "SDRInteligente");
 const SDRWizardPage = lazyWithRetry(() => import("./pages/SDRWizardPage"), "SDRWizardPage");
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
@@ -355,6 +356,7 @@ const App = () => (
                 <Route path="/reports/prospeccao" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/prospeccao" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/oportunidades" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/oportunidades/web" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><ProspeccaoWeb /></Suspense></ProtectedRoute>} />
                 <Route path="/oportunidades/gestao" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><OpportunitiesManagement /></Suspense></ProtectedRoute>} />
                 <Route path="/oportunidades/sdr" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><SDRInteligente /></Suspense></ProtectedRoute>} />
                 <Route path="/oportunidades/sdr/novo" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><SDRWizardPage /></Suspense></ProtectedRoute>} />

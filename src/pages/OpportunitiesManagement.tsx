@@ -45,11 +45,12 @@ import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/CRMResponsibleFilter";
 import { OpportunityBulkBar } from "@/components/opportunities/OpportunityBulkBar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE } from "@/lib/opportunitySource";
 
 interface OpportunityLead {
   id: string;
   company_name: string | null;
-  phone: string;
+  phone: string | null;
   category: string | null;
   city: string | null;
   website: string | null;
@@ -68,6 +69,10 @@ interface OpportunityLead {
   enrichment_data: any;
   created_at: string;
   origin: string | null;
+  source: string | null;
+  domain: string | null;
+  search_query: string | null;
+  email: string | null;
   first_message_sent: boolean | null;
   whatsapp_number_id: string | null;
   responsible_user_id: string | null;
@@ -111,6 +116,13 @@ export default function OpportunitiesManagement() {
   const [sortOrder, setSortOrder] = useState<"default" | "score_desc" | "score_asc">("default");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterCity, setFilterCity] = useState("all");
+  // Origem da oportunidade: "all" | "web" (Prospecção Web) | "maps" (Prospecção Completa)
+  const [filterSource, setFilterSource] = useState<string>(
+    () => new URLSearchParams(location.search).get("source") || "all",
+  );
+  const [filterSearchQuery, setFilterSearchQuery] = useState<string>(
+    () => new URLSearchParams(location.search).get("q") || "",
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(20);
   // Padrão "todos": o filtro "meus" escondia oportunidades atribuídas a outras
@@ -260,7 +272,7 @@ export default function OpportunitiesManagement() {
     const ownerId = accountOwnerId || user.id;
     setLoading(true);
     try {
-      const baseCols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, first_message_sent, whatsapp_number_id, responsible_user_id";
+      const baseCols = "id, company_name, phone, category, city, website, google_maps_link, address, rating, review_count, ai_score, opportunity_level, closing_probability, ai_diagnosis, ai_recommended_action, ai_approach_message, social_media, phone_numbers, enrichment_data, created_at, origin, source, domain, search_query, email, first_message_sent, whatsapp_number_id, responsible_user_id";
       const ownerFilter = `owner_user_id.eq.${ownerId},and(owner_user_id.is.null,user_id.eq.${user.id})`;
       // Linhas antigas podem ter origem nula: elas também são oportunidades.
       const originFilter = "origin.in.(oportunidades,prospeccao),origin.is.null";
@@ -403,6 +415,8 @@ export default function OpportunitiesManagement() {
 
   // Gera a abordagem com IA sem toasts (usada na etapa automática pós-diagnóstico)
   const generateApproachForLead = async (lead: OpportunityLead, mode: "manual" | "meta") => {
+    // Sem telefone/WhatsApp real não existe abordagem (regra também validada no backend).
+    if (!canGenerateMessage(lead)) return false;
     const fnName = mode === "manual" ? "approach-lead-manual" : "approach-lead";
     const { data, error } = await supabase.functions.invoke(fnName, { body: { lead_id: lead.id } });
     if (error || !data?.mensagem) return false;
@@ -592,6 +606,10 @@ export default function OpportunitiesManagement() {
   };
 
   const approachLead = async (lead: OpportunityLead, mode: "manual" | "meta" = "meta") => {
+    if (!canGenerateMessage(lead)) {
+      toast({ title: NO_NUMBER_MESSAGE, description: "Sem telefone ou WhatsApp não é possível criar a abordagem.", variant: "destructive" });
+      return;
+    }
     setApproachingLeadId(lead.id);
     setApproachingMode(mode);
     try {
@@ -751,6 +769,12 @@ export default function OpportunitiesManagement() {
     if (filterCity !== "all") {
       result = result.filter(l => l.city === filterCity);
     }
+    if (filterSource !== "all") {
+      result = result.filter(l => (l.source || "maps") === filterSource);
+    }
+    if (filterSearchQuery) {
+      result = result.filter(l => l.search_query === filterSearchQuery);
+    }
     if (responsibleFilter === "me") {
       // Leads sem responsável definido continuam visíveis para quem está usando a conta
       result = result.filter(l => !l.responsible_user_id || l.responsible_user_id === user?.id);
@@ -773,7 +797,7 @@ export default function OpportunitiesManagement() {
       });
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, responsibleFilter, user?.id]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, filterSource, filterSearchQuery, responsibleFilter, user?.id]);
 
   // Bulk actions handlers
   const toggleSelected = (id: string) => {
@@ -1507,15 +1531,18 @@ export default function OpportunitiesManagement() {
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground italic py-2">
-                  Nenhuma mensagem manual gerada ainda. Quer criar uma copy de primeiro contato de alta conversão para este lead?
+                  {canGenerateMessage(lead)
+                    ? "Nenhuma mensagem manual gerada ainda. Quer criar uma copy de primeiro contato de alta conversão para este lead?"
+                    : "Não encontramos telefone ou WhatsApp desta empresa, então não é possível gerar a mensagem de abordagem."}
                 </p>
                 <Button
                   onClick={() => approachLead(lead, "manual")}
-                  disabled={approachingLeadId === lead.id}
+                  disabled={approachingLeadId === lead.id || !canGenerateMessage(lead)}
+                  title={canGenerateMessage(lead) ? undefined : NO_NUMBER_MESSAGE}
                   className="w-full gap-2"
                 >
                   {approachingLeadId === lead.id && approachingMode === "manual" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                  Gerar mensagem manual com IA
+                  {canGenerateMessage(lead) ? "Gerar mensagem manual com IA" : NO_NUMBER_MESSAGE}
                 </Button>
               </div>
             )}
@@ -1559,7 +1586,7 @@ export default function OpportunitiesManagement() {
                     <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.ai_approach_message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
                       <Pencil size={12} /> Editar
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "meta")} disabled={approachingLeadId === lead.id} className="gap-1.5 text-xs">
+                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "meta")} disabled={approachingLeadId === lead.id || !canGenerateMessage(lead)} className="gap-1.5 text-xs">
                       {approachingLeadId === lead.id && approachingMode === "meta" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                       Regenerar
                     </Button>
@@ -1569,15 +1596,18 @@ export default function OpportunitiesManagement() {
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground italic py-2">
-                  Nenhum follow-up gerado ainda. Clique abaixo para gerar a mensagem usada após a resposta ao template.
+                  {canGenerateMessage(lead)
+                    ? "Nenhum follow-up gerado ainda. Clique abaixo para gerar a mensagem usada após a resposta ao template."
+                    : "Não encontramos telefone ou WhatsApp desta empresa, então não é possível gerar a mensagem de abordagem."}
                 </p>
                 <Button
                   onClick={() => approachLead(lead, "meta")}
-                  disabled={approachingLeadId === lead.id}
+                  disabled={approachingLeadId === lead.id || !canGenerateMessage(lead)}
+                  title={canGenerateMessage(lead) ? undefined : NO_NUMBER_MESSAGE}
                   className="w-full gap-2"
                 >
                   {approachingLeadId === lead.id && approachingMode === "meta" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                  Gerar follow-up com IA (pós-resposta do template)
+                  {canGenerateMessage(lead) ? "Gerar follow-up com IA (pós-resposta do template)" : NO_NUMBER_MESSAGE}
                 </Button>
               </div>
             )}
@@ -1769,6 +1799,8 @@ export default function OpportunitiesManagement() {
                   sortOrder !== "default",
                   filterCategory !== "all",
                   filterCity !== "all",
+                  filterSource !== "all",
+                  !!filterSearchQuery,
                   responsibleFilter !== "me",
                 ].filter(Boolean).length;
 
@@ -1898,6 +1930,22 @@ export default function OpportunitiesManagement() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Origem da prospecção */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Origem</label>
+                      <Select value={filterSource} onValueChange={(v) => { setFilterSource(v); setCurrentPage(1); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todas as origens" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas as origens</SelectItem>
+                          <SelectItem value="maps">Prospecção Completa (MAPS)</SelectItem>
+                          <SelectItem value="web">Prospecção Web (WEB)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
 
                     {/* Score e Avaliação */}
                     <div className="grid grid-cols-2 gap-4">
@@ -2038,9 +2086,18 @@ export default function OpportunitiesManagement() {
                             )}
                           </TableCell>
                           <TableCell className="font-medium max-w-[220px]">
-                            <span className="truncate block whitespace-nowrap" title={lead.company_name || "Sem nome"}>
-                              {lead.company_name || "Sem nome"}
-                            </span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="truncate whitespace-nowrap" title={lead.company_name || "Sem nome"}>
+                                {lead.company_name || "Sem nome"}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className="shrink-0 text-[10px] px-1.5 py-0 font-semibold"
+                                title={sourceTitle(lead.source)}
+                              >
+                                {sourceLabel(lead.source)}
+                              </Badge>
+                            </div>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{lead.category || "-"}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{lead.city || "-"}</TableCell>
@@ -2316,6 +2373,9 @@ export default function OpportunitiesManagement() {
                     <span className="break-words leading-tight">{selectedLead.company_name || "Sem nome"}</span>
                   </DialogTitle>
                   <DialogDescription className="flex items-center gap-2 flex-wrap mt-2">
+                    <Badge variant="outline" className="text-xs font-semibold" title={sourceTitle(selectedLead.source)}>
+                      {sourceLabel(selectedLead.source)}
+                    </Badge>
                     {selectedLead.category && <Badge variant="outline" className="text-xs">{selectedLead.category}</Badge>}
                     {selectedLead.city && <Badge variant="outline" className="text-xs"><MapPin size={10} className="mr-1" />{selectedLead.city}</Badge>}
                     {getLevelBadge(selectedLead.opportunity_level, selectedLead.ai_score)}
