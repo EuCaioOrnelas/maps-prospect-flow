@@ -23,8 +23,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const MIN_VALID_RESULTS = 10;
-const MAX_VALID_RESULTS = 30;
-const MAX_SERP_PAGES = 6;
+const MAX_VALID_RESULTS = 60;
+const MAX_SERP_PAGES = 8;
 
 /** Domínios que nunca contam como site próprio de uma empresa. */
 const BLOCKED_DOMAINS = [
