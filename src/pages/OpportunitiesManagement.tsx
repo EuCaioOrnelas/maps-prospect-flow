@@ -120,27 +120,11 @@ export default function OpportunitiesManagement() {
   const [filterSource, setFilterSource] = useState<string>(
     () => new URLSearchParams(location.search).get("source") || "all",
   );
-  const [filterSearchQuery, setFilterSearchQuery] = useState<string>(
-    () => new URLSearchParams(location.search).get("q") || "",
-  );
-  // Mantém a URL em sinc com os filtros de origem/busca para que "Todas"/"IA"
-  // não continuem presos ao ?source=/?q= da última prospecção.
-  const applySourceFilter = (value: string, keepQuery = false) => {
+  const applySourceFilter = (value: string) => {
     setFilterSource(value);
-    if (!keepQuery) setFilterSearchQuery("");
     setCurrentPage(1);
     const params = new URLSearchParams(window.location.search);
     if (value === "all") params.delete("source"); else params.set("source", value);
-    if (!keepQuery) params.delete("q");
-    const qs = params.toString();
-    navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
-  };
-
-  const clearSearchQueryFilter = () => {
-    setFilterSearchQuery("");
-    setCurrentPage(1);
-    const params = new URLSearchParams(window.location.search);
-    params.delete("q");
     const qs = params.toString();
     navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
   };
