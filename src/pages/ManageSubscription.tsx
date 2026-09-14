@@ -356,10 +356,10 @@ export default function ManageSubscription() {
           <Card className="overflow-hidden rounded-lg border-border/70 shadow-sm">
             <CardContent className="grid p-0 sm:grid-cols-2 xl:grid-cols-4">
             {[
-              { label: "Números WhatsApp", value: formatLimit(numbersLimit), detail: extraNumbers ? `Inclui +${extraNumbers} adicional${extraNumbers > 1 ? "is" : ""}` : "Capacidade do plano", icon: MessageSquare },
-              { label: "Colaboradores", value: formatLimit(seatsLimit), detail: extraNumbers ? `+${extraNumbers} liberado${extraNumbers > 1 ? "s" : ""} pelos números extras` : "Dono e equipe", icon: UserRoundPlus },
-              { label: "Contatos no CRM", value: formatLimit(contactsLimit), detail: extraContactPacks ? `Inclui +${(extraContactPacks * 1000).toLocaleString("pt-BR")} contatos` : "Capacidade total", icon: Users },
-              { label: "Oportunidades / mês", value: formatLimit(opportunitiesLimit), detail: extraOpportunityPacks ? `Inclui +${(extraOpportunityPacks * 1000).toLocaleString("pt-BR")} por mês` : "Franquia mensal", icon: Target },
+              { label: "Números WhatsApp", value: formatLimit(numbersLimit), detail: "Total disponível na conta", icon: MessageSquare },
+              { label: "Colaboradores", value: formatLimit(seatsLimit), detail: "Acessos disponíveis na conta", icon: UserRoundPlus },
+              { label: "Contatos no CRM", value: formatLimit(contactsLimit), detail: "Capacidade total de contatos", icon: Users },
+              { label: "Oportunidades / mês", value: formatLimit(opportunitiesLimit), detail: "Limite renovado mensalmente", icon: Target },
             ].map((item) => (
               <div key={item.label} className="flex min-w-0 items-center gap-3 border-b border-border/60 p-4 last:border-b-0 sm:[&:nth-child(odd)]:border-r sm:[&:nth-last-child(-n+2)]:border-b-0 xl:border-b-0 xl:border-r xl:last:border-r-0 xl:[&:nth-child(odd)]:border-r">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10"><item.icon className="h-4 w-4 text-primary" /></div>
@@ -377,12 +377,17 @@ export default function ManageSubscription() {
         </motion.section>
 
         <section aria-labelledby="expansoes-heading">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md border border-primary/20 bg-primary/10"><Boxes className="h-4 w-4 text-primary" /></div>
-            <div><h2 id="expansoes-heading" className="text-base font-semibold">Comprar capacidade adicional</h2><p className="text-xs text-muted-foreground">Escolha a quantidade e adicione diretamente ao seu plano atual.</p></div>
-          </div>
-          <Card className="rounded-lg border-border/70 shadow-sm">
-            <CardContent className="p-4 sm:p-5">
+          <Card className="overflow-hidden rounded-lg border-primary/20 shadow-sm">
+            <CardHeader className="border-b border-border/60 bg-muted/20 p-5 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10"><Boxes className="h-5 w-5 text-primary" /></div>
+                  <div><div className="flex flex-wrap items-center gap-2"><h2 id="expansoes-heading" className="text-lg font-semibold">Comprar capacidade adicional</h2><Badge variant="outline" className="border-primary/20 bg-primary/5 text-[10px] text-primary">Sem trocar de plano</Badge></div><p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">Escale sua operação no ritmo da demanda. Escolha novos pacotes, confira o valor e confirme a compra em poucos segundos.</p></div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 text-[11px] font-medium text-muted-foreground"><Shield className="h-4 w-4 text-primary" /> Cobrança segura e recorrente</div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
               <CommercialExpansionsSection
                 profile={addonProfile || profile}
                 provider={(addonProfile as any)?.payment_provider || (profile as any)?.payment_provider || provider}

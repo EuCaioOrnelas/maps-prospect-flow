@@ -23,3 +23,4 @@
 - [x] Refinar Perfil e Minha Assinatura como painel executivo Wiize, com seletor evidente, troca de plano e adicionais integrados
 - [x] Consolidar Minha Assinatura: planos com ícones, capacidade operacional, compra direta de adicionais e downloads de faturas Stripe/PIX; refinar saída e adicionais no upgrade
 - [x] Reorganizar Minha Assinatura: plano e alteração em 70/30, capacidade em painel informativo único e catálogo de adicionais visível
+- [x] Refinar compra de capacidade: catálogo premium, seleção apenas de novos pacotes, confirmação e totais operacionais claros

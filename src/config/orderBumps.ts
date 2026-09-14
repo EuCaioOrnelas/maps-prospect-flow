@@ -32,7 +32,7 @@ export interface OrderBumpDef {
   /** Price ID anual — null por enquanto, bumps não disponíveis em anual. */
   stripePriceIdAnnual: string | null;
   icon: LucideIcon;
-  availableOn: Array<"start" | "growth">;
+  availableOn: Array<"start" | "growth" | "scale">;
   accent: "primary" | "emerald" | "amber";
   /** Coluna em profiles que guarda a quantidade ativa. */
   profileColumn: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
@@ -50,7 +50,7 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     stripePriceIdMonthly: "price_1TYdiXK8CM0R6xMMqnhxGM1V",
     stripePriceIdAnnual: null,
     icon: MessageSquare,
-    availableOn: ["start", "growth"],
+    availableOn: ["start", "growth", "scale"],
     accent: "emerald",
     profileColumn: "extra_numbers",
   },
@@ -65,7 +65,7 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     stripePriceIdMonthly: "price_1TYdkPK8CM0R6xMMXHTfihdw",
     stripePriceIdAnnual: null,
     icon: Users,
-    availableOn: ["start", "growth"],
+    availableOn: ["start", "growth", "scale"],
     accent: "primary",
     profileColumn: "extra_contacts_packs",
   },
@@ -80,7 +80,7 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     stripePriceIdMonthly: "price_1TYdknK8CM0R6xMM9TXjGFf5",
     stripePriceIdAnnual: null,
     icon: Target,
-    availableOn: ["growth"],
+    availableOn: ["growth", "scale"],
     accent: "amber",
     profileColumn: "extra_opportunities_packs",
   },
@@ -108,8 +108,8 @@ export function calcBumpsTotalCents(
 
 export function getBumpsForPlan(planKey: string): OrderBumpDef[] {
   const k = (planKey || "").toLowerCase();
-  if (k !== "start" && k !== "growth") return [];
-  return ORDER_BUMPS.filter((b) => b.availableOn.includes(k as "start" | "growth"));
+  if (k !== "start" && k !== "growth" && k !== "scale") return [];
+  return ORDER_BUMPS.filter((b) => b.availableOn.includes(k as "start" | "growth" | "scale"));
 }
 
 /** True se a combinação plano+ciclo aceita order bumps. */
