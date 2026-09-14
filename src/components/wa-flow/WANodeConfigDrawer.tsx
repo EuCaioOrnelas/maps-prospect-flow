@@ -6,7 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EntryAudienceFilter } from "./EntryAudienceFilter";
+
+/** Gatilhos que rodam pelo agendador (sem depender de mensagem recebida). */
+const SCHEDULED_TRIGGER_TYPES = [
+  "no_reply_hours",
+  "no_conversation_days",
+  "before_appointment",
+  "after_appointment",
+  "appointment_no_show",
+  "stage_entered",
+  "score_reached",
+  "deal_created",
+  "lead_created",
+];
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
