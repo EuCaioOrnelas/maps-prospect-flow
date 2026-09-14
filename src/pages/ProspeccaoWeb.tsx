@@ -536,9 +536,9 @@ const ProspeccaoWeb = () => {
                     <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/10">
                       <Globe size={40} className="text-primary" />
                     </div>
-                    <h3 className="font-display text-xl sm:text-2xl font-bold mb-3">Pronto para prospectar pela web?</h3>
+                    <h3 className="font-display text-xl sm:text-2xl font-bold mb-3">Pronto para prospectar na web?</h3>
                     <p className="text-muted-foreground max-w-md mx-auto text-base">
-                      Informe o nicho, a localização e, se quiser, uma especialidade para encontrarmos o máximo de sites empresariais válidos.
+                      Insira um termo de busca e uma localização acima para descobrir novos leads qualificados.
                     </p>
                   </div>
                 )}
