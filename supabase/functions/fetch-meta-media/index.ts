@@ -134,8 +134,9 @@ Deno.serve(async (req) => {
 
       if (isExpired) {
         console.warn(`[fetch-meta-media] media ${mediaId} expired/missing on Meta`);
-        return new Response(JSON.stringify({ error: "media_expired", message: "Mídia não está mais disponível no WhatsApp (expirada após ~30 dias)." }), {
-          status: 410,
+        // 200 + flag: expiração é estado esperado, não erro de runtime no cliente.
+        return new Response(JSON.stringify({ expired: true, error: "media_expired", message: "Mídia não está mais disponível no WhatsApp (expirada após ~30 dias)." }), {
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=86400" },
         });
       }
