@@ -1774,7 +1774,7 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
   const trigger = String(cfg.trigger_type || "");
   const out: TriggerCandidate[] = [];
 
-  const convCandidates = async (direction: "inbound" | "any", ageHours: number) => {
+  const convCandidates = async (direction: "inbound" | "outbound" | "any", ageHours: number) => {
     const cutoff = hoursAgo(ageHours);
     let q = supabase
       .from("chat_conversations")
@@ -1784,7 +1784,7 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
       .lte("last_message_at", cutoff)
       .order("last_message_at", { ascending: true })
       .limit(500);
-    if (direction === "inbound") q = q.eq("last_message_direction", "inbound");
+    if (direction !== "any") q = q.eq("last_message_direction", direction);
     const { data } = await q;
     return (data || []).map((c: any) => ({
       phone: digits(c.contact_phone || ""),
@@ -1797,7 +1797,7 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
   switch (trigger) {
     case "no_reply_hours": {
       const hours = Math.max(1, Number(cfg.no_reply_hours || 24));
-      out.push(...(await convCandidates("inbound", hours)));
+      out.push(...(await convCandidates("outbound", hours)));
       break;
     }
     case "no_conversation_days": {
@@ -1854,23 +1854,37 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
     case "stage_entered": {
       const stageId = String(cfg.stage_id || "");
       if (!stageId) break;
-      const { data } = await supabase
+      const { data: stage } = await supabase.from("pipeline_stages").select("name").eq("id", stageId).maybeSingle();
+      if (!stage?.name) break;
+      const { data: activities } = await supabase
+        .from("lead_activities")
+        .select("id,lead_id,created_at")
+        .eq("owner_user_id", ownerId)
+        .eq("activity_type", "stage_changed")
+        .ilike("description", `%${stage.name}%`)
+        .gte("created_at", hoursAgo(24))
+        .order("created_at", { ascending: true })
+        .limit(500);
+      if (!activities?.length) break;
+      const { data: leads } = await supabase
         .from("leads")
-        .select("id,phone,contact_name,company_name,pipeline_stage_id,updated_at")
+        .select("id,phone,contact_name,company_name,pipeline_stage_id")
         .eq("owner_user_id", ownerId)
         .eq("pipeline_stage_id", stageId)
-        .gte("updated_at", hoursAgo(1))
         .is("archived_at", null)
-        .not("phone", "is", null)
-        .limit(50);
-      out.push(
-        ...(data || []).map((l: any) => ({
-          phone: digits(l.phone || ""),
-          name: l.contact_name || l.company_name || null,
-          refId: l.id,
-          data: { lead_id: l.id, stage_id: l.pipeline_stage_id },
-        })),
-      );
+        .in("id", activities.map((a: any) => a.lead_id))
+        .not("phone", "is", null);
+      const byLead = new Map((leads || []).map((lead: any) => [lead.id, lead]));
+      for (const activity of activities) {
+        const lead: any = byLead.get(activity.lead_id);
+        if (!lead?.phone) continue;
+        out.push({
+          phone: digits(lead.phone),
+          name: lead.contact_name || lead.company_name || null,
+          refId: activity.id,
+          data: { lead_id: lead.id, stage_id: lead.pipeline_stage_id, activity_id: activity.id },
+        });
+      }
       break;
     }
     case "score_reached": {

@@ -4,7 +4,7 @@ export const WA_TRIGGER_LABELS: Record<string, string> = {
   webhook: "Webhook/API",
   first_message: "Primeira mensagem do contato",
   any_message: "Qualquer mensagem",
-  no_reply_hours: "Contato aguardando resposta",
+  no_reply_hours: "Lead não respondeu",
   no_conversation_days: "Conversa sem atividade",
   before_appointment: "Antes do compromisso",
   after_appointment: "Após o compromisso",
