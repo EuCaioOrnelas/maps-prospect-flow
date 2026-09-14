@@ -689,9 +689,9 @@ const Dashboard = () => {
           {/* Search Card */}
           <div className="relative mb-10 w-full min-w-0">
             {/* Glow effect behind card */}
-            <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/[0.03] blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/[0.025] blur-3xl" />
             
-            <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-5 backdrop-blur-sm sm:p-8" data-tour="search-card">
+            <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-2xl border border-border/30 bg-background/60 p-5 backdrop-blur-sm sm:p-8" data-tour="search-card">
               {/* Feature badges */}
               <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/30">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -765,8 +765,8 @@ const Dashboard = () => {
               </div>
 
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
-              <div className="mb-6 overflow-hidden rounded-2xl border border-primary/10 bg-primary/[0.02]">
-                <div className="flex items-start gap-3 px-4 py-4 sm:px-5">
+              <div className="mb-6">
+                <div className="flex items-start gap-3 mb-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                     <Sparkles size={16} className="text-primary" />
                   </div>
@@ -777,8 +777,8 @@ const Dashboard = () => {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-3 px-3 pb-3 sm:grid-cols-2 sm:px-4 sm:pb-4">
-                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/50 bg-card/50 p-4 transition-all hover:border-primary/30 hover:bg-card/70">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 p-4 transition-all hover:border-primary/30 hover:bg-background/90">
                     <Checkbox
                       checked={autoApproach.manual}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
@@ -798,7 +798,7 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </label>
-                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/50 bg-card/50 p-4 transition-all hover:border-info/30 hover:bg-card/70">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 p-4 transition-all hover:border-info/30 hover:bg-background/90">
                     <Checkbox
                       checked={autoApproach.meta}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
