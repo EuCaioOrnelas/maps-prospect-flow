@@ -71,6 +71,20 @@ interface Props {
   saving: boolean;
   onSave: (input: CalendarEventInput & { id?: string }) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
+  /** Campos já preenchidos ao criar um compromisso (ex.: contato vindo do Chat). */
+  prefill?: Partial<EventFormPrefill>;
+}
+
+/** Campos que podem ser pré-preenchidos ao abrir o diálogo em modo de criação. */
+export interface EventFormPrefill {
+  title: string;
+  contact_name: string;
+  contact_phone: string;
+  contact_email: string;
+  company_name: string;
+  notes: string;
+  lead_id: string | null;
+  category: "comercial" | "interna";
 }
 
 interface FormState {

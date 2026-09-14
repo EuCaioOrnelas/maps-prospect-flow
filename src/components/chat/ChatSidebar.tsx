@@ -13,6 +13,7 @@ import { AddContactDialog } from "./AddContactDialog";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
 import { getResponsibleColor } from "@/lib/responsibleColor";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useChatPrivacy, PRIVACY_BLUR_CLASS } from "@/hooks/useChatPrivacy";
 import { toast } from "sonner";
 
 interface ChatSidebarProps {
@@ -94,6 +95,7 @@ export function ChatSidebar({
   const [searchFocused, setSearchFocused] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { settings: privacy } = useChatPrivacy();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [newConvOpen, setNewConvOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
@@ -454,7 +456,8 @@ export function ChatSidebar({
                 {/* Avatar */}
                 <div className={cn(
                   "w-[49px] h-[49px] rounded-full flex items-center justify-center shrink-0 text-white text-[17px] font-medium relative",
-                  getChatAvatarColor(conv.contact_phone)
+                  getChatAvatarColor(conv.contact_phone),
+                  privacy.avatar && PRIVACY_BLUR_CLASS
                 )}>
                   {conv.contact_profile_pic ? (
                     <img src={conv.contact_profile_pic} className="w-full h-full rounded-full object-cover" alt="" />
@@ -470,7 +473,7 @@ export function ChatSidebar({
                       {conv.is_muted && (
                         <VolumeX size={14} className="wa-icon-muted shrink-0" />
                       )}
-                      <span className="truncate">{displayName}</span>
+                      <span className={cn("truncate", privacy.name && PRIVACY_BLUR_CLASS)}>{displayName}</span>
                       {!hasName && onSaveContactName && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setAddContactFor(conv); }}
@@ -608,7 +611,7 @@ export function ChatSidebar({
                           </span>
                         );
                       })()}
-                      <span className="text-[14px] leading-[20px] wa-text-secondary truncate">
+                      <span className={cn("text-[14px] leading-[20px] wa-text-secondary truncate", privacy.preview && PRIVACY_BLUR_CLASS)}>
                         {getLastMessagePreview(conv)}
                       </span>
                     </div>

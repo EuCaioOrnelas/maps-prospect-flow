@@ -2038,3 +2038,14 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   );
   background-repeat: no-repeat;
 }
+
+/* ─── Privacidade visual do chat: desfoque que some ao passar o mouse ─── */
+.wa-private-blur {
+  filter: blur(6px);
+  transition: filter 160ms ease;
+}
+.wa-private-blur:hover,
+.wa-private-blur:focus-within,
+.group:hover .wa-private-blur {
+  filter: none;
+}
