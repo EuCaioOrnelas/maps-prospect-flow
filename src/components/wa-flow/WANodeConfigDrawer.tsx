@@ -1386,7 +1386,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
 
       {config.trigger_type === "no_reply_hours" && (
         <div className="space-y-2">
-          <Label className="text-xs">Horas sem sua resposta</Label>
+          <Label className="text-xs">Horas sem resposta do lead</Label>
           <Input
             type="number"
             min={1}
@@ -1395,7 +1395,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             className="h-9 text-sm"
           />
           <p className="text-[10px] text-muted-foreground">
-            O fluxo inicia quando a última mensagem da conversa for do contato e você não responder nesse tempo.
+            O fluxo inicia quando sua última mensagem enviada ainda não recebeu resposta do lead nesse tempo.
           </p>
         </div>
       )}
