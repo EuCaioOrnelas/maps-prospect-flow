@@ -34,6 +34,18 @@ const formatCurrencyInput = (input: string) => {
   return (parseInt(digits, 10) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+/** +55 (44) 9 9999-9999 */
+const prettyPhone = (raw: string) => {
+  const d = (raw || "").replace(/\D/g, "");
+  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) {
+    const ddd = d.slice(2, 4);
+    const rest = d.slice(4);
+    if (rest.length === 9) return `+55 (${ddd}) ${rest[0]} ${rest.slice(1, 5)}-${rest.slice(5)}`;
+    return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  }
+  return formatPhoneNumber(d);
+};
+
 const parseCurrency = (value: string) => {
   if (!value) return 0;
   const parsed = parseFloat(value.replace(/\./g, "").replace(",", "."));
