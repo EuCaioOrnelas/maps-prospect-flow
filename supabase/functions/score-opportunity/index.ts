@@ -109,6 +109,7 @@ type HeuristicScore = {
   activeSocialCount: number;
   rating: number;
   reviewCount: number;
+  webTrust?: WebTrustSignals | null;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -341,6 +342,89 @@ const fetchPageSummary = async (url: string, label: string, platform?: string): 
     clearTimeout(timeout);
   }
 };
+
+// ═══ Sinais de confiança extraídos do próprio site (usado em leads de origem WEB) ═══
+type WebTrustSignals = {
+  hasTestimonials: boolean;
+  testimonialStrength: number; // 0-3
+  clarityStrength: number; // 0-3
+  signals: string[];
+  summary: string;
+};
+
+const analyzeWebTrustSignals = (page: PageSummary | undefined): WebTrustSignals => {
+  if (!page || !page.ok) {
+    return {
+      hasTestimonials: false,
+      testimonialStrength: 0,
+      clarityStrength: 0,
+      signals: [],
+      summary: "Site não pôde ser lido — sem evidências de depoimentos ou clareza de entrega.",
+    };
+  }
+
+  const text = `${page.title} ${page.description} ${page.textSnippet}`.toLowerCase();
+  const signals: string[] = [];
+
+  const testimonialHits = [
+    /depoimento/,
+    /o que (nossos |os )?clientes (dizem|falam)/,
+    /avalia(ç|c)(õ|o)es de clientes/,
+    /cases? de sucesso/,
+    /hist(ó|o)rias? de clientes/,
+    /feedback dos clientes/,
+    /(5|cinco) estrelas/,
+    /google reviews?/,
+  ].filter((re) => re.test(text)).length;
+
+  const socialProofHits = [
+    /clientes atendidos/,
+    /anos de (experi(ê|e)ncia|mercado)/,
+/clientes satisfeitos/,
+    /portf(ó|o)lio/,
+    /parceiros/,
+    /antes e depois/,
+  ].filter((re) => re.test(text)).length;
+
+  const testimonialStrength = clamp(testimonialHits * 2 + socialProofHits, 0, 3);
+  if (testimonialHits > 0) signals.push("depoimentos de clientes no site");
+  if (socialProofHits > 0) signals.push("prova social (portfólio, cases, tempo de mercado)");
+
+  const clarityHits = [
+    /(serviç|servic)os?/,
+    /(soluç|soluc)(õ|o)es/,
+    /como funciona/,
+    /o que fazemos/,
+    /planos?|pacotes?|pre(ç|c)os?|investimento/,
+    /(orçamento|orcamento|agendar|agende|fale conosco|solicite)/,
+  ].filter((re) => re.test(text)).length;
+
+  const hasDescription = !!page.description;
+  const hasDepth = page.contentLength >= 700;
+
+  const clarityStrength = clamp(
+    (clarityHits >= 4 ? 2 : clarityHits >= 2 ? 1 : 0) + (hasDescription ? 1 : 0) + (hasDepth ? 1 : 0),
+    0,
+    3,
+  );
+  if (clarityHits >= 2) signals.push("descrição clara de serviços/entrega");
+  if (clarityHits >= 4) signals.push("oferta detalhada com chamada para ação");
+  if (hasDepth) signals.push("conteúdo com profundidade");
+
+  const summary = signals.length > 0
+    ? `Sinais encontrados no site: ${signals.join("; ")}.`
+    : "O site não apresenta depoimentos nem descrição clara da entrega.";
+
+  return {
+    hasTestimonials: testimonialHits > 0,
+    testimonialStrength,
+    clarityStrength,
+    signals,
+    summary,
+  };
+};
+
+
 
 // Social media insights type (kept for type compatibility, no longer uses SerpAPI)
 type SocialMediaInsight = {
@@ -1054,6 +1138,7 @@ const computeHeuristicScore = ({
   hasAddress,
   websitePage,
   socialPages,
+  webTrust,
 }: {
   rating: number;
   reviewCount: number;
@@ -1061,6 +1146,7 @@ const computeHeuristicScore = ({
   hasAddress: boolean;
   websitePage: PageSummary | undefined;
   socialPages: PageSummary[];
+  webTrust?: WebTrustSignals | null;
 }): HeuristicScore => {
   const hasWebsite = !!websitePage;
   const websiteReadable = !!websitePage && websitePage.ok && (websitePage.contentLength >= 220 || !!websitePage.title || !!websitePage.description);
@@ -1076,13 +1162,25 @@ const computeHeuristicScore = ({
     25,
   );
 
-  const reputacao = clamp(
-    (rating >= 4.8 ? 12 : rating >= 4.5 ? 10 : rating >= 4.0 ? 7 : rating >= 3.5 ? 4 : rating > 0 ? 2 : 0) +
-    (reviewCount >= 100 ? 8 : reviewCount >= 30 ? 6 : reviewCount >= 10 ? 4 : reviewCount >= 1 ? 2 : 0) +
-    (rating >= 4.5 && reviewCount >= 20 ? 5 : reviewCount >= 10 ? 3 : 0),
-    0,
-    25,
-  );
+  // Leads de origem WEB não têm avaliações do Google: a reputação vem dos
+  // depoimentos publicados no site e da clareza da entrega (serviços/oferta).
+  const reputacao = webTrust
+    ? clamp(
+        (webTrust.testimonialStrength * 4) +
+        (webTrust.clarityStrength * 3) +
+        (webTrust.hasTestimonials && webTrust.clarityStrength >= 2 ? 4 : 0) +
+        (websiteReadable ? 2 : 0),
+        0,
+        25,
+      )
+    : clamp(
+        (rating >= 4.8 ? 12 : rating >= 4.5 ? 10 : rating >= 4.0 ? 7 : rating >= 3.5 ? 4 : rating > 0 ? 2 : 0) +
+        (reviewCount >= 100 ? 8 : reviewCount >= 30 ? 6 : reviewCount >= 10 ? 4 : reviewCount >= 1 ? 2 : 0) +
+        (rating >= 4.5 && reviewCount >= 20 ? 5 : reviewCount >= 10 ? 3 : 0),
+        0,
+        25,
+      );
+
 
   const acessibilidade = clamp(
     (hasPhone ? 10 : 0) +
@@ -1095,7 +1193,9 @@ const computeHeuristicScore = ({
   const engajamento_atividade = clamp(
     (activeSocialCount * 3) +
     (websiteRich ? 5 : websiteReadable ? 3 : 0) +
-    (reviewCount >= 20 ? 4 : reviewCount >= 5 ? 2 : reviewCount > 0 ? 1 : 0),
+    (webTrust
+      ? (webTrust.testimonialStrength >= 2 ? 4 : webTrust.testimonialStrength > 0 ? 2 : 0)
+      : (reviewCount >= 20 ? 4 : reviewCount >= 5 ? 2 : reviewCount > 0 ? 1 : 0)),
     0,
     15,
   );
@@ -1103,11 +1203,13 @@ const computeHeuristicScore = ({
   const potencial_venda = clamp(
     (!hasWebsite ? 6 : !websiteReadable ? 3 : 0) +
     (socialCount === 0 ? 4 : activeSocialCount === 0 ? 2 : 0) +
-    (rating > 0 && rating < 4 ? 3 : 0) +
-    (reviewCount > 0 && reviewCount < 10 ? 2 : 0),
+    (webTrust
+      ? (!webTrust.hasTestimonials ? 3 : 0) + (webTrust.clarityStrength <= 1 ? 2 : 0)
+      : (rating > 0 && rating < 4 ? 3 : 0) + (reviewCount > 0 && reviewCount < 10 ? 2 : 0)),
     0,
     15,
   );
+
 
   const score = clamp(estrutura_digital + reputacao + acessibilidade + engajamento_atividade + potencial_venda, 0, 100);
 
@@ -1125,6 +1227,7 @@ const computeHeuristicScore = ({
     activeSocialCount,
     rating,
     reviewCount,
+    webTrust: webTrust ?? null,
   };
 };
 
@@ -1275,7 +1378,9 @@ const normalizeAiResult = ({
     pontos_fracos: (pontos_fracos.length > 0 ? pontos_fracos : fallbackPoints.pontos_fracos).slice(0, 3),
     analise_site: compact(toSafeString(raw?.analise_site)) || siteSummary,
     analise_redes_sociais: compact(toSafeString(raw?.analise_redes_sociais)) || socialSummary,
-    analise_reputacao_detalhada: compact(toSafeString(raw?.analise_reputacao_detalhada)) || `Avaliação ${heuristic.rating > 0 ? `${heuristic.rating.toFixed(1)}/5` : "não disponível"} com ${heuristic.reviewCount} avaliação(ões).`,
+    analise_reputacao_detalhada: compact(toSafeString(raw?.analise_reputacao_detalhada)) || (heuristic.webTrust
+      ? `Reputação avaliada pelo próprio site (origem Web): ${heuristic.webTrust.summary}`
+      : `Avaliação ${heuristic.rating > 0 ? `${heuristic.rating.toFixed(1)}/5` : "não disponível"} com ${heuristic.reviewCount} avaliação(ões).`),
     analise_concorrencia_regional: compact(toSafeString(raw?.analise_concorrencia_regional)) || "",
     analise_demanda_regional: compact(toSafeString(raw?.analise_demanda_regional)) || "",
     justificativa_score: compact(toSafeString(raw?.justificativa_score)) || `Score consolidado pelo equilíbrio entre estrutura digital (${estrutura_digital}), reputação (${reputacao}), acessibilidade (${acessibilidade}), engajamento (${engajamento_atividade}) e potencial (${potencial_venda}).`,
@@ -1347,7 +1452,7 @@ serve(async (req) => {
     const { data: currentLead } = lead_id
       ? await supabase
           .from("leads")
-          .select("enrichment_data")
+          .select("enrichment_data, source")
           .eq("id", lead_id)
           .eq("user_id", user.id)
           .maybeSingle()
@@ -1521,6 +1626,11 @@ Ainda não há negócios ganhos registrados no CRM. Não invente históricos de 
     const websitePage = pageSummaries.find((page) => page.label === "site");
     const socialPages = pageSummaries.filter((page) => page.label === "rede_social");
 
+    // Origem do lead: "web" (Prospecção Web, sem avaliações do Google) ou "maps" (padrão)
+    const leadSource = (compact(toSafeString(body?.source)) || compact(toSafeString((currentLead as any)?.source)) || "maps").toLowerCase();
+    const isWebLead = leadSource === "web";
+    const webTrust = isWebLead ? analyzeWebTrustSignals(websitePage) : null;
+
     const heuristic = computeHeuristicScore({
       rating: avaliacao_media,
       reviewCount: quantidade_avaliacoes,
@@ -1528,6 +1638,7 @@ Ainda não há negócios ganhos registrados no CRM. Não invente históricos de 
       hasAddress: !!endereco,
       websitePage,
       socialPages,
+      webTrust,
     });
 
     // Enrich social pages with SerpAPI insights for heuristic scoring
@@ -1614,6 +1725,15 @@ ${socialPages.length > 0
    - Conteúdo: ${page.contentLength >= 120 ? "Perfil com conteúdo" : "Pouco conteúdo visível"}`).join("\n\n")
   : "⚠️ Nenhuma rede social pôde ser analisada. Infira atividade com base nos dados do Google Maps (avaliações recentes = sinal de atividade)."}
 
+${isWebLead ? `═══ ORIGEM DO LEAD: PROSPECÇÃO WEB (SEM GOOGLE MAPS) ═══
+Este lead foi encontrado por busca na web. NÃO existem avaliações nem nota do Google Maps.
+REGRA OBRIGATÓRIA DE REPUTAÇÃO: avalie "reputacao" (0-25) usando SOMENTE dois critérios extraídos do próprio site:
+  A) DEPOIMENTOS / PROVA SOCIAL publicados no site (depoimentos de clientes, cases, portfólio, tempo de mercado, clientes atendidos).
+  B) CLAREZA NA ENTREGA (o site explica com clareza o que a empresa faz, quais serviços entrega, como funciona, e tem chamada para ação/contato).
+Se não houver depoimentos nem clareza, a reputação deve ser BAIXA. NUNCA cite nota ou quantidade de avaliações do Google para este lead, e NUNCA invente depoimentos.
+Em "analise_reputacao_detalhada", descreva exatamente o que foi encontrado (ou não) de depoimentos e clareza de entrega no site.
+SINAIS DETECTADOS AUTOMATICAMENTE NO SITE: ${webTrust?.summary || "nenhum"}
+` : ""}
 ═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
 - Reputação: ${heuristic.reputacao}/25
