@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SEO } from "@/components/SEO";
 import { TrialCancelCard } from "@/components/profile/TrialCancelCard";
 import { DeleteAccountCard } from "@/components/profile/DeleteAccountCard";
@@ -70,7 +71,6 @@ import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/l
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
-import { CommercialExpansionsSection } from "@/components/billing/CommercialExpansionsSection";
 
 
 
