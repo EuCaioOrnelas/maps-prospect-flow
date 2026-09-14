@@ -81,13 +81,6 @@ const RESULTS_PER_PAGE = 10;
 const HISTORY_PER_PAGE = 20;
 const MAX_HISTORY_ITEMS = 200; // Histórico ampliado para manter mais buscas
 
-const FadedDivider = () => (
-  <div className="relative my-6 h-[2px] w-full">
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-    <div className="absolute left-1/2 top-1/2 h-[3px] w-1/4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-border to-transparent" />
-  </div>
-);
-
 const Dashboard = () => {
   const publicDemo = window.location.pathname === "/tour-guiado";
   const [keyword, setKeyword] = useState("");
@@ -696,36 +689,34 @@ const Dashboard = () => {
           {/* Search Card */}
           <div className="relative mb-10 w-full min-w-0">
             {/* Glow effect behind card */}
-            <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/[0.025] blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/5 blur-3xl" />
             
-            <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-2xl border border-border/30 bg-background/60 p-5 backdrop-blur-sm sm:p-8" data-tour="search-card">
+            <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-panel border border-border/80 bg-card p-5 shadow-card sm:p-8" data-tour="search-card">
               {/* Feature badges */}
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Target size={16} className="text-primary" />
                   </div>
                   <span>Leads qualificados</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Sparkles size={16} className="text-primary" />
                   </div>
                   <span>Contatos verificados</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Globe size={16} className="text-primary" />
                   </div>
                   <span>Busca global</span>
                 </div>
               </div>
 
-              <FadedDivider />
-
               {/* Global search info */}
-              <div className="flex items-center gap-3 p-3 mb-6 rounded-xl border border-border/40 bg-background/50">
-                <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-3 p-3 mb-6 bg-primary/5 border border-primary/20 rounded-xl">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <MapPin size={18} className="text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -735,8 +726,6 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
-
-              <FadedDivider />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6" data-tour="search-fields">
                 <div className="space-y-2" data-tour="search-keyword">
@@ -749,7 +738,7 @@ const Dashboard = () => {
                     placeholder="Ex: restaurantes, dentistas, advogados..."
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    className="h-12 sm:h-14 bg-background border-border/60 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-1 focus:ring-primary/10 transition-colors"
+                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   />
                 </div>
 
@@ -767,7 +756,7 @@ const Dashboard = () => {
                     placeholder="Ex: São Paulo, SP ou Miami, FL, USA"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="h-12 sm:h-14 bg-background border-border/60 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-1 focus:ring-primary/10 transition-colors"
+                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                   />
                   <p className="text-xs text-muted-foreground/70">
                     Cidade, Estado • Cidade, País • ou qualquer região do mundo
@@ -775,12 +764,10 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <FadedDivider />
-
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
-              <div className="mb-6">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+              <div className="mb-6 overflow-hidden rounded-panel border border-border/70 bg-secondary/20">
+                <div className="flex items-start gap-3 border-b border-border/60 bg-card/70 px-4 py-4 sm:px-5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover border border-primary/20 bg-primary/10">
                     <Sparkles size={16} className="text-primary" />
                   </div>
                   <div className="min-w-0">
@@ -790,8 +777,8 @@ const Dashboard = () => {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 p-4 transition-all hover:border-primary/30 hover:bg-background/90">
+                <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
                     <Checkbox
                       checked={autoApproach.manual}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
@@ -799,7 +786,7 @@ const Dashboard = () => {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-primary/10">
                           <MessageSquare size={14} className="text-primary" />
                         </div>
                         <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
@@ -811,7 +798,7 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </label>
-                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 p-4 transition-all hover:border-info/30 hover:bg-background/90">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
                     <Checkbox
                       checked={autoApproach.meta}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
@@ -819,7 +806,7 @@ const Dashboard = () => {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-info/10">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-info/10">
                           <Megaphone size={14} className="text-info" />
                         </div>
                         <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
