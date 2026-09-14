@@ -245,43 +245,31 @@ function SignupWithCardInner() {
   }, [user, navigate]);
 
   useEffect(() => {
-    const cleanCep = postalCode.replace(/\D/g, "");
-
-    if (cleanCep.length !== 8) {
+    if (!isCepComplete(postalCode)) {
       setCepError("");
       setCepLoading(false);
       return;
     }
 
+    let cancelled = false;
     const timeout = setTimeout(async () => {
       setCepLoading(true);
       setCepError("");
-
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await res.json();
-
-        if (data.erro) {
-          setCepError("CEP não encontrado");
-          setAddress("");
-          setNeighborhood("");
-          setCity("");
-          setState("");
-          return;
-        }
-
-        setAddress(data.logradouro || "");
-        setNeighborhood(data.bairro || "");
-        setCity(data.localidade || "");
-        setState((data.estado || data.uf || "").trim());
-      } catch {
-        setCepError("Erro ao buscar o CEP");
-      } finally {
-        setCepLoading(false);
+      const { found, address: found_address } = await lookupCep(postalCode);
+      if (cancelled) return;
+      if (found && found_address) {
+        if (found_address.street) setAddress(found_address.street);
+        if (found_address.neighborhood) setNeighborhood(found_address.neighborhood);
+        if (found_address.city) setCity(found_address.city);
+        if (found_address.state) setState(found_address.state);
+      } else {
+        // CEP válido mas sem endereço na base: o usuário completa manualmente
+        setCepError("Não encontramos este CEP. Preencha o endereço manualmente.");
       }
+      setCepLoading(false);
     }, 500);
 
-    return () => clearTimeout(timeout);
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, [postalCode]);
 
   const trialEndDate = useMemo(() => {
