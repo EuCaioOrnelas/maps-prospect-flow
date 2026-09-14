@@ -960,7 +960,7 @@ const Profile = () => {
             </CardContent>
             </div>
             <div role="tabpanel" className={businessView === "services" ? "block" : "hidden"}>
-            <CardContent>
+            <CardContent className="pt-6">
               {isLoadingServices ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
