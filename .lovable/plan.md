@@ -1,22 +1,29 @@
-# Timeout de sessão por inatividade
+# Perfil comercial e expansão da conta
 
-## Análise atual
-- A sessão é centralizada no `AuthProvider`, que acompanha alterações de autenticação e já expõe o logout oficial da aplicação.
-- As páginas privadas usam `ProtectedRoute`; quando o usuário deixa de existir na sessão, esse controle redireciona para `/login`.
-- O melhor ponto único para monitorar atividade é dentro do `AuthProvider`, evitando um timer por página ou por rota.
-- Não é necessário alterar banco, 2FA, integrações, CRM, Chat, Wian ou automações.
+## Resultado
+- Unificar “Perfil da Empresa” e “Serviços Vendidos” em um único card premium com seletor entre as duas visões.
+- Manter os formulários, validações e fontes de dados atuais, sem duplicar cadastros.
+- Adicionar abaixo uma área de crescimento da conta para comprar expansões de CRM, oportunidades, números e colaboradores.
+- Dar ao dono da conta acesso rápido à troca de plano; subusuários continuam apenas com visualização.
 
-## Implementação
-- Criar um hook pequeno de inatividade, ativado somente quando houver usuário autenticado.
-- Considerar atividade real por eventos de ponteiro/clique, teclado, toque e navegação/rolagem, com atualização limitada para evitar trabalho excessivo.
-- Manter apenas um timeout para os 30 minutos; cada atividade válida reagenda esse mesmo timeout.
-- Persistir somente o horário da última atividade no navegador para que múltiplas abas compartilhem o prazo e uma aba parada não prolongue a sessão.
-- Ao voltar para uma aba após o prazo, conferir imediatamente a última atividade e encerrar a sessão, sem tratar foco ou aba aberta como atividade.
-- Executar o `signOut` já existente; a remoção do usuário no contexto fará as áreas protegidas enviarem para `/login`.
+## Experiência
+- O card da empresa terá um seletor compacto “Empresa / Serviços”, cabeçalho único, resumo do preenchimento e ações contextuais de editar ou adicionar.
+- A área de expansão mostrará preço mensal, quantidade ativa, benefício entregue e controles de compra em um clique.
+- Cada número adicional continuará liberando também um colaborador, conforme a regra já existente.
+- No plano Atendimento, o upgrade para Growth IA será destacado; a troca inversa ficará disponível como downgrade.
+- Upgrade será imediato com ajuste proporcional. Downgrade será programado para a próxima renovação.
+- Confirmações deixarão claro o efeito na cobrança e nos limites antes de concluir.
+
+## Regras e segurança
+- Reutilizar o catálogo e a função atuais de expansões para Stripe e PIX Automático, preservando preços, grandfathering e auditoria.
+- Bloquear compras em contratos anuais, inativos, personalizados ou por subusuários, como já ocorre hoje.
+- Centralizar a troca de plano no backend autenticado; nunca alterar o plano apenas no navegador.
+- Preservar os add-ons compatíveis no upgrade e remover/programar incompatibilidades somente conforme as regras do plano de destino.
+- Atualizar o perfil após cada operação para refletir limites e plano imediatamente.
 
 ## Validação
-- Testar renovação do prazo por interação real.
-- Testar expiração após 30 minutos sem interação.
-- Testar retorno à aba depois do prazo.
-- Testar sincronização entre abas e garantir uma única execução de logout.
-- Executar build e checagem de tipos do projeto.
+- Conferir visualmente desktop e celular, incluindo ausência de scroll horizontal.
+- Validar alternância Empresa/Serviços, edição e estados vazios.
+- Validar compra/remoção de expansões e estados indisponíveis.
+- Validar upgrade imediato e downgrade agendado sem afetar cancelamento ou renovação.
+- Executar checagem de tipos, build e testes direcionados.
