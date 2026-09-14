@@ -1464,6 +1464,45 @@ input::placeholder, textarea::placeholder {
 .wa-icon-button:hover { background-color: rgba(134,150,160,0.1); }
 .landing-light .wa-icon-button:hover { background-color: rgba(0,0,0,0.05); }
 
+/* ─── Header action buttons — premium hover + responsive ─── */
+.wa-header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  color: #aebac1;
+  transition: color 0.18s ease, background-color 0.18s ease, transform 0.14s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, background-color;
+}
+.landing-light .wa-header-action-btn { color: #54656f; }
+.wa-header-action-btn:hover {
+  color: #e9edef;
+  background-color: rgba(134,150,160,0.16);
+  transform: scale(1.08);
+}
+.landing-light .wa-header-action-btn:hover {
+  color: #111b21;
+  background-color: rgba(0,0,0,0.08);
+}
+.wa-header-action-btn:active { transform: scale(0.94); }
+
+.wa-tooltip-subtle {
+  background-color: hsl(220 18% 14%);
+  color: #e9edef;
+  border-color: rgba(134,150,160,0.18);
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+.landing-light .wa-tooltip-subtle {
+  background-color: #ffffff;
+  color: #111b21;
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
 /* ─── Dropdowns — Wiize green highlight + white text on hover/focus ─── */
 .wa-dropdown-menu,
 .wa-dropdown-bg { background-color: hsl(220 18% 10%); color: #e9edef; }
