@@ -28,6 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCep, cepDigits, isCepComplete, lookupCep } from "@/lib/cepLookup";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
@@ -162,48 +163,39 @@ function CheckoutCardInner() {
     return () => document.removeEventListener("click", handler);
   }, [installmentDropdownOpen]);
 
-  // CEP validation via ViaCEP
+  // Busca de endereço pelo CEP — nunca bloqueia o checkout
   useEffect(() => {
-    const cleanCep = postalCode.replace(/\D/g, "");
-    if (cleanCep.length !== 8) {
+    if (!isCepComplete(postalCode)) {
       setCepValid(null);
       setCepError("");
-      setAddressStreet("");
-      setAddressNeighborhood("");
       return;
     }
 
+    let cancelled = false;
     const timeout = setTimeout(async () => {
       setCepValidating(true);
       setCepError("");
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await res.json();
-        if (data.erro) {
-          setCepValid(false);
-          setCepError("CEP não encontrado");
-          setAddressStreet("");
-          setAddressNeighborhood("");
-        } else {
-          setCepValid(true);
-          setAddressStreet(data.logradouro || "");
-          setAddressNeighborhood(data.bairro || "");
-        }
-      } catch {
-        setCepValid(false);
-        setCepError("Erro ao validar CEP");
-      } finally {
-        setCepValidating(false);
+      const { found, address } = await lookupCep(postalCode);
+      if (cancelled) return;
+      if (found && address) {
+        setCepValid(true);
+        if (address.street) setAddressStreet(address.street);
+        if (address.neighborhood) setAddressNeighborhood(address.neighborhood);
+      } else {
+        // CEP não localizado na base: seguimos com preenchimento manual
+        setCepValid(true);
+        setCepError("Não encontramos este CEP na base. Preencha o endereço manualmente.");
       }
+      setCepValidating(false);
     }, 500);
 
-    return () => clearTimeout(timeout);
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, [postalCode]);
 
   const isCardValid =
     cardComplete &&
     cardHolder.trim().length >= 3 &&
-    cepValid === true &&
+    isCepComplete(postalCode) &&
     addressStreet.trim().length >= 2 &&
     addressNeighborhood.trim().length >= 1 &&
     addressNumber.trim().length >= 1;
@@ -242,7 +234,7 @@ function CheckoutCardInner() {
         email: customerData.email,
         phone: customerData.phone,
         address: {
-          postal_code: postalCode.replace(/\D/g, ""),
+          postal_code: cepDigits(postalCode),
           line1: `${addressStreet}, ${addressNumber || "S/N"}`,
           country: "BR",
         },
@@ -260,7 +252,7 @@ function CheckoutCardInner() {
           bumps: bumpsPayload,
           customerData: {
             ...customerData,
-            postalCode: postalCode.replace(/\D/g, ""),
+            postalCode: cepDigits(postalCode),
             address: addressStreet,
             addressNumber: addressNumber || "S/N",
             neighborhood: addressNeighborhood,
@@ -453,14 +445,13 @@ function CheckoutCardInner() {
                         id="postal-code"
                         placeholder="00000-000"
                         value={postalCode}
-                        onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-                          setPostalCode(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
+                        onChange={(e) => setPostalCode(formatCep(e.target.value))}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          setPostalCode(formatCep(e.clipboardData.getData("text")));
                         }}
+                        inputMode="numeric"
                         maxLength={9}
-                        className={cn(
-                          cepValid === false && "border-destructive"
-                        )}
                       />
                       {cepValidating && (
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
@@ -469,7 +460,7 @@ function CheckoutCardInner() {
                         <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-500" />
                       )}
                     </div>
-                    {cepError && <p className="text-[10px] text-destructive">{cepError}</p>}
+                    {cepError && <p className="text-[10px] text-muted-foreground">{cepError}</p>}
                   </div>
 
                   <div className="space-y-1.5">

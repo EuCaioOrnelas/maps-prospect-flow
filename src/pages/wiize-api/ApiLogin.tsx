@@ -14,6 +14,7 @@ import { ShaderBackground } from "@/components/ui/warmth-ripple";
 import { PasswordField, isStrongPassword } from "@/components/wiize-api/PasswordField";
 import { maskCEP, maskCNPJ, maskCPF, maskPhone, onlyDigits, BR_STATES, isValidCNPJ, isValidCPF } from "@/lib/brMasks";
 import { cn } from "@/lib/utils";
+import { formatCep, isCepComplete, lookupCep } from "@/lib/cepLookup";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 import { createWiizeApiAccess, resolveWiizeApiAccess, type WiizeApiProfileInput } from "@/lib/wiizeApiAuth";
 
@@ -120,10 +121,9 @@ export default function ApiLogin() {
   }, [navigate]);
 
 
-  // ViaCEP — mesmo mecanismo do checkout
+  // Busca de endereço pelo CEP — nunca bloqueia o cadastro
   useEffect(() => {
-    const clean = onlyDigits(cep);
-    if (clean.length !== 8) {
+    if (!isCepComplete(cep)) {
       setCepOk(false);
       setCepError("");
       return;
@@ -132,28 +132,18 @@ export default function ApiLogin() {
     const t = setTimeout(async () => {
       setCepLoading(true);
       setCepError("");
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
-        const data = await res.json();
-        if (cancelled) return;
-        if (data.erro) {
-          setCepOk(false);
-          setCepError("CEP não encontrado");
-        } else {
-          setCepOk(true);
-          setStreet(data.logradouro || "");
-          setNeighborhood(data.bairro || "");
-          setCity(data.localidade || "");
-          setUf(data.uf || "");
-        }
-      } catch {
-        if (!cancelled) {
-          setCepOk(false);
-          setCepError("Erro ao validar CEP");
-        }
-      } finally {
-        if (!cancelled) setCepLoading(false);
+      const { found, address } = await lookupCep(cep);
+      if (cancelled) return;
+      setCepOk(true);
+      if (found && address) {
+        if (address.street) setStreet(address.street);
+        if (address.neighborhood) setNeighborhood(address.neighborhood);
+        if (address.city) setCity(address.city);
+        if (address.state) setUf(address.state);
+      } else {
+        setCepError("Não encontramos este CEP. Preencha o endereço manualmente.");
       }
+      setCepLoading(false);
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
   }, [cep]);
@@ -596,9 +586,11 @@ export default function ApiLogin() {
                             required
                             inputMode="numeric"
                             value={cep}
-                            onChange={(e) => setCep(maskCEP(e.target.value))}
+                            onChange={(e) => setCep(formatCep(e.target.value))}
+                            onPaste={(e) => { e.preventDefault(); setCep(formatCep(e.clipboardData.getData("text"))); }}
+                            maxLength={9}
                             placeholder="00000-000"
-                            className={cn("pr-9", cepError && "border-destructive focus-visible:!border-destructive")}
+                            className="pr-9"
                           />
                           <span className="absolute right-2.5 top-1/2 -translate-y-1/2">
                             {cepLoading ? (
@@ -610,7 +602,7 @@ export default function ApiLogin() {
                             )}
                           </span>
                         </div>
-                        {cepError && <p className="text-[11px] text-destructive">{cepError}</p>}
+                        {cepError && <p className="text-[11px] text-muted-foreground">{cepError}</p>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="api-street">Endereço</Label>

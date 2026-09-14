@@ -34,6 +34,7 @@ import { generateFingerprint, getClientIP } from "@/lib/fingerprint";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { cn } from "@/lib/utils";
+import { formatCep, cepDigits, isCepComplete, lookupCep } from "@/lib/cepLookup";
 import { Elements, useStripe } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
@@ -109,9 +110,7 @@ function isValidTaxId(v: string) {
   const d = v.replace(/\D/g, "");
   return d.length === 11 ? isValidCpf(d) : d.length === 14 ? isValidCnpj(d) : false;
 }
-function fmtCep(v: string) {
-  return v.replace(/\D/g, "").slice(0, 8).replace(/(\d{5})(\d)/, "$1-$2");
-}
+const fmtCep = formatCep;
 function fmtPhone(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11);
   if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim();
@@ -246,43 +245,31 @@ function SignupWithCardInner() {
   }, [user, navigate]);
 
   useEffect(() => {
-    const cleanCep = postalCode.replace(/\D/g, "");
-
-    if (cleanCep.length !== 8) {
+    if (!isCepComplete(postalCode)) {
       setCepError("");
       setCepLoading(false);
       return;
     }
 
+    let cancelled = false;
     const timeout = setTimeout(async () => {
       setCepLoading(true);
       setCepError("");
-
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await res.json();
-
-        if (data.erro) {
-          setCepError("CEP não encontrado");
-          setAddress("");
-          setNeighborhood("");
-          setCity("");
-          setState("");
-          return;
-        }
-
-        setAddress(data.logradouro || "");
-        setNeighborhood(data.bairro || "");
-        setCity(data.localidade || "");
-        setState((data.estado || data.uf || "").trim());
-      } catch {
-        setCepError("Erro ao buscar o CEP");
-      } finally {
-        setCepLoading(false);
+      const { found, address: found_address } = await lookupCep(postalCode);
+      if (cancelled) return;
+      if (found && found_address) {
+        if (found_address.street) setAddress(found_address.street);
+        if (found_address.neighborhood) setNeighborhood(found_address.neighborhood);
+        if (found_address.city) setCity(found_address.city);
+        if (found_address.state) setState(found_address.state);
+      } else {
+        // CEP válido mas sem endereço na base: o usuário completa manualmente
+        setCepError("Não encontramos este CEP. Preencha o endereço manualmente.");
       }
+      setCepLoading(false);
     }, 500);
 
-    return () => clearTimeout(timeout);
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, [postalCode]);
 
   const trialEndDate = useMemo(() => {
@@ -317,7 +304,7 @@ function SignupWithCardInner() {
       toast({ title: "Telefone inválido", variant: "destructive" });
       return;
     }
-    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood || !city || !state || !!cepError) {
+    if (!isCepComplete(postalCode) || !address || !addressNumber || !neighborhood || !city || !state) {
       toast({ title: "Complete o endereço", description: "Informe CEP, rua, número, bairro, cidade e estado.", variant: "destructive" });
       return;
     }
@@ -430,7 +417,7 @@ function SignupWithCardInner() {
         trial_asaas_customer_id: trialRes.customerId,
         cpf: cleanTaxId,
         phone: phone || null,
-        postal_code: postalCode.replace(/\D/g, "") || null,
+        postal_code: cepDigits(postalCode) || null,
         address: address || null,
         address_number: addressNumber || null,
         address_complement: addressComplement.trim() || null,
@@ -517,7 +504,7 @@ function SignupWithCardInner() {
           email,
           phone: phone.replace(/\D/g, ""),
           address: {
-            postal_code: postalCode.replace(/\D/g, ""),
+            postal_code: cepDigits(postalCode),
             line1: `${address}, ${addressNumber || "S/N"}`,
             city,
             state,
@@ -554,7 +541,7 @@ function SignupWithCardInner() {
               email,
               taxId: cleanTaxId,
               phone: phone.replace(/\D/g, ""),
-              postalCode: postalCode.replace(/\D/g, ""),
+              postalCode: cepDigits(postalCode),
               address,
               addressNumber: addressNumber || "S/N",
               addressComplement: addressComplement.trim() || undefined,
@@ -741,7 +728,15 @@ function SignupWithCardInner() {
                       <div className="grid sm:grid-cols-[140px_1fr] gap-3">
                         <div className="space-y-1.5">
                           <Label>CEP</Label>
-                          <Input value={postalCode} onChange={(e) => setPostalCode(fmtCep(e.target.value))} required placeholder="00000-000" />
+                          <Input
+                            value={postalCode}
+                            onChange={(e) => setPostalCode(fmtCep(e.target.value))}
+                            onPaste={(e) => { e.preventDefault(); setPostalCode(fmtCep(e.clipboardData.getData("text"))); }}
+                            inputMode="numeric"
+                            maxLength={9}
+                            required
+                            placeholder="00000-000"
+                          />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Endereço</Label>
@@ -773,7 +768,7 @@ function SignupWithCardInner() {
                         </div>
                       </div>
                       {(cepLoading || cepError) && (
-                        <p className={cn("text-xs", cepError ? "text-destructive" : "text-muted-foreground")}>
+                        <p className="text-xs text-muted-foreground">
                           {cepLoading ? "Buscando endereço pelo CEP..." : cepError}
                         </p>
                       )}
