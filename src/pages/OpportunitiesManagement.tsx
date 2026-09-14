@@ -1786,6 +1786,8 @@ export default function OpportunitiesManagement() {
                   sortOrder !== "default",
                   filterCategory !== "all",
                   filterCity !== "all",
+                  filterSource !== "all",
+                  !!filterSearchQuery,
                   responsibleFilter !== "me",
                 ].filter(Boolean).length;
 
@@ -1915,6 +1917,22 @@ export default function OpportunitiesManagement() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Origem da prospecção */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Origem</label>
+                      <Select value={filterSource} onValueChange={(v) => { setFilterSource(v); setCurrentPage(1); }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todas as origens" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todas as origens</SelectItem>
+                          <SelectItem value="maps">Prospecção Completa (MAPS)</SelectItem>
+                          <SelectItem value="web">Prospecção Web (WEB)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
 
                     {/* Score e Avaliação */}
                     <div className="grid grid-cols-2 gap-4">
