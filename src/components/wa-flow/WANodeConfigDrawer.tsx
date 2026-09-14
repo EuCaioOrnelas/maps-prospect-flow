@@ -1445,6 +1445,14 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
           </div>
         </div>
       )}
+
+      {/* Filtro de público — vale para qualquer gatilho */}
+      {!!config.trigger_type && (
+        <EntryAudienceFilter
+          value={config.audience || {}}
+          onChange={(next) => updateConfig("audience", next)}
+        />
+      )}
     </div>
   );
 }
