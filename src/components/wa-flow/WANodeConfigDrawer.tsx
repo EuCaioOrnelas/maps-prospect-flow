@@ -1074,6 +1074,15 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
     enabled: !!user && config.trigger_type === "campaign_reply",
   });
 
+  const { data: triggerStages = [] } = useQuery({
+    queryKey: ["wa-trigger-stages", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("pipeline_stages").select("id,name,position").order("position");
+      return data || [];
+    },
+    enabled: !!user && config.trigger_type === "stage_entered",
+  });
+
   const filteredReopenTemplates = reopenTemplates.filter((t: any) =>
     t.name?.toLowerCase().includes(templateSearch.toLowerCase())
   );
