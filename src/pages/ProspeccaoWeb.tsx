@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,12 +34,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { hasSDRAccess } from "@/lib/planAccess";
-import {
-  AutoApproachPrefs,
-  EMPTY_AUTO_APPROACH,
-  clearAutoApproachPrefs,
-  saveAutoApproachPrefs,
-} from "@/lib/autoApproachPrefs";
+import { clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
 
 type Phase = "idle" | "searching" | "diagnosing" | "done";
 
@@ -58,10 +52,8 @@ const ProspeccaoWeb = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [niche, setNiche] = useState("");
+  const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [extraTerm, setExtraTerm] = useState("");
-  const [autoApproach, setAutoApproach] = useState<AutoApproachPrefs>({ ...EMPTY_AUTO_APPROACH });
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [statusText, setStatusText] = useState("");
@@ -89,8 +81,8 @@ const ProspeccaoWeb = () => {
   }, [user, accountOwnerId]);
 
   const canSubmit = useMemo(
-    () => niche.trim().length >= 2 && location.trim().length >= 2 && !isBusy,
-    [niche, location, isBusy],
+    () => query.trim().length >= 2 && !isBusy,
+    [query, isBusy],
   );
 
   const runDiagnosis = async (leadIds: string[]) => {
@@ -126,15 +118,13 @@ const ProspeccaoWeb = () => {
     setProgress(0);
     setPhase("searching");
     setStatusText("Procurando empresas com site na web...");
-    if (autoApproach.manual || autoApproach.meta) saveAutoApproachPrefs(autoApproach);
-    else clearAutoApproachPrefs();
+    clearAutoApproachPrefs();
 
     try {
       const { data, error } = await supabase.functions.invoke("search-leads-web", {
         body: {
-          niche: niche.trim(),
-          location: location.trim(),
-          extra_term: extraTerm.trim() || undefined,
+          query: query.trim(),
+          location: location.trim() || undefined,
         },
       });
 
