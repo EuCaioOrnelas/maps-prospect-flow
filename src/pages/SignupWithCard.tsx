@@ -760,7 +760,7 @@ function SignupWithCardInner() {
                         </div>
                       </div>
                       {(cepLoading || cepError) && (
-                        <p className={cn("text-xs", cepError ? "text-destructive" : "text-muted-foreground")}>
+                        <p className="text-xs text-muted-foreground">
                           {cepLoading ? "Buscando endereço pelo CEP..." : cepError}
                         </p>
                       )}
