@@ -160,7 +160,7 @@ export default function ManageSubscription() {
     if (!user?.id) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, plan, payment_provider, billing_period, subscription_current_period_end, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
+      .select("id, plan, created_at, payment_provider, billing_period, subscription_current_period_end, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
       .eq("id", user.id)
       .maybeSingle();
     setAddonProfile(data);
@@ -376,6 +376,7 @@ export default function ManageSubscription() {
             provider={(addonProfile as any)?.payment_provider || (profile as any)?.payment_provider || provider}
             canPurchase={(isStripe || isPix) && hasActiveSub && (addonProfile?.billing_period || profile?.billing_period) !== "annual"}
             onChanged={() => { fetchAddonProfile(); fetchInfo(); }}
+            directCatalog
           />
         </section>
 

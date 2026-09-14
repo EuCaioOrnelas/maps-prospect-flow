@@ -25,12 +25,14 @@ interface Props {
   onChanged?: () => void;
   /** Exibe atalhos de troca de plano quando usado no Perfil. */
   showPlanActions?: boolean;
+  /** Renderiza somente o catálogo, sem criar outro card/cabeçalho ao redor. */
+  directCatalog?: boolean;
 }
 
 const currency = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function CommercialExpansionsSection({ profile, provider, canPurchase, onChanged, showPlanActions = false }: Props) {
+export function CommercialExpansionsSection({ profile, provider, canPurchase, onChanged, showPlanActions = false, directCatalog = false }: Props) {
   const { refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [pending, setPending] = useState<OrderBumpId | null>(null);
@@ -70,8 +72,8 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-      <Card className="relative overflow-hidden rounded-md border-border/70 shadow-sm">
-        <CardHeader className="relative border-b border-border/60 bg-muted/20 pb-5 pt-6">
+      <Card className={directCatalog ? "border-0 bg-transparent shadow-none" : "relative overflow-hidden rounded-md border-border/70 shadow-sm"}>
+        {!directCatalog && <CardHeader className="relative border-b border-border/60 bg-muted/20 pb-5 pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
@@ -91,9 +93,9 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
               </Badge>
             )}
           </div>
-        </CardHeader>
+        </CardHeader>}
 
-        <CardContent className="relative space-y-5 p-4 sm:p-6">
+        <CardContent className={directCatalog ? "relative space-y-5 p-0" : "relative space-y-5 p-4 sm:p-6"}>
           {bumps.length > 0 && (
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               {bumps.map((b) => {
