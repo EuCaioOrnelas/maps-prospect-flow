@@ -163,48 +163,39 @@ function CheckoutCardInner() {
     return () => document.removeEventListener("click", handler);
   }, [installmentDropdownOpen]);
 
-  // CEP validation via ViaCEP
+  // Busca de endereço pelo CEP — nunca bloqueia o checkout
   useEffect(() => {
-    const cleanCep = postalCode.replace(/\D/g, "");
-    if (cleanCep.length !== 8) {
+    if (!isCepComplete(postalCode)) {
       setCepValid(null);
       setCepError("");
-      setAddressStreet("");
-      setAddressNeighborhood("");
       return;
     }
 
+    let cancelled = false;
     const timeout = setTimeout(async () => {
       setCepValidating(true);
       setCepError("");
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await res.json();
-        if (data.erro) {
-          setCepValid(false);
-          setCepError("CEP não encontrado");
-          setAddressStreet("");
-          setAddressNeighborhood("");
-        } else {
-          setCepValid(true);
-          setAddressStreet(data.logradouro || "");
-          setAddressNeighborhood(data.bairro || "");
-        }
-      } catch {
-        setCepValid(false);
-        setCepError("Erro ao validar CEP");
-      } finally {
-        setCepValidating(false);
+      const { found, address } = await lookupCep(postalCode);
+      if (cancelled) return;
+      if (found && address) {
+        setCepValid(true);
+        if (address.street) setAddressStreet(address.street);
+        if (address.neighborhood) setAddressNeighborhood(address.neighborhood);
+      } else {
+        // CEP não localizado na base: seguimos com preenchimento manual
+        setCepValid(true);
+        setCepError("Não encontramos este CEP na base. Preencha o endereço manualmente.");
       }
+      setCepValidating(false);
     }, 500);
 
-    return () => clearTimeout(timeout);
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, [postalCode]);
 
   const isCardValid =
     cardComplete &&
     cardHolder.trim().length >= 3 &&
-    cepValid === true &&
+    isCepComplete(postalCode) &&
     addressStreet.trim().length >= 2 &&
     addressNeighborhood.trim().length >= 1 &&
     addressNumber.trim().length >= 1;
