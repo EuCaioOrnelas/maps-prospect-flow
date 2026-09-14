@@ -120,27 +120,11 @@ export default function OpportunitiesManagement() {
   const [filterSource, setFilterSource] = useState<string>(
     () => new URLSearchParams(location.search).get("source") || "all",
   );
-  const [filterSearchQuery, setFilterSearchQuery] = useState<string>(
-    () => new URLSearchParams(location.search).get("q") || "",
-  );
-  // Mantém a URL em sinc com os filtros de origem/busca para que "Todas"/"IA"
-  // não continuem presos ao ?source=/?q= da última prospecção.
-  const applySourceFilter = (value: string, keepQuery = false) => {
+  const applySourceFilter = (value: string) => {
     setFilterSource(value);
-    if (!keepQuery) setFilterSearchQuery("");
     setCurrentPage(1);
     const params = new URLSearchParams(window.location.search);
     if (value === "all") params.delete("source"); else params.set("source", value);
-    if (!keepQuery) params.delete("q");
-    const qs = params.toString();
-    navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
-  };
-
-  const clearSearchQueryFilter = () => {
-    setFilterSearchQuery("");
-    setCurrentPage(1);
-    const params = new URLSearchParams(window.location.search);
-    params.delete("q");
     const qs = params.toString();
     navigate({ pathname: window.location.pathname, search: qs ? `?${qs}` : "" }, { replace: true });
   };
@@ -794,9 +778,6 @@ export default function OpportunitiesManagement() {
     if (filterSource !== "all") {
       result = result.filter(l => (l.source || "maps") === filterSource);
     }
-    if (filterSearchQuery) {
-      result = result.filter(l => l.search_query === filterSearchQuery);
-    }
     if (responsibleFilter === "me") {
       // Leads sem responsável definido continuam visíveis para quem está usando a conta
       result = result.filter(l => !l.responsible_user_id || l.responsible_user_id === user?.id);
@@ -819,7 +800,7 @@ export default function OpportunitiesManagement() {
       });
     }
     return result;
-  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, filterSource, filterSearchQuery, responsibleFilter, user?.id]);
+  }, [leads, searchTerm, filterLevel, minScore, minRating, onlyHighOpp, sortOrder, filterCategory, filterCity, filterSource, responsibleFilter, user?.id]);
 
   // Bulk actions handlers
   const toggleSelected = (id: string) => {
@@ -1836,7 +1817,6 @@ export default function OpportunitiesManagement() {
                   filterCategory !== "all",
                   filterCity !== "all",
                   filterSource !== "all",
-                  !!filterSearchQuery,
                   responsibleFilter !== "me",
                 ].filter(Boolean).length;
 
@@ -1931,20 +1911,6 @@ export default function OpportunitiesManagement() {
                         ))}
                       </div>
                     </div>
-
-                    {/* Filtro herdado da última prospecção */}
-                    {filterSearchQuery && (
-                      <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
-                        <span className="text-xs text-muted-foreground truncate">
-                          <Search size={12} className="inline mr-1.5 -mt-0.5" />
-                          Somente da busca: <strong className="text-foreground">{filterSearchQuery}</strong>
-                        </span>
-                        <Button variant="ghost" size="sm" className="h-7 gap-1 shrink-0" onClick={clearSearchQueryFilter}>
-                          <X size={12} />
-                          Remover
-                        </Button>
-                      </div>
-                    )}
 
 
                     {/* Ordenação */}
