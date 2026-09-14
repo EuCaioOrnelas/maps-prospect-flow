@@ -348,13 +348,14 @@ serve(async (req) => {
     if (authError || !user) return json({ error: "Usuário não autenticado" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const niche = String(body?.niche || "").trim();
+    // Só o necessário para o SerpAPI: o termo de busca (q) e, opcionalmente, a localização.
+    const searchTerm = String(body?.query || body?.q || body?.niche || "").trim();
     const location = String(body?.location || "").trim();
-    const extraTerm = String(body?.extra_term || "").trim();
 
-    if (!niche || !location) {
-      return json({ error: "Informe o nicho e a localização para buscar." }, 400);
+    if (searchTerm.length < 2) {
+      return json({ error: "Informe o que você quer buscar no Google." }, 400);
     }
+
 
     const userRl = await checkRateLimit(admin, user.id, "search_leads_web_user", 5, 60);
     if (!userRl.allowed) {
