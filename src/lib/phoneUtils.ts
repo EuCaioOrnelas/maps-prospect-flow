@@ -7,8 +7,9 @@
  * Format a phone number for display
  * Handles Brazilian and international numbers
  */
-export const formatPhoneNumber = (phone: string): string => {
-  const digits = phone.replace(/\D/g, '');
+export const formatPhoneNumber = (phone?: string | null): string => {
+  const digits = String(phone ?? '').replace(/\D/g, '');
+  if (!digits) return '';
   
   // Brazilian phone with country code
   if (digits.startsWith('55') && digits.length >= 12 && digits.length <= 13) {
