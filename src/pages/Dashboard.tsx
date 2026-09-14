@@ -287,7 +287,7 @@ const Dashboard = () => {
     if (!keyword.trim() || !location.trim()) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha a palavra-chave e a localização",
+        description: "Preencha o nicho e a localização",
         variant: "destructive",
       });
       return;
@@ -592,7 +592,7 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+      <div className="min-h-screen flex w-full max-w-full bg-background relative overflow-x-hidden">
         <BackgroundGlow />
         <AppSidebar 
           profile={profile} 
@@ -605,7 +605,7 @@ const Dashboard = () => {
             onWhatsAppClick={() => setShowWhatsAppUpgradeModal(true)} 
           />
 
-          <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto">
+          <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
             {!hasSDRAccess(profile) ? (
               <div className="max-w-2xl mx-auto mt-12">
                 <div className="rounded-2xl border border-primary/30 bg-card/60 backdrop-blur p-8 text-center">
@@ -636,7 +636,7 @@ const Dashboard = () => {
                 </div>
               </div>
             ) : (
-            <div className="max-w-4xl mx-auto">
+            <div className="mx-auto w-full max-w-4xl min-w-0">
           <div className="text-center mb-8 sm:mb-12 relative">
             {companyProfile && (
               <div className="absolute right-0 top-0 hidden sm:block">
@@ -655,8 +655,9 @@ const Dashboard = () => {
               <Brain size={18} className="text-primary" />
               <span className="text-sm font-medium text-primary">Oportunidades Inteligentes com IA</span>
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-              Encontre suas próximas oportunidades
+            <h1 className="mb-4 font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
+              <span className="text-foreground">Encontre suas próximas </span>
+              <span className="text-shimmer-highlight">oportunidades</span>
             </h1>
             <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
               Nossa IA analisa e entrega até <span className="text-primary font-semibold">60 oportunidades estratégicas</span> por busca
@@ -686,11 +687,11 @@ const Dashboard = () => {
           )}
 
           {/* Search Card */}
-          <div className="relative mb-10">
+          <div className="relative mb-10 w-full min-w-0">
             {/* Glow effect behind card */}
-            <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full scale-150 -z-10" />
+            <div className="pointer-events-none absolute inset-x-8 -inset-y-3 -z-10 rounded-panel bg-primary/5 blur-3xl" />
             
-            <form onSubmit={handleSearch} className="bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xl" data-tour="search-card">
+            <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-panel border border-border/80 bg-card p-5 shadow-card sm:p-8" data-tour="search-card">
               {/* Feature badges */}
               <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -730,7 +731,7 @@ const Dashboard = () => {
                 <div className="space-y-2" data-tour="search-keyword">
                   <Label htmlFor="keyword" className="flex items-center gap-2 text-sm font-medium">
                     <Search size={14} className="text-primary" />
-                    Palavra-chave
+                    Nicho
                   </Label>
                   <Input
                     id="keyword"
@@ -764,18 +765,20 @@ const Dashboard = () => {
               </div>
 
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
-              <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/60">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Sparkles size={14} className="text-primary" />
+              <div className="mb-6 overflow-hidden rounded-panel border border-border/70 bg-secondary/20">
+                <div className="flex items-start gap-3 border-b border-border/60 bg-card/70 px-4 py-4 sm:px-5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover border border-primary/20 bg-primary/10">
+                    <Sparkles size={16} className="text-primary" />
                   </div>
-                  <p className="text-sm font-semibold text-foreground">Geração de mensagem p/ abordagem com IA</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">Geração de mensagem p/ abordagem com IA</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      Gere automaticamente as mensagens após o diagnóstico dos leads.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Gere automaticamente as mensagens após o diagnóstico dos leads.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/60 cursor-pointer group transition-colors hover:border-primary/30 hover:bg-card/80">
+                <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
                     <Checkbox
                       checked={autoApproach.manual}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
@@ -783,8 +786,8 @@ const Dashboard = () => {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-                          <MessageSquare size={13} className="text-emerald-500" />
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-primary/10">
+                          <MessageSquare size={14} className="text-primary" />
                         </div>
                         <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
                           Envio manual
@@ -795,7 +798,7 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </label>
-                  <label className="flex items-start gap-3 p-3 rounded-xl bg-card border border-border/60 cursor-pointer group transition-colors hover:border-primary/30 hover:bg-card/80">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
                     <Checkbox
                       checked={autoApproach.meta}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
@@ -803,8 +806,8 @@ const Dashboard = () => {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
-                          <Megaphone size={13} className="text-blue-500" />
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-info/10">
+                          <Megaphone size={14} className="text-info" />
                         </div>
                         <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
                           Campanhas Meta
@@ -865,8 +868,8 @@ const Dashboard = () => {
               </h3>
               <p className="text-muted-foreground max-w-md mx-auto text-base">
                 {searchHistory.length > 0 
-                  ? 'Insira uma palavra-chave e localização acima para descobrir novos leads qualificados'
-                  : 'Digite uma palavra-chave e localização para encontrar empresas e profissionais no Google Maps'
+                  ? 'Insira um nicho e uma localização acima para descobrir novos leads qualificados'
+                  : 'Digite um nicho e uma localização para encontrar empresas e profissionais no Google Maps'
                 }
               </p>
             </div>
