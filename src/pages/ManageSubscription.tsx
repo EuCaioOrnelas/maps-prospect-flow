@@ -291,6 +291,7 @@ export default function ManageSubscription() {
                   <Button
                     variant="outline"
                     className="gap-1.5 text-xs"
+                    disabled={(profile?.plan || "free").toLowerCase() === "free"}
                     onClick={() => {
                       if (isStripe && stripePortalUrl) window.open(stripePortalUrl, "_blank");
                       else document.getElementById("cancelamento")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -314,6 +315,7 @@ export default function ManageSubscription() {
             provider={(addonProfile as any)?.payment_provider || (profile as any)?.payment_provider || provider}
             canPurchase={(isStripe || isPix) && hasActiveSub && (addonProfile?.billing_period || profile?.billing_period) !== "annual"}
             onChanged={() => { fetchAddonProfile(); fetchInfo(); }}
+            showPlanActions
           />
         </section>
 

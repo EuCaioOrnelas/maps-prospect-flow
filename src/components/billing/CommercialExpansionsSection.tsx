@@ -178,8 +178,8 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                   </p>
                 </div>
               </div>
-              <Button onClick={() => navigate(planKey === "start" ? "/upgrade?plan=growth" : "/minha-assinatura")} className="w-full gap-2 sm:w-auto">
-                {planKey === "start" ? "Fazer upgrade" : "Gerenciar plano"}
+              <Button onClick={() => navigate(planKey === "start" ? "/upgrade?plan=growth" : planKey === "free" ? "/upgrade" : "/minha-assinatura")} className="w-full gap-2 sm:w-auto">
+                {planKey === "start" ? "Fazer upgrade" : planKey === "free" ? "Escolher plano" : "Gerenciar plano"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </section>
