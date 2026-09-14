@@ -6,8 +6,8 @@
 
 export type OpportunitySource = "maps" | "web";
 
-export function sourceLabel(source?: string | null): "MAPS" | "WEB" {
-  return source === "web" ? "WEB" : "MAPS";
+export function sourceLabel(source?: string | null): "IA" | "Web" {
+  return source === "web" ? "Web" : "IA";
 }
 
 export function sourceTitle(source?: string | null): string {
