@@ -337,8 +337,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                             : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
                       >
-                        <Search size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Prospecção Completa</span>
+                        <Brain size={20} className="shrink-0" />
+                        <span className="whitespace-nowrap">Prospecção IA</span>
                       </Link>
                     </li>
                     <li data-tour="sidebar-oportunidades-web">
@@ -352,7 +352,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Globe size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Prospecção Web</span>
+                        <span className="whitespace-nowrap">Prospecção Web</span>
                       </Link>
                     </li>
                     <li data-tour="sidebar-oportunidades-gestao">
@@ -366,7 +366,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <BarChart3 size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Gestão de Oportunidades</span>
+                        <span className="whitespace-nowrap">Gestão</span>
                       </Link>
                     </li>
                     {can("sdr_inteligente") && (

@@ -22,8 +22,8 @@ const SERP_API_KEYS = [
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const ALLOWED_COUNTS = [10, 20, 30, 50];
 const MIN_VALID_RESULTS = 10;
+const MAX_VALID_RESULTS = 60;
 const MAX_SERP_PAGES = 6;
 
 /** Domínios que nunca contam como site próprio de uma empresa. */
@@ -341,8 +341,6 @@ serve(async (req) => {
     const niche = String(body?.niche || "").trim();
     const location = String(body?.location || "").trim();
     const extraTerm = String(body?.extra_term || "").trim();
-    const requested = Number(body?.count);
-    const count = ALLOWED_COUNTS.includes(requested) ? requested : 10;
 
     if (!niche || !location) {
       return json({ error: "Informe o nicho e a localização para buscar." }, 400);
@@ -396,7 +394,10 @@ serve(async (req) => {
       }, 403);
     }
 
-    const target = Math.min(count, remaining);
+    // A quantidade não é controlada pelo cliente: cada busca tenta entregar o
+    // máximo possível, respeitando o teto operacional e o saldo da conta.
+    const target = Math.min(MAX_VALID_RESULTS, remaining);
+    const candidateTarget = Math.min(MAX_SERP_PAGES * 20, target + 40);
     const query = [niche, extraTerm, location].filter(Boolean).join(" ");
 
     // --- Busca + filtragem ---
@@ -405,7 +406,7 @@ serve(async (req) => {
     let serpCalls = 0;
     let lastSerpFailed = false;
 
-    for (let page = 0; page < MAX_SERP_PAGES && candidates.length < target; page++) {
+    for (let page = 0; page < MAX_SERP_PAGES && candidates.length < candidateTarget; page++) {
       const data = await serpSearch(query, page * 20);
       serpCalls++;
       if (!data) {
@@ -425,7 +426,7 @@ serve(async (req) => {
           title: String(r?.title || ""),
           snippet: String(r?.snippet || ""),
         });
-        if (candidates.length >= target) break;
+        if (candidates.length >= candidateTarget) break;
       }
     }
 
@@ -450,7 +451,7 @@ serve(async (req) => {
       .eq("owner_user_id", ownerId)
       .in("domain", domains);
     const known = new Set((existing || []).map((e: any) => e.domain));
-    const fresh = candidates.filter((c) => !known.has(c.domain));
+    const fresh = candidates.filter((c) => !known.has(c.domain)).slice(0, target);
 
     if (fresh.length < MIN_VALID_RESULTS) {
       return json({
@@ -545,7 +546,7 @@ serve(async (req) => {
         keyword: niche,
         location,
         extra_term: extraTerm || null,
-        requested_count: count,
+        requested_count: target,
         results_count: savedCount,
         source: "web",
         status: "completed",
@@ -563,7 +564,7 @@ serve(async (req) => {
         found: fresh.length,
         saved: savedCount,
         withPhone,
-        withWhatsApp: withPhone,
+        withWhatsApp: rows.filter((row) => row.whatsapp_status === "provavel").length,
         withEmail,
         withSocial,
         serpCalls,
