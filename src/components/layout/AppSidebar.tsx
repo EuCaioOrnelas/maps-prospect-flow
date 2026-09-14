@@ -306,14 +306,14 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             {can("oportunidades") && canRole("prospeccao") && (
             <li data-tour="sidebar-oportunidades">
               <SidebarNavItem
-                title="Prospecção IA"
+                title="Prospecção"
                 icon={Search}
                 onClick={handleOpportunitiesClick}
                 isActive={isOnOpportunitiesPage}
                 isExpanded={isExpanded}
                 hasSubmenu
                 isSubmenuOpen={isOpportunitiesOpen}
-                tooltip="Prospecção IA"
+                tooltip="Prospecção"
               />
 
               {isExpanded && (
@@ -321,7 +321,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                   className={cn(
                     "overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isOpportunitiesOpen
-                      ? "max-h-40 opacity-100 mt-1"
+                      ? "max-h-56 opacity-100 mt-1"
                       : "max-h-0 opacity-0"
                   )}
                 >
@@ -337,7 +337,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <Search size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Buscar</span>
+                        <span className="whitespace-nowrap truncate">Prospecção Completa</span>
+                      </Link>
+                    </li>
+                    <li data-tour="sidebar-oportunidades-web">
+                      <Link
+                        to="/oportunidades/web"
+                        className={cn(
+                          "flex items-center gap-3 px-2.5 h-10 rounded-hover transition-colors duration-200",
+                          currentPath === "/oportunidades/web"
+                            ? "bg-sidebar-accent/60 text-primary font-medium"
+                            : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <Globe size={20} className="shrink-0" />
+                        <span className="whitespace-nowrap truncate">Prospecção Web</span>
                       </Link>
                     </li>
                     <li data-tour="sidebar-oportunidades-gestao">
@@ -351,7 +365,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                         )}
                       >
                         <BarChart3 size={20} className="shrink-0" />
-                        <span className="whitespace-nowrap truncate">Gestão</span>
+                        <span className="whitespace-nowrap truncate">Gestão de Oportunidades</span>
                       </Link>
                     </li>
                     {can("sdr_inteligente") && (
