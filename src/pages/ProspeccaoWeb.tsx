@@ -12,19 +12,15 @@ import {
   Share2,
   CheckCircle2,
   AlertCircle,
-  ListFilter,
   Brain,
   Lock,
   Settings,
   Target,
-  MessageSquare,
-  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,12 +31,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { hasSDRAccess } from "@/lib/planAccess";
-import {
-  AutoApproachPrefs,
-  EMPTY_AUTO_APPROACH,
-  clearAutoApproachPrefs,
-  saveAutoApproachPrefs,
-} from "@/lib/autoApproachPrefs";
+import { clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
 
 type Phase = "idle" | "searching" | "diagnosing" | "done";
 
@@ -58,10 +49,8 @@ const ProspeccaoWeb = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [niche, setNiche] = useState("");
+  const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [extraTerm, setExtraTerm] = useState("");
-  const [autoApproach, setAutoApproach] = useState<AutoApproachPrefs>({ ...EMPTY_AUTO_APPROACH });
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [statusText, setStatusText] = useState("");
@@ -89,8 +78,8 @@ const ProspeccaoWeb = () => {
   }, [user, accountOwnerId]);
 
   const canSubmit = useMemo(
-    () => niche.trim().length >= 2 && location.trim().length >= 2 && !isBusy,
-    [niche, location, isBusy],
+    () => query.trim().length >= 2 && !isBusy,
+    [query, isBusy],
   );
 
   const runDiagnosis = async (leadIds: string[]) => {
@@ -126,15 +115,13 @@ const ProspeccaoWeb = () => {
     setProgress(0);
     setPhase("searching");
     setStatusText("Procurando empresas com site na web...");
-    if (autoApproach.manual || autoApproach.meta) saveAutoApproachPrefs(autoApproach);
-    else clearAutoApproachPrefs();
+    clearAutoApproachPrefs();
 
     try {
       const { data, error } = await supabase.functions.invoke("search-leads-web", {
         body: {
-          niche: niche.trim(),
-          location: location.trim(),
-          extra_term: extraTerm.trim() || undefined,
+          query: query.trim(),
+          location: location.trim() || undefined,
         },
       });
 
@@ -302,102 +289,44 @@ const ProspeccaoWeb = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6 mb-6">
                     <div className="space-y-2">
-                      <Label htmlFor="niche" className="flex items-center gap-2 text-sm font-medium">
-                        <Building2 size={14} className="text-primary" />
-                        Nicho
+                      <Label htmlFor="query" className="flex items-center gap-2 text-sm font-medium">
+                        <Search size={14} className="text-primary" />
+                        O que você quer buscar
                       </Label>
                       <Input
-                        id="niche"
-                        placeholder="Ex: clínicas odontológicas, contabilidades..."
-                        value={niche}
-                        onChange={(e) => setNiche(e.target.value)}
+                        id="query"
+                        placeholder='Ex: clínicas odontológicas em Maringá PR'
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
                         disabled={isBusy}
                         className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                       />
+                      <p className="text-xs text-muted-foreground/70">
+                        Escreva como pesquisaria no Google. É o único campo obrigatório.
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="location" className="flex items-center gap-2 text-sm font-medium">
                         <MapPin size={14} className="text-primary" />
-                        Localização
-                        <span className="ml-auto flex items-center gap-1 text-xs font-normal text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">
-                          <Globe size={10} />
-                          Global
-                        </span>
+                        Localização{" "}
+                        <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
                       </Label>
                       <Input
                         id="location"
-                        placeholder="Ex: Maringá, PR ou Lisboa, Portugal"
+                        placeholder="Ex: Maringa, State of Parana, Brazil"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         disabled={isBusy}
                         className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
                       />
-                      <p className="text-xs text-muted-foreground/70">Cidade, Estado • Cidade, País • ou qualquer região</p>
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="extra" className="flex items-center gap-2 text-sm font-medium">
-                        <ListFilter size={14} className="text-primary" />
-                        Serviço ou especialidade{" "}
-                        <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
-                      </Label>
-                      <Input
-                        id="extra"
-                        placeholder="Ex: implante dentário, BPO financeiro, energia solar..."
-                        value={extraTerm}
-                        onChange={(e) => setExtraTerm(e.target.value)}
-                        disabled={isBusy}
-                        className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
-                      />
+                      <p className="text-xs text-muted-foreground/70">
+                        Usada para simular a busca a partir dessa região. Se não for reconhecida, buscamos sem ela.
+                      </p>
                     </div>
                     </div>
 
-                    <div className="mb-6 overflow-hidden rounded-panel border border-border/70 bg-secondary/20">
-                      <div className="flex items-start gap-3 border-b border-border/60 bg-card/70 px-4 py-4 sm:px-5">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover border border-primary/20 bg-primary/10">
-                          <Sparkles size={16} className="text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-foreground">Geração de mensagem p/ abordagem com IA</p>
-                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Gere automaticamente as mensagens após o diagnóstico das empresas com número válido.</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4">
-                        <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
-                          <Checkbox
-                            checked={autoApproach.manual}
-                            onCheckedChange={(checked) => setAutoApproach((previous) => ({ ...previous, manual: !!checked }))}
-                            className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-primary/10">
-                                <MessageSquare size={14} className="text-primary" />
-                              </div>
-                              <span className="text-sm font-medium text-foreground">Envio manual</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground block leading-relaxed">Primeiro contato para copiar ou enviar pelo WhatsApp.</span>
-                          </div>
-                        </label>
-                        <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
-                          <Checkbox
-                            checked={autoApproach.meta}
-                            onCheckedChange={(checked) => setAutoApproach((previous) => ({ ...previous, meta: !!checked }))}
-                            className="mt-0.5 h-[18px] w-[18px] rounded-md border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-info/10">
-                                <Megaphone size={14} className="text-info" />
-                              </div>
-                              <span className="text-sm font-medium text-foreground">Campanhas Meta</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground block leading-relaxed">Follow-up após resposta ao template aprovado.</span>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
 
                     <Button
                     type="submit"

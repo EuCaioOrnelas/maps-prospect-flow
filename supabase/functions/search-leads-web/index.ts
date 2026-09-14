@@ -145,29 +145,39 @@ function isMobileBR(e164: string): boolean {
   return e164.length === 13 && e164[4] === "9";
 }
 
-async function serpSearch(query: string, start: number): Promise<any | null> {
+async function serpSearch(
+  query: string,
+  start: number,
+  location?: string | null,
+): Promise<any | null> {
+  // SerpAPI (engine=google) precisa apenas de: q, start/num e, opcionalmente,
+  // location. Se a localização não for reconhecida, refazemos sem ela.
   for (const key of SERP_API_KEYS) {
-    const url =
-      `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}` +
-      `&hl=pt-br&gl=br&google_domain=google.com.br&num=20&start=${start}&api_key=${key}`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        console.error(`[web-search] SERP ${res.status} — tentando próxima chave`);
-        continue;
+    for (const useLocation of location ? [true, false] : [false]) {
+      const url =
+        `https://serpapi.com/search.json?engine=google&q=${encodeURIComponent(query)}` +
+        (useLocation ? `&location=${encodeURIComponent(location as string)}` : "") +
+        `&hl=pt-br&gl=br&google_domain=google.com.br&num=20&start=${start}&api_key=${key}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.error(`[web-search] SERP ${res.status} — tentando novamente`);
+          continue;
+        }
+        const data = await res.json();
+        if (data?.error) {
+          console.error(`[web-search] SERP error: ${data.error}`);
+          continue;
+        }
+        return data;
+      } catch (e) {
+        console.error("[web-search] SERP fetch falhou", String(e));
       }
-      const data = await res.json();
-      if (data?.error) {
-        console.error(`[web-search] SERP error: ${data.error}`);
-        continue;
-      }
-      return data;
-    } catch (e) {
-      console.error("[web-search] SERP fetch falhou", String(e));
     }
   }
   return null;
 }
+
 
 type WebCandidate = {
   domain: string;
@@ -338,13 +348,14 @@ serve(async (req) => {
     if (authError || !user) return json({ error: "Usuário não autenticado" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const niche = String(body?.niche || "").trim();
+    // Só o necessário para o SerpAPI: o termo de busca (q) e, opcionalmente, a localização.
+    const searchTerm = String(body?.query || body?.q || body?.niche || "").trim();
     const location = String(body?.location || "").trim();
-    const extraTerm = String(body?.extra_term || "").trim();
 
-    if (!niche || !location) {
-      return json({ error: "Informe o nicho e a localização para buscar." }, 400);
+    if (searchTerm.length < 2) {
+      return json({ error: "Informe o que você quer buscar no Google." }, 400);
     }
+
 
     const userRl = await checkRateLimit(admin, user.id, "search_leads_web_user", 5, 60);
     if (!userRl.allowed) {
@@ -398,7 +409,7 @@ serve(async (req) => {
     // máximo possível, respeitando o teto operacional e o saldo da conta.
     const target = Math.min(MAX_VALID_RESULTS, remaining);
     const candidateTarget = Math.min(MAX_SERP_PAGES * 20, target + 40);
-    const query = [niche, extraTerm, location].filter(Boolean).join(" ");
+    const query = searchTerm;
 
     // --- Busca + filtragem ---
     const seen = new Set<string>();
@@ -407,7 +418,7 @@ serve(async (req) => {
     let lastSerpFailed = false;
 
     for (let page = 0; page < MAX_SERP_PAGES && candidates.length < candidateTarget; page++) {
-      const data = await serpSearch(query, page * 20);
+      const data = await serpSearch(query, page * 20, location || null);
       serpCalls++;
       if (!data) {
         lastSerpFailed = true;
@@ -439,7 +450,7 @@ serve(async (req) => {
       }
       return json({
         error: "no_results",
-        message: `Nenhum site válido encontrado para "${niche}" em ${location}. Tente outro nicho, termo ou localização.`,
+        message: `Nenhum site válido encontrado para "${searchTerm}". Tente outro termo de busca.`,
       }, 422);
     }
 
@@ -497,13 +508,13 @@ serve(async (req) => {
         website: c.website,
         domain: c.domain,
         address: e.address,
-        city: location,
-        category: niche,
+        city: location || null,
+        category: searchTerm,
         social_media: Object.keys(e.social).length > 0 ? e.social : null,
         source: "web",
         origin: "oportunidades",
         search_query: query,
-        search_location: location,
+        search_location: location || null,
         web_title: c.title || null,
         web_snippet: c.snippet || null,
         whatsapp_status: e.hasWhatsApp ? "provavel" : null,
@@ -543,9 +554,9 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         owner_user_id: ownerId,
-        keyword: niche,
-        location,
-        extra_term: extraTerm || null,
+        keyword: searchTerm,
+        location: location || null,
+        extra_term: null,
         requested_count: target,
         results_count: savedCount,
         source: "web",
