@@ -58,6 +58,7 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
     let cancelled = false;
     setPlayableSrc(null);
     setLoadError(false);
+    setExpired(false);
     setPeaks(null);
     if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
 
@@ -188,7 +189,8 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
   const toggle = async () => {
     const a = audioRef.current;
     if (!a || !playableSrc) {
-      if (loadError) toast.error("Não foi possível carregar o áudio");
+      if (expired) toast.info("Este áudio expirou no WhatsApp e não está mais disponível");
+      else if (loadError) toast.error("Não foi possível carregar o áudio");
       return;
     }
     if (playing) { a.pause(); setPlaying(false); return; }
