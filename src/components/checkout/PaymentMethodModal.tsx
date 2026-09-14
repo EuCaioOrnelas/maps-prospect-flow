@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatCep, isCepComplete } from "@/lib/cepLookup";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ export interface CustomerData {
   email: string;
   phone: string;
   taxId: string;
+  postalCode?: string;
 }
 
 interface PaymentMethodModalProps {
@@ -96,6 +98,7 @@ export function PaymentMethodModal({
     email: defaultEmail || "",
     phone: "",
     taxId: "",
+    postalCode: "",
   });
 
   const isAnnual = billingPeriod === "annual";
@@ -144,7 +147,8 @@ export function PaymentMethodModal({
     customerData.name.trim().length >= 3 &&
     customerData.email.includes("@") &&
     customerData.phone.replace(/\D/g, "").length >= 10 &&
-    customerData.taxId.replace(/\D/g, "").length >= 11;
+    customerData.taxId.replace(/\D/g, "").length >= 11 &&
+    isCepComplete(customerData.postalCode || "");
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -250,6 +254,27 @@ export function PaymentMethodModal({
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="checkout-cep" className="text-sm font-medium flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                  CEP
+                </Label>
+                <Input
+                  id="checkout-cep"
+                  placeholder="00000-000"
+                  inputMode="numeric"
+                  value={customerData.postalCode || ""}
+                  onChange={(e) =>
+                    setCustomerData((d) => ({ ...d, postalCode: formatCep(e.target.value) }))
+                  }
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    setCustomerData((d) => ({ ...d, postalCode: formatCep(e.clipboardData.getData("text")) }));
+                  }}
+                  required
+                />
               </div>
 
               <Button type="submit" className="w-full mt-4" size="lg" disabled={!isDataValid}>
