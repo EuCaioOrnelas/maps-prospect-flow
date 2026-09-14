@@ -1725,6 +1725,15 @@ ${socialPages.length > 0
    - Conteúdo: ${page.contentLength >= 120 ? "Perfil com conteúdo" : "Pouco conteúdo visível"}`).join("\n\n")
   : "⚠️ Nenhuma rede social pôde ser analisada. Infira atividade com base nos dados do Google Maps (avaliações recentes = sinal de atividade)."}
 
+${isWebLead ? `═══ ORIGEM DO LEAD: PROSPECÇÃO WEB (SEM GOOGLE MAPS) ═══
+Este lead foi encontrado por busca na web. NÃO existem avaliações nem nota do Google Maps.
+REGRA OBRIGATÓRIA DE REPUTAÇÃO: avalie "reputacao" (0-25) usando SOMENTE dois critérios extraídos do próprio site:
+  A) DEPOIMENTOS / PROVA SOCIAL publicados no site (depoimentos de clientes, cases, portfólio, tempo de mercado, clientes atendidos).
+  B) CLAREZA NA ENTREGA (o site explica com clareza o que a empresa faz, quais serviços entrega, como funciona, e tem chamada para ação/contato).
+Se não houver depoimentos nem clareza, a reputação deve ser BAIXA. NUNCA cite nota ou quantidade de avaliações do Google para este lead, e NUNCA invente depoimentos.
+Em "analise_reputacao_detalhada", descreva exatamente o que foi encontrado (ou não) de depoimentos e clareza de entrega no site.
+SINAIS DETECTADOS AUTOMATICAMENTE NO SITE: ${webTrust?.summary || "nenhum"}
+` : ""}
 ═══ HEURÍSTICA BASE (piso de consistência) ═══
 - Estrutura Digital: ${heuristic.estrutura_digital}/25
 - Reputação: ${heuristic.reputacao}/25
