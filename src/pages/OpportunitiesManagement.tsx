@@ -50,7 +50,7 @@ import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE } from 
 interface OpportunityLead {
   id: string;
   company_name: string | null;
-  phone: string;
+  phone: string | null;
   category: string | null;
   city: string | null;
   website: string | null;
