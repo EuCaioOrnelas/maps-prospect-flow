@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo } from "react";
-import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare, CalendarPlus, CalendarClock, Zap } from "lucide-react";
+import { Search, MoreVertical, X, User, Trash2, Ban, Reply, Forward, Copy, ChevronDown, UserCog, ArrowLeft, UserPlus, Tag, Check, Download, Sparkles, Workflow, CheckSquare, CalendarPlus, CalendarClock, LayoutGrid, ContactRound } from "lucide-react";
 import { ConversationSummaryDialog } from "./ConversationSummaryDialog";
 import { cn } from "@/lib/utils";
 import { ContactDetailsPanel } from "./ContactDetailsPanel";
@@ -27,6 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useChatPrivacy, PRIVACY_BLUR_CLASS } from "@/hooks/useChatPrivacy";
 import { ChatAppointmentDialog } from "./ChatAppointmentDialog";
 import { ScheduleMessageDialog } from "./ScheduleMessageDialog";
+import { AddToCRMDialog } from "./AddToCRMDialog";
 
 
 
@@ -407,6 +408,7 @@ export function ChatMessageArea({
   const [lightboxOpenId, setLightboxOpenId] = useState<string | null>(null);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [addToCrmOpen, setAddToCrmOpen] = useState(false);
   const dragCounterRef = useRef(0);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
@@ -909,6 +911,22 @@ export function ChatMessageArea({
                     Agendar mensagem
                   </TooltipContent>
                 </Tooltip>
+                {!leadInfo && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="wa-header-action-btn"
+                        onClick={() => setAddToCrmOpen(true)}
+                        aria-label="Adicionar este contato no CRM"
+                      >
+                        <ContactRound size={20} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="wa-tooltip-subtle">
+                      Adicionar no CRM
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </TooltipProvider>
 
@@ -920,7 +938,7 @@ export function ChatMessageArea({
                     className="wa-header-action-btn"
                     aria-label="Ações rápidas"
                   >
-                    <Zap size={20} />
+                    <LayoutGrid size={20} />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
@@ -936,9 +954,18 @@ export function ChatMessageArea({
                   >
                     <CalendarClock size={16} /> Agendar mensagem
                   </DropdownMenuItem>
+                  {!leadInfo && (
+                    <DropdownMenuItem
+                      onClick={() => setAddToCrmOpen(true)}
+                      className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                    >
+                      <ContactRound size={16} /> Adicionar no CRM
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
 
             <button className="wa-header-action-btn" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar na conversa">
               <Search size={20} />
@@ -1479,6 +1506,18 @@ export function ChatMessageArea({
           isEvolution={!!isEvolution}
           lastInboundAt={lastInboundAt}
           fetchTemplates={fetchTemplates}
+        />
+      )}
+
+      {conversation && (
+        <AddToCRMDialog
+          open={addToCrmOpen}
+          onOpenChange={setAddToCrmOpen}
+          contactName={conversation.contact_name}
+          contactPhone={conversation.contact_phone}
+          conversationId={conversation.id}
+          stages={pipelineStages}
+          onCreated={(lead) => setLeadInfo({ id: lead.id, pipeline_stage_id: lead.pipeline_stage_id })}
         />
       )}
     </div>

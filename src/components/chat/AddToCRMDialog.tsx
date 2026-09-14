@@ -1,0 +1,217 @@
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserPlus, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface PipelineStageLite {
+  id: string;
+  name: string;
+  color: string | null;
+  position: number;
+}
+
+interface AddToCRMDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  contactName: string | null;
+  contactPhone: string;
+  conversationId?: string | null;
+  stages: PipelineStageLite[];
+  onCreated?: (lead: { id: string; pipeline_stage_id: string | null }) => void;
+}
+
+const formatCurrencyInput = (input: string) => {
+  const digits = input.replace(/\D/g, "");
+  if (!digits) return "";
+  return (parseInt(digits, 10) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+const parseCurrency = (value: string) => {
+  if (!value) return 0;
+  const parsed = parseFloat(value.replace(/\./g, "").replace(",", "."));
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+/**
+ * Adiciona um contato do WhatsApp ao CRM, com nome e telefone já preenchidos.
+ */
+export function AddToCRMDialog({
+  open, onOpenChange, contactName, contactPhone, conversationId = null, stages, onCreated,
+}: AddToCRMDialogProps) {
+  const { user, accountOwnerId } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState("");
+  const [company, setCompany] = useState("");
+  const [email, setEmail] = useState("");
+  const [stageId, setStageId] = useState("");
+  const [value, setValue] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const sortedStages = useMemo(() => [...stages].sort((a, b) => a.position - b.position), [stages]);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(contactName || "");
+    setCompany("");
+    setEmail("");
+    setValue("");
+    setNotes("");
+    setStageId(sortedStages[0]?.id || "");
+  }, [open, contactName, sortedStages]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    const normalizedPhone = contactPhone.replace(/\D/g, "");
+    if (!normalizedPhone) {
+      toast.error("Telefone inválido para cadastro no CRM.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const last8 = normalizedPhone.slice(-8);
+      const ownerId = accountOwnerId || user.id;
+
+      const { data: existing } = await supabase
+        .from("leads")
+        .select("id, pipeline_stage_id")
+        .eq("user_id", ownerId)
+        .ilike("phone", `%${last8}`)
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        toast.info("Este contato já está no CRM.");
+        onCreated?.(existing[0] as any);
+        onOpenChange(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("leads")
+        .insert({
+          user_id: ownerId,
+          owner_user_id: ownerId,
+          phone: normalizedPhone,
+          contact_name: name.trim() || null,
+          company_name: company.trim() || null,
+          email: email.trim() || null,
+          origin: "whatsapp",
+          pipeline_stage_id: stageId || sortedStages[0]?.id || null,
+          estimated_value: parseCurrency(value),
+          conversation_id: conversationId,
+          tags: [],
+        })
+        .select("id, pipeline_stage_id")
+        .single();
+
+      if (error) throw error;
+
+      if (notes.trim() && data?.id) {
+        await supabase.from("lead_notes").insert({ lead_id: data.id, user_id: user.id, content: notes.trim() });
+      }
+
+      toast.success("Contato adicionado no CRM.");
+      onCreated?.(data as any);
+      onOpenChange(false);
+    } catch (err: any) {
+      console.error("add-to-crm error", err);
+      toast.error(err?.message || "Não foi possível adicionar no CRM.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px] bg-popover">
+        <DialogHeader>
+          <div className="w-12 h-12 rounded-[14px] wa-accent-bg-soft flex items-center justify-center mb-2">
+            <UserPlus size={22} className="wa-accent-text" />
+          </div>
+          <DialogTitle>Adicionar no CRM</DialogTitle>
+          <DialogDescription>
+            Confira os dados do contato e escolha a etapa. Você pode completar o restante depois no CRM.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 py-1 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="crm-name">Nome</Label>
+              <Input id="crm-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: João Silva" autoFocus />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="crm-phone">Telefone</Label>
+              <Input id="crm-phone" value={contactPhone} readOnly className="font-mono text-sm bg-muted/40" />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="crm-company">Empresa</Label>
+              <Input id="crm-company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Opcional" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="crm-email">E-mail</Label>
+              <Input id="crm-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Opcional" />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Etapa do CRM</Label>
+              <Select value={stageId} onValueChange={setStageId}>
+                <SelectTrigger><SelectValue placeholder="Selecione a etapa" /></SelectTrigger>
+                <SelectContent>
+                  {sortedStages.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color || "#10b981" }} />
+                        {s.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="crm-value">Valor estimado</Label>
+              <Input
+                id="crm-value"
+                value={value}
+                onChange={(e) => setValue(formatCurrencyInput(e.target.value))}
+                placeholder="0,00"
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="crm-notes">Observação</Label>
+            <Textarea
+              id="crm-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Contexto da conversa, próximo passo..."
+              rows={3}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? <><Loader2 size={15} className="mr-2 animate-spin" /> Adicionando...</> : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

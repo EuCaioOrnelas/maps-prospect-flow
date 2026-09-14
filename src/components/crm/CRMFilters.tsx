@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Search, X, SlidersHorizontal, Smartphone, CalendarIcon, Layers, MessageCircle, Users } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Smartphone, CalendarIcon, Layers, MessageCircle, Users, Archive, ArchiveRestore } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -147,6 +147,26 @@ export const CRMFilters = ({
           className="pl-9"
         />
       </div>
+
+      {/* Archived quick toggle (always visible) */}
+      {onShowArchivedChange && (
+        <Button
+          variant={showArchived ? 'default' : 'outline'}
+          size="default"
+          onClick={() => onShowArchivedChange(!showArchived)}
+          className="gap-2 shrink-0"
+          aria-pressed={showArchived}
+          title={showArchived ? 'Mostrando contatos arquivados' : 'Ver contatos arquivados'}
+        >
+          {showArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+          <span className="hidden sm:inline">{showArchived ? 'Arquivados' : 'Arquivados'}</span>
+          {archivedCount > 0 && (
+            <Badge variant={showArchived ? 'secondary' : 'outline'} className="ml-1 px-1.5 py-0 text-xs">
+              {archivedCount}
+            </Badge>
+          )}
+        </Button>
+      )}
 
       {/* Filters Popover */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
