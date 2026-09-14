@@ -685,7 +685,7 @@ const Profile = () => {
                       className="h-10 bg-muted/40"
                     />
                     <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      <Check className="h-3.5 w-3.5 text-primary" />
                       Verificado
                     </div>
                   </div>
