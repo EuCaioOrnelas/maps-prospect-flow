@@ -606,6 +606,10 @@ export default function OpportunitiesManagement() {
   };
 
   const approachLead = async (lead: OpportunityLead, mode: "manual" | "meta" = "meta") => {
+    if (!canGenerateMessage(lead)) {
+      toast({ title: NO_NUMBER_MESSAGE, description: "Sem telefone ou WhatsApp não é possível criar a abordagem.", variant: "destructive" });
+      return;
+    }
     setApproachingLeadId(lead.id);
     setApproachingMode(mode);
     try {
