@@ -304,7 +304,7 @@ function SignupWithCardInner() {
       toast({ title: "Telefone inválido", variant: "destructive" });
       return;
     }
-    if (!isCepComplete(postalCode) || !address || !addressNumber || !neighborhood || !city || !state || !!cepError) {
+    if (!isCepComplete(postalCode) || !address || !addressNumber || !neighborhood || !city || !state) {
       toast({ title: "Complete o endereço", description: "Informe CEP, rua, número, bairro, cidade e estado.", variant: "destructive" });
       return;
     }
