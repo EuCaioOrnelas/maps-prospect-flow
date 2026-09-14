@@ -28,4 +28,4 @@
 
 - Chat: privacidade visual (desfoques), compromisso pelo header e mensagens agendadas (edge chat-scheduled-sender + cron por minuto). Validar em produção com envio real.
 - [x] Auditar e corrigir gatilhos, filtros e conexões dos fluxos
-- [x] Alinhar Prospecção Web ao visual da Prospecção IA, simplificar o menu e buscar automaticamente o máximo de sites válidos
+- [x] Alinhar Prospecção Web ao visual da Prospecção IA, buscar meta de 30 com mínimo de 10 sites e manter somente análise/diagnóstico
