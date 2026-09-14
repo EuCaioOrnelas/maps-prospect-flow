@@ -3,23 +3,7 @@ import { FlowHandle } from "./FlowHandle";
 import { NodeShell } from "./NodeShell";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { Phone, Radio, Wifi } from "lucide-react";
-
-const triggerLabels: Record<string, string> = {
-  keyword: "Palavra-chave",
-  campaign_reply: "Resposta campanha",
-  webhook: "Webhook/API",
-  first_message: "1ª mensagem",
-  any_message: "Qualquer mensagem",
-  no_reply_hours: "Sem resposta há X horas",
-  no_conversation_days: "X dias sem conversa",
-  before_appointment: "Antes do compromisso",
-  after_appointment: "Após a reunião",
-  appointment_no_show: "Compromisso precisa ser reagendado",
-  stage_entered: "Entrou na etapa do CRM",
-  score_reached: "Score atingido",
-  deal_created: "Venda registrada",
-  lead_created: "Novo lead criado",
-};
+import { getWATriggerLabel } from "../triggerDefinitions";
 
 export function WAEntryNode({ data }: NodeProps) {
   const cfg = (data as any).config || {};
@@ -34,7 +18,7 @@ export function WAEntryNode({ data }: NodeProps) {
       icon={WhatsAppIcon}
       accent="bg-wa-trigger"
       title={String((data as any).label || "Gatilho")}
-      subtitle={isConfigured ? (triggerLabels[cfg.trigger_type] || cfg.trigger_type) : null}
+      subtitle={isConfigured ? getWATriggerLabel(cfg.trigger_type) : null}
       placeholder="Clique para configurar"
     >
       <FlowHandle type="target" position={Position.Left} />

@@ -27,3 +27,4 @@
 - [x] Alinhar catálogo de adicionais, adicionar resumo de investimento e cobrar imediatamente no cartão/PIX antes de liberar capacidade
 
 - Chat: privacidade visual (desfoques), compromisso pelo header e mensagens agendadas (edge chat-scheduled-sender + cron por minuto). Validar em produção com envio real.
+- [x] Auditar e corrigir gatilhos, filtros e conexões dos fluxos

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EntryAudienceFilter } from "./EntryAudienceFilter";
+import { WA_TRIGGER_LABELS } from "./triggerDefinitions";
 
 /** Gatilhos que rodam pelo agendador (sem depender de mensagem recebida). */
 const SCHEDULED_TRIGGER_TYPES = [
@@ -29,10 +30,10 @@ const TRIGGER_GROUPS = [
     description: "Inicia quando o contato fala com você",
     icon: MessageSquare,
     triggers: [
-      { value: "any_message", label: "Qualquer mensagem", icon: MessageSquare },
-      { value: "keyword", label: "Mensagem com palavra-chave", icon: KeyRound },
-      { value: "campaign_reply", label: "Resposta de campanha", icon: Repeat },
-      { value: "first_message", label: "Primeira mensagem do contato", icon: UserPlus },
+      { value: "any_message", label: WA_TRIGGER_LABELS.any_message, icon: MessageSquare },
+      { value: "keyword", label: WA_TRIGGER_LABELS.keyword, icon: KeyRound },
+      { value: "campaign_reply", label: WA_TRIGGER_LABELS.campaign_reply, icon: Repeat },
+      { value: "first_message", label: WA_TRIGGER_LABELS.first_message, icon: UserPlus },
     ],
   },
   {
@@ -41,8 +42,8 @@ const TRIGGER_GROUPS = [
     description: "Inicia automaticamente após um período",
     icon: Clock,
     triggers: [
-      { value: "no_reply_hours", label: "Contato aguardando resposta", icon: Clock },
-      { value: "no_conversation_days", label: "Conversa sem atividade", icon: PowerOff },
+      { value: "no_reply_hours", label: WA_TRIGGER_LABELS.no_reply_hours, icon: Clock },
+      { value: "no_conversation_days", label: WA_TRIGGER_LABELS.no_conversation_days, icon: PowerOff },
     ],
   },
   {
@@ -51,9 +52,9 @@ const TRIGGER_GROUPS = [
     description: "Inicia antes ou depois de um compromisso",
     icon: Calendar,
     triggers: [
-      { value: "before_appointment", label: "Antes do compromisso", icon: Clock },
-      { value: "after_appointment", label: "Após o compromisso", icon: CheckCircle2 },
-      { value: "appointment_no_show", label: "Compromisso precisa ser reagendado", icon: Repeat },
+      { value: "before_appointment", label: WA_TRIGGER_LABELS.before_appointment, icon: Clock },
+      { value: "after_appointment", label: WA_TRIGGER_LABELS.after_appointment, icon: CheckCircle2 },
+      { value: "appointment_no_show", label: WA_TRIGGER_LABELS.appointment_no_show, icon: Repeat },
     ],
   },
   {
@@ -62,10 +63,10 @@ const TRIGGER_GROUPS = [
     description: "Inicia quando um lead muda no CRM",
     icon: Target,
     triggers: [
-      { value: "lead_created", label: "Novo lead criado", icon: UserPlus },
-      { value: "stage_entered", label: "Lead entrou em uma etapa", icon: ArrowRight },
-      { value: "score_reached", label: "Lead atingiu um score", icon: Target },
-      { value: "deal_created", label: "Venda registrada", icon: CheckCircle2 },
+      { value: "lead_created", label: WA_TRIGGER_LABELS.lead_created, icon: UserPlus },
+      { value: "stage_entered", label: WA_TRIGGER_LABELS.stage_entered, icon: ArrowRight },
+      { value: "score_reached", label: WA_TRIGGER_LABELS.score_reached, icon: Target },
+      { value: "deal_created", label: WA_TRIGGER_LABELS.deal_created, icon: CheckCircle2 },
     ],
   },
 ] as const;
@@ -1116,13 +1117,15 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const { data: campaigns = [] } = useQuery({
     queryKey: ["wa-campaigns-for-trigger", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("whatsapp_campaigns")
-        .select("id, name, status")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      return data || [];
+      if (!user?.id) return [];
+      const [outbound, meta] = await Promise.all([
+        supabase.from("whatsapp_campaigns").select("id, name, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
+        supabase.from("meta_campaigns").select("id, campaign_name, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
+      ]);
+      return [
+        ...(meta.data || []).map((c) => ({ id: c.id, name: c.campaign_name, status: c.status, created_at: c.created_at })),
+        ...(outbound.data || []).map((c) => ({ id: c.id, name: c.name, status: c.status, created_at: c.created_at })),
+      ].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).slice(0, 50);
     },
     enabled: !!user && config.trigger_type === "campaign_reply",
   });
@@ -1383,7 +1386,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
 
       {config.trigger_type === "no_reply_hours" && (
         <div className="space-y-2">
-          <Label className="text-xs">Horas sem sua resposta</Label>
+          <Label className="text-xs">Horas sem resposta do lead</Label>
           <Input
             type="number"
             min={1}
@@ -1392,7 +1395,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             className="h-9 text-sm"
           />
           <p className="text-[10px] text-muted-foreground">
-            O fluxo inicia quando a última mensagem da conversa for do contato e você não responder nesse tempo.
+            O fluxo inicia quando sua última mensagem enviada ainda não recebeu resposta do lead nesse tempo.
           </p>
         </div>
       )}

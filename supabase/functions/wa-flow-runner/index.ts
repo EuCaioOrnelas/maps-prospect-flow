@@ -1385,13 +1385,58 @@ function entryMatches(cfg: Record<string, any>, text: string, isFirstMessage: bo
   const normalized = stripAccents(text || "").toLowerCase().trim();
   if (trigger === "any_message") return true;
   if (trigger === "first_message") return isFirstMessage;
-  if (trigger === "campaign_reply") return true; // filtro de campanha tratado no webhook/campanhas
+  if (trigger === "campaign_reply") return false; // validado de forma assíncrona por campaignReplyMatches
   if (trigger === "keyword") {
     const kws = String(cfg.keywords || "").split(",").map((k) => stripAccents(k.trim()).toLowerCase()).filter(Boolean);
     if (!kws.length) return false;
     return cfg.exact_match ? kws.includes(normalized) : kws.some((k) => normalized.includes(k));
   }
   return false;
+}
+
+/** Confirma que a mensagem atual responde diretamente a um envio de campanha. */
+async function campaignReplyMatches(cfg: Record<string, any>, ownerId: string, phone: string): Promise<boolean> {
+  const selectedCampaignId = String(cfg.campaign_id || "").trim();
+  const tail = digits(phone).slice(-8);
+  if (!tail) return false;
+
+  const { data: conversation } = await supabase
+    .from("chat_conversations")
+    .select("id")
+    .eq("owner_user_id", ownerId)
+    .ilike("contact_phone", `%${tail}`)
+    .order("last_message_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (conversation?.id) {
+    const { data: messages } = await supabase
+      .from("chat_messages")
+      .select("direction,metadata,created_at")
+      .eq("conversation_id", conversation.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    const ordered = messages || [];
+    const latestInboundIndex = ordered.findIndex((m: any) => m.direction === "inbound");
+    const previousMessage = latestInboundIndex >= 0 ? ordered[latestInboundIndex + 1] : null;
+    const campaignId = String((previousMessage?.metadata as any)?.campaign_id || "");
+    const isCampaignSend = previousMessage?.direction === "outbound" &&
+      ((previousMessage?.metadata as any)?.source === "campaign" || !!campaignId);
+    if (isCampaignSend && (!selectedCampaignId || campaignId === selectedCampaignId)) return true;
+  }
+
+  // Compatibilidade com campanhas outbound legadas que registram a resposta em tabela própria.
+  let responseQuery = supabase
+    .from("campaign_responses")
+    .select("campaign_id,responded_at")
+    .eq("owner_user_id", ownerId)
+    .ilike("contact_phone", `%${tail}`)
+    .gte("responded_at", new Date(Date.now() - 5 * 60_000).toISOString())
+    .order("responded_at", { ascending: false })
+    .limit(1);
+  if (selectedCampaignId) responseQuery = responseQuery.eq("campaign_id", selectedCampaignId);
+  const { data: response } = await responseQuery.maybeSingle();
+  return !!response;
 }
 
 /**
@@ -1576,7 +1621,13 @@ async function handleInbound(body: Record<string, any>) {
     if (!entry) continue;
     if (isIg) {
       if (!igEntryMatches(entry.config || {}, text, igEvent, isFirstMessage)) continue;
-    } else if (!entryMatches(entry.config || {}, text, isFirstMessage)) continue;
+    } else {
+      const entryConfig = entry.config || {};
+      const matched = entryConfig.trigger_type === "campaign_reply"
+        ? await campaignReplyMatches(entryConfig, ownerId, phone)
+        : entryMatches(entryConfig, text, isFirstMessage);
+      if (!matched) continue;
+    }
     if (!(await audienceMatches(entry.config || {}, ownerId, phone))) continue;
 
     const send = await buildSendCtx(flow, phone, body.lead_name || null, userId, ownerId);
@@ -1723,23 +1774,22 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
   const trigger = String(cfg.trigger_type || "");
   const out: TriggerCandidate[] = [];
 
-  const convCandidates = async (direction: "inbound" | "any", ageHours: number) => {
+  const convCandidates = async (direction: "inbound" | "outbound" | "any", ageHours: number) => {
     const cutoff = hoursAgo(ageHours);
-    const floor = hoursAgo(ageHours + 24); // janela de 24h para não varrer histórico antigo
     let q = supabase
       .from("chat_conversations")
       .select("id,contact_phone,contact_name,last_message_at,last_message_direction")
       .eq("owner_user_id", ownerId)
       .eq("is_archived", false)
       .lte("last_message_at", cutoff)
-      .gte("last_message_at", floor)
-      .limit(50);
-    if (direction === "inbound") q = q.eq("last_message_direction", "inbound");
+      .order("last_message_at", { ascending: true })
+      .limit(500);
+    if (direction !== "any") q = q.eq("last_message_direction", direction);
     const { data } = await q;
     return (data || []).map((c: any) => ({
       phone: digits(c.contact_phone || ""),
       name: c.contact_name || null,
-      refId: c.id,
+      refId: `${c.id}:${c.last_message_at}`,
       data: { conversation_id: c.id, last_message_at: c.last_message_at },
     }));
   };
@@ -1747,7 +1797,7 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
   switch (trigger) {
     case "no_reply_hours": {
       const hours = Math.max(1, Number(cfg.no_reply_hours || 24));
-      out.push(...(await convCandidates("inbound", hours)));
+      out.push(...(await convCandidates("outbound", hours)));
       break;
     }
     case "no_conversation_days": {
@@ -1781,7 +1831,7 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
       const minutes = Math.max(0, Number(cfg.appointment_minutes_after || 30));
       const upper = new Date(Date.now() - minutes * 60_000).toISOString();
       const lower = new Date(Date.now() - (minutes + 180) * 60_000).toISOString();
-      const statuses = trigger === "appointment_no_show" ? ["no_show"] : ["confirmed", "completed", "scheduled"];
+       const statuses = trigger === "appointment_no_show" ? ["no_show"] : ["completed"];
       const { data } = await supabase
         .from("calendar_events")
         .select("id,contact_phone,contact_name,title,ends_at,status")
@@ -1804,23 +1854,37 @@ async function collectCandidates(cfg: Record<string, any>, ownerId: string): Pro
     case "stage_entered": {
       const stageId = String(cfg.stage_id || "");
       if (!stageId) break;
-      const { data } = await supabase
+      const { data: stage } = await supabase.from("pipeline_stages").select("name").eq("id", stageId).maybeSingle();
+      if (!stage?.name) break;
+      const { data: activities } = await supabase
+        .from("lead_activities")
+        .select("id,lead_id,created_at")
+        .eq("owner_user_id", ownerId)
+        .eq("activity_type", "stage_changed")
+        .ilike("description", `%${stage.name}%`)
+        .gte("created_at", hoursAgo(24))
+        .order("created_at", { ascending: true })
+        .limit(500);
+      if (!activities?.length) break;
+      const { data: leads } = await supabase
         .from("leads")
-        .select("id,phone,contact_name,company_name,pipeline_stage_id,updated_at")
+        .select("id,phone,contact_name,company_name,pipeline_stage_id")
         .eq("owner_user_id", ownerId)
         .eq("pipeline_stage_id", stageId)
-        .gte("updated_at", hoursAgo(1))
         .is("archived_at", null)
-        .not("phone", "is", null)
-        .limit(50);
-      out.push(
-        ...(data || []).map((l: any) => ({
-          phone: digits(l.phone || ""),
-          name: l.contact_name || l.company_name || null,
-          refId: l.id,
-          data: { lead_id: l.id, stage_id: l.pipeline_stage_id },
-        })),
-      );
+        .in("id", activities.map((a: any) => a.lead_id))
+        .not("phone", "is", null);
+      const byLead = new Map((leads || []).map((lead: any) => [lead.id, lead]));
+      for (const activity of activities) {
+        const lead: any = byLead.get(activity.lead_id);
+        if (!lead?.phone) continue;
+        out.push({
+          phone: digits(lead.phone),
+          name: lead.contact_name || lead.company_name || null,
+          refId: activity.id,
+          data: { lead_id: lead.id, stage_id: lead.pipeline_stage_id, activity_id: activity.id },
+        });
+      }
       break;
     }
     case "score_reached": {
@@ -1911,7 +1975,7 @@ async function alreadyTriggered(flowId: string, cfg: Record<string, any>, cand: 
     .maybeSingle();
   if (running) return true;
 
-  // mesma referência (evento/negócio/lead) já processada?
+  // Com referência, cada evento é independente e o mesmo evento nunca repete.
   if (cand.refId) {
     const { data: sameRef } = await supabase
       .from("wa_flow_executions")
@@ -1920,7 +1984,7 @@ async function alreadyTriggered(flowId: string, cfg: Record<string, any>, cand: 
       .contains("trigger_data", { trigger_ref: cand.refId })
       .limit(1)
       .maybeSingle();
-    if (sameRef) return true;
+    return !!sameRef;
   }
 
   const cooldown = Number(cfg.retrigger_hours ?? 168); // 0 = nunca repetir
@@ -1947,7 +2011,8 @@ async function handleScheduledTriggers(): Promise<number> {
       if (!ownerId) continue;
 
       const candidates = await collectCandidates(cfg, ownerId);
-      for (const cand of candidates.slice(0, 20)) {
+      for (const cand of candidates) {
+        if (started >= 100) break;
         if (flow.test_mode && digits(flow.test_phone || "").slice(-8) !== cand.phone.slice(-8)) continue;
         if (!(await audienceMatches(cfg, ownerId, cand.phone))) continue;
         if (await alreadyTriggered(flow.id, cfg, cand)) continue;
@@ -2168,7 +2233,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
-    if (body?.mode === "tick" || body?.trigger === "cron") return await handleTick();
+    if (body?.mode === "tick" || body?.trigger === "cron" || body?.scheduler === true) return await handleTick();
     return await handleInbound(body || {});
   } catch (e) {
     console.error("[wa-flow-runner]", e);
