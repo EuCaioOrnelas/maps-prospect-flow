@@ -109,6 +109,7 @@ type HeuristicScore = {
   activeSocialCount: number;
   rating: number;
   reviewCount: number;
+  webTrust?: WebTrustSignals | null;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -1226,6 +1227,7 @@ const computeHeuristicScore = ({
     activeSocialCount,
     rating,
     reviewCount,
+    webTrust: webTrust ?? null,
   };
 };
 
@@ -1376,7 +1378,9 @@ const normalizeAiResult = ({
     pontos_fracos: (pontos_fracos.length > 0 ? pontos_fracos : fallbackPoints.pontos_fracos).slice(0, 3),
     analise_site: compact(toSafeString(raw?.analise_site)) || siteSummary,
     analise_redes_sociais: compact(toSafeString(raw?.analise_redes_sociais)) || socialSummary,
-    analise_reputacao_detalhada: compact(toSafeString(raw?.analise_reputacao_detalhada)) || `Avaliação ${heuristic.rating > 0 ? `${heuristic.rating.toFixed(1)}/5` : "não disponível"} com ${heuristic.reviewCount} avaliação(ões).`,
+    analise_reputacao_detalhada: compact(toSafeString(raw?.analise_reputacao_detalhada)) || (heuristic.webTrust
+      ? `Reputação avaliada pelo próprio site (origem Web): ${heuristic.webTrust.summary}`
+      : `Avaliação ${heuristic.rating > 0 ? `${heuristic.rating.toFixed(1)}/5` : "não disponível"} com ${heuristic.reviewCount} avaliação(ões).`),
     analise_concorrencia_regional: compact(toSafeString(raw?.analise_concorrencia_regional)) || "",
     analise_demanda_regional: compact(toSafeString(raw?.analise_demanda_regional)) || "",
     justificativa_score: compact(toSafeString(raw?.justificativa_score)) || `Score consolidado pelo equilíbrio entre estrutura digital (${estrutura_digital}), reputação (${reputacao}), acessibilidade (${acessibilidade}), engajamento (${engajamento_atividade}) e potencial (${potencial_venda}).`,
@@ -1448,7 +1452,7 @@ serve(async (req) => {
     const { data: currentLead } = lead_id
       ? await supabase
           .from("leads")
-          .select("enrichment_data")
+          .select("enrichment_data, source")
           .eq("id", lead_id)
           .eq("user_id", user.id)
           .maybeSingle()
@@ -1622,6 +1626,11 @@ Ainda não há negócios ganhos registrados no CRM. Não invente históricos de 
     const websitePage = pageSummaries.find((page) => page.label === "site");
     const socialPages = pageSummaries.filter((page) => page.label === "rede_social");
 
+    // Origem do lead: "web" (Prospecção Web, sem avaliações do Google) ou "maps" (padrão)
+    const leadSource = (compact(toSafeString(body?.source)) || compact(toSafeString((currentLead as any)?.source)) || "maps").toLowerCase();
+    const isWebLead = leadSource === "web";
+    const webTrust = isWebLead ? analyzeWebTrustSignals(websitePage) : null;
+
     const heuristic = computeHeuristicScore({
       rating: avaliacao_media,
       reviewCount: quantidade_avaliacoes,
@@ -1629,6 +1638,7 @@ Ainda não há negócios ganhos registrados no CRM. Não invente históricos de 
       hasAddress: !!endereco,
       websitePage,
       socialPages,
+      webTrust,
     });
 
     // Enrich social pages with SerpAPI insights for heuristic scoring
