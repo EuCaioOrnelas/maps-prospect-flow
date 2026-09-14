@@ -403,7 +403,7 @@ serve(async (req) => {
     const target = Math.min(MAX_VALID_RESULTS, remaining);
     // Buscamos uma margem maior porque diretórios, redes sociais e domínios já
     // existentes são descartados. A meta é salvar 30 oportunidades novas.
-    const candidateTarget = Math.min(MAX_SERP_PAGES * 20, Math.max(60, target * 2));
+    const candidateTarget = Math.min(MAX_SERP_PAGES * 20, Math.max(80, target * 2));
     const query = searchTerm;
 
     // --- Busca + filtragem ---
