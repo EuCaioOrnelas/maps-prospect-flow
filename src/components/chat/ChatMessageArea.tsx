@@ -404,10 +404,21 @@ export function ChatMessageArea({
   const [isDragging, setIsDragging] = useState(false);
   const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
   const [lightboxOpenId, setLightboxOpenId] = useState<string | null>(null);
+  const [appointmentOpen, setAppointmentOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const dragCounterRef = useRef(0);
   const navigate = useNavigate();
   const { accountOwnerId } = useAuth();
   const isMobile = useIsMobile();
+  const { settings: privacy } = useChatPrivacy();
+
+  /** Última mensagem recebida — base do cálculo da janela de 24h da Meta. */
+  const lastInboundAt = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]?.direction === "inbound") return messages[i].created_at as string;
+    }
+    return null;
+  }, [messages]);
 
   const currentStage = useMemo(
     () => pipelineStages.find(s => s.id === leadInfo?.pipeline_stage_id),
