@@ -121,10 +121,9 @@ export default function ApiLogin() {
   }, [navigate]);
 
 
-  // ViaCEP — mesmo mecanismo do checkout
+  // Busca de endereço pelo CEP — nunca bloqueia o cadastro
   useEffect(() => {
-    const clean = onlyDigits(cep);
-    if (clean.length !== 8) {
+    if (!isCepComplete(cep)) {
       setCepOk(false);
       setCepError("");
       return;
@@ -133,28 +132,18 @@ export default function ApiLogin() {
     const t = setTimeout(async () => {
       setCepLoading(true);
       setCepError("");
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
-        const data = await res.json();
-        if (cancelled) return;
-        if (data.erro) {
-          setCepOk(false);
-          setCepError("CEP não encontrado");
-        } else {
-          setCepOk(true);
-          setStreet(data.logradouro || "");
-          setNeighborhood(data.bairro || "");
-          setCity(data.localidade || "");
-          setUf(data.uf || "");
-        }
-      } catch {
-        if (!cancelled) {
-          setCepOk(false);
-          setCepError("Erro ao validar CEP");
-        }
-      } finally {
-        if (!cancelled) setCepLoading(false);
+      const { found, address } = await lookupCep(cep);
+      if (cancelled) return;
+      setCepOk(true);
+      if (found && address) {
+        if (address.street) setStreet(address.street);
+        if (address.neighborhood) setNeighborhood(address.neighborhood);
+        if (address.city) setCity(address.city);
+        if (address.state) setUf(address.state);
+      } else {
+        setCepError("Não encontramos este CEP. Preencha o endereço manualmente.");
       }
+      setCepLoading(false);
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
   }, [cep]);
