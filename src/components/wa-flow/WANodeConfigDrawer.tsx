@@ -1178,6 +1178,9 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
             {numbers.map((n: any) => (
               <SelectItem key={n.id} value={n.id}>
                 <div className="flex items-center gap-2">
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded ${n.api_type === "meta" ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-600"}`}>
+                    {n.api_type === "meta" ? <Megaphone size={11} /> : <Headset size={11} />}
+                  </span>
                   <span>{n.name || n.display_phone_number || n.phone_number}</span>
                   <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${n.api_type === "meta" ? "bg-primary/10 text-primary" : "bg-emerald-500/10 text-emerald-600"}`}>
                     {n.api_type === "meta" ? "Número de Marketing" : "Número de Atendimento"}
