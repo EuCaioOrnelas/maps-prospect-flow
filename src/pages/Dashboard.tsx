@@ -738,7 +738,7 @@ const Dashboard = () => {
                     placeholder="Ex: restaurantes, dentistas, advogados..."
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
-                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
+                    className="h-12 sm:h-14 bg-background border-border/60 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-1 focus:ring-primary/10 transition-colors"
                   />
                 </div>
 
@@ -756,7 +756,7 @@ const Dashboard = () => {
                     placeholder="Ex: São Paulo, SP ou Miami, FL, USA"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="h-12 sm:h-14 bg-secondary/50 border-border/50 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 transition-colors"
+                    className="h-12 sm:h-14 bg-background border-border/60 text-base placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-1 focus:ring-primary/10 transition-colors"
                   />
                   <p className="text-xs text-muted-foreground/70">
                     Cidade, Estado • Cidade, País • ou qualquer região do mundo
@@ -765,9 +765,9 @@ const Dashboard = () => {
               </div>
 
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
-              <div className="mb-6 overflow-hidden rounded-panel border border-border/70 bg-secondary/20">
-                <div className="flex items-start gap-3 border-b border-border/60 bg-card/70 px-4 py-4 sm:px-5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-hover border border-primary/20 bg-primary/10">
+              <div className="mb-6 overflow-hidden rounded-2xl border border-primary/10 bg-primary/[0.02]">
+                <div className="flex items-start gap-3 px-4 py-4 sm:px-5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                     <Sparkles size={16} className="text-primary" />
                   </div>
                   <div className="min-w-0">
@@ -777,8 +777,8 @@ const Dashboard = () => {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4">
-                  <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
+                <div className="grid grid-cols-1 gap-3 px-3 pb-3 sm:grid-cols-2 sm:px-4 sm:pb-4">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/50 bg-card/50 p-4 transition-all hover:border-primary/30 hover:bg-card/70">
                     <Checkbox
                       checked={autoApproach.manual}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, manual: !!checked }))}
@@ -786,7 +786,7 @@ const Dashboard = () => {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-primary/10">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
                           <MessageSquare size={14} className="text-primary" />
                         </div>
                         <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
@@ -798,7 +798,7 @@ const Dashboard = () => {
                       </span>
                     </div>
                   </label>
-                  <label className="group flex cursor-pointer items-start gap-3 rounded-card border border-border/70 bg-card p-4 transition-colors hover:border-primary/40">
+                  <label className="group flex cursor-pointer items-start gap-3 rounded-xl border border-border/50 bg-card/50 p-4 transition-all hover:border-info/30 hover:bg-card/70">
                     <Checkbox
                       checked={autoApproach.meta}
                       onCheckedChange={(checked) => setAutoApproach((p) => ({ ...p, meta: !!checked }))}
@@ -806,7 +806,7 @@ const Dashboard = () => {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-info/10">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-info/10">
                           <Megaphone size={14} className="text-info" />
                         </div>
                         <span className="text-sm font-medium text-foreground group-hover:text-foreground/80 transition-colors">
