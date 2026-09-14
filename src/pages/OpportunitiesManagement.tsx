@@ -2095,13 +2095,12 @@ export default function OpportunitiesManagement() {
                               <span className="truncate whitespace-nowrap" title={lead.company_name || "Sem nome"}>
                                 {lead.company_name || "Sem nome"}
                               </span>
-                              <Badge
-                                variant="outline"
-                                className="shrink-0 text-[10px] px-1.5 py-0 font-semibold"
+                              <span
+                                className="shrink-0 rounded-md border border-border/60 px-1.5 text-[10px] leading-4 font-medium text-muted-foreground"
                                 title={sourceTitle(lead.source)}
                               >
                                 {sourceLabel(lead.source)}
-                              </Badge>
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{lead.category || "-"}</TableCell>
@@ -2378,9 +2377,12 @@ export default function OpportunitiesManagement() {
                     <span className="break-words leading-tight">{selectedLead.company_name || "Sem nome"}</span>
                   </DialogTitle>
                   <DialogDescription className="flex items-center gap-2 flex-wrap mt-2">
-                    <Badge variant="outline" className="text-xs font-semibold" title={sourceTitle(selectedLead.source)}>
+                    <span
+                      className="rounded-md border border-border/60 px-1.5 text-[10px] leading-5 font-medium text-muted-foreground"
+                      title={sourceTitle(selectedLead.source)}
+                    >
                       {sourceLabel(selectedLead.source)}
-                    </Badge>
+                    </span>
                     {selectedLead.category && <Badge variant="outline" className="text-xs">{selectedLead.category}</Badge>}
                     {selectedLead.city && <Badge variant="outline" className="text-xs"><MapPin size={10} className="mr-1" />{selectedLead.city}</Badge>}
                     {getLevelBadge(selectedLead.opportunity_level, selectedLead.ai_score)}

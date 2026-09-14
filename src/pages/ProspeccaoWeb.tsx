@@ -334,6 +334,11 @@ const ProspeccaoWeb = () => {
                     )}
                     </Button>
 
+                    <p className="mt-3 text-center text-xs text-muted-foreground">
+                      Aguarde: a busca analisa cada site encontrado e pode levar até 3 minutos.
+                    </p>
+
+
                     {errorText && (
                     <div className="mt-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
                       <AlertCircle size={16} className="mt-0.5 shrink-0" />
