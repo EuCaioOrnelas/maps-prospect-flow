@@ -28,6 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCep, cepDigits, isCepComplete, lookupCep } from "@/lib/cepLookup";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
