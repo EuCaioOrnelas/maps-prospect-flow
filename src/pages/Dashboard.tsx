@@ -81,6 +81,13 @@ const RESULTS_PER_PAGE = 10;
 const HISTORY_PER_PAGE = 20;
 const MAX_HISTORY_ITEMS = 200; // Histórico ampliado para manter mais buscas
 
+const FadedDivider = () => (
+  <div className="relative my-6 h-[2px] w-full">
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+    <div className="absolute left-1/2 top-1/2 h-[3px] w-1/4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-border to-transparent" />
+  </div>
+);
+
 const Dashboard = () => {
   const publicDemo = window.location.pathname === "/tour-guiado";
   const [keyword, setKeyword] = useState("");
@@ -693,7 +700,7 @@ const Dashboard = () => {
             
             <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-2xl border border-border/30 bg-background/60 p-5 backdrop-blur-sm sm:p-8" data-tour="search-card">
               {/* Feature badges */}
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/30">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
                     <Target size={16} className="text-primary" />
@@ -714,6 +721,8 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              <FadedDivider />
+
               {/* Global search info */}
               <div className="flex items-center gap-3 p-3 mb-6 rounded-xl border border-border/40 bg-background/50">
                 <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0">
@@ -726,6 +735,8 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
+
+              <FadedDivider />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6" data-tour="search-fields">
                 <div className="space-y-2" data-tour="search-keyword">
@@ -763,6 +774,8 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
+
+              <FadedDivider />
 
               {/* Geração automática da abordagem com IA (após o diagnóstico) */}
               <div className="mb-6">
