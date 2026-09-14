@@ -2073,7 +2073,7 @@ export default function OpportunitiesManagement() {
                       <Button
                         variant="ghost"
                         className="w-full"
-                        onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setCurrentPage(1); }}
+                        onClick={() => { setMinScore(""); setMinRating(""); setOnlyHighOpp(false); setFilterLevel("all"); setSortOrder("default"); setFilterCategory("all"); setFilterCity("all"); setResponsibleFilter("all"); applySourceFilter("all"); }}
                       >
                         Limpar tudo
                       </Button>
