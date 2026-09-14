@@ -1192,7 +1192,9 @@ const computeHeuristicScore = ({
   const engajamento_atividade = clamp(
     (activeSocialCount * 3) +
     (websiteRich ? 5 : websiteReadable ? 3 : 0) +
-    (reviewCount >= 20 ? 4 : reviewCount >= 5 ? 2 : reviewCount > 0 ? 1 : 0),
+    (webTrust
+      ? (webTrust.testimonialStrength >= 2 ? 4 : webTrust.testimonialStrength > 0 ? 2 : 0)
+      : (reviewCount >= 20 ? 4 : reviewCount >= 5 ? 2 : reviewCount > 0 ? 1 : 0)),
     0,
     15,
   );
@@ -1200,11 +1202,13 @@ const computeHeuristicScore = ({
   const potencial_venda = clamp(
     (!hasWebsite ? 6 : !websiteReadable ? 3 : 0) +
     (socialCount === 0 ? 4 : activeSocialCount === 0 ? 2 : 0) +
-    (rating > 0 && rating < 4 ? 3 : 0) +
-    (reviewCount > 0 && reviewCount < 10 ? 2 : 0),
+    (webTrust
+      ? (!webTrust.hasTestimonials ? 3 : 0) + (webTrust.clarityStrength <= 1 ? 2 : 0)
+      : (rating > 0 && rating < 4 ? 3 : 0) + (reviewCount > 0 && reviewCount < 10 ? 2 : 0)),
     0,
     15,
   );
+
 
   const score = clamp(estrutura_digital + reputacao + acessibilidade + engajamento_atividade + potencial_venda, 0, 100);
 
