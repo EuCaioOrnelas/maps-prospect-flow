@@ -48,6 +48,21 @@ export function EntryAudienceFilter({ value, onChange }: Props) {
 
   const set = (patch: Partial<AudienceConfig>) => onChange({ ...aud, ...patch });
 
+  const changeCrmStatus = (status: AudienceConfig["crm_status"]) => {
+    if (status === "not_in_crm") {
+      onChange({
+        crm_status: status,
+        stage_ids: [],
+        tags: [],
+        customer: "any",
+        min_score: null,
+        max_score: null,
+      });
+      return;
+    }
+    set({ crm_status: status });
+  };
+
   const { data: stages = [] } = useQuery({
     queryKey: ["flow-audience-stages", user?.id],
     queryFn: async () => {
@@ -106,7 +121,7 @@ export function EntryAudienceFilter({ value, onChange }: Props) {
 
           <div className="space-y-1.5">
             <Label className="text-[11px] font-medium text-foreground">Presença no CRM</Label>
-            <Select value={crmStatus} onValueChange={(v) => set({ crm_status: v as AudienceConfig["crm_status"] })}>
+            <Select value={crmStatus} onValueChange={(v) => changeCrmStatus(v as AudienceConfig["crm_status"])}>
               <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Todos os contatos</SelectItem>
