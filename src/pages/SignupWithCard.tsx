@@ -304,7 +304,7 @@ function SignupWithCardInner() {
       toast({ title: "Telefone inválido", variant: "destructive" });
       return;
     }
-    if (postalCode.replace(/\D/g, "").length < 8 || !address || !addressNumber || !neighborhood || !city || !state || !!cepError) {
+    if (!isCepComplete(postalCode) || !address || !addressNumber || !neighborhood || !city || !state || !!cepError) {
       toast({ title: "Complete o endereço", description: "Informe CEP, rua, número, bairro, cidade e estado.", variant: "destructive" });
       return;
     }
@@ -417,7 +417,7 @@ function SignupWithCardInner() {
         trial_asaas_customer_id: trialRes.customerId,
         cpf: cleanTaxId,
         phone: phone || null,
-        postal_code: postalCode.replace(/\D/g, "") || null,
+        postal_code: cepDigits(postalCode) || null,
         address: address || null,
         address_number: addressNumber || null,
         address_complement: addressComplement.trim() || null,
@@ -504,7 +504,7 @@ function SignupWithCardInner() {
           email,
           phone: phone.replace(/\D/g, ""),
           address: {
-            postal_code: postalCode.replace(/\D/g, ""),
+            postal_code: cepDigits(postalCode),
             line1: `${address}, ${addressNumber || "S/N"}`,
             city,
             state,
@@ -541,7 +541,7 @@ function SignupWithCardInner() {
               email,
               taxId: cleanTaxId,
               phone: phone.replace(/\D/g, ""),
-              postalCode: postalCode.replace(/\D/g, ""),
+              postalCode: cepDigits(postalCode),
               address,
               addressNumber: addressNumber || "S/N",
               addressComplement: addressComplement.trim() || undefined,
