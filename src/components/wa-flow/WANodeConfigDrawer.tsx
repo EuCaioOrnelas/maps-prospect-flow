@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EntryAudienceFilter } from "./EntryAudienceFilter";
 
 /** Gatilhos que rodam pelo agendador (sem depender de mensagem recebida). */
@@ -21,6 +21,54 @@ const SCHEDULED_TRIGGER_TYPES = [
   "deal_created",
   "lead_created",
 ];
+
+const TRIGGER_GROUPS = [
+  {
+    value: "message",
+    label: "Mensagens recebidas",
+    description: "Inicia quando o contato fala com você",
+    triggers: [
+      { value: "any_message", label: "Qualquer mensagem" },
+      { value: "keyword", label: "Mensagem com palavra-chave" },
+      { value: "campaign_reply", label: "Resposta de campanha" },
+      { value: "first_message", label: "Primeira mensagem do contato" },
+    ],
+  },
+  {
+    value: "time",
+    label: "Tempo e inatividade",
+    description: "Inicia automaticamente após um período",
+    triggers: [
+      { value: "no_reply_hours", label: "Contato aguardando resposta" },
+      { value: "no_conversation_days", label: "Conversa sem atividade" },
+    ],
+  },
+  {
+    value: "calendar",
+    label: "Compromissos",
+    description: "Inicia antes ou depois de um compromisso",
+    triggers: [
+      { value: "before_appointment", label: "Antes do compromisso" },
+      { value: "after_appointment", label: "Após o compromisso" },
+      { value: "appointment_no_show", label: "Contato não compareceu" },
+    ],
+  },
+  {
+    value: "crm",
+    label: "Eventos do CRM",
+    description: "Inicia quando um lead muda no CRM",
+    triggers: [
+      { value: "lead_created", label: "Novo lead criado" },
+      { value: "stage_entered", label: "Lead entrou em uma etapa" },
+      { value: "score_reached", label: "Lead atingiu um score" },
+      { value: "deal_created", label: "Venda registrada" },
+    ],
+  },
+] as const;
+
+function getTriggerGroup(triggerType?: string) {
+  return TRIGGER_GROUPS.find((group) => group.triggers.some((trigger) => trigger.value === triggerType));
+}
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
@@ -955,6 +1003,7 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [reopenTemplates, setReopenTemplates] = useState<any[]>([]);
   const [tokenExpired, setTokenExpired] = useState(false);
+  const selectedTriggerGroup = getTriggerGroup(config.trigger_type);
 
   // Números disponíveis para o fluxo:
   // - Marketing (Meta Cloud API): conexões WABA ativas
@@ -1233,38 +1282,49 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
       )}
 
       {/* Trigger type */}
-      <div className="space-y-2">
-        <Label className="text-xs font-medium">Tipo de gatilho</Label>
-        <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
-          <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-          <SelectContent className="max-h-[320px]">
-            <SelectGroup>
-              <SelectLabel className="text-[10px]">Quando o contato fala com você</SelectLabel>
-              <SelectItem value="any_message">Qualquer mensagem</SelectItem>
-              <SelectItem value="keyword">Palavra-chave</SelectItem>
-              <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
-              <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel className="text-[10px]">Por tempo (o sistema inicia sozinho)</SelectLabel>
-              <SelectItem value="no_reply_hours">Sem resposta sua há X horas</SelectItem>
-              <SelectItem value="no_conversation_days">X dias sem conversa</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel className="text-[10px]">Agenda</SelectLabel>
-              <SelectItem value="before_appointment">X minutos antes do compromisso</SelectItem>
-              <SelectItem value="after_appointment">Depois da reunião concluída</SelectItem>
-              <SelectItem value="appointment_no_show">Cliente faltou ao compromisso</SelectItem>
-            </SelectGroup>
-            <SelectGroup>
-              <SelectLabel className="text-[10px]">CRM</SelectLabel>
-              <SelectItem value="lead_created">Novo lead criado</SelectItem>
-              <SelectItem value="stage_entered">Lead entrou em uma etapa</SelectItem>
-              <SelectItem value="score_reached">Score atingiu X pontos</SelectItem>
-              <SelectItem value="deal_created">Venda registrada (virou cliente)</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+      <div className="space-y-3 rounded-lg border border-border/60 bg-card p-3">
+        <div>
+          <Label className="text-xs font-semibold">Quando o fluxo deve começar?</Label>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">Escolha primeiro o tipo de evento e depois a ação específica.</p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-medium text-muted-foreground">1. Categoria</Label>
+          <Select
+            value={selectedTriggerGroup?.value || ""}
+            onValueChange={(groupValue) => {
+              const group = TRIGGER_GROUPS.find((item) => item.value === groupValue);
+              const firstTrigger = group?.triggers[0];
+              if (firstTrigger) updateConfig("trigger_type", firstTrigger.value);
+            }}
+          >
+            <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Selecione uma categoria" /></SelectTrigger>
+            <SelectContent>
+              {TRIGGER_GROUPS.map((group) => (
+                <SelectItem key={group.value} value={group.value}>
+                  <div className="py-0.5">
+                    <p className="text-xs font-medium text-foreground">{group.label}</p>
+                    <p className="text-[9px] text-muted-foreground">{group.description}</p>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {selectedTriggerGroup && (
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-medium text-muted-foreground">2. Gatilho</Label>
+            <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
+              <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Selecione o gatilho" /></SelectTrigger>
+              <SelectContent>
+                {selectedTriggerGroup.triggers.map((trigger) => (
+                  <SelectItem key={trigger.value} value={trigger.value}>{trigger.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {config.trigger_type === "no_reply_hours" && (
