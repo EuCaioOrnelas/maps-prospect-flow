@@ -531,8 +531,8 @@ const ProspeccaoWeb = () => {
                   </div>
                 )}
 
-                {phase === "idle" && !summary && webHistory.length === 0 && !loadingHistory && (
-                  <div className="text-center py-12 sm:py-20">
+                {phase === "idle" && !summary && !loadingHistory && (
+                  <div className="text-center py-12 sm:py-16">
                     <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mx-auto mb-6 border border-primary/10">
                       <Globe size={40} className="text-primary" />
                     </div>
