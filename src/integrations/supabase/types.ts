@@ -2363,6 +2363,77 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_scheduled_messages: {
+        Row: {
+          contact_phone: string
+          content: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          kind: string
+          owner_user_id: string
+          scheduled_at: string
+          sent_at: string | null
+          sequence: number
+          status: string
+          template_language: string | null
+          template_name: string | null
+          updated_at: string
+          waba_connection_id: string
+          waba_message_id: string | null
+        }
+        Insert: {
+          contact_phone: string
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          created_by: string
+          error?: string | null
+          id?: string
+          kind?: string
+          owner_user_id: string
+          scheduled_at: string
+          sent_at?: string | null
+          sequence?: number
+          status?: string
+          template_language?: string | null
+          template_name?: string | null
+          updated_at?: string
+          waba_connection_id: string
+          waba_message_id?: string | null
+        }
+        Update: {
+          contact_phone?: string
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          owner_user_id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          sequence?: number
+          status?: string
+          template_language?: string | null
+          template_name?: string | null
+          updated_at?: string
+          waba_connection_id?: string
+          waba_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_scheduled_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_leads: {
         Row: {
           address: string | null

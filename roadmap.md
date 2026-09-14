@@ -25,3 +25,5 @@
 - [x] Reorganizar Minha Assinatura: plano e alteração em 70/30, capacidade em painel informativo único e catálogo de adicionais visível
 - [x] Refinar compra de capacidade: catálogo premium, seleção apenas de novos pacotes, confirmação e totais operacionais claros
 - [x] Alinhar catálogo de adicionais, adicionar resumo de investimento e cobrar imediatamente no cartão/PIX antes de liberar capacidade
+
+- Chat: privacidade visual (desfoques), compromisso pelo header e mensagens agendadas (edge chat-scheduled-sender + cron por minuto). Validar em produção com envio real.

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ArrowLeft, Zap, Clock, Sparkles, MessageSquare, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Zap, Clock, Sparkles, MessageSquare, EyeOff, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Card = {
@@ -32,6 +32,13 @@ const CARDS: Card[] = [
     description: "Envie uma mensagem automática fora do horário comercial. Não dispara em números com fluxos ativos.",
     icon: Clock,
     route: "/chat/configuracoes/resposta-automatica",
+  },
+  {
+    id: "privacy",
+    title: "Privacidade na tela",
+    description: "Desfoque foto, nome, prévia e mensagens. O conteúdo reaparece ao passar o mouse.",
+    icon: EyeOff,
+    route: "/chat/configuracoes/privacidade",
   },
   {
     id: "ai-summary",

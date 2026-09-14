@@ -15,6 +15,13 @@
       "when": 1789152755590,
       "tag": "0001_enforce_encrypted_chat_content",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789383360342,
+      "tag": "0002_create_chat_scheduled_messages",
+      "breakpoints": true
     }
   ]
 }

@@ -71,6 +71,20 @@ interface Props {
   saving: boolean;
   onSave: (input: CalendarEventInput & { id?: string }) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
+  /** Campos já preenchidos ao criar um compromisso (ex.: contato vindo do Chat). */
+  prefill?: Partial<EventFormPrefill>;
+}
+
+/** Campos que podem ser pré-preenchidos ao abrir o diálogo em modo de criação. */
+export interface EventFormPrefill {
+  title: string;
+  contact_name: string;
+  contact_phone: string;
+  contact_email: string;
+  company_name: string;
+  notes: string;
+  lead_id: string | null;
+  category: "comercial" | "interna";
 }
 
 interface FormState {
@@ -126,6 +140,7 @@ const buildInitialState = (
   event: CalendarEvent | null,
   defaultDate: Date | null | undefined,
   currentUserId: string,
+  prefill?: Partial<EventFormPrefill>,
 ): FormState => {
   if (event) {
     return {
@@ -182,6 +197,7 @@ const buildInitialState = (
     participants: [],
     lead_id: null,
     notify_lead: true,
+    ...(prefill ?? {}),
   };
 };
 
@@ -216,9 +232,11 @@ export function EventDialog({
   saving,
   onSave,
   onDelete,
+  prefill,
 }: Props) {
+  const prefillKey = JSON.stringify(prefill ?? null);
   const [form, setForm] = useState<FormState>(() =>
-    buildInitialState(event, defaultDate, currentUserId),
+    buildInitialState(event, defaultDate, currentUserId, prefill),
   );
   const [deleting, setDeleting] = useState(false);
   const [step, setStep] = useState(1);
@@ -231,10 +249,11 @@ export function EventDialog({
 
   useEffect(() => {
     if (open) {
-      setForm(buildInitialState(event, defaultDate, currentUserId));
+      setForm(buildInitialState(event, defaultDate, currentUserId, prefill));
       setStep(1);
     }
-  }, [open, event, defaultDate, currentUserId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, event, defaultDate, currentUserId, prefillKey]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));

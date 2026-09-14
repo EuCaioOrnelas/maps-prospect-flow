@@ -104,6 +104,7 @@ const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "Create
 const ChatSettings = lazyWithRetry(() => import("./pages/ChatSettings"), "ChatSettings");
 const ChatQuickReplies = lazyWithRetry(() => import("./pages/ChatQuickReplies"), "ChatQuickReplies");
 const ChatAutoReply = lazyWithRetry(() => import("./pages/ChatAutoReply"), "ChatAutoReply");
+const ChatPrivacy = lazyWithRetry(() => import("./pages/ChatPrivacy"), "ChatPrivacy");
 
 // Meta Platforms module
 const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), "MetaDashboard");
@@ -377,6 +378,7 @@ const App = () => (
                 <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/mensagens-rapidas" element={<ProtectedRoute><ChatQuickReplies /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/resposta-automatica" element={<ProtectedRoute><ChatAutoReply /></ProtectedRoute>} />
+                <Route path="/chat/configuracoes/privacidade" element={<ProtectedRoute><ChatPrivacy /></ProtectedRoute>} />
                 <Route path="/agents" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/agents/reports" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/equipe-ia" element={<ProtectedRoute><EquipeEmBreve /></ProtectedRoute>} />
