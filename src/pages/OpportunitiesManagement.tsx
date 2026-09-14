@@ -415,6 +415,8 @@ export default function OpportunitiesManagement() {
 
   // Gera a abordagem com IA sem toasts (usada na etapa automática pós-diagnóstico)
   const generateApproachForLead = async (lead: OpportunityLead, mode: "manual" | "meta") => {
+    // Sem telefone/WhatsApp real não existe abordagem (regra também validada no backend).
+    if (!canGenerateMessage(lead)) return false;
     const fnName = mode === "manual" ? "approach-lead-manual" : "approach-lead";
     const { data, error } = await supabase.functions.invoke(fnName, { body: { lead_id: lead.id } });
     if (error || !data?.mensagem) return false;
@@ -1525,15 +1527,18 @@ export default function OpportunitiesManagement() {
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground italic py-2">
-                  Nenhuma mensagem manual gerada ainda. Quer criar uma copy de primeiro contato de alta conversão para este lead?
+                  {canGenerateMessage(lead)
+                    ? "Nenhuma mensagem manual gerada ainda. Quer criar uma copy de primeiro contato de alta conversão para este lead?"
+                    : "Não encontramos telefone ou WhatsApp desta empresa, então não é possível gerar a mensagem de abordagem."}
                 </p>
                 <Button
                   onClick={() => approachLead(lead, "manual")}
-                  disabled={approachingLeadId === lead.id}
+                  disabled={approachingLeadId === lead.id || !canGenerateMessage(lead)}
+                  title={canGenerateMessage(lead) ? undefined : NO_NUMBER_MESSAGE}
                   className="w-full gap-2"
                 >
                   {approachingLeadId === lead.id && approachingMode === "manual" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                  Gerar mensagem manual com IA
+                  {canGenerateMessage(lead) ? "Gerar mensagem manual com IA" : NO_NUMBER_MESSAGE}
                 </Button>
               </div>
             )}
