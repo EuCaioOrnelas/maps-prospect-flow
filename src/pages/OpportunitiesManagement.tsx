@@ -2115,13 +2115,25 @@ export default function OpportunitiesManagement() {
                           <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">{lead.category || "-"}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{lead.city || "-"}</TableCell>
                           <TableCell className="text-center">
-                            {lead.rating ? (
-                              <div className="flex items-center justify-center gap-1">
-                                <Star size={14} className="text-amber-400 fill-amber-400" />
-                                <span className="text-sm">{lead.rating}</span>
-                                <span className="text-xs text-muted-foreground">({lead.review_count || 0})</span>
-                              </div>
-                            ) : "-"}
+                            {(() => {
+                              const r = displayRating(lead);
+                              if (r == null) return "-";
+                              const derived = isDerivedRating(lead);
+                              return (
+                                <div
+                                  className="flex items-center justify-center gap-1"
+                                  title={derived ? "Avaliação gerada pela análise de IA (0 a 5)" : "Avaliação do Google"}
+                                >
+                                  <Star size={14} className="text-amber-400 fill-amber-400" />
+                                  <span className="text-sm">{r}</span>
+                                  {derived ? (
+                                    <span className="text-[10px] text-muted-foreground">IA</span>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">({lead.review_count || 0})</span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           {/* Célula "Índ. Fech." removida — visível apenas no card do lead */}
                           <TableCell className="text-center">{getLevelBadge(lead.opportunity_level, lead.ai_score)}</TableCell>
