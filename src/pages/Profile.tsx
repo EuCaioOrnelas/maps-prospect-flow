@@ -1196,19 +1196,12 @@ const Profile = () => {
                       <Check className="h-4 w-4" />
                       Plano máximo
                     </div>
-                  ) : (
-                    <Link to="/upgrade" className="w-full sm:w-auto">
-                      <Button size="sm" variant="outline" className="w-full gap-2 border-primary text-primary hover:bg-primary/10 sm:w-auto">
-                        <Crown className="h-4 w-4" />
-                        Fazer upgrade
-                      </Button>
-                    </Link>
-                  )}
+                  ) : null}
                   {!isFreePlan && (
                     <Link to="/minha-assinatura" className="w-full sm:w-auto">
-                      <Button size="sm" variant="outline" className="w-full gap-2 sm:w-auto">
-                        <ExternalLink className="h-4 w-4" />
-                        Gerenciar assinatura
+                      <Button size="sm" variant="outline" className="w-full gap-2 border-primary text-primary hover:bg-primary/10 sm:w-auto">
+                        <Crown className="h-4 w-4" />
+                        Alterar plano e capacidade
                       </Button>
                     </Link>
                   )}
