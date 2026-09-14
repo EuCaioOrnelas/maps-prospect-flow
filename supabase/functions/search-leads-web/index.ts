@@ -22,9 +22,9 @@ const SERP_API_KEYS = [
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const MIN_VALID_RESULTS = 10;
-const MAX_VALID_RESULTS = 60;
-const MAX_SERP_PAGES = 6;
+const MIN_VALID_RESULTS = 1;
+const MAX_VALID_RESULTS = 30;
+const MAX_SERP_PAGES = 3;
 
 /** Domínios que nunca contam como site próprio de uma empresa. */
 const BLOCKED_DOMAINS = [
@@ -199,7 +199,7 @@ const EMPTY_ENRICHMENT: Enrichment = {
   phone: null, phones: [], email: null, social: {}, address: null, hasWhatsApp: false,
 };
 
-async function fetchHtml(url: string, timeoutMs = 12000): Promise<string | null> {
+async function fetchHtml(url: string, timeoutMs = 7000): Promise<string | null> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -296,7 +296,7 @@ function extractFromHtml(html: string, enr: Enrichment) {
 async function enrichCandidate(c: WebCandidate): Promise<Enrichment> {
   const enr: Enrichment = { ...EMPTY_ENRICHMENT, phones: [], social: {} };
   const base = `https://${c.domain}`;
-  const paths = ["", "/contato", "/contact", "/fale-conosco", "/sobre"];
+  const paths = ["", "/contato"];
   for (const p of paths) {
     if (enr.phone && enr.email && Object.keys(enr.social).length > 0) break;
     const html = await fetchHtml(`${base}${p}`);
@@ -397,7 +397,7 @@ serve(async (req) => {
         limitReached: true,
       }, 403);
     }
-    if (remaining < MIN_VALID_RESULTS) {
+    if (false) {
       return json({
         error: "Saldo insuficiente",
         message: `Cada busca Web precisa de pelo menos ${MIN_VALID_RESULTS} oportunidades disponíveis. Você tem ${remaining}.`,
@@ -408,7 +408,7 @@ serve(async (req) => {
     // A quantidade não é controlada pelo cliente: cada busca tenta entregar o
     // máximo possível, respeitando o teto operacional e o saldo da conta.
     const target = Math.min(MAX_VALID_RESULTS, remaining);
-    const candidateTarget = Math.min(MAX_SERP_PAGES * 20, target + 40);
+    const candidateTarget = Math.min(MAX_SERP_PAGES * 20, target + 20);
     const query = searchTerm;
 
     // --- Busca + filtragem ---
@@ -476,7 +476,7 @@ serve(async (req) => {
     }
 
     // --- Enriquecimento (dados reais do site) ---
-    const enrichments = await mapLimit(fresh, 5, enrichCandidate);
+    const enrichments = await mapLimit(fresh, 10, enrichCandidate);
 
     // Dedup adicional por telefone dentro da conta
     const foundPhones = enrichments.map((e) => e?.phone).filter(Boolean) as string[];
