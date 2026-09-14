@@ -15,16 +15,14 @@ import {
   Clock, XCircle, Banknote, Loader2,
   Receipt, Info, ArrowLeft, HelpCircle,
   ExternalLink, Shield, MessageCircle, RefreshCw,
-  Calendar, Ban, Sparkles, Plus,
+  Calendar, Ban, ArrowRight, Crown, TrendingDown, Boxes,
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ManageAddonsDialog } from "@/components/billing/ManageAddonsDialog";
 import { CommercialExpansionsSection } from "@/components/billing/CommercialExpansionsSection";
-import { ORDER_BUMPS, calcBumpsMonthlyCents, profileToBumpSelection, getBumpsForPlan } from "@/config/orderBumps";
 
 interface SubscriptionInfo {
   id: string;
@@ -125,7 +123,6 @@ export default function ManageSubscription() {
   const [cancellations, setCancellations] = useState<CancellationInfo[]>([]);
   const [cancellationDetails, setCancellationDetails] = useState<any>(null);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-  const [showAddonsDialog, setShowAddonsDialog] = useState(false);
   const [addonProfile, setAddonProfile] = useState<any>(null);
 
   useEffect(() => {
@@ -145,7 +142,7 @@ export default function ManageSubscription() {
     if (!user?.id) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, plan, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
+      .select("id, plan, payment_provider, billing_period, subscription_current_period_end, extra_numbers, extra_contacts_packs, extra_opportunities_packs")
       .eq("id", user.id)
       .maybeSingle();
     setAddonProfile(data);
@@ -223,26 +220,10 @@ export default function ManageSubscription() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-      {/* Background glows */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-primary/[0.05] rounded-full blur-[160px]" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-primary/[0.03] rounded-full blur-[130px]" />
-        <div className="absolute top-1/2 -left-20 w-[350px] h-[350px] bg-primary/[0.025] rounded-full blur-[110px]" />
-      </div>
-
-      {/* Grid */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.035] dark:opacity-[0.025]"
-        style={{
-          backgroundImage: `linear-gradient(hsl(var(--foreground) / 0.08) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground) / 0.08) 1px, transparent 1px)`,
-          backgroundSize: "48px 48px",
-        }}
-      />
-      <div className="fixed inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse 70% 60% at 50% 40%, transparent 0%, hsl(var(--background)) 100%)` }} />
+    <div className="relative min-h-screen overflow-hidden bg-muted/20 text-foreground">
 
       {/* Header */}
-      <div className="border-b border-border/60 bg-background/90 backdrop-blur-2xl sticky top-0 z-50">
+      <div className="sticky top-0 z-50 border-b border-border/70 bg-background">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Logo size="sm" asLink={false} />
@@ -260,129 +241,81 @@ export default function ManageSubscription() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-8 relative z-10">
+      <div className="relative z-10 mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6 sm:py-10">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase text-primary">Conta e faturamento</p>
+            <h1 className="mt-1 text-2xl font-bold text-foreground">Painel da assinatura</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Acompanhe seu plano, altere a assinatura e expanda a capacidade da operação.</p>
+          </div>
+          <Button onClick={() => navigate("/upgrade")} className="w-full gap-2 sm:w-auto">
+            <Crown className="h-4 w-4" /> Comparar planos
+          </Button>
+        </div>
+
         {/* Plan Summary */}
         <motion.div {...fadeUp(0)}>
-          <Card className="overflow-hidden relative border-border/50 shadow-lg shadow-primary/[0.03]">
-            <div className="absolute top-0 right-0 w-56 h-56 bg-primary/[0.06] rounded-full blur-[90px]" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 bg-primary/[0.04] rounded-full blur-[70px]" />
-            <CardContent className="p-8 relative z-10">
-              <div className="flex items-start justify-between flex-wrap gap-6">
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Plano atual</p>
-                  <h2 className="text-3xl font-bold text-foreground capitalize tracking-tight">
-                    Wiize {profile?.plan || "Free"}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-2">{profile?.email}</p>
-                  {isStripe && (
-                    <Badge variant="outline" className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/25 mt-2">
-                      Pagamento via Stripe
-                    </Badge>
-                  )}
+          <Card className="overflow-hidden rounded-lg border-border/70 shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-border/60 bg-muted/20 pb-5">
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted-foreground">Plano atual</p>
+                <CardTitle className="mt-1 text-xl capitalize">Wiize {profile?.plan || "Free"}</CardTitle>
+              </div>
+              <Badge variant="outline" className="gap-1.5 border-primary/25 bg-primary/10 text-primary">
+                <CheckCircle className="h-3.5 w-3.5" /> {cancelled ? "Ativo até o vencimento" : hasActiveSub ? "Ativo" : "Sem renovação ativa"}
+              </Badge>
+            </CardHeader>
+            <CardContent className="grid gap-6 p-5 lg:grid-cols-[1.2fr_0.8fr] lg:p-6">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="border-r-0 border-border sm:border-r">
+                  <p className="text-xs text-muted-foreground">Valor recorrente</p>
+                  <p className="mt-2 text-2xl font-bold tabular-nums">{activeSubscriptions[0]?.value ? formatCurrency(activeSubscriptions[0].value) : "—"}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{profile?.billing_period === "annual" ? "Cobrança anual" : "Cobrança mensal"}</p>
                 </div>
-                <div className="text-right space-y-1">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">Ativo até</p>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">
-                    {profile?.subscription_current_period_end ? formatDate(profile.subscription_current_period_end) : "—"}
-                  </p>
-                  {hasActiveSub && (
-                    <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25 text-[10px]">
-                      <CheckCircle className="h-3 w-3 mr-1" /> Renovação ativa
-                    </Badge>
-                  )}
-                  {cancelled && (
-                    <Badge variant="outline" className="text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/25 text-[10px]">
-                      <Ban className="h-3 w-3 mr-1" /> Renovação cancelada
-                    </Badge>
-                  )}
+                <div className="border-r-0 border-border sm:border-r sm:px-4">
+                  <p className="text-xs text-muted-foreground">Próxima renovação</p>
+                  <p className="mt-2 text-lg font-semibold tabular-nums">{profile?.subscription_current_period_end ? formatDate(profile.subscription_current_period_end) : "—"}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{cancelled ? "Não será renovado" : "Renovação automática"}</p>
+                </div>
+                <div className="sm:pl-4">
+                  <p className="text-xs text-muted-foreground">Pagamento</p>
+                  <p className="mt-2 text-lg font-semibold">{isStripe ? "Cartão" : isPix ? "PIX automático" : paymentMethod ? "Cartão" : "—"}</p>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">{profile?.email}</p>
+                </div>
+              </div>
+              <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+                <p className="text-sm font-semibold">Alterar meu plano</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">Upgrade é ativado após a confirmação do pagamento. Downgrade passa a valer na próxima renovação, sem interromper o período já pago.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => navigate("/upgrade")} className="gap-1.5 text-xs"><ArrowRight className="h-3.5 w-3.5" /> Upgrade</Button>
+                  <Button
+                    variant="outline"
+                    className="gap-1.5 text-xs"
+                    onClick={() => {
+                      if (isStripe && stripePortalUrl) window.open(stripePortalUrl, "_blank");
+                      else document.getElementById("cancelamento")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                  >
+                    <TrendingDown className="h-3.5 w-3.5" /> Downgrade
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Add-ons / Order Bumps */}
-        {(() => {
-          const planKey = (addonProfile?.plan || profile?.plan || "free").toLowerCase();
-          const availableBumps = getBumpsForPlan(planKey);
-          if (availableBumps.length === 0) return null;
-          const sel = profileToBumpSelection(addonProfile || profile);
-          const monthlyCents = calcBumpsMonthlyCents(sel);
-          const hasAny = sel.numbers + sel.contacts + sel.opportunities > 0;
-          const isMonthlyEligible = isStripe || isPix; // bumps só em ciclo mensal
-
-          return (
-            <motion.div {...fadeUp(0.04)}>
-              <Card className="border-border/50 shadow-md shadow-primary/[0.02] relative overflow-hidden">
-                <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/[0.06] rounded-full blur-[70px]" />
-                <CardHeader className="pb-3 relative z-10">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <CardTitle className="text-sm flex items-center gap-2 text-foreground font-semibold">
-                      <div className="h-7 w-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                        <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                      </div>
-                      Add-ons da sua assinatura
-                    </CardTitle>
-                    <Button
-                      size="sm"
-                      variant={hasAny ? "outline" : "default"}
-                      onClick={() => setShowAddonsDialog(true)}
-                      disabled={!isMonthlyEligible || !hasActiveSub}
-                      className="gap-1.5"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      {hasAny ? "Gerenciar" : "Adicionar add-ons"}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="relative z-10 space-y-3">
-                  {hasAny ? (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        {availableBumps.map((b) => {
-                          const qty = sel[b.id];
-                          if (qty <= 0) return null;
-                          return (
-                            <div key={b.id} className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{b.shortLabel}</p>
-                              <p className="text-base font-bold text-foreground tabular-nums mt-1">
-                                {qty}× <span className="text-xs font-medium text-muted-foreground">/mês</span>
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="flex items-center justify-between rounded-lg border border-border/40 bg-amber-500/[0.04] p-3">
-                        <span className="text-xs text-muted-foreground">Total extra mensal</span>
-                        <span className="text-sm font-bold text-foreground tabular-nums">
-                          {(monthlyCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/mês
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Você ainda não possui add-ons. Expanda números de WhatsApp, contatos no CRM e oportunidades comerciais conforme sua operação cresce —
-                      pague apenas pelo que precisa, cancele a qualquer momento.
-                    </p>
-                  )}
-                  {!isMonthlyEligible && (
-                    <p className="text-[11px] text-muted-foreground/80">
-                      Add-ons disponíveis apenas para assinaturas mensais ativas.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })()}
-
-        {/* Expansões comerciais (compra em 1 clique) */}
-        <CommercialExpansionsSection
-          profile={addonProfile || profile}
-          provider={(addonProfile as any)?.payment_provider || (profile as any)?.payment_provider || provider}
-          canPurchase={(isStripe || isPix) && hasActiveSub}
-          onChanged={fetchAddonProfile}
-        />
+        <section aria-labelledby="expansoes-heading">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/10"><Boxes className="h-4 w-4 text-primary" /></div>
+            <div><h2 id="expansoes-heading" className="text-base font-semibold">Capacidade adicional</h2><p className="text-xs text-muted-foreground">Adicione recursos diretamente à sua assinatura atual.</p></div>
+          </div>
+          <CommercialExpansionsSection
+            profile={addonProfile || profile}
+            provider={(addonProfile as any)?.payment_provider || (profile as any)?.payment_provider || provider}
+            canPurchase={(isStripe || isPix) && hasActiveSub && (addonProfile?.billing_period || profile?.billing_period) !== "annual"}
+            onChanged={() => { fetchAddonProfile(); fetchInfo(); }}
+          />
+        </section>
 
         {/* Payment Method + Help */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -657,7 +590,7 @@ export default function ManageSubscription() {
         )}
 
         {/* Cancellation Section */}
-        <motion.div {...fadeUp(0.2)}>
+        <motion.div {...fadeUp(0.2)} id="cancelamento" className="scroll-mt-24">
           <Card className="border-border/50 border-t-red-500/10 shadow-md relative overflow-hidden">
             <CardHeader className="pb-3 relative z-10">
               <CardTitle className="text-sm flex items-center gap-2 text-foreground font-semibold">
@@ -855,13 +788,6 @@ export default function ManageSubscription() {
         </motion.div>
       </div>
 
-      <ManageAddonsDialog
-        open={showAddonsDialog}
-        onOpenChange={setShowAddonsDialog}
-        planKey={(addonProfile?.plan || profile?.plan || "free").toLowerCase()}
-        profile={addonProfile || profile}
-        onSaved={fetchAddonProfile}
-      />
     </div>
   );
 }

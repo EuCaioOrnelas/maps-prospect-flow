@@ -70,18 +70,18 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-      <Card className="relative overflow-hidden border-border/60 shadow-none">
-        <CardHeader className="relative border-b border-border/60 bg-muted/20 pb-5">
+      <Card className="relative overflow-hidden rounded-lg border-border/70 shadow-sm">
+        <CardHeader className="relative border-b border-border/60 bg-muted/20 pb-5 pt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
                 <div className="flex h-8 w-8 items-center justify-center rounded-md border border-primary/20 bg-primary/10">
                   <Rocket className="h-4 w-4 text-primary" />
                 </div>
-                Expanda sua operação
+                Expanda sua operação na Wiize
               </CardTitle>
               <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
-                Aumente a capacidade da sua conta sem interromper o trabalho da equipe. Pague apenas pelos recursos adicionais ativos.
+                Contrate números, colaboradores, contatos e oportunidades extras. Ao clicar em Adicionar, o recurso entra no seu plano atual e a cobrança é ajustada automaticamente.
               </p>
             </div>
             {canPurchase && (
@@ -103,7 +103,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                   ? "+1 número e +1 colaborador"
                   : `+${b.step.toLocaleString("pt-BR")} ${b.unit}`;
                 return (
-                  <section key={b.id} className="flex min-w-0 flex-col border border-border/70 bg-card p-4">
+                  <section key={b.id} className="flex min-w-0 flex-col rounded-lg border border-border/70 bg-card p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/60">
                         <b.icon className="h-4 w-4 text-primary" />
@@ -156,7 +156,7 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
           )}
 
           {showPlanActions && (
-            <section className="grid gap-4 border border-border/70 bg-muted/20 p-4 sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
+            <section className="grid gap-4 rounded-lg border border-border/70 bg-muted/20 p-4 sm:grid-cols-[1fr_auto] sm:items-center sm:p-5">
               <div className="flex min-w-0 items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <Crown className="h-4 w-4" />
@@ -164,14 +164,14 @@ export function CommercialExpansionsSection({ profile, provider, canPurchase, on
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold text-foreground">
-                      {planKey === "start" ? "Desbloqueie a operação comercial completa" : planKey === "growth" ? "Plano Growth IA ativo" : "Escolha o plano ideal"}
+                      {planKey === "start" ? "Faça upgrade para o Growth IA" : planKey === "growth" ? "Gerencie ou altere seu plano" : "Escolha o plano ideal"}
                     </p>
                     {planKey === "growth" && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" /> Ativo</Badge>}
                   </div>
                   <p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">
                     {planKey === "start"
-                      ? "Faça upgrade para Growth IA e libere geração de oportunidades, diagnóstico comercial e agentes de IA."
-                      : "Compare planos, revise seus limites ou programe uma mudança para a próxima renovação."}
+                      ? "Clique em Fazer upgrade para comparar o Growth IA e confirmar a mudança. A ativação é imediata após a aprovação do pagamento."
+                      : "Clique em Gerenciar plano para revisar cobrança, comprar adicionais ou solicitar uma mudança para a próxima renovação."}
                   </p>
                   <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-foreground">
                     <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Upgrade imediato; downgrade na próxima renovação

@@ -740,8 +740,8 @@ const Profile = () => {
 
           {hasOpps && (<>
           {/* Empresa e serviços — uma única área comercial */}
-          <Card className="overflow-hidden border-border/60 shadow-none">
-            <CardHeader className="border-b border-border/60 bg-muted/20 pb-4">
+          <Card className="overflow-hidden rounded-lg border-border/70 shadow-sm">
+            <CardHeader className="border-b border-border/60 bg-muted/20 pb-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -770,11 +770,11 @@ const Profile = () => {
                   )}
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-2 rounded-md border border-border/70 bg-background p-1" role="tablist" aria-label="Dados comerciais">
+              <div className="mt-5 grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/60 p-1.5 shadow-inner" role="tablist" aria-label="Dados comerciais">
                 <Button
                   type="button"
-                  variant={businessView === "company" ? "secondary" : "ghost"}
-                  className="h-9 gap-2 rounded-sm text-xs sm:text-sm"
+                  variant={businessView === "company" ? "default" : "ghost"}
+                  className="h-10 gap-2 rounded-md text-xs font-semibold shadow-none sm:text-sm"
                   onClick={() => setBusinessView("company")}
                   role="tab"
                   aria-selected={businessView === "company"}
@@ -783,8 +783,8 @@ const Profile = () => {
                 </Button>
                 <Button
                   type="button"
-                  variant={businessView === "services" ? "secondary" : "ghost"}
-                  className="h-9 gap-2 rounded-sm text-xs sm:text-sm"
+                  variant={businessView === "services" ? "default" : "ghost"}
+                  className="h-10 gap-2 rounded-md text-xs font-semibold shadow-none sm:text-sm"
                   onClick={() => setBusinessView("services")}
                   role="tab"
                   aria-selected={businessView === "services"}
@@ -1111,13 +1111,15 @@ const Profile = () => {
           </>)}
 
           {!isSubUser && (
-            <CommercialExpansionsSection
-              profile={profile}
-              provider={(profile as any)?.payment_provider}
-              canPurchase={!isFreePlan && (profile as any)?.billing_period !== "annual" && Boolean(profile?.subscription_current_period_end && new Date(profile.subscription_current_period_end).getTime() > Date.now())}
-              onChanged={() => refreshProfile?.()}
-              showPlanActions
-            />
+            <div className="pt-3">
+              <CommercialExpansionsSection
+                profile={profile}
+                provider={(profile as any)?.payment_provider}
+                canPurchase={!isFreePlan && (profile as any)?.billing_period !== "annual" && Boolean(profile?.subscription_current_period_end && new Date(profile.subscription_current_period_end).getTime() > Date.now())}
+                onChanged={() => refreshProfile?.()}
+                showPlanActions
+              />
+            </div>
           )}
 
 
