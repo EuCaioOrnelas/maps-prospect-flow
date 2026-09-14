@@ -70,6 +70,7 @@ import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/l
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
+import { CommercialExpansionsSection } from "@/components/billing/CommercialExpansionsSection";
 
 
 
@@ -83,6 +84,7 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { services, isLoading: isLoadingServices, upsertServices } = useCompanyServices();
   const [isEditingServices, setIsEditingServices] = useState(false);
+  const [businessView, setBusinessView] = useState<"company" | "services">("company");
   const [serviceForm, setServiceForm] = useState<{ name: string; average_ticket: number; description: string }[]>([]);
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -737,27 +739,61 @@ const Profile = () => {
           </div>
 
           {hasOpps && (<>
-          {/* Company Profile Card */}
-          <Card className="border-border/50 shadow-none">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
+          {/* Empresa e serviços — uma única área comercial */}
+          <Card className="overflow-hidden border-border/60 shadow-none">
+            <CardHeader className="border-b border-border/60 bg-muted/20 pb-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                    <Building2 className="h-4 w-4 text-primary" />
-                    Perfil da Empresa
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md border border-primary/20 bg-primary/10">
+                      <Building2 className="h-4 w-4 text-primary" />
+                    </div>
+                    Empresa e serviços
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Informações usadas pela IA para personalizar mensagens de prospecção
+                    Contexto comercial usado pela Wiize AI em diagnósticos, mensagens e previsões
                   </CardDescription>
                 </div>
-                {companyProfile && !isEditingCompany && (
-                  <Button variant="outline" size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2">
-                    <Pencil className="h-3.5 w-3.5" />
-                    Editar
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {businessView === "company" && companyProfile && !isEditingCompany && (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditingCompany(true)} className="gap-2">
+                      <Pencil className="h-3.5 w-3.5" /> Editar
+                    </Button>
+                  )}
+                  {businessView === "services" && !isEditingServices && services.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setServiceForm(services.map(s => ({ name: s.name, average_ticket: s.average_ticket, description: s.description || "" })));
+                      setIsEditingServices(true);
+                    }} className="gap-2">
+                      <Pencil className="h-3.5 w-3.5" /> Editar
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 rounded-md border border-border/70 bg-background p-1" role="tablist" aria-label="Dados comerciais">
+                <Button
+                  type="button"
+                  variant={businessView === "company" ? "secondary" : "ghost"}
+                  className="h-9 gap-2 rounded-sm text-xs sm:text-sm"
+                  onClick={() => setBusinessView("company")}
+                  role="tab"
+                  aria-selected={businessView === "company"}
+                >
+                  <Building2 className="h-3.5 w-3.5" /> Perfil da empresa
+                </Button>
+                <Button
+                  type="button"
+                  variant={businessView === "services" ? "secondary" : "ghost"}
+                  className="h-9 gap-2 rounded-sm text-xs sm:text-sm"
+                  onClick={() => setBusinessView("services")}
+                  role="tab"
+                  aria-selected={businessView === "services"}
+                >
+                  <DollarSign className="h-3.5 w-3.5" /> Serviços e tickets
+                </Button>
               </div>
             </CardHeader>
+            <div role="tabpanel" className={businessView === "company" ? "block" : "hidden"}>
             <CardContent>
               {isLoadingCompanyProfile ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -934,32 +970,8 @@ const Profile = () => {
                 </div>
               )}
             </CardContent>
-          </Card>
-
-          {/* Services Card */}
-          <Card className="border-border/50 shadow-none">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                    <DollarSign className="h-4 w-4 text-primary" />
-                    Serviços Vendidos
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Serviços e ticket médio usados pela IA para calcular oportunidades e forecast
-                  </CardDescription>
-                </div>
-                {!isEditingServices && services.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setServiceForm(services.map(s => ({ name: s.name, average_ticket: s.average_ticket, description: s.description || "" })));
-                    setIsEditingServices(true);
-                  }} className="gap-2">
-                    <Pencil className="h-3.5 w-3.5" />
-                    Editar
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
+            </div>
+            <div role="tabpanel" className={businessView === "services" ? "block" : "hidden"}>
             <CardContent>
               {isLoadingServices ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -990,12 +1002,16 @@ const Profile = () => {
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-medium text-muted-foreground">Serviço {index + 1}</span>
                           {serviceForm.length > 1 && (
-                            <button
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
                               onClick={() => setServiceForm(prev => prev.filter((_, i) => i !== index))}
-                              className="text-destructive/60 hover:text-destructive transition-colors"
+                              className="h-7 w-7 text-destructive/70 hover:text-destructive"
+                              aria-label={`Remover serviço ${index + 1}`}
                             >
                               <Trash2 size={14} />
-                            </button>
+                            </Button>
                           )}
                         </div>
                         <Input
@@ -1090,9 +1106,19 @@ const Profile = () => {
                 </div>
               )}
             </CardContent>
+            </div>
           </Card>
           </>)}
 
+          {!isSubUser && (
+            <CommercialExpansionsSection
+              profile={profile}
+              provider={(profile as any)?.payment_provider}
+              canPurchase={!isFreePlan && (profile as any)?.billing_period !== "annual" && Boolean(profile?.subscription_current_period_end && new Date(profile.subscription_current_period_end).getTime() > Date.now())}
+              onChanged={() => refreshProfile?.()}
+              showPlanActions
+            />
+          )}
 
 
           {/* Plan Card — Owner vê completo; Admin/Operational vê resumo somente leitura */}
