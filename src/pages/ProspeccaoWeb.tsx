@@ -236,7 +236,7 @@ const ProspeccaoWeb = () => {
                   </div>
                   <h1 className="mb-4 font-display text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
                     <span className="text-foreground">Encontre oportunidades pela </span>
-                    <span className="text-shimmer-highlight">web</span>
+                     <span className="text-shimmer-highlight">Web</span>
                   </h1>
                   <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
                     Encontramos o máximo de sites empresariais válidos e extraímos os contatos públicos disponíveis
