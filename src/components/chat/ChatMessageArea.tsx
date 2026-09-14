@@ -1508,6 +1508,18 @@ export function ChatMessageArea({
           fetchTemplates={fetchTemplates}
         />
       )}
+
+      {conversation && (
+        <AddToCRMDialog
+          open={addToCrmOpen}
+          onOpenChange={setAddToCrmOpen}
+          contactName={conversation.contact_name}
+          contactPhone={conversation.contact_phone}
+          conversationId={conversation.id}
+          stages={pipelineStages}
+          onCreated={(lead) => setLeadInfo({ id: lead.id, pipeline_stage_id: lead.pipeline_stage_id })}
+        />
+      )}
     </div>
   );
 }
