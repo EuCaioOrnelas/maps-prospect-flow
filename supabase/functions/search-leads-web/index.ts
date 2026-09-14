@@ -397,13 +397,6 @@ serve(async (req) => {
         limitReached: true,
       }, 403);
     }
-    if (false) {
-      return json({
-        error: "Saldo insuficiente",
-        message: `Cada busca Web precisa de pelo menos ${MIN_VALID_RESULTS} oportunidades disponíveis. Você tem ${remaining}.`,
-        limitReached: true,
-      }, 403);
-    }
 
     // A quantidade não é controlada pelo cliente: cada busca tenta entregar o
     // máximo possível, respeitando o teto operacional e o saldo da conta.
