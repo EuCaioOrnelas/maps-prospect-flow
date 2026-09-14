@@ -1137,6 +1137,7 @@ const computeHeuristicScore = ({
   hasAddress,
   websitePage,
   socialPages,
+  webTrust,
 }: {
   rating: number;
   reviewCount: number;
@@ -1144,6 +1145,7 @@ const computeHeuristicScore = ({
   hasAddress: boolean;
   websitePage: PageSummary | undefined;
   socialPages: PageSummary[];
+  webTrust?: WebTrustSignals | null;
 }): HeuristicScore => {
   const hasWebsite = !!websitePage;
   const websiteReadable = !!websitePage && websitePage.ok && (websitePage.contentLength >= 220 || !!websitePage.title || !!websitePage.description);
@@ -1159,13 +1161,25 @@ const computeHeuristicScore = ({
     25,
   );
 
-  const reputacao = clamp(
-    (rating >= 4.8 ? 12 : rating >= 4.5 ? 10 : rating >= 4.0 ? 7 : rating >= 3.5 ? 4 : rating > 0 ? 2 : 0) +
-    (reviewCount >= 100 ? 8 : reviewCount >= 30 ? 6 : reviewCount >= 10 ? 4 : reviewCount >= 1 ? 2 : 0) +
-    (rating >= 4.5 && reviewCount >= 20 ? 5 : reviewCount >= 10 ? 3 : 0),
-    0,
-    25,
-  );
+  // Leads de origem WEB não têm avaliações do Google: a reputação vem dos
+  // depoimentos publicados no site e da clareza da entrega (serviços/oferta).
+  const reputacao = webTrust
+    ? clamp(
+        (webTrust.testimonialStrength * 4) +
+        (webTrust.clarityStrength * 3) +
+        (webTrust.hasTestimonials && webTrust.clarityStrength >= 2 ? 4 : 0) +
+        (websiteReadable ? 2 : 0),
+        0,
+        25,
+      )
+    : clamp(
+        (rating >= 4.8 ? 12 : rating >= 4.5 ? 10 : rating >= 4.0 ? 7 : rating >= 3.5 ? 4 : rating > 0 ? 2 : 0) +
+        (reviewCount >= 100 ? 8 : reviewCount >= 30 ? 6 : reviewCount >= 10 ? 4 : reviewCount >= 1 ? 2 : 0) +
+        (rating >= 4.5 && reviewCount >= 20 ? 5 : reviewCount >= 10 ? 3 : 0),
+        0,
+        25,
+      );
+
 
   const acessibilidade = clamp(
     (hasPhone ? 10 : 0) +
