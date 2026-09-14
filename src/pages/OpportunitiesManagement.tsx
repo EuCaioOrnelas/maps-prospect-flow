@@ -1582,7 +1582,7 @@ export default function OpportunitiesManagement() {
                     <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.ai_approach_message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
                       <Pencil size={12} /> Editar
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "meta")} disabled={approachingLeadId === lead.id} className="gap-1.5 text-xs">
+                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "meta")} disabled={approachingLeadId === lead.id || !canGenerateMessage(lead)} className="gap-1.5 text-xs">
                       {approachingLeadId === lead.id && approachingMode === "meta" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                       Regenerar
                     </Button>
@@ -1592,15 +1592,18 @@ export default function OpportunitiesManagement() {
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground italic py-2">
-                  Nenhum follow-up gerado ainda. Clique abaixo para gerar a mensagem usada após a resposta ao template.
+                  {canGenerateMessage(lead)
+                    ? "Nenhum follow-up gerado ainda. Clique abaixo para gerar a mensagem usada após a resposta ao template."
+                    : "Não encontramos telefone ou WhatsApp desta empresa, então não é possível gerar a mensagem de abordagem."}
                 </p>
                 <Button
                   onClick={() => approachLead(lead, "meta")}
-                  disabled={approachingLeadId === lead.id}
+                  disabled={approachingLeadId === lead.id || !canGenerateMessage(lead)}
+                  title={canGenerateMessage(lead) ? undefined : NO_NUMBER_MESSAGE}
                   className="w-full gap-2"
                 >
                   {approachingLeadId === lead.id && approachingMode === "meta" ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                  Gerar follow-up com IA (pós-resposta do template)
+                  {canGenerateMessage(lead) ? "Gerar follow-up com IA (pós-resposta do template)" : NO_NUMBER_MESSAGE}
                 </Button>
               </div>
             )}
