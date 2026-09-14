@@ -1214,14 +1214,142 @@ function EntryNodeConfig({ config, updateConfig, renderInfoBanner }: { config: a
         <Label className="text-xs font-medium">Tipo de gatilho</Label>
         <Select value={config.trigger_type || ""} onValueChange={(v) => updateConfig("trigger_type", v)}>
           <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="any_message">Qualquer mensagem</SelectItem>
-            <SelectItem value="keyword">Palavra-chave</SelectItem>
-            <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
-            <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
+          <SelectContent className="max-h-[320px]">
+            <SelectGroup>
+              <SelectLabel className="text-[10px]">Quando o contato fala com você</SelectLabel>
+              <SelectItem value="any_message">Qualquer mensagem</SelectItem>
+              <SelectItem value="keyword">Palavra-chave</SelectItem>
+              <SelectItem value="campaign_reply">Resposta de campanha</SelectItem>
+              <SelectItem value="first_message">1ª mensagem recebida</SelectItem>
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel className="text-[10px]">Por tempo (o sistema inicia sozinho)</SelectLabel>
+              <SelectItem value="no_reply_hours">Sem resposta sua há X horas</SelectItem>
+              <SelectItem value="no_conversation_days">X dias sem conversa</SelectItem>
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel className="text-[10px]">Agenda</SelectLabel>
+              <SelectItem value="before_appointment">X minutos antes do compromisso</SelectItem>
+              <SelectItem value="after_appointment">Depois da reunião concluída</SelectItem>
+              <SelectItem value="appointment_no_show">Cliente faltou ao compromisso</SelectItem>
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel className="text-[10px]">CRM</SelectLabel>
+              <SelectItem value="lead_created">Novo lead criado</SelectItem>
+              <SelectItem value="stage_entered">Lead entrou em uma etapa</SelectItem>
+              <SelectItem value="score_reached">Score atingiu X pontos</SelectItem>
+              <SelectItem value="deal_created">Venda registrada (virou cliente)</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
+
+      {config.trigger_type === "no_reply_hours" && (
+        <div className="space-y-2">
+          <Label className="text-xs">Horas sem sua resposta</Label>
+          <Input
+            type="number"
+            min={1}
+            value={config.no_reply_hours ?? 24}
+            onChange={(e) => updateConfig("no_reply_hours", e.target.value)}
+            className="h-9 text-sm"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            O fluxo inicia quando a última mensagem da conversa for do contato e você não responder nesse tempo.
+          </p>
+        </div>
+      )}
+
+      {config.trigger_type === "no_conversation_days" && (
+        <div className="space-y-2">
+          <Label className="text-xs">Dias sem nenhuma mensagem</Label>
+          <Input
+            type="number"
+            min={1}
+            value={config.no_conversation_days ?? 7}
+            onChange={(e) => updateConfig("no_conversation_days", e.target.value)}
+            className="h-9 text-sm"
+          />
+          <p className="text-[10px] text-muted-foreground">Reativa conversas paradas, independente de quem falou por último.</p>
+        </div>
+      )}
+
+      {config.trigger_type === "before_appointment" && (
+        <div className="space-y-2">
+          <Label className="text-xs">Minutos antes do compromisso</Label>
+          <Input
+            type="number"
+            min={5}
+            value={config.appointment_minutes_before ?? 60}
+            onChange={(e) => updateConfig("appointment_minutes_before", e.target.value)}
+            className="h-9 text-sm"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Usa os compromissos da Agenda com telefone preenchido (status agendado ou confirmado).
+          </p>
+        </div>
+      )}
+
+      {(config.trigger_type === "after_appointment" || config.trigger_type === "appointment_no_show") && (
+        <div className="space-y-2">
+          <Label className="text-xs">Minutos após o fim do compromisso</Label>
+          <Input
+            type="number"
+            min={0}
+            value={config.appointment_minutes_after ?? 30}
+            onChange={(e) => updateConfig("appointment_minutes_after", e.target.value)}
+            className="h-9 text-sm"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            {config.trigger_type === "appointment_no_show"
+              ? "Dispara para compromissos marcados como falta."
+              : "Ideal para pedir feedback ou enviar a proposta logo após a reunião."}
+          </p>
+        </div>
+      )}
+
+      {config.trigger_type === "stage_entered" && (
+        <div className="space-y-2">
+          <Label className="text-xs">Etapa do CRM</Label>
+          <Select value={config.stage_id || ""} onValueChange={(v) => updateConfig("stage_id", v)}>
+            <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecionar etapa..." /></SelectTrigger>
+            <SelectContent>
+              {triggerStages.map((s: any) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground">O fluxo inicia quando o lead passa a ficar nessa coluna do Kanban.</p>
+        </div>
+      )}
+
+      {config.trigger_type === "score_reached" && (
+        <div className="space-y-2">
+          <Label className="text-xs">Score mínimo</Label>
+          <Input
+            type="number"
+            min={0}
+            value={config.score_min ?? 700}
+            onChange={(e) => updateConfig("score_min", e.target.value)}
+            className="h-9 text-sm"
+          />
+          <p className="text-[10px] text-muted-foreground">Dispara quando o lead alcança esse score de interesse.</p>
+        </div>
+      )}
+
+      {SCHEDULED_TRIGGER_TYPES.includes(config.trigger_type) && (
+        <div className="space-y-2">
+          <Label className="text-xs">Repetir para o mesmo contato após (horas)</Label>
+          <Input
+            type="number"
+            min={0}
+            value={config.retrigger_hours ?? 168}
+            onChange={(e) => updateConfig("retrigger_hours", e.target.value)}
+            className="h-9 text-sm"
+          />
+          <p className="text-[10px] text-muted-foreground">Use 0 para nunca repetir com o mesmo contato.</p>
+        </div>
+      )}
 
       {/* Keyword config */}
       {config.trigger_type === "keyword" && (
