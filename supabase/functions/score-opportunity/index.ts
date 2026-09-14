@@ -379,7 +379,7 @@ const analyzeWebTrustSignals = (page: PageSummary | undefined): WebTrustSignals 
   const socialProofHits = [
     /clientes atendidos/,
     /anos de (experi(ê|e)ncia|mercado)/,
-depoimentoPlaceholder
+/clientes satisfeitos/,
     /portf(ó|o)lio/,
     /parceiros/,
     /antes e depois/,
