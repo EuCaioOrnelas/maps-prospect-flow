@@ -1577,6 +1577,7 @@ async function handleInbound(body: Record<string, any>) {
     if (isIg) {
       if (!igEntryMatches(entry.config || {}, text, igEvent, isFirstMessage)) continue;
     } else if (!entryMatches(entry.config || {}, text, isFirstMessage)) continue;
+    if (!(await audienceMatches(entry.config || {}, ownerId, phone))) continue;
 
     const send = await buildSendCtx(flow, phone, body.lead_name || null, userId, ownerId);
     if (!send) continue;
@@ -2152,7 +2153,15 @@ async function handleTick() {
     }
   }
 
-  return json({ ok: true, processed });
+  // D) gatilhos agendados (sem resposta, sem conversa, compromissos, CRM…)
+  let scheduledStarted = 0;
+  try {
+    scheduledStarted = await handleScheduledTriggers();
+  } catch (e) {
+    console.error("[wa-flow-runner] scheduled triggers erro", e);
+  }
+
+  return json({ ok: true, processed, scheduled_started: scheduledStarted });
 }
 
 Deno.serve(async (req) => {
