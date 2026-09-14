@@ -22,3 +22,4 @@
 - [x] Unificar perfil da empresa e serviços e adicionar expansão rápida de plano, CRM, oportunidades, números e colaboradores
 - [x] Refinar Perfil e Minha Assinatura como painel executivo Wiize, com seletor evidente, troca de plano e adicionais integrados
 - [x] Consolidar Minha Assinatura: planos com ícones, capacidade operacional, compra direta de adicionais e downloads de faturas Stripe/PIX; refinar saída e adicionais no upgrade
+- [x] Reorganizar Minha Assinatura: plano e alteração em 70/30, capacidade em painel informativo único e catálogo de adicionais visível
