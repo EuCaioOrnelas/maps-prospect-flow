@@ -693,21 +693,21 @@ const Dashboard = () => {
             
             <form onSubmit={handleSearch} className="w-full min-w-0 overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-5 backdrop-blur-sm sm:p-8" data-tour="search-card">
               {/* Feature badges */}
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/50">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-6 pb-6 border-b border-border/30">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
                     <Target size={16} className="text-primary" />
                   </div>
                   <span>Leads qualificados</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
                     <Sparkles size={16} className="text-primary" />
                   </div>
                   <span>Contatos verificados</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
                     <Globe size={16} className="text-primary" />
                   </div>
                   <span>Busca global</span>
@@ -715,8 +715,8 @@ const Dashboard = () => {
               </div>
 
               {/* Global search info */}
-              <div className="flex items-center gap-3 p-3 mb-6 bg-primary/5 border border-primary/20 rounded-xl">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-3 p-3 mb-6 rounded-xl border border-border/40 bg-background/50">
+                <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center shrink-0">
                   <MapPin size={18} className="text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
