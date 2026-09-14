@@ -82,9 +82,9 @@ const HISTORY_PER_PAGE = 20;
 const MAX_HISTORY_ITEMS = 200; // Histórico ampliado para manter mais buscas
 
 const FadedDivider = () => (
-  <div className="relative my-6 h-px w-full">
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-border/30 to-transparent" />
-    <div className="absolute left-1/2 top-1/2 h-[2px] w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-border/70 to-transparent" />
+  <div className="relative my-6 h-[2px] w-full">
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+    <div className="absolute left-1/2 top-1/2 h-[3px] w-1/4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-border to-transparent" />
   </div>
 );
 
