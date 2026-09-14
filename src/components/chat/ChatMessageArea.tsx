@@ -877,27 +877,71 @@ export function ChatMessageArea({
               </DropdownMenu>
             )}
           </div>
-          <div className="flex items-center gap-[10px]">
+          <div className="flex items-center gap-1 sm:gap-[10px]">
+            {/* Desktop: premium hover actions */}
+            <TooltipProvider delayDuration={180}>
+              <div className="hidden sm:flex items-center gap-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="wa-header-action-btn"
+                      onClick={() => setAppointmentOpen(true)}
+                      aria-label="Criar compromisso com este contato"
+                    >
+                      <CalendarPlus size={20} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="wa-tooltip-subtle">
+                    Criar compromisso
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className="wa-header-action-btn"
+                      onClick={() => setScheduleOpen(true)}
+                      aria-label="Agendar mensagem para este contato"
+                    >
+                      <CalendarClock size={20} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="wa-tooltip-subtle">
+                    Agendar mensagem
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
 
-            <button
-              className="wa-icon-button p-1"
-              onClick={() => setAppointmentOpen(true)}
-              title="Criar compromisso com este contato"
-              aria-label="Criar compromisso"
-            >
-              <CalendarPlus size={20} className="wa-chat-header-icon" />
-            </button>
-            <button
-              className="wa-icon-button p-1"
-              onClick={() => setScheduleOpen(true)}
-              title="Agendar mensagem para este contato"
-              aria-label="Agendar mensagem"
-            >
-              <CalendarClock size={20} className="wa-chat-header-icon" />
-            </button>
+            {/* Mobile: compact actions dropdown */}
+            <div className="flex sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="wa-header-action-btn"
+                    aria-label="Ações rápidas"
+                  >
+                    <Zap size={20} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="wa-dropdown-menu border wa-border min-w-[220px] rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                  <DropdownMenuItem
+                    onClick={() => setAppointmentOpen(true)}
+                    className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                  >
+                    <CalendarPlus size={16} /> Criar compromisso
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setScheduleOpen(true)}
+                    className="wa-dropdown-item flex items-center gap-2.5 px-3 py-2 mx-1 my-0.5 rounded-lg text-[13px] cursor-pointer"
+                  >
+                    <CalendarClock size={16} /> Agendar mensagem
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-            <button className="wa-icon-button p-1" onClick={() => setShowSearch(!showSearch)}>
-              <Search size={20} className="wa-chat-header-icon" />
+            <button className="wa-header-action-btn" onClick={() => setShowSearch(!showSearch)} aria-label="Buscar na conversa">
+              <Search size={20} />
             </button>
             <DropdownMenu open={headerMenuOpen} onOpenChange={(o) => { setHeaderMenuOpen(o); if (!o) setMobileSubOpen(null); }}>
               <DropdownMenuTrigger asChild>
