@@ -1098,19 +1098,6 @@ const Profile = () => {
           </Card>
           </>)}
 
-          {!isSubUser && (
-            <div className="pt-3">
-              <CommercialExpansionsSection
-                profile={profile}
-                provider={(profile as any)?.payment_provider}
-                canPurchase={!isFreePlan && (profile as any)?.billing_period !== "annual" && Boolean(profile?.subscription_current_period_end && new Date(profile.subscription_current_period_end).getTime() > Date.now())}
-                onChanged={() => refreshProfile?.()}
-                showPlanActions
-              />
-            </div>
-          )}
-
-
           {/* Plan Card — Owner vê completo; Admin/Operational vê resumo somente leitura */}
           {isSubUser ? (
             <Card className="border-border/50 shadow-none">
