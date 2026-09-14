@@ -1198,7 +1198,7 @@ const Profile = () => {
                     </div>
                   ) : (
                     <Link to="/upgrade" className="w-full sm:w-auto">
-                      <Button size="sm" className="w-full gap-2 sm:w-auto">
+                      <Button size="sm" variant="outline" className="w-full gap-2 border-primary text-primary hover:bg-primary/10 sm:w-auto">
                         <Crown className="h-4 w-4" />
                         Fazer upgrade
                       </Button>
