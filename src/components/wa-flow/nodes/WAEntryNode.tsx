@@ -10,6 +10,15 @@ const triggerLabels: Record<string, string> = {
   webhook: "Webhook/API",
   first_message: "1ª mensagem",
   any_message: "Qualquer mensagem",
+  no_reply_hours: "Sem resposta há X horas",
+  no_conversation_days: "X dias sem conversa",
+  before_appointment: "Antes do compromisso",
+  after_appointment: "Após a reunião",
+  appointment_no_show: "Faltou ao compromisso",
+  stage_entered: "Entrou na etapa do CRM",
+  score_reached: "Score atingido",
+  deal_created: "Venda registrada",
+  lead_created: "Novo lead criado",
 };
 
 export function WAEntryNode({ data }: NodeProps) {
