@@ -73,6 +73,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   };
 
   const handleSignupClick = () => {
+    trackFreeTrialClick("navbar");
     onSignupClick?.();
   };
 
