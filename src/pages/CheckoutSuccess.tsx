@@ -35,6 +35,9 @@ const CheckoutSuccess = () => {
 
   useEffect(() => { markBlogAttribution("purchased", user?.id); }, [user?.id]);
 
+  // Compra/assinatura concluída — evento para Google Analytics / Tag Manager.
+  useEffect(() => { trackTrialStarted(); trackEvent("checkout_concluido"); }, []);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
