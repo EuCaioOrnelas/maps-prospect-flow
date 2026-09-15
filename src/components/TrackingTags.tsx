@@ -108,5 +108,10 @@ export const TrackingTags = () => {
     return onConsentChange((prefs) => applyTags(cfg, prefs));
   }, [cfg]);
 
+  // Página vista a cada navegação interna (SPA não dispara sozinho).
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+
   return null;
 };
