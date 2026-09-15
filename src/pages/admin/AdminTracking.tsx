@@ -55,6 +55,7 @@ export default function AdminTracking() {
       if (data) {
         setValues({
           gtm_id: (data as any).gtm_id || "",
+          ga4_id: (data as any).ga4_id || "",
           meta_pixel_id: (data as any).meta_pixel_id || "",
           enabled: (data as any).enabled ?? true,
         });
