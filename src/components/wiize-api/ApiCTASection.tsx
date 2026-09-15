@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { trackApiSignupClick } from "@/lib/analytics";
 
 /** CTA final do Wiize API — mesmo desenho do CTA da LP principal. */
 export const ApiCTASection = () => {
@@ -36,7 +37,7 @@ export const ApiCTASection = () => {
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground sm:text-xl">
             Crie sua conta, gere sua chave e comece a integrar prospecção e inteligência comercial em minutos.
           </p>
-          <Link to="/api/login?modo=cadastro">
+          <Link to="/api/login?modo=cadastro" onClick={() => trackApiSignupClick("api_cta_final")}>
             <Button size="lg" className="h-12 rounded-hover px-7 text-base">Criar conta grátis <ArrowRight size={17} /></Button>
           </Link>
           <p className="mt-6 text-sm text-muted-foreground">

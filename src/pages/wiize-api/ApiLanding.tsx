@@ -19,6 +19,7 @@ import { ApiCTASection } from "@/components/wiize-api/ApiCTASection";
 import { TrustedBySection } from "@/components/landing/TrustedBySection";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
 import wiizeLogo from "@/assets/logo-icon-new.png";
+import { trackApiSignupClick } from "@/lib/analytics";
 
 const FEATURES: ApiFeature[] = [
   {
@@ -345,7 +346,7 @@ export default function ApiLanding() {
             <Link to="/api/login" className="hover:text-foreground">
               Entrar
             </Link>
-            <Link to="/api/login?modo=cadastro" className="hover:text-foreground">Criar conta grátis</Link>
+            <Link to="/api/login?modo=cadastro" className="hover:text-foreground" onClick={() => trackApiSignupClick("api_rodape")}>Criar conta grátis</Link>
             <Link to="/privacy" className="hover:text-foreground">
               Política de Privacidade
             </Link>
