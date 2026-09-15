@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { trackPageView } from "@/lib/analytics";
 import {
   ConsentPrefs,
   ensureDataLayer,
@@ -87,6 +89,7 @@ function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
  */
 export const TrackingTags = () => {
   const [cfg, setCfg] = useState<TrackingSettings | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     let active = true;
@@ -107,6 +110,11 @@ export const TrackingTags = () => {
     if (hasConsentDecision()) applyTags(cfg, getConsent());
     return onConsentChange((prefs) => applyTags(cfg, prefs));
   }, [cfg]);
+
+  // Página vista a cada navegação interna (SPA não dispara sozinho).
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
 
   return null;
 };

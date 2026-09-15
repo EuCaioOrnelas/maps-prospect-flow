@@ -7,6 +7,7 @@ import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { NavMegaMenu } from "./NavMegaMenu";
 import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, type MenuItem } from "./navMenuData";
 import { cn } from "@/lib/utils";
+import { trackFreeTrialClick } from "@/lib/analytics";
 
 interface NavbarProps {
   onSignupClick?: () => void;
@@ -72,6 +73,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
   };
 
   const handleSignupClick = () => {
+    trackFreeTrialClick("navbar");
     onSignupClick?.();
   };
 

@@ -26,6 +26,7 @@ import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { markBlogAttribution } from "@/lib/blogAttribution";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
+import { trackEvent, trackTrialStarted } from "@/lib/analytics";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -34,6 +35,9 @@ const CheckoutSuccess = () => {
   useAutoScoreTracking("checkout_success");
 
   useEffect(() => { markBlogAttribution("purchased", user?.id); }, [user?.id]);
+
+  // Compra/assinatura concluída — evento para Google Analytics / Tag Manager.
+  useEffect(() => { trackTrialStarted(); trackEvent("checkout_concluido"); }, []);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

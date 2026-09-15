@@ -28,6 +28,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trackCheckoutView } from "@/lib/analytics";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
@@ -59,6 +60,11 @@ export default function CheckoutPix() {
     annual: { start: "1957", growth: "7152", scale: "1496" },
   };
   const planPrice = planPriceParam || PLAN_PRICES[billingPeriod]?.[planKey] || PLAN_PRICES.monthly[planKey] || "";
+
+  // Rastreia a chegada no checkout PIX (Google Analytics / Tag Manager).
+  useEffect(() => {
+    trackCheckoutView("pix", planName || planKey);
+  }, [planKey, planName]);
 
   const isRenewal = searchParams.get("renewal") === "true";
   const renewalEmail = searchParams.get("email") || "";

@@ -28,6 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trackCheckoutView, trackPurchase } from "@/lib/analytics";
 import { formatCep, cepDigits, isCepComplete, lookupCep } from "@/lib/cepLookup";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
@@ -87,6 +88,11 @@ function CheckoutCardInner() {
   const isAnnual = billingPeriod === "annual";
 
   const planConfig = PLAN_PRICES[planKey];
+
+  // Rastreia a chegada no checkout de cartão (Google Analytics / Tag Manager).
+  useEffect(() => {
+    trackCheckoutView("cartao", planName || planKey);
+  }, [planKey, planName]);
 
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -293,6 +299,7 @@ function CheckoutCardInner() {
       }));
 
       setSuccess(true);
+      trackPurchase(planName || planKey, undefined, "cartao");
       toast({ title: "🎉 Pagamento confirmado!", description: isAnnual ? "Seu plano anual foi ativado." : "Seu plano mensal foi ativado." });
       setTimeout(() => navigate("/checkout-success?provider=stripe"), 1800);
     } catch (err: any) {
