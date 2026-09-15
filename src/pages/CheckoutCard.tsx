@@ -299,6 +299,7 @@ function CheckoutCardInner() {
       }));
 
       setSuccess(true);
+      trackPurchase(planName || planKey, undefined, "cartao");
       toast({ title: "🎉 Pagamento confirmado!", description: isAnnual ? "Seu plano anual foi ativado." : "Seu plano mensal foi ativado." });
       setTimeout(() => navigate("/checkout-success?provider=stripe"), 1800);
     } catch (err: any) {
