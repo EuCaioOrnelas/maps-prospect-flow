@@ -29,6 +29,22 @@ function loadGtm(id: string) {
   document.head.appendChild(s);
 }
 
+function loadGa4(id: string) {
+  if (injected.has("ga4") || document.querySelector('script[data-tag="ga4"]')) return;
+  injected.add("ga4");
+  ensureDataLayer();
+  const s = document.createElement("script");
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  s.dataset.tag = "ga4";
+  document.head.appendChild(s);
+  const gtag = (...args: any[]) => {
+    window.dataLayer!.push(args);
+  };
+  gtag("js", new Date());
+  gtag("config", id);
+}
+
 function loadMetaPixel(id: string) {
   if (injected.has("fbq")) return;
   injected.add("fbq");
