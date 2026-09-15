@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
+import { trackDemoClick, trackFreeTrialClick } from "@/lib/analytics";
 
 /* ─── Animated counter ─── */
 const AnimatedCounter = ({ value, duration = 2000 }: { value: string; duration?: number }) => {
