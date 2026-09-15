@@ -117,7 +117,7 @@ const EnterpriseContact = () => {
 
       if (error) throw error;
 
-      trackEnterpriseRequest(formData.company);
+      trackEnterpriseRequest(formData.companyName);
       setSubmitted(true);
       toast({
         title: "Solicitação enviada com sucesso!",
