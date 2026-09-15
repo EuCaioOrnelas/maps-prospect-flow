@@ -3,6 +3,7 @@ import { HiArrowRight, HiLockClosed } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { ShaderBackground } from "@/components/ui/warmth-ripple";
 import { withReferralParams } from "@/hooks/usePartnerTracking";
+import { trackDemoClick, trackFreeTrialClick } from "@/lib/analytics";
 
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { ProductVisualContent } from "./ProductFloatingVisual";
@@ -108,7 +109,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
                   Comece agora em breve
                 </Button>
               ) : (
-                <Link to={withReferralParams("/signup/escolher-plano")} className="shrink-0">
+                <Link to={withReferralParams("/signup/escolher-plano")} className="shrink-0" onClick={() => trackFreeTrialClick(`produto_${product.key}_hero`)}>
                   <Button
                     variant="hero"
                     size="lg"
@@ -122,7 +123,7 @@ export const ProductHero = ({ product, sharedDesktopVisual = false }: ProductHer
                   </Button>
                 </Link>
               )}
-              <Link to={withReferralParams("/tour-guiado")} className="group shrink-0">
+              <Link to={withReferralParams("/tour-guiado")} className="group shrink-0" onClick={() => trackDemoClick(`produto_${product.key}_hero`)}>
                 <Button
                   variant="ghost"
                   size="lg"

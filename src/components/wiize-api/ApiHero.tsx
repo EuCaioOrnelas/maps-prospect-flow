@@ -3,6 +3,7 @@ import { ArrowRight, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShaderBackground } from "@/components/ui/warmth-ripple";
 import { CodeBlock } from "@/pages/admin/integration/components/CodeBlock";
+import { trackApiSignupClick } from "@/lib/analytics";
 
 const sample = `# 1. exporte sua chave (ambiente de produção)
 export WIIZE_API_KEY="wk_live_sua_chave"
@@ -100,7 +101,7 @@ export const ApiHero = () => {
               className="mb-8 flex animate-slide-up flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 xl:justify-start"
               style={{ animationDelay: "0.3s" }}
             >
-              <Link to="/api/login?modo=cadastro" className="shrink-0">
+              <Link to="/api/login?modo=cadastro" className="shrink-0" onClick={() => trackApiSignupClick("api_hero")}>
                 <Button size="lg" className="h-11 rounded-hover px-6 text-sm sm:h-12 sm:px-8 sm:text-base">
                   Criar conta grátis <ArrowRight size={17} />
                 </Button>

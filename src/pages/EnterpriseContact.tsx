@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEnterpriseRequest } from "@/lib/analytics";
 import { ArrowLeft, Building2, Check, Loader2, Send, Shield, Users, Zap, Globe, Headphones } from "lucide-react";
 import { z } from "zod";
 
@@ -116,6 +117,7 @@ const EnterpriseContact = () => {
 
       if (error) throw error;
 
+      trackEnterpriseRequest(formData.companyName);
       setSubmitted(true);
       toast({
         title: "Solicitação enviada com sucesso!",
