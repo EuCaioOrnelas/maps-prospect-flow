@@ -50,3 +50,11 @@ export const trackTrialStarted = (plan?: string) =>
 
 export const trackPurchase = (plan?: string, value?: number, method?: string) =>
   trackEvent("purchase", { plano: plan ?? "", value: value ?? 0, currency: "BRL", metodo: method ?? "" });
+
+/** Clique em criar conta na landing do Wiize API. */
+export const trackApiSignupClick = (location: string) =>
+  trackEvent("clique_api_cadastro", { origem: location });
+
+/** Envio do formulário de contato Enterprise. */
+export const trackEnterpriseRequest = (company?: string) =>
+  trackEvent("pedido_enterprise", { empresa: company ?? "" });
