@@ -60,6 +60,11 @@ export default function CheckoutPix() {
   };
   const planPrice = planPriceParam || PLAN_PRICES[billingPeriod]?.[planKey] || PLAN_PRICES.monthly[planKey] || "";
 
+  // Rastreia a chegada no checkout PIX (Google Analytics / Tag Manager).
+  useEffect(() => {
+    trackCheckoutView("pix", planName || planKey);
+  }, [planKey, planName]);
+
   const isRenewal = searchParams.get("renewal") === "true";
   const renewalEmail = searchParams.get("email") || "";
   const renewalName = searchParams.get("name") || "";
