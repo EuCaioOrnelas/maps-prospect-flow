@@ -10,12 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 
 type Settings = {
   gtm_id: string;
+  ga4_id: string;
   meta_pixel_id: string;
   enabled: boolean;
 };
 
 const EMPTY: Settings = {
   gtm_id: "",
+  ga4_id: "",
   meta_pixel_id: "",
   enabled: true,
 };
@@ -25,7 +27,13 @@ const FIELDS: { key: keyof Settings; label: string; placeholder: string; hint: s
     key: "gtm_id",
     label: "Google Tag Manager",
     placeholder: "GTM-XXXXXXX",
-    hint: "Carrega quando o visitante aceita analíticos ou marketing. Google Ads e Analytics devem ser configurados dentro do próprio GTM.",
+    hint: "Opcional. Use se você tiver um contêiner do Tag Manager. Google Ads e Analytics podem ser configurados dentro dele.",
+  },
+  {
+    key: "ga4_id",
+    label: "Google Analytics (GA4)",
+    placeholder: "G-XXXXXXXXXX",
+    hint: "Use este campo se o seu código começa com G-. Carrega quando o visitante aceita analíticos.",
   },
   {
     key: "meta_pixel_id",
@@ -47,6 +55,7 @@ export default function AdminTracking() {
       if (data) {
         setValues({
           gtm_id: (data as any).gtm_id || "",
+          ga4_id: (data as any).ga4_id || "",
           meta_pixel_id: (data as any).meta_pixel_id || "",
           enabled: (data as any).enabled ?? true,
         });
@@ -61,6 +70,7 @@ export default function AdminTracking() {
       .from("tracking_settings")
       .update({
         gtm_id: values.gtm_id.trim() || null,
+        ga4_id: values.ga4_id.trim() || null,
         meta_pixel_id: values.meta_pixel_id.trim() || null,
         enabled: values.enabled,
         updated_at: new Date().toISOString(),

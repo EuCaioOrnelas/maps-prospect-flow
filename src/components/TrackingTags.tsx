@@ -10,6 +10,7 @@ import {
 
 type TrackingSettings = {
   gtm_id: string | null;
+  ga4_id: string | null;
   meta_pixel_id: string | null;
   enabled: boolean;
 };
@@ -26,6 +27,22 @@ function loadGtm(id: string) {
   s.src = `https://www.googletagmanager.com/gtm.js?id=${id}`;
   s.dataset.tag = "gtm";
   document.head.appendChild(s);
+}
+
+function loadGa4(id: string) {
+  if (injected.has("ga4") || document.querySelector('script[data-tag="ga4"]')) return;
+  injected.add("ga4");
+  ensureDataLayer();
+  const s = document.createElement("script");
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+  s.dataset.tag = "ga4";
+  document.head.appendChild(s);
+  const gtag = (...args: any[]) => {
+    window.dataLayer!.push(args);
+  };
+  gtag("js", new Date());
+  gtag("config", id);
 }
 
 function loadMetaPixel(id: string) {
@@ -58,6 +75,8 @@ function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
   // Google Tag Manager: carrega com analíticos OU marketing; o próprio GTM
   // respeita o Consent Mode enviado em src/lib/consent.ts.
   if (cfg.gtm_id && (prefs.analytics || prefs.marketing)) loadGtm(cfg.gtm_id);
+  // Google Analytics 4 (código G-XXXX), quando não se usa o Tag Manager.
+  if (cfg.ga4_id && prefs.analytics) loadGa4(cfg.ga4_id);
   // Pixel do Meta: somente com consentimento de marketing.
   if (cfg.meta_pixel_id && prefs.marketing) loadMetaPixel(cfg.meta_pixel_id);
 }
@@ -74,7 +93,7 @@ export const TrackingTags = () => {
     (async () => {
       const { data } = await supabase
         .from("tracking_settings")
-        .select("gtm_id, meta_pixel_id, enabled")
+        .select("gtm_id, ga4_id, meta_pixel_id, enabled")
         .maybeSingle();
       if (active && data) setCfg(data as TrackingSettings);
     })();
