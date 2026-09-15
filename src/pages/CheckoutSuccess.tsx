@@ -26,6 +26,7 @@ import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { markBlogAttribution } from "@/lib/blogAttribution";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
+import { trackEvent, trackTrialStarted } from "@/lib/analytics";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
