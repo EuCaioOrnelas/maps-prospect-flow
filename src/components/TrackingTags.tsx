@@ -75,6 +75,8 @@ function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
   // Google Tag Manager: carrega com analíticos OU marketing; o próprio GTM
   // respeita o Consent Mode enviado em src/lib/consent.ts.
   if (cfg.gtm_id && (prefs.analytics || prefs.marketing)) loadGtm(cfg.gtm_id);
+  // Google Analytics 4 (código G-XXXX), quando não se usa o Tag Manager.
+  if (cfg.ga4_id && prefs.analytics) loadGa4(cfg.ga4_id);
   // Pixel do Meta: somente com consentimento de marketing.
   if (cfg.meta_pixel_id && prefs.marketing) loadMetaPixel(cfg.meta_pixel_id);
 }
