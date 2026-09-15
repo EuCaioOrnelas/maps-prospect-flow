@@ -60,7 +60,7 @@ export const CTASection = ({ onSignupClick }: CTASectionProps) => {
  </>
  ) : (
  <>
- <Link to={withReferralParams("/signup/escolher-plano")} onClick={onSignupClick}>
+ <Link to={withReferralParams("/signup/escolher-plano")} onClick={() => { trackFreeTrialClick("cta_final"); onSignupClick?.(); }}>
  <Button variant="hero" size="xl" className="group rounded-full">
  Iniciar Teste Grátis
  <ArrowRight className="group-hover:translate-x-1 transition-transform" />
