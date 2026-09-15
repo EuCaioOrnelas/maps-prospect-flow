@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import { withReferralParams } from "@/hooks/usePartnerTracking";
+import { trackFreeTrialClick } from "@/lib/analytics";
 
 interface CTASectionProps {
  onSignupClick?: () => void;
