@@ -43,6 +43,13 @@
       "when": 1789499461561,
       "tag": "0005_grant_tracking_settings_api_access",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789503980308,
+      "tag": "0006_repair_tracking_settings_api_access",
+      "breakpoints": true
     }
   ]
 }
