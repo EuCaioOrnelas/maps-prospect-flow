@@ -409,6 +409,7 @@ export const PricingSection = () => {
  const handlePixCheckout = async (_customerData: CustomerData) => {};
 
  const handlePlanClick = (plan: { name: string; key: string; price: string }) => {
+ trackPlanClick(plan.name, plan.price);
  setSelectedPlan(plan);
  setPaymentModalOpen(true);
  };
