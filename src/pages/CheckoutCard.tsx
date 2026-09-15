@@ -88,6 +88,11 @@ function CheckoutCardInner() {
 
   const planConfig = PLAN_PRICES[planKey];
 
+  // Rastreia a chegada no checkout de cartão (Google Analytics / Tag Manager).
+  useEffect(() => {
+    trackCheckoutView("cartao", planName || planKey);
+  }, [planKey, planName]);
+
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
