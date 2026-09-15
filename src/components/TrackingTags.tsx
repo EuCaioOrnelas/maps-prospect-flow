@@ -93,7 +93,7 @@ export const TrackingTags = () => {
     (async () => {
       const { data } = await supabase
         .from("tracking_settings")
-        .select("gtm_id, meta_pixel_id, enabled")
+        .select("gtm_id, ga4_id, meta_pixel_id, enabled")
         .maybeSingle();
       if (active && data) setCfg(data as TrackingSettings);
     })();
