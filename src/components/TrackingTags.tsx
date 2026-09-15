@@ -89,6 +89,7 @@ function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
  */
 export const TrackingTags = () => {
   const [cfg, setCfg] = useState<TrackingSettings | null>(null);
+  const location = useLocation();
 
   useEffect(() => {
     let active = true;
