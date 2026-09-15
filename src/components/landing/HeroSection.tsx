@@ -222,7 +222,7 @@ export const HeroSection = ({
    </Button>
    </Link>
   )}
-  <Link to="/tour-guiado" className="group shrink-0">
+  <Link to="/tour-guiado" className="group shrink-0" onClick={() => trackDemoClick("hero")}>
   <Button
   variant="ghost"
   size="lg"
