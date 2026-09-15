@@ -215,7 +215,7 @@ export const HeroSection = ({
   Teste grátis em breve
   </Button>
   ) : (
-   <Link to="/signup/escolher-plano" className="shrink-0" onClick={onSignupClick}>
+   <Link to="/signup/escolher-plano" className="shrink-0" onClick={() => { trackFreeTrialClick("hero"); onSignupClick?.(); }}>
    <Button variant="hero" size="lg" className="group rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11">
    Iniciar Teste Grátis
    <ArrowRight size={13} className="ml-1 sm:ml-1.5 group-hover:translate-x-0.5 transition-transform" />
