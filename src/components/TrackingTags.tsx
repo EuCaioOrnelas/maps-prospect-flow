@@ -10,6 +10,7 @@ import {
 
 type TrackingSettings = {
   gtm_id: string | null;
+  ga4_id: string | null;
   meta_pixel_id: string | null;
   enabled: boolean;
 };
