@@ -355,30 +355,67 @@ serve(async (req) => {
         Array.isArray(p.contact_links) ? p.contact_links.join("\n") : "",
       ].filter(Boolean).join("\n");
 
-      found.push(...harvest(decodeHtmlEntities(aboutBlob), "youtube_about", "alta"));
+      const aboutText = decodeHtmlEntities(aboutBlob);
+      found.push(...harvest(aboutText, "youtube_about", "alta"));
 
       // contatos já existentes nas colunas legadas do prospect
       if (p.contact_email) found.push({ type: "email", value: p.contact_email, source: "youtube_about", confidence: "alta" });
       if (p.instagram_url) found.push({ type: "instagram", value: p.instagram_url, source: "youtube_about", confidence: "alta" });
-      if (p.website_url) found.push({ type: "website", value: p.website_url, source: "youtube_about", confidence: "media" });
 
       // descrições dos vídeos recentes (fonte oficial do criador, porém secundária)
       const { data: videos } = await admin
         .from("influencer_videos").select("description").eq("prospect_id", p.id).limit(12);
       const videoBlob = (videos ?? []).map((v: any) => v.description).filter(Boolean).join("\n");
-      if (videoBlob) found.push(...harvest(decodeHtmlEntities(videoBlob), "youtube_videos", "media"));
+      const videoText = decodeHtmlEntities(videoBlob);
+      if (videoText) found.push(...harvest(videoText, "youtube_videos", "media"));
 
-      // site oficial + página de contato
-      const sites = Array.from(new Set(
-        found.filter((f) => f.type === "website" || f.type === "contact_page").map((f) => f.value),
-      )).slice(0, 2);
+      // página pública do canal (traz links do "Sobre" que a API não devolve)
+      let channelText = "";
+      const channelUrls = [
+        p.youtube_channel_id ? `https://www.youtube.com/channel/${p.youtube_channel_id}/about?hl=pt-BR` : "",
+        p.channel_url ? `${String(p.channel_url).replace(/\/+$/, "")}/about?hl=pt-BR` : "",
+      ].filter(Boolean);
+      for (const url of channelUrls) {
+        const html = await fetchPage(url, 9000);
+        if (!html) continue;
+        channelText = decodeHtmlEntities(html.replace(/\\u0026/g, "&").replace(/\\\//g, "/"));
+        found.push(...harvest(channelText, "youtube_about", "alta"));
+        break;
+      }
 
-      for (const site of sites) {
+      // sites oficiais e agregadores de links citados pelo criador
+      const candidateLinks = rankLinks([
+        ...(p.website_url ? [String(p.website_url)] : []),
+        ...crawlableLinks(aboutText),
+        ...crawlableLinks(channelText),
+        ...crawlableLinks(videoText),
+      ]).slice(0, 4);
+
+      const visited = new Set<string>();
+      for (const site of candidateLinks) {
+        if (visited.has(site)) continue;
+        visited.add(site);
         const html = decodeHtmlEntities(await fetchPage(site));
-        if (html) found.push(...harvest(html, "site_oficial", "media"));
+        if (!html) continue;
+        const isHub = LINK_HUBS.test(site);
+        found.push(...harvest(html, isHub ? "agregador_links" : "site_oficial", "media"));
+
+        if (isHub) {
+          // dentro do agregador, visita o site próprio do criador
+          for (const inner of rankLinks(crawlableLinks(html)).slice(0, 2)) {
+            if (visited.has(inner) || LINK_HUBS.test(inner)) continue;
+            visited.add(inner);
+            const innerHtml = decodeHtmlEntities(await fetchPage(inner, 7000));
+            if (innerHtml) found.push(...harvest(innerHtml, "site_oficial", "media"));
+          }
+          continue;
+        }
+
         try {
           const origin = new URL(site).origin;
-          for (const path of ["/contato", "/contact"]) {
+          for (const path of ["/contato", "/contact", "/fale-conosco", "/parcerias", "/sobre", "/about"]) {
+            if (visited.has(origin + path)) continue;
+            visited.add(origin + path);
             const page = decodeHtmlEntities(await fetchPage(origin + path, 6000));
             if (page) found.push(...harvest(page, "pagina_contato", "media"));
           }
@@ -394,7 +431,6 @@ serve(async (req) => {
       const legacyPatch: Record<string, unknown> = {
         contact_email: p.contact_email || pick("email"),
         instagram_url: p.instagram_url || pick("instagram"),
-        website_url: p.website_url || pick("website"),
       };
       const hasEmail = !!legacyPatch.contact_email;
       if (["novo", "qualificado", "contato_encontrado"].includes(p.status)) {
