@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
-  const secret = Deno.env.get("LIFECYCLE_TRACKING_SECRET") || "";
+  const secret = resolveTrackingSecret();
 
   try {
     const url = new URL(req.url);
