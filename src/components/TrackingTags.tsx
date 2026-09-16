@@ -124,15 +124,21 @@ export const TrackingTags = () => {
   useEffect(() => {
     let active = true;
     (async () => {
-      // 1) Cadastro do admin (tabela pública).
+      // 1) Cadastro do admin (tabela pública). Com limite de tempo: se o banco
+      // demorar a responder, o rastreamento continua pelas reservas abaixo.
       try {
-        const { data } = await supabase
+        const query = supabase
           .from("tracking_settings")
           .select("gtm_id, ga4_id, meta_pixel_id, enabled")
-          .maybeSingle();
+          .maybeSingle()
+          .then((r) => r.data as TrackingSettings | null);
+        const data = await Promise.race([
+          query,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+        ]);
         if (!active) return;
         if (data) {
-          const clean = sanitize(data as TrackingSettings);
+          const clean = sanitize(data);
           if (clean.ga4_id || clean.gtm_id || clean.meta_pixel_id) {
             setCfg(clean);
             return;
@@ -145,6 +151,7 @@ export const TrackingTags = () => {
       } catch {
         /* segue para a reserva abaixo */
       }
+
       // 2) Reserva: função pública que também lê o ID guardado nos secrets.
       try {
         const res = await fetch(
