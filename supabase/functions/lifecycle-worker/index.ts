@@ -5,7 +5,7 @@ const LIFECYCLE_BRAND = {
   name: "Wiize",
   color: "#3daa57",
   url: "https://wiize.com.br",
-  logo: "https://wiize.com.br/wiize-logo-white.png",
+  logo: "https://wiize.com.br/assets/logo_wiize_white.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
@@ -110,8 +110,8 @@ ${preheaderHtml}
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
 ${testBanner}
-<tr><td style="background:${LIFECYCLE_BRAND.color};padding:22px 36px;">
-  <img src="${LIFECYCLE_BRAND.logo}" width="132" alt="${LIFECYCLE_BRAND.name}" style="display:block;width:132px;max-width:132px;height:auto;border:0;">
+<tr><td style="background:${LIFECYCLE_BRAND.color};padding:20px 36px;">
+  <img src="${LIFECYCLE_BRAND.logo}" width="52" height="52" alt="${LIFECYCLE_BRAND.name}" style="display:block;width:52px;max-width:52px;height:52px;border:0;">
 </td></tr>
 <tr><td style="padding:38px 36px 32px;">
 ${opts.body}

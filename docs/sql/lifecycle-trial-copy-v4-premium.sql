@@ -40,7 +40,7 @@ WITH new_copy (key, name, subject, preheader, content) AS (
     $email$
       <p style="margin:0 0 10px;color:#199b68;font-size:13px;font-weight:800;text-transform:uppercase;">Bem-vindo à Wiize</p>
       <h1>🚀 Encontre sua próxima oportunidade</h1>
-      <p>Olá, <strong>{{user.name}}</strong>. Seu teste já está ativo , e você não precisa configurar tudo para começar.</p>
+      <p>Olá, <strong>{{user.name}}</strong>. Seu teste já está ativo, e você não precisa configurar tudo para começar.</p>
       <blockquote><strong>Seu primeiro objetivo:</strong> encontrar uma empresa que realmente combine com o que você vende.</blockquote>
       <p>Faça uma busca por <strong>nicho e localização</strong>. Em poucos minutos, você terá contexto para decidir onde vale investir atenção.</p>
       <p style="margin:26px 0;text-align:center;"><a href="{{dashboard_url}}" style="display:inline-block;background:#199b68;color:#ffffff;text-decoration:none;padding:15px 26px;border-radius:10px;font-weight:800;font-size:15px;">Encontrar minha primeira oportunidade →</a></p>
