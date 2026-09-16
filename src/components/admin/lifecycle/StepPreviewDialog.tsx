@@ -17,7 +17,7 @@ const SAMPLE_VARIABLES: Record<string, string> = {
   checkout_url: "https://wiize.com.br/planos",
 };
 
-const WIIZE_EMAIL_LOGO_URL = "https://www.wiize.com.br/assets/wiize-logo-wordmark-white.png";
+const WIIZE_EMAIL_LOGO_URL = "https://wiize-lb2.lovable.app/__l5e/assets-v1/63550fa5-ffa3-4751-a8f2-d12db32cc49c/wiize-logo-wordmark-white.png";
 
 function compilePreview(value: string) {
   return value.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_match, key: string) => SAMPLE_VARIABLES[key] || "");

@@ -5,7 +5,7 @@ const LIFECYCLE_BRAND = {
   name: "Wiize",
   color: "#3daa57",
   url: "https://wiize.com.br",
-  logo: "https://www.wiize.com.br/assets/wiize-logo-wordmark-white.png",
+  logo: "https://wiize-lb2.lovable.app/__l5e/assets-v1/63550fa5-ffa3-4751-a8f2-d12db32cc49c/wiize-logo-wordmark-white.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
