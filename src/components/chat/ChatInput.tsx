@@ -225,36 +225,54 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     inputRef.current?.focus();
   }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
+  // Etapas resolvidas (mensagem 1, 2, 3…) da mensagem rápida selecionada.
+  const confirmSteps = useMemo(() => {
+    if (!confirmQr) return [];
+    return quickReplySteps(confirmQr).map(s => ({
+      ...s,
+      content: applyQuickReplyVariables(s.content || "", quickReplyCtx),
+    }));
+  }, [confirmQr, quickReplyCtx]);
+
   const applyQuickReply = useCallback((qr: QuickReply) => {
-    const resolved = applyQuickReplyVariables(qr.content || "", quickReplyCtx);
+    const steps = quickReplySteps(qr);
+    const firstText = steps.find(s => s.type === "text");
+    const resolved = applyQuickReplyVariables(firstText?.content || qr.content || "", quickReplyCtx);
     setConfirmPreview(resolved);
     setConfirmQr(qr);
   }, [quickReplyCtx]);
 
   const handleConfirmSend = useCallback(async () => {
     if (!confirmQr) return;
-    const qr = confirmQr;
-    const resolved = confirmPreview;
+    const steps = confirmSteps;
     setConfirmQr(null);
+    setConfirmExpanded(false);
     setText("");
-    if (qr.media_url) {
-      try {
-        const signed = (await resolveStorageUrl(qr.media_url)) || qr.media_url;
-        const res = await fetch(signed);
-        const blob = await res.blob();
-        const fname = qr.media_filename || `quick-reply-${qr.shortcut}`;
-        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
-        onSendMedia(file, resolved || undefined);
-      } catch (err) {
-        console.error("[quick-reply] media fetch failed", err);
-        if (resolved.trim()) onSendMessage(resolved, replyingTo?.id);
-      }
-    } else if (resolved.trim()) {
-      onSendMessage(resolved, replyingTo?.id);
-    }
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [confirmQr, confirmPreview, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const wait = i === 0 ? 0 : Math.max(0, Number(step.delay_seconds) || 0) * 1000;
+      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+
+      if (step.type === "text") {
+        if ((step.content || "").trim()) onSendMessage(step.content!.trim(), i === 0 ? replyingTo?.id : undefined);
+        continue;
+      }
+      if (!step.media_url) continue;
+      try {
+        const signed = (await resolveStorageUrl(step.media_url)) || step.media_url;
+        const res = await fetch(signed);
+        const blob = await res.blob();
+        const fname = step.media_filename || `quick-reply-${confirmQr.shortcut}`;
+        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
+        onSendMedia(file, (step.content || "").trim() || undefined);
+      } catch (err) {
+        console.error("[quick-reply] media fetch failed", err);
+      }
+    }
+  }, [confirmQr, confirmSteps, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (qrOpen) {
