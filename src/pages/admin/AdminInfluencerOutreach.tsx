@@ -79,6 +79,8 @@ export default function AdminInfluencerOutreach() {
   const [thread, setThread] = useState<any | null>(null);
   const [approach, setApproach] = useState<{ prospect: any; email: string } | null>(null);
   const [testingTemplate, setTestingTemplate] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[]; disqualify: boolean }>(null);
 
   // ── Campanhas ─────────────────────────────────────────────────────────────
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -266,6 +268,41 @@ export default function AdminInfluencerOutreach() {
     toast({ title: "Modelo salvo" });
     setEditing(null);
     loadTemplates();
+  };
+
+  // ── status e exclusão de prospects ────────────────────────────────────────
+  const updateStatus = async (ids: string[], status: string) => {
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const { data, error } = await (supabase as any)
+      .from("influencer_prospects").update({ status }).in("id", ids).select("id");
+    setBulkBusy(false);
+    if (error || !data?.length) {
+      toast({ title: "Erro ao alterar status", description: error?.message, variant: "destructive" });
+      return;
+    }
+    setProspects((list) => list.map((p) => (ids.includes(p.id) ? { ...p, status } : p)));
+    toast({
+      title: ids.length > 1 ? `${data.length} influenciadores atualizados` : "Status atualizado",
+      description: prospectOutreachLabel(status),
+    });
+  };
+
+  const deleteProspects = async (ids: string[]) => {
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const { error } = await (supabase as any).from("influencer_prospects").delete().in("id", ids);
+    setBulkBusy(false);
+    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
+    setProspects((list) => list.filter((p) => !ids.includes(p.id)));
+    setSelectedIds((s) => s.filter((id) => !ids.includes(id)));
+    setConfirmDelete(null);
+    toast({ title: `${ids.length} influenciador(es) excluído(s)` });
+  };
+
+  const disqualifyAndDelete = async (ids: string[]) => {
+    await updateStatus(ids, "sem_interesse");
+    await deleteProspects(ids);
   };
 
   const allVisibleSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p.id));
