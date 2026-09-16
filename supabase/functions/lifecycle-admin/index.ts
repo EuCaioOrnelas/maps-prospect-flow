@@ -5,6 +5,7 @@ const LIFECYCLE_BRAND = {
   name: "Wiize",
   color: "#3daa57",
   url: "https://wiize.com.br",
+  logo: "https://wiize.com.br/wiize-logo-white.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
@@ -63,6 +64,8 @@ const INLINE_STYLES: Record<string, string> = {
   li: "margin:0 0 9px;font-size:15px;line-height:1.65;color:#374151;",
   ul: "margin:0 0 18px;padding-left:22px;",
   ol: "margin:0 0 16px;padding-left:20px;",
+  strong: "color:#111827;font-weight:800;",
+  em: "color:#374151;font-style:italic;",
   a: "color:#3daa57;",
   img: "max-width:100%;height:auto;border-radius:8px;",
   blockquote: "margin:20px 0;padding:18px 20px;border-left:4px solid #199b68;background:#ecfdf5;color:#1f2937;font-size:15px;line-height:1.65;border-radius:0 10px 10px 0;",
@@ -92,7 +95,7 @@ function lifecycleLayout(opts: {
     ? `<div style="display:none;font-size:1px;color:#f4f4f5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${escapeHtml(opts.preheader)}</div>`
     : "";
   const testBanner = opts.isTest
-    ? `<tr><td style="padding:10px 32px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:600;text-align:center;">E-MAIL DE TESTE — não representa um envio real de campanha</td></tr>`
+    ? `<tr><td style="padding:10px 32px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:600;text-align:center;">E-MAIL DE TESTE | não representa um envio real de campanha</td></tr>`
     : "";
   const unsubscribe = opts.unsubscribeUrl
     ? `<p style="margin:6px 0 0;font-size:12px;color:#a1a1aa;"><a href="${opts.unsubscribeUrl}" style="color:#a1a1aa;text-decoration:underline;">Não quero mais receber estes e-mails</a></p>`
@@ -107,8 +110,8 @@ ${preheaderHtml}
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
 ${testBanner}
-<tr><td style="background:#111827;padding:24px 36px;">
-  <span style="color:#ffffff;font-size:23px;font-weight:800;">${LIFECYCLE_BRAND.name}</span>
+<tr><td style="background:${LIFECYCLE_BRAND.color};padding:22px 36px;">
+  <img src="${LIFECYCLE_BRAND.logo}" width="132" alt="${LIFECYCLE_BRAND.name}" style="display:block;width:132px;max-width:132px;height:auto;border:0;">
 </td></tr>
 <tr><td style="padding:38px 36px 32px;">
 ${opts.body}

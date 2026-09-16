@@ -17,6 +17,8 @@ const SAMPLE_VARIABLES: Record<string, string> = {
   checkout_url: "https://wiize.com.br/planos",
 };
 
+const WIIZE_EMAIL_LOGO_URL = "https://wiize.com.br/wiize-logo-white.png";
+
 function compilePreview(value: string) {
   return value.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_match, key: string) => SAMPLE_VARIABLES[key] || "");
 }
@@ -28,6 +30,8 @@ function buildPreviewHtml(step: LifecycleStep) {
     .replace(/<p(?![^>]*style=)(\s[^>]*)?>/gi, '<p$1 style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#4b5563;">')
     .replace(/<li(?![^>]*style=)(\s[^>]*)?>/gi, '<li$1 style="margin:0 0 9px;font-size:15px;line-height:1.65;color:#374151;">')
     .replace(/<ul(?![^>]*style=)(\s[^>]*)?>/gi, '<ul$1 style="margin:0 0 18px;padding-left:22px;">')
+    .replace(/<strong(?![^>]*style=)(\s[^>]*)?>/gi, '<strong$1 style="color:#111827;font-weight:800;">')
+    .replace(/<em(?![^>]*style=)(\s[^>]*)?>/gi, '<em$1 style="color:#374151;font-style:italic;">')
     .replace(/<blockquote(?![^>]*style=)(\s[^>]*)?>/gi, '<blockquote$1 style="margin:20px 0;padding:18px 20px;border-left:4px solid #199b68;background:#ecfdf5;color:#1f2937;font-size:15px;line-height:1.65;border-radius:0 10px 10px 0;">');
   const preheader = compilePreview(step.preheader || "");
   return `<!DOCTYPE html>
@@ -37,7 +41,7 @@ function buildPreviewHtml(step: LifecycleStep) {
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:36px 16px;"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
-<tr><td style="background:#111827;padding:24px 36px;"><table role="presentation" width="100%"><tr><td><span style="color:#ffffff;font-size:23px;font-weight:800;">Wiize</span></td><td align="right"><span style="display:inline-block;background:#199b68;color:#ffffff;font-size:11px;font-weight:700;padding:7px 10px;border-radius:999px;">TRIAL • DIA ${step.day_offset}</span></td></tr></table></td></tr>
+<tr><td style="background:#3daa57;padding:22px 36px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td><img src="${WIIZE_EMAIL_LOGO_URL}" width="132" alt="Wiize" style="display:block;width:132px;max-width:132px;height:auto;border:0;"></td><td align="right"><span style="display:inline-block;background:#ffffff;color:#16794d;font-size:11px;font-weight:800;padding:7px 11px;border-radius:999px;">TRIAL • DIA ${step.day_offset}</span></td></tr></table></td></tr>
 <tr><td style="padding:38px 36px 32px;">${body}</td></tr>
 <tr><td style="padding:20px 36px;background:#f9fafb;text-align:center;border-top:1px solid #e5e7eb;"><p style="margin:0;font-size:12px;color:#9ca3af;">Wiize • Inteligência comercial para empresas</p><p style="margin:7px 0 0;font-size:12px;color:#9ca3af;text-decoration:underline;">Não quero mais receber estes e-mails</p></td></tr>
 </table></td></tr></table></body></html>`;
