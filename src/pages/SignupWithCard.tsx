@@ -178,7 +178,10 @@ function SignupWithCardInner() {
   useEffect(() => {
     if (!sessionStorage.getItem("trial_plan_chosen")) {
       navigate("/signup/escolher-plano", { replace: true });
+      return;
     }
+    // GA4: início do cadastro do trial com cartão.
+    trackSignupStart("trial_cartao");
   }, [navigate]);
 
   // Retomada: se o usuário saiu para o app do banco (ou recarregou a página),
