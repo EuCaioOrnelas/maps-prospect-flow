@@ -466,10 +466,12 @@ export function useChat() {
   }, [activeConversationId, user, accountOwnerId, conversations, connections]);
 
   // Send media message
-  const sendMedia = useCallback(async (file: File, caption?: string) => {
-    if (!activeConversationId || !user) return;
-    const conversation = conversations.find(c => c.id === activeConversationId);
+  const sendMedia = useCallback(async (file: File, caption?: string, targetConversationId?: string) => {
+    const convId = targetConversationId || activeConversationId;
+    if (!convId || !user) return;
+    const conversation = conversations.find(c => c.id === convId);
     if (!conversation) return;
+    const isActive = convId === activeConversationId;
 
     const messageType = file.type.startsWith("image/") ? "image"
       : file.type.startsWith("video/") ? "video"
