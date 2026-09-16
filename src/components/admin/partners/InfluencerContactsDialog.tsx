@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import {
   CONTACT_TYPES, CONTACT_STATUSES, confidenceMeta, contactTypeLabel, contactStatusLabel,
+  PROSPECT_OUTREACH_STATUSES,
 } from "@/lib/influencerOutreach";
 import {
   Loader2, Plus, Trash2, Pencil, Check, X, ExternalLink, Save, Search, Link2,
@@ -33,6 +34,8 @@ export function InfluencerContactsDialog({ prospect, contacts, onClose, onChange
   const { toast } = useToast();
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [status, setStatus] = useState("novo");
+  const [savingStatus, setSavingStatus] = useState(false);
   const [adding, setAdding] = useState<null | { type: string; value: string; note: string }>(null);
   const [savingAdd, setSavingAdd] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export function InfluencerContactsDialog({ prospect, contacts, onClose, onChange
 
   useEffect(() => {
     setNotes(prospect?.notes ?? "");
+    setStatus(prospect?.status ?? "novo");
     setAdding(null);
     setEditId(null);
   }, [prospect?.id]);
@@ -48,13 +52,42 @@ export function InfluencerContactsDialog({ prospect, contacts, onClose, onChange
   const saveNotes = async () => {
     if (!prospect) return;
     setSavingNotes(true);
-    const { error } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("influencer_prospects")
-      .update({ notes })
-      .eq("id", prospect.id);
+      .update({ notes: notes.trim() ? notes : null })
+      .eq("id", prospect.id)
+      .select("id, notes");
     setSavingNotes(false);
     if (error) { toast({ title: "Erro ao salvar anotação", description: error.message, variant: "destructive" }); return; }
+    if (!data || data.length === 0) {
+      toast({
+        title: "Anotação não foi salva",
+        description: "Você não tem permissão para editar este influenciador.",
+        variant: "destructive",
+      });
+      return;
+    }
+    prospect.notes = data[0].notes;
     toast({ title: "Anotação salva" });
+    onChanged();
+  };
+
+  const changeStatus = async (value: string) => {
+    if (!prospect) return;
+    setSavingStatus(true);
+    const { data, error } = await (supabase as any)
+      .from("influencer_prospects")
+      .update({ status: value })
+      .eq("id", prospect.id)
+      .select("id, status");
+    setSavingStatus(false);
+    if (error || !data?.length) {
+      toast({ title: "Erro ao alterar status", description: error?.message, variant: "destructive" });
+      return;
+    }
+    setStatus(value);
+    prospect.status = value;
+    toast({ title: "Status atualizado" });
     onChanged();
   };
 
@@ -155,6 +188,22 @@ export function InfluencerContactsDialog({ prospect, contacts, onClose, onChange
               ))}
             </div>
           )}
+
+          {/* Status do influenciador */}
+          <div className="rounded-xl border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs text-muted-foreground">Status do influenciador</Label>
+              {savingStatus && <Loader2 className="animate-spin text-muted-foreground" size={13} />}
+            </div>
+            <Select value={status} onValueChange={changeStatus} disabled={savingStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PROSPECT_OUTREACH_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Anotações gerais do canal */}
           <div className="rounded-xl border border-border p-3 space-y-2">

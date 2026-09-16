@@ -13,6 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { OutreachComposeDialog } from "@/components/admin/partners/OutreachComposeDialog";
@@ -79,6 +83,8 @@ export default function AdminInfluencerOutreach() {
   const [thread, setThread] = useState<any | null>(null);
   const [approach, setApproach] = useState<{ prospect: any; email: string } | null>(null);
   const [testingTemplate, setTestingTemplate] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[]; disqualify: boolean }>(null);
 
   // ── Campanhas ─────────────────────────────────────────────────────────────
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -268,6 +274,41 @@ export default function AdminInfluencerOutreach() {
     loadTemplates();
   };
 
+  // ── status e exclusão de prospects ────────────────────────────────────────
+  const updateStatus = async (ids: string[], status: string) => {
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const { data, error } = await (supabase as any)
+      .from("influencer_prospects").update({ status }).in("id", ids).select("id");
+    setBulkBusy(false);
+    if (error || !data?.length) {
+      toast({ title: "Erro ao alterar status", description: error?.message, variant: "destructive" });
+      return;
+    }
+    setProspects((list) => list.map((p) => (ids.includes(p.id) ? { ...p, status } : p)));
+    toast({
+      title: ids.length > 1 ? `${data.length} influenciadores atualizados` : "Status atualizado",
+      description: prospectOutreachLabel(status),
+    });
+  };
+
+  const deleteProspects = async (ids: string[]) => {
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const { error } = await (supabase as any).from("influencer_prospects").delete().in("id", ids);
+    setBulkBusy(false);
+    if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
+    setProspects((list) => list.filter((p) => !ids.includes(p.id)));
+    setSelectedIds((s) => s.filter((id) => !ids.includes(id)));
+    setConfirmDelete(null);
+    toast({ title: `${ids.length} influenciador(es) excluído(s)` });
+  };
+
+  const disqualifyAndDelete = async (ids: string[]) => {
+    await updateStatus(ids, "sem_interesse");
+    await deleteProspects(ids);
+  };
+
   const allVisibleSelected = filtered.length > 0 && filtered.every((p) => selectedIds.includes(p.id));
 
   return (
@@ -377,6 +418,37 @@ export default function AdminInfluencerOutreach() {
                 </Button>
               </div>
 
+              {selectedIds.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.04] px-3 py-2">
+                  <span className="text-xs font-medium">
+                    {selectedIds.length} selecionado(s) — ações em massa
+                  </span>
+                  <div className="flex-1" />
+                  <Select disabled={bulkBusy} onValueChange={(v) => updateStatus(selectedIds, v)}>
+                    <SelectTrigger className="h-8 w-[200px] text-xs">
+                      <SelectValue placeholder="Alterar status para…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROSPECT_OUTREACH_STATUSES.map((s) => (
+                        <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" className="h-8" disabled={bulkBusy}
+                    onClick={() => setConfirmDelete({ ids: selectedIds, disqualify: true })}>
+                    <Ban className="mr-2" size={14} /> Não qualificado e excluir
+                  </Button>
+                  <Button size="sm" variant="destructive" className="h-8" disabled={bulkBusy}
+                    onClick={() => setConfirmDelete({ ids: selectedIds, disqualify: false })}>
+                    {bulkBusy ? <Loader2 className="animate-spin mr-2" size={14} /> : <Trash2 className="mr-2" size={14} />}
+                    Excluir
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-8" onClick={() => setSelectedIds([])}>
+                    <XCircle size={14} />
+                  </Button>
+                </div>
+              )}
+
               <div className="rounded-xl border border-border overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -446,7 +518,18 @@ export default function AdminInfluencerOutreach() {
                           </TableCell>
                           <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
                           <TableCell className="py-3 text-right text-sm">{p.fit_score ?? 0}</TableCell>
-                          <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
+                          <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+                            <Select value={p.status ?? "novo"} onValueChange={(v) => updateStatus([p.id], v)}>
+                              <SelectTrigger className="h-8 w-[178px] text-xs">
+                                <SelectValue>{prospectOutreachLabel(p.status)}</SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PROSPECT_OUTREACH_STATUSES.map((s) => (
+                                  <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
                           <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
 
                              <IconAction label="Abrir conversa por e-mail" size="sm" variant="ghost"
@@ -462,6 +545,10 @@ export default function AdminInfluencerOutreach() {
                               {finding.includes(p.id)
                                 ? <Loader2 className="animate-spin" size={14} />
                                 : <RefreshCw size={14} />}
+                             </IconAction>
+                             <IconAction label="Excluir influenciador" size="sm" variant="ghost"
+                              onClick={() => setConfirmDelete({ ids: [p.id], disqualify: false })}>
+                              <Trash2 size={14} className="text-destructive" />
                              </IconAction>
                           </TableCell>
                         </TableRow>
@@ -708,6 +795,37 @@ export default function AdminInfluencerOutreach() {
         onOpenThread={() => { const p = detail; setDetail(null); setThread(p); }}
         finding={finding.includes(detail?.id)}
       />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDelete?.disqualify
+                ? `Marcar como não qualificado e excluir ${confirmDelete?.ids.length} influenciador(es)?`
+                : `Excluir ${confirmDelete?.ids.length ?? 0} influenciador(es)?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Os contatos, conversas e histórico de abordagem desses
+              influenciadores também serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkBusy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={bulkBusy}
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (!confirmDelete) return;
+                if (confirmDelete.disqualify) disqualifyAndDelete(confirmDelete.ids);
+                else deleteProspects(confirmDelete.ids);
+              }}
+            >
+              {bulkBusy ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <InfluencerApproachDialog
         open={!!approach}

@@ -18,7 +18,7 @@ const defaultMeta = {
   title: 'Wiize: Tudo para vender B2B. Em um só lugar.',
   description: 'Plataforma de vendas B2B que centraliza e automatiza sua operação comercial com IA: capte oportunidades, converse com clientes, feche vendas e gerencie tudo em um só lugar.',
   keywords: 'inteligência comercial, prospecção B2B, dados B2B, dados qualificados, enriquecimento de dados, sales intelligence, automação de vendas, qualificação de leads, CRM inteligente, agente de IA comercial, ICP, dados de empresas, Wiize',
-  image: 'https://lovable.dev/opengraph-image-p98pqg.png',
+  image: `${SITE_URL}/og-wiize.jpg`,
   url: SITE_URL,
   type: 'website',
 };
