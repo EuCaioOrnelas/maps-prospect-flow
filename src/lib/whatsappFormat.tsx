@@ -72,10 +72,10 @@ export function parseWhatsAppText(text: string, keyPrefix = "f"): React.ReactNod
   while (rest.length > 0) {
     const match = TOKEN_RE.exec(rest);
     if (!match || match.index === undefined) {
-      nodes.push(rest);
+      nodes.push(...linkify(rest, `${keyPrefix}-${i++}`));
       break;
     }
-    if (match.index > 0) nodes.push(rest.slice(0, match.index));
+    if (match.index > 0) nodes.push(...linkify(rest.slice(0, match.index), `${keyPrefix}-${i++}`));
 
     const key = `${keyPrefix}-${i++}`;
     const [full, block, code, underline, bold, italic, strike] = match;
