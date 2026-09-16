@@ -408,10 +408,12 @@ export function useChat() {
   }, [user?.id, accountOwnerId, activeConnectionId]);
 
   // Send text message
-  const sendMessage = useCallback(async (text: string, replyToId?: string) => {
-    if (!activeConversationId || !user || !text.trim()) return;
-    const conversation = conversations.find(c => c.id === activeConversationId);
+  const sendMessage = useCallback(async (text: string, replyToId?: string, targetConversationId?: string) => {
+    const convId = targetConversationId || activeConversationId;
+    if (!convId || !user || !text.trim()) return;
+    const conversation = conversations.find(c => c.id === convId);
     if (!conversation) return;
+    const isActive = convId === activeConversationId;
 
     // Optimistic insert — tempId is also written to DB row metadata.client_token,
     // so realtime INSERT can replace the optimistic row instead of duplicating it.
