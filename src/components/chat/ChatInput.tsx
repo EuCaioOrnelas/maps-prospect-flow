@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/privateStorage";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,72 @@ import { QuickReplyPicker } from "./QuickReplyPicker";
 import { toggleWhatsAppMarker } from "@/lib/whatsappFormat";
 
 const AI_APPROACH_QR_ID = "__ai_approach__";
+
+interface QrRunState {
+  shortcut: string;
+  total: number;
+  index: number;
+  waitSeconds: number;
+}
+
+/** Pill exibida enquanto a sequência da mensagem rápida roda, com relógio animado e contagem regressiva. */
+function QrRunningPill({ run, onStop }: { run: QrRunState; onStop: () => void }) {
+  const [remaining, setRemaining] = useState(run.waitSeconds);
+
+  useEffect(() => {
+    setRemaining(run.waitSeconds);
+    if (run.waitSeconds <= 0) return;
+    const id = setInterval(() => setRemaining(r => Math.max(0, r - 1)), 1000);
+    return () => clearInterval(id);
+  }, [run.index, run.waitSeconds]);
+
+  const waiting = remaining > 0;
+  const pct = waiting ? remaining / run.waitSeconds : 0;
+  const circumference = 2 * Math.PI * 10;
+
+  return (
+    <div className="px-3 pt-2 pb-1">
+      <div className="inline-flex items-center gap-2.5 h-9 px-3 rounded-full border border-primary/50 bg-primary/10 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <span className="relative w-5 h-5 flex items-center justify-center shrink-0">
+          {waiting ? (
+            <>
+              <svg className="absolute inset-0 w-5 h-5 -rotate-90" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="hsl(var(--primary))" strokeOpacity="0.25" strokeWidth="2.5" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={circumference * (1 - pct)}
+                  className="transition-[stroke-dashoffset] duration-1000 ease-linear"
+                />
+              </svg>
+              <Clock size={10} className="text-primary animate-pulse" />
+            </>
+          ) : (
+            <span className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          )}
+        </span>
+        <span className="text-[12px] font-medium text-foreground whitespace-nowrap">
+          {waiting
+            ? `Enviando /${run.shortcut} · próxima mensagem em ${remaining}s`
+            : `Enviando /${run.shortcut} · mensagem ${Math.min(run.index + 1, run.total)} de ${run.total}`}
+        </span>
+        <button
+          type="button"
+          onClick={onStop}
+          className="p-1 rounded-full hover:bg-foreground/10 transition-colors shrink-0"
+          title="Parar sequência"
+        >
+          <X size={13} className="text-muted-foreground" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface ChatInputProps {
   onSendMessage: (text: string, replyToId?: string) => void;
@@ -88,6 +154,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [confirmQr, setConfirmQr] = useState<QuickReply | null>(null);
   const [confirmPreview, setConfirmPreview] = useState("");
   const [confirmExpanded, setConfirmExpanded] = useState(false);
+  const [qrRun, setQrRun] = useState<QrRunState | null>(null);
+  const qrCancelRef = useRef(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -246,32 +314,51 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const handleConfirmSend = useCallback(async () => {
     if (!confirmQr) return;
     const steps = confirmSteps;
+    const shortcut = confirmQr.shortcut;
     setConfirmQr(null);
     setConfirmExpanded(false);
     setText("");
     onCancelReply?.();
     inputRef.current?.focus();
 
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      const wait = i === 0 ? 0 : Math.max(0, Number(step.delay_seconds) || 0) * 1000;
-      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    qrCancelRef.current = false;
+    setQrRun({ shortcut, total: steps.length, index: 0, waitSeconds: 0 });
 
-      if (step.type === "text") {
-        if ((step.content || "").trim()) onSendMessage(step.content!.trim(), i === 0 ? replyingTo?.id : undefined);
-        continue;
+    try {
+      for (let i = 0; i < steps.length; i++) {
+        if (qrCancelRef.current) break;
+        const step = steps[i];
+        const wait = i === 0 ? 0 : Math.max(0, Number(step.delay_seconds) || 0) * 1000;
+        if (wait > 0) {
+          setQrRun({ shortcut, total: steps.length, index: i, waitSeconds: wait / 1000 });
+          await new Promise<void>(resolve => {
+            const start = Date.now();
+            const id = setInterval(() => {
+              if (qrCancelRef.current || Date.now() - start >= wait) { clearInterval(id); resolve(); }
+            }, 200);
+          });
+          if (qrCancelRef.current) break;
+        }
+        setQrRun(prev => (prev ? { ...prev, index: i, waitSeconds: 0 } : prev));
+
+        if (step.type === "text") {
+          if ((step.content || "").trim()) onSendMessage(step.content!.trim(), i === 0 ? replyingTo?.id : undefined);
+          continue;
+        }
+        if (!step.media_url) continue;
+        try {
+          const signed = (await resolveStorageUrl(step.media_url)) || step.media_url;
+          const res = await fetch(signed);
+          const blob = await res.blob();
+          const fname = step.media_filename || `quick-reply-${shortcut}`;
+          const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
+          onSendMedia(file, (step.content || "").trim() || undefined);
+        } catch (err) {
+          console.error("[quick-reply] media fetch failed", err);
+        }
       }
-      if (!step.media_url) continue;
-      try {
-        const signed = (await resolveStorageUrl(step.media_url)) || step.media_url;
-        const res = await fetch(signed);
-        const blob = await res.blob();
-        const fname = step.media_filename || `quick-reply-${confirmQr.shortcut}`;
-        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
-        onSendMedia(file, (step.content || "").trim() || undefined);
-      } catch (err) {
-        console.error("[quick-reply] media fetch failed", err);
-      }
+    } finally {
+      setQrRun(null);
     }
   }, [confirmQr, confirmSteps, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
 
@@ -628,7 +715,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {!attachments.length && (
         <div className="wa-composer-surface border-t wa-border-light">
-          {(quickReplies.length > 0 || aiApproachQR) && !qrOpen && (
+          {qrRun && <QrRunningPill run={qrRun} onStop={() => { qrCancelRef.current = true; }} />}
+          {(quickReplies.length > 0 || aiApproachQR) && !qrOpen && !qrRun && (
             <div className="relative">
               <div className="absolute left-0 top-0 bottom-0 w-4 wa-composer-fade-left pointer-events-none z-10" />
               <div className="absolute right-0 top-0 bottom-0 w-10 wa-composer-fade-right pointer-events-none z-10" />
