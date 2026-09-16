@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { trackPageView } from "@/lib/analytics";
+import { setMeasurementId, trackPageView } from "@/lib/analytics";
 import {
   ConsentPrefs,
   ensureDataLayer,
@@ -34,17 +34,21 @@ function loadGtm(id: string) {
 function loadGa4(id: string) {
   if (injected.has("ga4") || document.querySelector('script[data-tag="ga4"]')) return;
   injected.add("ga4");
+  // window.gtag já existe (consent.ts) e empilha `arguments` no dataLayer,
+  // que é exatamente o formato que o gtag.js espera.
   ensureDataLayer();
   const s = document.createElement("script");
   s.async = true;
   s.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
   s.dataset.tag = "ga4";
   document.head.appendChild(s);
-  const gtag = (...args: any[]) => {
-    window.dataLayer!.push(args);
-  };
-  gtag("js", new Date());
-  gtag("config", id);
+  window.gtag!("js", new Date());
+  // O page_view é enviado pela própria aplicação (SPA), evitando duplicidade.
+  window.gtag!("config", id, {
+    send_page_view: false,
+    ...(import.meta.env.DEV ? { debug_mode: true } : {}),
+  });
+  setMeasurementId(id);
 }
 
 function loadMetaPixel(id: string) {
@@ -83,22 +87,44 @@ function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
   if (cfg.meta_pixel_id && prefs.marketing) loadMetaPixel(cfg.meta_pixel_id);
 }
 
+const isPlaceholder = (v: string | null) =>
+  !v || !v.trim() || v.trim().startsWith("@secret:");
+
 /**
- * Carrega apenas Google Tag Manager e Pixel do Meta, conforme cadastrado no
- * admin e o consentimento do visitante. Sem consentimento, nada é carregado.
+ * Carrega Google Analytics 4, Google Tag Manager e Pixel do Meta conforme o
+ * cadastro no admin e o consentimento do visitante. Sem consentimento de
+ * analíticos, nada é carregado (LGPD).
  */
 export const TrackingTags = () => {
   const [cfg, setCfg] = useState<TrackingSettings | null>(null);
   const location = useLocation();
+  const lastPath = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
     (async () => {
+      // Fonte única: edge function pública (tabela + secret como reserva).
+      try {
+        const { data, error } = await supabase.functions.invoke("tracking-config");
+        if (!error && data && active) {
+          setCfg(data as TrackingSettings);
+          return;
+        }
+      } catch {
+        /* cai no plano B abaixo */
+      }
       const { data } = await supabase
         .from("tracking_settings")
         .select("gtm_id, ga4_id, meta_pixel_id, enabled")
         .maybeSingle();
-      if (active && data) setCfg(data as TrackingSettings);
+      if (!active || !data) return;
+      const row = data as TrackingSettings;
+      setCfg({
+        ...row,
+        gtm_id: isPlaceholder(row.gtm_id) ? null : row.gtm_id,
+        ga4_id: isPlaceholder(row.ga4_id) ? null : row.ga4_id,
+        meta_pixel_id: isPlaceholder(row.meta_pixel_id) ? null : row.meta_pixel_id,
+      });
     })();
     return () => {
       active = false;
@@ -108,12 +134,22 @@ export const TrackingTags = () => {
   useEffect(() => {
     if (!cfg) return;
     if (hasConsentDecision()) applyTags(cfg, getConsent());
-    return onConsentChange((prefs) => applyTags(cfg, prefs));
+    return onConsentChange((prefs) => {
+      applyTags(cfg, prefs);
+      // Primeira visualização logo após o visitante aceitar os cookies.
+      if (prefs.analytics || prefs.marketing) {
+        lastPath.current = window.location.pathname + window.location.search;
+        trackPageView(lastPath.current);
+      }
+    });
   }, [cfg]);
 
   // Página vista a cada navegação interna (SPA não dispara sozinho).
   useEffect(() => {
-    trackPageView(location.pathname + location.search);
+    const path = location.pathname + location.search;
+    if (lastPath.current === path) return;
+    lastPath.current = path;
+    trackPageView(path);
   }, [location.pathname, location.search]);
 
   return null;
