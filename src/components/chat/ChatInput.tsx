@@ -286,6 +286,21 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         return;
       }
     }
+    // Atalhos de formatação do WhatsApp: negrito (*), itálico (_), sublinhado (__), riscado (~)
+    if ((e.ctrlKey || e.metaKey) && ["b", "i", "u", "s"].includes(e.key.toLowerCase())) {
+      const el = inputRef.current;
+      if (el) {
+        e.preventDefault();
+        const marker = e.key.toLowerCase() === "b" ? "*" : e.key.toLowerCase() === "i" ? "_" : e.key.toLowerCase() === "u" ? "__" : "~";
+        const next = toggleWhatsAppMarker(el.value, el.selectionStart ?? 0, el.selectionEnd ?? 0, marker);
+        setText(next.value);
+        requestAnimationFrame(() => {
+          el.focus();
+          el.setSelectionRange(next.selectionStart, next.selectionEnd);
+        });
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
