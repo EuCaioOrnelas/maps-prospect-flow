@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  Mail, Pencil, Eye, Play, Pause, Power, RefreshCw, FlaskConical, ArrowDown, Users,
+  Mail, Pencil, Eye, Play, Pause, Power, RefreshCw, FlaskConical, ArrowDown, Users, Send,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { StepEditorDialog } from "@/components/admin/lifecycle/StepEditorDialog"
 import { StepPreviewDialog } from "@/components/admin/lifecycle/StepPreviewDialog";
 import { RecipientsDialog } from "@/components/admin/lifecycle/RecipientsDialog";
 import { TestModeDialog } from "@/components/admin/lifecycle/TestModeDialog";
+import { SendTestDialog } from "@/components/admin/lifecycle/SendTestDialog";
 import { ExecutionLogsPanel } from "@/components/admin/lifecycle/ExecutionLogsPanel";
 import { useLifecycleCampaign, rate, type LifecycleStep } from "@/hooks/useLifecycleCampaign";
 
@@ -33,6 +34,7 @@ export default function AdminTrialEmailFlow() {
   const [recipientsStep, setRecipientsStep] = useState<LifecycleStep | null>(null);
   const [recipientsOpen, setRecipientsOpen] = useState(false);
   const [testModeOpen, setTestModeOpen] = useState(false);
+  const [sendTestStep, setSendTestStep] = useState<LifecycleStep | null>(null);
   const [confirmActivate, setConfirmActivate] = useState(false);
 
   const convertedUserIds = useMemo(
@@ -167,6 +169,9 @@ export default function AdminTrialEmailFlow() {
                       <Button size="sm" variant="outline" onClick={() => setPreviewStep(step)}>
                         <Eye size={14} className="mr-1.5" /> Visualizar
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => setSendTestStep(step)}>
+                        <Send size={14} className="mr-1.5" /> Testar
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => setEditStep(step)}>
                         <Pencil size={14} className="mr-1.5" /> Editar
                       </Button>
@@ -211,6 +216,11 @@ export default function AdminTrialEmailFlow() {
         convertedUserIds={convertedUserIds}
       />
       <TestModeDialog open={testModeOpen} onOpenChange={setTestModeOpen} />
+      <SendTestDialog
+        step={sendTestStep}
+        open={!!sendTestStep}
+        onOpenChange={(o) => !o && setSendTestStep(null)}
+      />
 
       <AlertDialog open={confirmActivate} onOpenChange={setConfirmActivate}>
         <AlertDialogContent className="bg-background">
