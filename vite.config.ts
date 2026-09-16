@@ -54,8 +54,8 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        // Não cachear a página principal - sempre buscar do servidor
-        navigateFallback: '/index.html',
+        // Navegações sempre buscam o HTML atual no servidor (sem fallback em cache).
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.(js|css)$/,
