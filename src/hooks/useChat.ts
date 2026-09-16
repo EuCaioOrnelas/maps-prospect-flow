@@ -408,17 +408,19 @@ export function useChat() {
   }, [user?.id, accountOwnerId, activeConnectionId]);
 
   // Send text message
-  const sendMessage = useCallback(async (text: string, replyToId?: string) => {
-    if (!activeConversationId || !user || !text.trim()) return;
-    const conversation = conversations.find(c => c.id === activeConversationId);
+  const sendMessage = useCallback(async (text: string, replyToId?: string, targetConversationId?: string) => {
+    const convId = targetConversationId || activeConversationId;
+    if (!convId || !user || !text.trim()) return;
+    const conversation = conversations.find(c => c.id === convId);
     if (!conversation) return;
+    const isActive = convId === activeConversationId;
 
     // Optimistic insert — tempId is also written to DB row metadata.client_token,
     // so realtime INSERT can replace the optimistic row instead of duplicating it.
     const tempId = crypto.randomUUID();
     const tempMsg: ChatMessage = {
       id: tempId,
-      conversation_id: activeConversationId,
+      conversation_id: convId,
       user_id: user.id,
       waba_message_id: null,
       direction: "outbound",
@@ -434,18 +436,18 @@ export function useChat() {
       metadata: { client_token: tempId },
       created_at: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempMsg]);
+    if (isActive) setMessages(prev => [...prev, tempMsg]);
 
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
     if (!connection) {
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+      if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
       toast.error("Conexão não encontrada");
       return;
     }
     if (connection) {
       supabase.functions.invoke("send-chat-message", {
         body: {
-          conversation_id: activeConversationId,
+          conversation_id: convId,
           phone_number_id: connection.phone_number_id,
           to: conversation.contact_phone,
           type: "text",
@@ -457,17 +459,19 @@ export function useChat() {
       }).then(({ error: fnError }) => {
         if (fnError) {
           console.error("send-chat-message error:", fnError);
-          setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+          if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
         }
       });
     }
   }, [activeConversationId, user, accountOwnerId, conversations, connections]);
 
   // Send media message
-  const sendMedia = useCallback(async (file: File, caption?: string) => {
-    if (!activeConversationId || !user) return;
-    const conversation = conversations.find(c => c.id === activeConversationId);
+  const sendMedia = useCallback(async (file: File, caption?: string, targetConversationId?: string) => {
+    const convId = targetConversationId || activeConversationId;
+    if (!convId || !user) return;
+    const conversation = conversations.find(c => c.id === convId);
     if (!conversation) return;
+    const isActive = convId === activeConversationId;
 
     const messageType = file.type.startsWith("image/") ? "image"
       : file.type.startsWith("video/") ? "video"
@@ -506,24 +510,24 @@ export function useChat() {
 
     const tempId = crypto.randomUUID();
     const tempMsg: ChatMessage = {
-      id: tempId, conversation_id: activeConversationId, user_id: user.id,
+      id: tempId, conversation_id: convId, user_id: user.id,
       waba_message_id: null, direction: "outbound", message_type: messageType,
       content: caption || null, media_url: signedUrl, media_mime_type: file.type,
       media_filename: file.name, media_caption: caption || null, status: "pending",
       status_updated_at: null, reply_to_message_id: null,
       metadata: { client_token: tempId }, created_at: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempMsg]);
+    if (isActive) setMessages(prev => [...prev, tempMsg]);
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
     if (!connection) {
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+      if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
       toast.error("Conexão não encontrada");
       return;
     }
     if (connection) {
       supabase.functions.invoke("send-chat-message", {
         body: {
-          conversation_id: activeConversationId,
+          conversation_id: convId,
           phone_number_id: connection.phone_number_id,
           to: conversation.contact_phone,
           type: messageType,
@@ -537,7 +541,7 @@ export function useChat() {
       }).then(({ error: fnError }) => {
         if (fnError) {
           console.error("[sendMedia] send-chat-message error:", fnError);
-          setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+          if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
           toast.error("Falha ao enviar mídia", { description: fnError.message });
         }
       });

@@ -13,6 +13,56 @@ import React from "react";
 const TOKEN_RE =
   /```([\s\S]+?)```|`([^`\n]+?)`|__([^_\n]+?)__|\*([^*\n]+?)\*|_([^_\n]+?)_|~([^~\n]+?)~/;
 
+/** URLs (http/https), domínios com www ou TLD comum e e-mails. */
+const LINK_RE =
+  /((?:https?:\/\/|www\.)[^\s<>()[\]{}"']+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|(?:[a-zA-Z0-9-]+\.)+(?:com|com\.br|net|br|org|org\.br|io|app|dev|co|me|info|shop|site|store|link|page)(?:\/[^\s<>()[\]{}"']*)?)/gi;
+
+/** Pontuação final que não faz parte do link. */
+function trimTrailing(raw: string): { url: string; trail: string } {
+  let url = raw;
+  let trail = "";
+  while (url.length > 1 && /[.,;:!?)\]}>'"]$/.test(url)) {
+    // mantém o parêntese se ele estiver balanceado dentro da URL
+    const last = url[url.length - 1];
+    if (last === ")" && (url.match(/\(/g) || []).length > (url.match(/\)/g) || []).length) break;
+    trail = last + trail;
+    url = url.slice(0, -1);
+  }
+  return { url, trail };
+}
+
+/** Converte URLs/e-mails de um trecho de texto puro em links clicáveis. */
+function linkify(text: string, keyPrefix: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let i = 0;
+  LINK_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = LINK_RE.exec(text)) !== null) {
+    const raw = m[0];
+    const { url, trail } = trimTrailing(raw);
+    if (m.index > lastIndex) out.push(text.slice(lastIndex, m.index));
+    const isEmail = /^[^\s@]+@[^\s@]+$/.test(url);
+    const href = isEmail ? `mailto:${url}` : /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    out.push(
+      <a
+        key={`${keyPrefix}-l-${i++}`}
+        href={href}
+        target={isEmail ? undefined : "_blank"}
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="underline underline-offset-2 break-all wa-accent-text hover:opacity-80"
+      >
+        {url}
+      </a>
+    );
+    if (trail) out.push(trail);
+    lastIndex = m.index + raw.length;
+  }
+  if (lastIndex < text.length) out.push(text.slice(lastIndex));
+  return out;
+}
+
 export function parseWhatsAppText(text: string, keyPrefix = "f"): React.ReactNode[] {
   if (!text) return [];
   const nodes: React.ReactNode[] = [];
@@ -22,10 +72,10 @@ export function parseWhatsAppText(text: string, keyPrefix = "f"): React.ReactNod
   while (rest.length > 0) {
     const match = TOKEN_RE.exec(rest);
     if (!match || match.index === undefined) {
-      nodes.push(rest);
+      nodes.push(...linkify(rest, `${keyPrefix}-${i++}`));
       break;
     }
-    if (match.index > 0) nodes.push(rest.slice(0, match.index));
+    if (match.index > 0) nodes.push(...linkify(rest.slice(0, match.index), `${keyPrefix}-${i++}`));
 
     const key = `${keyPrefix}-${i++}`;
     const [full, block, code, underline, bold, italic, strike] = match;
