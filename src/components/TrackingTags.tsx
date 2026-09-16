@@ -105,14 +105,23 @@ export const TrackingTags = () => {
 
   useEffect(() => {
     let active = true;
-    console.log("[dbgTT] effect start");
     (async () => {
-      // Fonte única: edge function pública (tabela + secret como reserva).
+      // Fonte única: função pública (tabela + secret como reserva).
+      // Usa fetch puro: não depende da sessão de login do visitante.
       try {
-        const { data, error } = await supabase.functions.invoke("tracking-config");
-        console.log("[dbgTT] invoke", JSON.stringify(data), String(error));
-        if (!error && data && active) {
-          setCfg(data as TrackingSettings);
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tracking-config`,
+          { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } },
+        );
+        if (res.ok) {
+          const data = (await res.json()) as TrackingSettings;
+          if (!active) return;
+          setCfg({
+            ...data,
+            gtm_id: isPlaceholder(data.gtm_id) ? null : data.gtm_id,
+            ga4_id: isPlaceholder(data.ga4_id) ? null : data.ga4_id,
+            meta_pixel_id: isPlaceholder(data.meta_pixel_id) ? null : data.meta_pixel_id,
+          });
           return;
         }
       } catch {
