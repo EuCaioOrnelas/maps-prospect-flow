@@ -7,10 +7,28 @@ const lifecycleCors = {
     "authorization, x-client-info, apikey, content-type, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Same fallback chain used by lifecycle-worker and lifecycle-admin, so links
+// keep working even when LIFECYCLE_TRACKING_SECRET is missing/empty.
+const LIFECYCLE_SECRET_FALLBACK = "wiize-lifecycle-tracking-fallback-v1";
+
+function resolveTrackingSecret(): string {
+  const candidates = [
+    Deno.env.get("LIFECYCLE_TRACKING_SECRET"),
+    Deno.env.get("LIFECYCLE_CRON_KEY"),
+    Deno.env.get("LIFECYCLE_CRON_SECRET"),
+  ];
+  for (const c of candidates) {
+    const v = (c || "").trim();
+    if (v) return v;
+  }
+  return LIFECYCLE_SECRET_FALLBACK;
+}
+
 async function signToken(secret: string, payload: string): Promise<string> {
+  const material = (secret || "").trim() || LIFECYCLE_SECRET_FALLBACK;
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(material),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
