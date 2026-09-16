@@ -2332,6 +2332,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           shortcut: string
+          steps: Json
           title: string | null
           updated_at: string
         }
@@ -2345,6 +2346,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           shortcut: string
+          steps?: Json
           title?: string | null
           updated_at?: string
         }
@@ -2358,6 +2360,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           shortcut?: string
+          steps?: Json
           title?: string | null
           updated_at?: string
         }
