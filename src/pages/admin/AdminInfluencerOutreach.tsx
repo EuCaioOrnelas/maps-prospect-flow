@@ -483,7 +483,18 @@ export default function AdminInfluencerOutreach() {
                           </TableCell>
                           <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
                           <TableCell className="py-3 text-right text-sm">{p.fit_score ?? 0}</TableCell>
-                          <TableCell className="py-3"><Badge variant="secondary" className="text-[10px]">{prospectOutreachLabel(p.status)}</Badge></TableCell>
+                          <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+                            <Select value={p.status ?? "novo"} onValueChange={(v) => updateStatus([p.id], v)}>
+                              <SelectTrigger className="h-8 w-[178px] text-xs">
+                                <SelectValue>{prospectOutreachLabel(p.status)}</SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PROSPECT_OUTREACH_STATUSES.map((s) => (
+                                  <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
                           <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
 
                              <IconAction label="Abrir conversa por e-mail" size="sm" variant="ghost"
@@ -499,6 +510,10 @@ export default function AdminInfluencerOutreach() {
                               {finding.includes(p.id)
                                 ? <Loader2 className="animate-spin" size={14} />
                                 : <RefreshCw size={14} />}
+                             </IconAction>
+                             <IconAction label="Excluir influenciador" size="sm" variant="ghost"
+                              onClick={() => setConfirmDelete({ ids: [p.id], disqualify: false })}>
+                              <Trash2 size={14} className="text-destructive" />
                              </IconAction>
                           </TableCell>
                         </TableRow>
