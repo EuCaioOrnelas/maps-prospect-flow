@@ -243,6 +243,7 @@ export default function ApiLogin() {
         await createWiizeApiAccess(data.session.user.id, profile);
         await supabase.auth.signOut({ scope: "local" });
       }
+      trackSignupComplete("wiize_api");
       setAwaitingConfirm(email.trim());
     } catch (err: any) {
       toast({
