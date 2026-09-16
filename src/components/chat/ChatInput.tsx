@@ -824,7 +824,20 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                 )}
               </button>
             )}
-            {confirmQr?.media_url && (
+            {confirmSteps.length > 1 && (
+              <div className="mt-2 pt-2 border-t border-border space-y-1">
+                {confirmSteps.map((s, i) => (
+                  <div key={s.id || i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">{i + 1}.</span>
+                    <span className="truncate flex-1">
+                      {s.type === "text" ? (s.content || "").slice(0, 60) : (s.media_filename || s.type)}
+                    </span>
+                    {i > 0 && !!s.delay_seconds && <span>+{s.delay_seconds}s</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {confirmSteps.length <= 1 && confirmQr?.media_url && (
               <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
                 Anexo: {confirmQr.media_filename || confirmQr.media_type}
               </div>
