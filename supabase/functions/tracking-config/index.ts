@@ -26,8 +26,8 @@ async function readSettings(): Promise<Record<string, unknown> | null> {
       .from("tracking_settings")
       .select("gtm_id, ga4_id, meta_pixel_id, enabled")
       .maybeSingle();
-    // O banco nunca pode segurar a resposta: 2,5s no máximo.
-    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+    // O banco nunca pode segurar a resposta: 8s no máximo.
+    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000));
     const result = await Promise.race([query, timeout]);
     return (result as { data?: Record<string, unknown> } | null)?.data ?? null;
   } catch (e) {
