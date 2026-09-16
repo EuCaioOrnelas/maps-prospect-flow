@@ -934,7 +934,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               </div>
             )}
           </div>
-          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+          <DialogFooter className="w-full min-w-0 flex-col-reverse sm:flex-row sm:justify-end sm:space-x-0 gap-2 sm:gap-3">
             <Button
               variant="outline"
               className="w-full sm:w-auto"
