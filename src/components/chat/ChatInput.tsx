@@ -879,7 +879,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           }
         }}
       >
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)]">
+        {/* grid-cols-[minmax(0,1fr)] + [&>*]:min-w-0 impedem que um texto longo
+            (ex.: URL) estique a coluna e corte o rodapé/botões do popup. */}
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)] grid-cols-[minmax(0,1fr)] [&>*]:min-w-0">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base sm:text-lg">Enviar mensagem rápida?</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
@@ -887,10 +889,10 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               <span className="font-medium text-primary">/{confirmQr?.shortcut}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border">
+          <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border min-w-0 overflow-hidden">
             <div
               className={cn(
-                "whitespace-pre-wrap break-words leading-relaxed",
+                "whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed",
                 !confirmExpanded && "max-h-[160px] overflow-hidden"
               )}
             >
@@ -932,7 +934,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               </div>
             )}
           </div>
-          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+          <DialogFooter className="w-full min-w-0 flex-col-reverse sm:flex-row sm:justify-end sm:space-x-0 gap-2 sm:gap-3">
             <Button
               variant="outline"
               className="w-full sm:w-auto"
