@@ -45,8 +45,8 @@ interface ChatMessageAreaProps {
   conversations?: ChatConversation[];
   messages: ChatMessage[];
   loading: boolean;
-  onSendMessage: (text: string, replyToId?: string) => void;
-  onSendMedia: (file: File, caption?: string) => void;
+  onSendMessage: (text: string, replyToId?: string, conversationId?: string) => void;
+  onSendMedia: (file: File, caption?: string, conversationId?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onReopenConversation?: (templateName: string) => void;
   fetchTemplates?: () => Promise<any[]>;
