@@ -422,6 +422,13 @@ serve(async (req) => {
         } catch { /* URL inválida */ }
       }
 
+      // mantém apenas e-mail e Instagram (limpa tipos antigos: site, tiktok, etc.)
+      await admin
+        .from("influencer_contacts")
+        .delete()
+        .eq("prospect_id", p.id)
+        .not("type", "in", "(email,instagram)");
+
       const stats = await persist(admin, p.id, found);
 
       // sincroniza colunas legadas (retrocompatibilidade com a tela atual)
