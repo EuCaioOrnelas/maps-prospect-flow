@@ -189,6 +189,22 @@ export function InfluencerContactsDialog({ prospect, contacts, onClose, onChange
             </div>
           )}
 
+          {/* Status do influenciador */}
+          <div className="rounded-xl border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs text-muted-foreground">Status do influenciador</Label>
+              {savingStatus && <Loader2 className="animate-spin text-muted-foreground" size={13} />}
+            </div>
+            <Select value={status} onValueChange={changeStatus} disabled={savingStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PROSPECT_OUTREACH_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Anotações gerais do canal */}
           <div className="rounded-xl border border-border p-3 space-y-2">
             <div className="flex items-center justify-between">
