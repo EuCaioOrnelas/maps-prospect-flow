@@ -51,6 +51,36 @@ export function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Aplica estilos inline nas tags que não têm `style` — necessário porque clientes
+ * de e-mail ignoram CSS externo e o editor visual gera HTML simples.
+ */
+const INLINE_STYLES: Record<string, string> = {
+  h1: "margin:0 0 16px;font-size:24px;line-height:1.3;color:#18181b;font-weight:700;",
+  h2: "margin:24px 0 12px;font-size:20px;line-height:1.3;color:#18181b;font-weight:700;",
+  h3: "margin:20px 0 10px;font-size:17px;line-height:1.4;color:#18181b;font-weight:700;",
+  p: "margin:0 0 16px;font-size:16px;line-height:1.6;color:#3f3f46;",
+  li: "margin:0 0 8px;font-size:16px;line-height:1.6;color:#3f3f46;",
+  ul: "margin:0 0 16px;padding-left:20px;",
+  ol: "margin:0 0 16px;padding-left:20px;",
+  a: "color:#3daa57;",
+  img: "max-width:100%;height:auto;border-radius:8px;",
+  blockquote: "margin:0 0 16px;padding:12px 16px;border-left:3px solid #3daa57;background:#f4f4f5;color:#3f3f46;font-size:16px;line-height:1.6;",
+};
+
+export function styleEmailHtml(html: string): string {
+  let output = html;
+  for (const [tag, style] of Object.entries(INLINE_STYLES)) {
+    const re = new RegExp(`<${tag}(\\s[^>]*)?>`, "gi");
+    output = output.replace(re, (match, attrs = "") => {
+      if (/\sstyle\s*=/i.test(match)) return match;
+      const cleanAttrs = attrs || "";
+      return `<${tag}${cleanAttrs} style="${style}">`;
+    });
+  }
+  return output;
+}
+
 export function lifecycleLayout(opts: {
   body: string;
   preheader?: string;
