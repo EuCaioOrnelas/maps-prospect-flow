@@ -156,8 +156,13 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [confirmQr, setConfirmQr] = useState<QuickReply | null>(null);
   const [confirmPreview, setConfirmPreview] = useState("");
   const [confirmExpanded, setConfirmExpanded] = useState(false);
-  const [qrRun, setQrRun] = useState<QrRunState | null>(null);
-  const qrCancelRef = useRef(false);
+  // A execução da mensagem rápida vive fora do componente: é por conversa e
+  // continua rodando mesmo se o atendente trocar de contato.
+  const qrRun = useSyncExternalStore<QrRunState | null>(
+    subscribeQuickReplyRuns,
+    () => getQuickReplyRun(conversationId),
+    () => null
+  );
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
