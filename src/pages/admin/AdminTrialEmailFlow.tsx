@@ -14,6 +14,7 @@ import { StepEditorDialog } from "@/components/admin/lifecycle/StepEditorDialog"
 import { StepPreviewDialog } from "@/components/admin/lifecycle/StepPreviewDialog";
 import { RecipientsDialog } from "@/components/admin/lifecycle/RecipientsDialog";
 import { TestModeDialog } from "@/components/admin/lifecycle/TestModeDialog";
+import { SendTestDialog } from "@/components/admin/lifecycle/SendTestDialog";
 import { ExecutionLogsPanel } from "@/components/admin/lifecycle/ExecutionLogsPanel";
 import { useLifecycleCampaign, rate, type LifecycleStep } from "@/hooks/useLifecycleCampaign";
 
