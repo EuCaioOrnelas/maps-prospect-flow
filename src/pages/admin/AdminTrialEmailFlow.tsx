@@ -34,6 +34,7 @@ export default function AdminTrialEmailFlow() {
   const [recipientsStep, setRecipientsStep] = useState<LifecycleStep | null>(null);
   const [recipientsOpen, setRecipientsOpen] = useState(false);
   const [testModeOpen, setTestModeOpen] = useState(false);
+  const [sendTestStep, setSendTestStep] = useState<LifecycleStep | null>(null);
   const [confirmActivate, setConfirmActivate] = useState(false);
 
   const convertedUserIds = useMemo(
