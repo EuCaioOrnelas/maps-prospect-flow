@@ -46,14 +46,18 @@ export function trackEvent(event: string, params: TrackParams = {}) {
   }
 }
 
-let lastView = { path: "", at: 0 };
+let lastView = { path: "", at: 0, sentToGa: false };
 
 /** Visualização de página em navegação interna (SPA). Evita duplicidade. */
 export function trackPageView(path: string, title?: string) {
   if (!allowed()) return;
   const now = Date.now();
-  if (lastView.path === path && now - lastView.at < 2000) return;
-  lastView = { path, at: now };
+  const gaReady = Boolean(measurementId);
+  // Repete a mesma página apenas quando a visualização anterior ainda não
+  // chegou ao Google Analytics (a tag ainda não tinha carregado).
+  const repeated = lastView.path === path && now - lastView.at < 2000;
+  if (repeated && (lastView.sentToGa || !gaReady)) return;
+  lastView = { path, at: now, sentToGa: gaReady };
   try {
     ensureDataLayer();
     const params = {
@@ -62,12 +66,25 @@ export function trackPageView(path: string, title?: string) {
       page_location: window.location.href,
       ...(isDev ? { debug_mode: true } : {}),
     };
-    if (measurementId) window.gtag?.("event", "page_view", params);
-    window.dataLayer!.push({ event: "page_view", ...params });
+    if (gaReady) window.gtag?.("event", "page_view", params);
+    if (!repeated) window.dataLayer!.push({ event: "page_view", ...params });
   } catch {
     /* noop */
   }
 }
+
+/** Evita enviar o mesmo evento duas vezes (recarga de página, re-render). */
+const oncePerBrowser = (key: string) => {
+  try {
+    const k = `wz_evt_${key}`;
+    if (sessionStorage.getItem(k)) return false;
+    sessionStorage.setItem(k, "1");
+    return true;
+  } catch {
+    return true;
+  }
+};
+
 
 /* ------------------------------------------------------------------ */
 /* Eventos do funil — nomes no padrão GA4                              */
@@ -95,22 +112,34 @@ export const trackSignupStart = (location: string) =>
 export const trackSignupComplete = (method = "email") =>
   trackEvent("sign_up", { method });
 
-export const trackTrialStarted = (plan?: string) =>
-  trackEvent("trial_started", { plano: plan ?? "" });
+/** Teste grátis realmente iniciado (conta criada com cartão aprovado). */
+export const trackTrialStarted = (plan?: string, id?: string) => {
+  if (id && !oncePerBrowser(`trial_${id}`)) return;
+  trackEvent("trial_started", { plano: plan ?? "", item_name: plan ?? "" });
+};
 
 /** Compra confirmada — usar apenas com pagamento realmente aprovado. */
-export const trackPurchase = (plan?: string, value?: number, method?: string) =>
+export const trackPurchase = (
+  plan?: string,
+  value?: number,
+  method?: string,
+  transactionId?: string,
+) => {
+  if (transactionId && !oncePerBrowser(`purchase_${transactionId}`)) return;
   trackEvent("purchase", {
+    transaction_id: transactionId ?? "",
     plano: plan ?? "",
     item_name: plan ?? "",
     value: value ?? 0,
     currency: "BRL",
     metodo: method ?? "",
   });
+};
 
 /** Clique em criar conta na landing do Wiize API. */
 export const trackApiSignupClick = (location: string) =>
   trackEvent("click_api_signup", { button_location: location, origem: location });
+
 
 /** Envio do formulário de contato Enterprise. */
 export const trackEnterpriseRequest = (company?: string) =>

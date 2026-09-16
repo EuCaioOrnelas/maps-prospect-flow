@@ -436,7 +436,7 @@ function SignupWithCardInner() {
 
     // GA4: conta criada + trial iniciado (só aqui, quando o cartão foi aprovado).
     trackSignupComplete("email");
-    trackTrialStarted(planKey);
+    trackTrialStarted(planKey, newUserId);
 
     toast({
       title: "Conta criada com sucesso!",

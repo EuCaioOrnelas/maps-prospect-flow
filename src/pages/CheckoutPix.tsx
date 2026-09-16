@@ -28,7 +28,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { trackCheckoutView } from "@/lib/analytics";
+import { trackCheckoutView, trackCheckoutStart, trackPurchase } from "@/lib/analytics";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
@@ -166,6 +166,8 @@ export default function CheckoutPix() {
     setLoading(true);
     
     trackScoreEvent("checkout_started", { plan: planKey, method: "pix", source: "asaas" });
+    trackCheckoutStart("pix", planName || planKey);
+
     
     try {
       // Bumps só são permitidos no mensal — força vazio em qualquer outro ciclo
@@ -211,6 +213,8 @@ export default function CheckoutPix() {
           setPaid(true);
           setCheckingPayment(false);
           trackScoreEvent("checkout_completed", { plan: planKey, method: "pix", source: "asaas", renewal: isRenewal });
+          trackPurchase(planName || planKey, Number(planPrice) || 0, "pix", pixId);
+
           toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano será ativado em instantes." });
           if (isRenewal) {
             setTimeout(() => navigate(`/renewal-success?email=${encodeURIComponent(renewalEmail)}&plan=${encodeURIComponent(planKey)}`), 2000);

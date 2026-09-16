@@ -26,7 +26,7 @@ import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { markBlogAttribution } from "@/lib/blogAttribution";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
-import { trackEvent, trackTrialStarted } from "@/lib/analytics";
+import { trackPurchase, trackSignupComplete, trackTrialStarted } from "@/lib/analytics";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -36,8 +36,26 @@ const CheckoutSuccess = () => {
 
   useEffect(() => { markBlogAttribution("purchased", user?.id); }, [user?.id]);
 
-  // Compra/assinatura concluída — evento para Google Analytics / Tag Manager.
-  useEffect(() => { trackTrialStarted(); trackEvent("checkout_concluido"); }, []);
+  // Pagamento aprovado — envia "purchase" (uma única vez) ao Google Analytics.
+  useEffect(() => {
+    let purchase: any = null;
+    try {
+      const raw = sessionStorage.getItem("checkoutPurchase");
+      if (raw) purchase = JSON.parse(raw);
+    } catch { purchase = null; }
+    const provider = new URLSearchParams(window.location.search).get("provider");
+    const id =
+      purchase?.subscriptionId ||
+      purchase?.paymentId ||
+      `${provider || "checkout"}_${purchase?.planKey || "plano"}`;
+    const plan = purchase?.planName || purchase?.planKey || "";
+    const value = Number(purchase?.amount ?? purchase?.value ?? 0) || 0;
+    const method = provider === "asaas" ? "pix" : purchase?.method || "cartao";
+    trackPurchase(plan, value, method, id);
+    // Teste grátis só conta quando a compra realmente tem período de teste.
+    if (purchase?.periodEnd || purchase?.trial) trackTrialStarted(plan, id);
+  }, []);
+
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -141,14 +159,17 @@ const CheckoutSuccess = () => {
             variant: "destructive",
           });
         } else if (!data.session) {
+          trackSignupComplete("email");
           setShowEmailVerification(true);
         } else {
+          trackSignupComplete("email");
           toast({
             title: "Conta criada com sucesso!",
             description: "Sua assinatura já está ativa.",
           });
           navigate("/dashboard");
         }
+
       }
     } catch (error: any) {
       console.error("Signup error:", error);
