@@ -28,7 +28,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { trackCheckoutView } from "@/lib/analytics";
+import { trackCheckoutView, trackCheckoutStart, trackPurchase } from "@/lib/analytics";
 import { motion } from "framer-motion";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
