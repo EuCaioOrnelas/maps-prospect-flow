@@ -40,11 +40,14 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const resendKey = Deno.env.get("RESEND_API_KEY") || "";
   const trackingSecret = Deno.env.get("LIFECYCLE_TRACKING_SECRET") || "";
-  const cronSecret = Deno.env.get("LIFECYCLE_CRON_SECRET") || "";
+  const cronSecrets = [
+    Deno.env.get("LIFECYCLE_CRON_KEY") || "",
+    Deno.env.get("LIFECYCLE_CRON_SECRET") || "",
+  ].filter(Boolean);
 
   // ── Auth: cron secret OR an authenticated admin (manual run from the panel) ──
   const provided = req.headers.get("x-cron-secret") || new URL(req.url).searchParams.get("secret") || "";
-  let authorized = !!cronSecret && provided === cronSecret;
+  let authorized = !!provided && cronSecrets.includes(provided);
   if (!authorized) {
     const authHeader = req.headers.get("Authorization") || "";
     if (authHeader.startsWith("Bearer ")) {

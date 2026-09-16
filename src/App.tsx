@@ -86,6 +86,7 @@ const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
 const UpgradePromo = lazyWithRetry(() => import("./pages/UpgradePromo"), "UpgradePromo");
 const AdminEmailTests = lazyWithRetry(() => import("./pages/AdminEmailTests"), "AdminEmailTests");
 const AdminTrialAutomation = lazyWithRetry(() => import("./pages/AdminTrialAutomation"), "AdminTrialAutomation");
+const AdminTrialEmailFlow = lazyWithRetry(() => import("./pages/admin/AdminTrialEmailFlow"), "AdminTrialEmailFlow");
 const AdminUserScoring = lazyWithRetry(() => import("./pages/AdminUserScoring"), "AdminUserScoring");
 const AdminEmailFlows = lazyWithRetry(() => import("./pages/AdminEmailFlows"), "AdminEmailFlows");
 const AdminEmailFlowEditor = lazyWithRetry(() => import("./pages/AdminEmailFlowEditor"), "AdminEmailFlowEditor");
@@ -445,6 +446,7 @@ const App = () => (
                   <Route path="email-flows/:id" element={<AdminEmailFlowEditor />} />
                   <Route path="user-scoring" element={<AdminUserScoring />} />
                   <Route path="trial-automation" element={<AdminTrialAutomation />} />
+                  <Route path="trial-email-flow" element={<AdminTrialEmailFlow />} />
                   
                   {/* Admin */}
                   <Route path="announcements" element={<AdminAnnouncements />} />
