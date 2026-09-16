@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmojiPicker, EmojiPickerSearch, EmojiPickerContent } from "@/components/ui/emoji-picker";
 import {
   QUICK_REPLY_VARIABLES,
@@ -16,7 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   Smile, Paperclip, X, Loader2, Plus, ArrowUp, ArrowDown, Trash2, Clock,
-  MessageSquareText, ImageIcon, Film, Music, FileText, Mic,
+  MessageSquareText, ImageIcon, Film, Music, FileText, Mic, Play, Pause,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,12 +53,150 @@ function MediaThumb({ step }: { step: QuickReplyStep }) {
     return <img src={url} alt="" className="w-12 h-12 rounded object-cover border border-border" />;
   }
   if (step.type === "audio" && url) {
-    return <audio src={url} controls className="h-9 max-w-[220px]" />;
+    const Icon = STEP_META.audio.icon;
+    return (
+      <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center text-primary">
+        <Icon size={18} />
+      </div>
+    );
   }
   const Icon = STEP_META[step.type]?.icon || FileText;
   return (
     <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center text-primary">
       <Icon size={18} />
+    </div>
+  );
+}
+
+const fmtTime = (s: number) => {
+  if (!isFinite(s) || s < 0) s = 0;
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+};
+
+function AudioPlayer({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [time, setTime] = useState(0);
+  const [dur, setDur] = useState(0);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (playing) el.pause();
+    else void el.play();
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current;
+    if (!el || !dur) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    el.currentTime = ratio * dur;
+    setTime(el.currentTime);
+  };
+
+  const progress = dur ? (time / dur) * 100 : 0;
+
+  return (
+    <div className="flex items-center gap-2.5 w-full">
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="metadata"
+        onLoadedMetadata={e => setDur(e.currentTarget.duration)}
+        onTimeUpdate={e => setTime(e.currentTarget.currentTime)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => { setPlaying(false); setTime(0); }}
+        className="hidden"
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 hover:bg-primary/90 transition-colors"
+        aria-label={playing ? "Pausar" : "Reproduzir"}
+      >
+        {playing ? <Pause size={15} /> : <Play size={15} className="ml-0.5" />}
+      </button>
+      <div className="flex-1 min-w-0">
+        <div
+          className="group relative h-5 flex items-center cursor-pointer"
+          onClick={seek}
+          role="slider"
+          aria-label="Linha de reprodução"
+          aria-valuemin={0}
+          aria-valuemax={Math.round(dur)}
+          aria-valuenow={Math.round(time)}
+        >
+          <div className="relative w-full h-1.5 rounded-full bg-muted overflow-hidden">
+            <div className="absolute inset-y-0 left-0 bg-primary rounded-full" style={{ width: `${progress}%` }} />
+          </div>
+          <div
+            className="absolute w-3 h-3 rounded-full bg-primary shadow ring-2 ring-background transition-transform group-hover:scale-110"
+            style={{ left: `calc(${progress}% - 6px)` }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums mt-0.5">
+          <span>{fmtTime(time)}</span>
+          <span>{fmtTime(dur)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AudioPreview({ step }: { step: QuickReplyStep }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    if (!step.media_url) { setUrl(null); return; }
+    resolveStorageUrl(step.media_url).then(u => { if (active) setUrl(u); });
+    return () => { active = false; };
+  }, [step.media_url]);
+
+  return (
+    <div className="flex-1 min-w-0">
+      {url ? <AudioPlayer src={url} /> : <div className="h-10 rounded-lg bg-muted animate-pulse" />}
+      <p className="text-[10px] text-muted-foreground truncate mt-1">{step.media_filename || "áudio"}</p>
+    </div>
+  );
+}
+
+function RecordingWave({ stream }: { stream: MediaStream }) {
+  const barsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = new AudioContext();
+    const source = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 64;
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let raf = 0;
+    const tick = () => {
+      analyser.getByteFrequencyData(data);
+      const bars = barsRef.current?.children;
+      if (bars) {
+        for (let i = 0; i < bars.length; i++) {
+          const v = data[Math.floor((i * data.length) / bars.length)] / 255;
+          (bars[i] as HTMLElement).style.height = `${Math.max(12, v * 100)}%`;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => { cancelAnimationFrame(raf); void ctx.close(); };
+  }, [stream]);
+
+  return (
+    <div ref={barsRef} className="flex items-center gap-[3px] h-6 px-1" aria-hidden>
+      {Array.from({ length: 18 }).map((_, i) => (
+        <span
+          key={i}
+          className="w-[3px] rounded-full bg-destructive transition-[height] duration-75"
+          style={{ height: "12%" }}
+        />
+      ))}
     </div>
   );
 }
@@ -76,6 +215,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [recStream, setRecStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -152,6 +292,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
       rec.ondataavailable = e => { if (e.data.size) chunksRef.current.push(e.data); };
       rec.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
+        setRecStream(null);
         const blob = new Blob(chunksRef.current, { type: mime });
         const ext = mime.includes("ogg") ? "ogg" : mime.includes("mp4") ? "m4a" : "webm";
         await uploadForStep(stepId, new File([blob], `audio-${Date.now()}.${ext}`, { type: mime }));
@@ -159,6 +300,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
       };
       recorderRef.current = rec;
       rec.start();
+      setRecStream(stream);
       setRecordingId(stepId);
     } catch {
       toast.error("Não foi possível acessar o microfone");
@@ -244,18 +386,25 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
 
                     <div className="ml-auto flex items-center gap-1">
                       {idx > 0 && (
-                        <div className="flex items-center gap-1 mr-1">
-                          <Clock size={13} className="text-muted-foreground" />
-                          <Input
-                            type="number"
-                            min={0}
-                            max={600}
-                            value={step.delay_seconds ?? 0}
-                            onChange={e => patchStep(step.id, { delay_seconds: Number(e.target.value) })}
-                            className="h-7 w-[64px] text-xs"
-                          />
-                          <span className="text-[11px] text-muted-foreground">s</span>
-                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 mr-1 cursor-help">
+                              <Clock size={13} className="text-muted-foreground" />
+                              <Input
+                                type="number"
+                                min={0}
+                                max={600}
+                                value={step.delay_seconds ?? 0}
+                                onChange={e => patchStep(step.id, { delay_seconds: Number(e.target.value) })}
+                                className="h-7 w-[64px] text-xs"
+                              />
+                              <span className="text-[11px] text-muted-foreground">s</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs">Delay de envio: espera em segundos antes de enviar esta mensagem</p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => moveStep(step.id, -1)} disabled={idx === 0}>
                         <ArrowUp size={13} />
@@ -311,14 +460,25 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
                     <div className="space-y-2">
                       {step.media_url ? (
                         <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
-                          <MediaThumb step={step} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{step.media_filename || "anexo"}</p>
-                            <p className="text-[10px] text-muted-foreground">{STEP_META[step.type]?.label}</p>
-                          </div>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => patchStep(step.id, { media_url: null, media_filename: null })}>
-                            <X size={14} />
-                          </Button>
+                          {step.type === "audio" ? (
+                            <>
+                              <AudioPreview step={step} />
+                              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => patchStep(step.id, { media_url: null, media_filename: null })}>
+                                <X size={14} />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <MediaThumb step={step} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{step.media_filename || "anexo"}</p>
+                                <p className="text-[10px] text-muted-foreground">{STEP_META[step.type]?.label}</p>
+                              </div>
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => patchStep(step.id, { media_url: null, media_filename: null })}>
+                                <X size={14} />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -332,9 +492,12 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
                           </Button>
                           {step.type === "audio" && (
                             recordingId === step.id ? (
-                              <Button type="button" size="sm" variant="destructive" className="gap-1.5" onClick={stopRecording}>
-                                <Mic size={14} /> Parar gravação
-                              </Button>
+                              <>
+                                <Button type="button" size="sm" variant="destructive" className="gap-1.5" onClick={stopRecording}>
+                                  <Mic size={14} /> Parar gravação
+                                </Button>
+                                {recStream && <RecordingWave stream={recStream} />}
+                              </>
                             ) : (
                               <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => void startRecording(step.id)}>
                                 <Mic size={14} /> Gravar áudio
