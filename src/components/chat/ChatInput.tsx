@@ -154,6 +154,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [confirmQr, setConfirmQr] = useState<QuickReply | null>(null);
   const [confirmPreview, setConfirmPreview] = useState("");
   const [confirmExpanded, setConfirmExpanded] = useState(false);
+  const [qrRun, setQrRun] = useState<QrRunState | null>(null);
+  const qrCancelRef = useRef(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiViewportRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -312,32 +314,51 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const handleConfirmSend = useCallback(async () => {
     if (!confirmQr) return;
     const steps = confirmSteps;
+    const shortcut = confirmQr.shortcut;
     setConfirmQr(null);
     setConfirmExpanded(false);
     setText("");
     onCancelReply?.();
     inputRef.current?.focus();
 
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      const wait = i === 0 ? 0 : Math.max(0, Number(step.delay_seconds) || 0) * 1000;
-      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    qrCancelRef.current = false;
+    setQrRun({ shortcut, total: steps.length, index: 0, waitSeconds: 0 });
 
-      if (step.type === "text") {
-        if ((step.content || "").trim()) onSendMessage(step.content!.trim(), i === 0 ? replyingTo?.id : undefined);
-        continue;
+    try {
+      for (let i = 0; i < steps.length; i++) {
+        if (qrCancelRef.current) break;
+        const step = steps[i];
+        const wait = i === 0 ? 0 : Math.max(0, Number(step.delay_seconds) || 0) * 1000;
+        if (wait > 0) {
+          setQrRun({ shortcut, total: steps.length, index: i, waitSeconds: wait / 1000 });
+          await new Promise<void>(resolve => {
+            const start = Date.now();
+            const id = setInterval(() => {
+              if (qrCancelRef.current || Date.now() - start >= wait) { clearInterval(id); resolve(); }
+            }, 200);
+          });
+          if (qrCancelRef.current) break;
+        }
+        setQrRun(prev => (prev ? { ...prev, index: i, waitSeconds: 0 } : prev));
+
+        if (step.type === "text") {
+          if ((step.content || "").trim()) onSendMessage(step.content!.trim(), i === 0 ? replyingTo?.id : undefined);
+          continue;
+        }
+        if (!step.media_url) continue;
+        try {
+          const signed = (await resolveStorageUrl(step.media_url)) || step.media_url;
+          const res = await fetch(signed);
+          const blob = await res.blob();
+          const fname = step.media_filename || `quick-reply-${shortcut}`;
+          const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
+          onSendMedia(file, (step.content || "").trim() || undefined);
+        } catch (err) {
+          console.error("[quick-reply] media fetch failed", err);
+        }
       }
-      if (!step.media_url) continue;
-      try {
-        const signed = (await resolveStorageUrl(step.media_url)) || step.media_url;
-        const res = await fetch(signed);
-        const blob = await res.blob();
-        const fname = step.media_filename || `quick-reply-${confirmQr.shortcut}`;
-        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
-        onSendMedia(file, (step.content || "").trim() || undefined);
-      } catch (err) {
-        console.error("[quick-reply] media fetch failed", err);
-      }
+    } finally {
+      setQrRun(null);
     }
   }, [confirmQr, confirmSteps, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
 
