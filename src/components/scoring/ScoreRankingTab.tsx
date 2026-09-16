@@ -1,175 +1,182 @@
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Users } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Trophy, TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Medal } from "lucide-react";
+import { ScoreUserDetailDialog } from "./ScoreUserDetailDialog";
 import { cn } from "@/lib/utils";
 
-interface RevenueLead {
-  id: string;
-  name: string | null;
-  phone_e164: string;
-  score_total: number;
-  score_engagement: number;
-  score_intent: number;
-  score_risk: number;
-  score_urgency: number;
-  status_bucket: string;
+type SortKey = "total_score" | "purchase_intent" | "value" | "engagement" | "activation" | "churn_risk";
+
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: "total_score", label: "Score geral" },
+  { key: "purchase_intent", label: "Intenção de compra" },
+  { key: "value", label: "Uso de valor" },
+  { key: "engagement", label: "Engajamento" },
+  { key: "activation", label: "Ativação" },
+  { key: "churn_risk", label: "Risco de churn" },
+];
+
+const bandStyle = (score: number) => {
+  if (score >= 81) return "bg-purple-500/10 text-purple-500 border-purple-500/25";
+  if (score >= 61) return "bg-emerald-500/10 text-emerald-500 border-emerald-500/25";
+  if (score >= 41) return "bg-blue-500/10 text-blue-500 border-blue-500/25";
+  if (score >= 21) return "bg-yellow-500/10 text-yellow-600 border-yellow-500/25";
+  return "bg-red-500/10 text-red-500 border-red-500/25";
+};
+
+const medalColor = (i: number) =>
+  i === 0 ? "text-yellow-500" : i === 1 ? "text-zinc-400" : i === 2 ? "text-amber-700" : "text-muted-foreground";
+
+interface RankRow {
+  user_id: string;
+  total_score: number;
+  score_label: string;
+  trend: string;
+  activation_score: number;
+  engagement_score: number;
+  value_score: number;
+  purchase_intent_score: number;
+  churn_risk_score: number;
+  profiles?: { name?: string | null; email?: string | null; plan?: string | null } | null;
 }
 
-interface ScoreRankingTabProps {
-  leads?: RevenueLead[];
-}
+export const ScoreRankingTab = () => {
+  const [rows, setRows] = useState<RankRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortKey>("total_score");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-const BUCKET_SHORT_LABELS: Record<string, string> = {
-  COLD: "Frio",
-  LOW_ENGAGEMENT: "Baixo engaj.",
-  ENGAGED: "Engajado",
-  HIGH_VALUE: "Alto valor",
-  READY_TO_SELL: "Pronto p/ venda",
-};
-
-const BUCKET_BADGE_COLORS: Record<string, string> = {
-  READY_TO_SELL: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  HIGH_VALUE: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  ENGAGED: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  LOW_ENGAGEMENT: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  COLD: "bg-red-500/20 text-red-400 border-red-500/30",
-};
-
-const mapBucket = (_bucket: string, score: number): string => {
-  if (score >= 801) return "READY_TO_SELL";
-  if (score >= 601) return "HIGH_VALUE";
-  if (score >= 401) return "ENGAGED";
-  if (score >= 201) return "LOW_ENGAGEMENT";
-  return "COLD";
-};
-
-const fmtPhone = (p: string) => {
-  const d = p.replace(/\D/g, "");
-  if (d.length === 13) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`;
-  return p;
-};
-
-const fmtNum = (n: number) => new Intl.NumberFormat("pt-BR").format(Math.round(n));
-
-const getScoreColor = (score: number) => {
-  if (score >= 801) return "text-emerald-400";
-  if (score >= 601) return "text-purple-400";
-  if (score >= 401) return "text-blue-400";
-  if (score >= 201) return "text-yellow-400";
-  return "text-red-400";
-};
-
-type SortKey = "score_total" | "score_engagement" | "score_intent" | "score_risk" | "score_urgency";
-
-export const ScoreRankingTab = ({ leads: externalLeads }: ScoreRankingTabProps) => {
-  const [sortBy, setSortBy] = useState<SortKey>("score_total");
-  const { user, accountOwnerId } = useAuth();
-
-  // Fallback: fetch from DB when leads prop is not provided (admin page)
-  const { data: fetchedLeads = [], isLoading } = useQuery({
-    queryKey: ["ranking-leads-fallback", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from("revenue_leads")
-        .select("id, name, phone_e164, score_total, score_engagement, score_intent, score_risk, score_urgency, status_bucket")
-        .eq("owner_user_id", accountOwnerId)
-        .order("score_total", { ascending: false });
+  const load = async (sort: SortKey) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("score-processor", {
+        body: { action: "get_ranking", limit: 50, sort_by: sort },
+      });
       if (error) throw error;
-      return (data || []) as RevenueLead[];
-    },
-    enabled: !!user && !externalLeads,
-  });
-
-  const leads = externalLeads || fetchedLeads;
-
-  const sorted = useMemo(
-    () => [...leads].sort((a, b) => b[sortBy] - a[sortBy]),
-    [leads, sortBy]
-  );
-
-  const getMedalIcon = (index: number) => {
-    if (index === 0) return <Trophy className="h-5 w-5 text-yellow-400" />;
-    if (index === 1) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (index === 2) return <Medal className="h-5 w-5 text-orange-600" />;
-    return <span className="w-5 text-center text-sm text-muted-foreground font-medium">{index + 1}</span>;
+      setRows(((data as any)?.ranking || []) as RankRow[]);
+    } catch {
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (!externalLeads && isLoading) {
-    return (
-      <Card className="bg-card border-border/50">
-        <CardContent className="p-6 space-y-2">
-          {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
-        </CardContent>
-      </Card>
-    );
-  }
+  useEffect(() => {
+    load(sortBy);
+  }, [sortBy]);
+
+  const metricFor = (r: RankRow) => {
+    switch (sortBy) {
+      case "purchase_intent": return Number(r.purchase_intent_score || 0);
+      case "value": return Number(r.value_score || 0);
+      case "engagement": return Number(r.engagement_score || 0);
+      case "activation": return Number(r.activation_score || 0);
+      case "churn_risk": return Number(r.churn_risk_score || 0);
+      default: return Number(r.total_score || 0);
+    }
+  };
 
   return (
-    <Card className="bg-card border-border/50">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-400" />
-            Ranking de Leads
-          </CardTitle>
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="score_total">Maior Score Total</SelectItem>
-              <SelectItem value="score_engagement">Engajamento</SelectItem>
-              <SelectItem value="score_intent">Intenção de Compra</SelectItem>
-              <SelectItem value="score_urgency">Urgência</SelectItem>
-              <SelectItem value="score_risk">Risco</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {sorted.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
-            <Users className="h-8 w-8" />
-            <p className="text-sm">Nenhum lead com score disponível ainda.</p>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {SORTS.map((s) => (
+          <Button
+            key={s.key}
+            size="sm"
+            variant={sortBy === s.key ? "default" : "outline"}
+            className="h-8 rounded-full text-xs"
+            onClick={() => setSortBy(s.key)}
+          >
+            {s.label}
+          </Button>
+        ))}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 gap-2 text-xs ml-auto"
+          onClick={() => load(sortBy)}
+          disabled={loading}
+        >
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+          Atualizar
+        </Button>
+      </div>
+
+      <Card className="border-border/60">
+        <CardContent className="p-0">
+          <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
+            <Trophy size={16} className="text-primary" />
+            <h2 className="text-sm font-semibold">Top 50 usuários por {SORTS.find((s) => s.key === sortBy)?.label.toLowerCase()}</h2>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {sorted.map((lead, index) => {
-              const bucket = mapBucket(lead.status_bucket, lead.score_total);
-              return (
-                <div
-                  key={lead.id}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors border border-transparent hover:border-border/50"
-                >
-                  <div className="w-8 flex justify-center">{getMedalIcon(index)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{lead.name || fmtPhone(lead.phone_e164)}</p>
-                    <p className="text-xs text-muted-foreground truncate">{fmtPhone(lead.phone_e164)}</p>
-                  </div>
-                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", BUCKET_BADGE_COLORS[bucket] || "")}>
-                    {BUCKET_SHORT_LABELS[bucket] || bucket}
-                  </Badge>
-                  <div className="text-right min-w-[60px]">
-                    <p className={`text-xl font-bold tabular-nums ${getScoreColor(lead.score_total)}`}>
-                      {fmtNum(lead.score_total)}
-                    </p>
-                    {sortBy !== "score_total" && (
-                      <p className="text-[10px] text-muted-foreground tabular-nums">
-                        {fmtNum(lead[sortBy])} {sortBy.replace("score_", "")}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {loading ? (
+            <div className="space-y-2 p-5">
+              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="p-10 text-center text-sm text-muted-foreground">
+              Nenhum usuário com score calculado ainda. Use "Recalcular Todos" para gerar o ranking.
+            </div>
+          ) : (
+            <div className="divide-y divide-border/60">
+              {rows.map((r, i) => {
+                const total = Number(r.total_score || 0);
+                return (
+                  <button
+                    key={r.user_id}
+                    onClick={() => setSelectedUserId(r.user_id)}
+                    className="flex w-full items-center gap-4 px-5 py-3 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <div className={cn("w-8 shrink-0 text-center text-sm font-bold", medalColor(i))}>
+                      {i < 3 ? <Medal size={16} className="mx-auto" /> : i + 1}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">
+                        {r.profiles?.name || r.profiles?.email || "Usuário sem nome"}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">{r.profiles?.email || "—"}</div>
+                    </div>
+
+                    <Badge variant="outline" className="hidden shrink-0 text-[10px] uppercase sm:inline-flex">
+                      {(r.profiles?.plan || "free")}
+                    </Badge>
+
+                    <Badge variant="outline" className={cn("hidden shrink-0 text-[10px] md:inline-flex", bandStyle(total))}>
+                      {r.score_label || "—"}
+                    </Badge>
+
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-semibold tabular-nums">{metricFor(r).toFixed(1)}</div>
+                      <div className="flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
+                        {r.trend === "rising" ? (
+                          <TrendingUp size={12} className="text-emerald-500" />
+                        ) : r.trend === "falling" ? (
+                          <TrendingDown size={12} className="text-destructive" />
+                        ) : (
+                          <Minus size={12} />
+                        )}
+                        score {total.toFixed(0)}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {selectedUserId && (
+        <ScoreUserDetailDialog
+          userId={selectedUserId}
+          open={!!selectedUserId}
+          onOpenChange={(o) => !o && setSelectedUserId(null)}
+        />
+      )}
+    </div>
   );
 };

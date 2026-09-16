@@ -1,4 +1,4 @@
--- Execução automática do fluxo de e-mails do Trial (a cada 15 minutos).
+-- Execução automática do fluxo de e-mails do Trial (1x por hora).
 -- Idempotente: pode ser executado novamente.
 -- A chave abaixo corresponde ao secret LIFECYCLE_CRON_KEY do projeto.
 
@@ -8,9 +8,12 @@ CREATE EXTENSION IF NOT EXISTS pg_net;
 SELECT cron.unschedule('lifecycle-trial-worker-15min')
 WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'lifecycle-trial-worker-15min');
 
+SELECT cron.unschedule('lifecycle-trial-worker-hourly')
+WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'lifecycle-trial-worker-hourly');
+
 SELECT cron.schedule(
-  'lifecycle-trial-worker-15min',
-  '*/15 * * * *',
+  'lifecycle-trial-worker-hourly',
+  '0 * * * *',
   $CRON$
   SELECT net.http_post(
     url := 'https://wgokhkawjdxsmvfuhazb.supabase.co/functions/v1/lifecycle-worker',
@@ -23,4 +26,4 @@ SELECT cron.schedule(
   $CRON$
 );
 
-SELECT jobname, schedule, active FROM cron.job WHERE jobname = 'lifecycle-trial-worker-15min';
+SELECT jobname, schedule, active FROM cron.job WHERE jobname LIKE 'lifecycle-trial-worker%';

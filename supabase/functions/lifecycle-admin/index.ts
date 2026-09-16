@@ -31,16 +31,30 @@ Deno.serve(async (req) => {
     new Response(JSON.stringify(body), { status, headers: { ...lifecycleCors, "Content-Type": "application/json" } });
 
   try {
-    const authHeader = req.headers.get("Authorization") || "";
-    if (!authHeader.startsWith("Bearer ")) return json({ error: "unauthorized" }, 401);
+    // Server-to-server auth (internal validation / scheduled checks) with the
+    // same shared secret used by the worker. Never exposed to the browser.
+    const cronSecrets = [
+      Deno.env.get("LIFECYCLE_CRON_KEY") || "",
+      Deno.env.get("LIFECYCLE_CRON_SECRET") || "",
+    ].filter(Boolean);
+    const providedSecret = req.headers.get("x-cron-secret") || "";
+    const machineAuthorized = !!providedSecret && cronSecrets.includes(providedSecret);
 
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData } = await userClient.auth.getUser();
-    if (!userData?.user) return json({ error: "unauthorized" }, 401);
-    const { data: isAdmin } = await userClient.rpc("is_current_user_admin");
-    if (isAdmin !== true) return json({ error: "forbidden" }, 403);
+    let userData: { user: { email?: string | null } | null } = { user: null };
+
+    if (!machineAuthorized) {
+      const authHeader = req.headers.get("Authorization") || "";
+      if (!authHeader.startsWith("Bearer ")) return json({ error: "unauthorized" }, 401);
+
+      const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: authUser } = await userClient.auth.getUser();
+      if (!authUser?.user) return json({ error: "unauthorized" }, 401);
+      const { data: isAdmin } = await userClient.rpc("is_current_user_admin");
+      if (isAdmin !== true) return json({ error: "forbidden" }, 403);
+      userData = { user: authUser.user };
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = body?.action as string;
@@ -61,7 +75,7 @@ Deno.serve(async (req) => {
       const sampleEnd = new Date(Date.now() + 3 * 86400000);
       const vars = buildVars({
         name: body?.sampleName || "Maria",
-        email: body?.recipientEmail || userData.user.email || "",
+        email: body?.recipientEmail || userData.user?.email || "",
         trialEnd: sampleEnd,
         daysRemaining: 3,
       });

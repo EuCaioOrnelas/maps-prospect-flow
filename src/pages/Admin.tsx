@@ -1333,18 +1333,13 @@ const Admin = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/admin/trial-automation" className="flex items-center gap-2 cursor-pointer">
-                      <Zap size={14} /> Trial Automação
+                    <Link to="/admin/trial-email-flow" className="flex items-center gap-2 cursor-pointer">
+                      <Zap size={14} /> Trial Email Flow
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/admin/user-scoring" className="flex items-center gap-2 cursor-pointer">
                       <BarChart3 size={14} /> Score de Usuários
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin/email-flows" className="flex items-center gap-2 cursor-pointer">
-                      <Zap size={14} /> Fluxos de Email
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
