@@ -91,8 +91,8 @@ function QrRunningPill({ run, onStop }: { run: QrRunState; onStop: () => void })
 }
 
 interface ChatInputProps {
-  onSendMessage: (text: string, replyToId?: string) => void;
-  onSendMedia: (file: File, caption?: string) => void;
+  onSendMessage: (text: string, replyToId?: string, conversationId?: string) => void;
+  onSendMedia: (file: File, caption?: string, conversationId?: string) => void;
   replyingTo?: ChatMessage | null;
   onCancelReply?: () => void;
   /** External files (e.g. dropped on the message area) — preview opens automatically */
