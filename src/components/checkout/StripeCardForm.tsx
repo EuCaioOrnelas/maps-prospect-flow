@@ -121,7 +121,9 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <div className="flex h-10 w-full rounded-[var(--radius-input)] border border-input bg-background px-3 py-2 items-center">
             <CardNumberElement
-              options={{ ...elementOptions, showIcon: false }}
+              // disableLink: remove o botão "Save with Link" do Stripe, que ficava
+              // sobreposto aos campos e impedia o clique/digitação do cartão.
+              options={{ ...elementOptions, showIcon: false, disableLink: true }}
               className="w-full"
               onChange={(e) =>
                 onCardChange?.({
