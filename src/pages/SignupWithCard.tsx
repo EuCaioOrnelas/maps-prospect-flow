@@ -40,6 +40,7 @@ import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { useRef } from "react";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
+import { trackSignupStart, trackSignupComplete, trackTrialStarted } from "@/lib/analytics";
 
 /** Rascunho dos dados (sem senha e sem cartão) para retomar após o 3DS. */
 const DRAFT_KEY = "wiize_trial_draft";
@@ -177,7 +178,10 @@ function SignupWithCardInner() {
   useEffect(() => {
     if (!sessionStorage.getItem("trial_plan_chosen")) {
       navigate("/signup/escolher-plano", { replace: true });
+      return;
     }
+    // GA4: início do cadastro do trial com cartão.
+    trackSignupStart("trial_cartao");
   }, [navigate]);
 
   // Retomada: se o usuário saiu para o app do banco (ou recarregou a página),
@@ -429,6 +433,10 @@ function SignupWithCardInner() {
 
     sessionStorage.removeItem("trial_plan_chosen");
     clearPersisted();
+
+    // GA4: conta criada + trial iniciado (só aqui, quando o cartão foi aprovado).
+    trackSignupComplete("email");
+    trackTrialStarted(planKey);
 
     toast({
       title: "Conta criada com sucesso!",
