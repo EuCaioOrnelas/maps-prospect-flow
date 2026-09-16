@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const service = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-  const trackingSecret = Deno.env.get("LIFECYCLE_TRACKING_SECRET") || "";
+  const trackingSecret = resolveTrackingSecret();
   const resendKey = Deno.env.get("RESEND_API_KEY") || "";
 
   const json = (body: unknown, status = 200) =>

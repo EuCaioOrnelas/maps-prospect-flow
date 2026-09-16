@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const resendKey = Deno.env.get("RESEND_API_KEY") || "";
-  const trackingSecret = Deno.env.get("LIFECYCLE_TRACKING_SECRET") || "";
+  const trackingSecret = resolveTrackingSecret();
   const cronSecrets = [
     Deno.env.get("LIFECYCLE_CRON_KEY") || "",
     Deno.env.get("LIFECYCLE_CRON_SECRET") || "",
