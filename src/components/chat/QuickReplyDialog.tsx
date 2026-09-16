@@ -215,6 +215,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [recStream, setRecStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -291,6 +292,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
       rec.ondataavailable = e => { if (e.data.size) chunksRef.current.push(e.data); };
       rec.onstop = async () => {
         stream.getTracks().forEach(t => t.stop());
+        setRecStream(null);
         const blob = new Blob(chunksRef.current, { type: mime });
         const ext = mime.includes("ogg") ? "ogg" : mime.includes("mp4") ? "m4a" : "webm";
         await uploadForStep(stepId, new File([blob], `audio-${Date.now()}.${ext}`, { type: mime }));
@@ -298,6 +300,7 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
       };
       recorderRef.current = rec;
       rec.start();
+      setRecStream(stream);
       setRecordingId(stepId);
     } catch {
       toast.error("Não foi possível acessar o microfone");
@@ -383,18 +386,25 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
 
                     <div className="ml-auto flex items-center gap-1">
                       {idx > 0 && (
-                        <div className="flex items-center gap-1 mr-1">
-                          <Clock size={13} className="text-muted-foreground" />
-                          <Input
-                            type="number"
-                            min={0}
-                            max={600}
-                            value={step.delay_seconds ?? 0}
-                            onChange={e => patchStep(step.id, { delay_seconds: Number(e.target.value) })}
-                            className="h-7 w-[64px] text-xs"
-                          />
-                          <span className="text-[11px] text-muted-foreground">s</span>
-                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 mr-1 cursor-help">
+                              <Clock size={13} className="text-muted-foreground" />
+                              <Input
+                                type="number"
+                                min={0}
+                                max={600}
+                                value={step.delay_seconds ?? 0}
+                                onChange={e => patchStep(step.id, { delay_seconds: Number(e.target.value) })}
+                                className="h-7 w-[64px] text-xs"
+                              />
+                              <span className="text-[11px] text-muted-foreground">s</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs">Delay de envio: espera em segundos antes de enviar esta mensagem</p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => moveStep(step.id, -1)} disabled={idx === 0}>
                         <ArrowUp size={13} />
@@ -450,14 +460,25 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
                     <div className="space-y-2">
                       {step.media_url ? (
                         <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
-                          <MediaThumb step={step} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{step.media_filename || "anexo"}</p>
-                            <p className="text-[10px] text-muted-foreground">{STEP_META[step.type]?.label}</p>
-                          </div>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => patchStep(step.id, { media_url: null, media_filename: null })}>
-                            <X size={14} />
-                          </Button>
+                          {step.type === "audio" ? (
+                            <>
+                              <AudioPreview step={step} />
+                              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => patchStep(step.id, { media_url: null, media_filename: null })}>
+                                <X size={14} />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <MediaThumb step={step} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium truncate">{step.media_filename || "anexo"}</p>
+                                <p className="text-[10px] text-muted-foreground">{STEP_META[step.type]?.label}</p>
+                              </div>
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => patchStep(step.id, { media_url: null, media_filename: null })}>
+                                <X size={14} />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -471,9 +492,12 @@ export function QuickReplyDialog({ open, onOpenChange, initial, onSubmit }: Prop
                           </Button>
                           {step.type === "audio" && (
                             recordingId === step.id ? (
-                              <Button type="button" size="sm" variant="destructive" className="gap-1.5" onClick={stopRecording}>
-                                <Mic size={14} /> Parar gravação
-                              </Button>
+                              <>
+                                <Button type="button" size="sm" variant="destructive" className="gap-1.5" onClick={stopRecording}>
+                                  <Mic size={14} /> Parar gravação
+                                </Button>
+                                {recStream && <RecordingWave stream={recStream} />}
+                              </>
                             ) : (
                               <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => void startRecording(step.id)}>
                                 <Mic size={14} /> Gravar áudio
