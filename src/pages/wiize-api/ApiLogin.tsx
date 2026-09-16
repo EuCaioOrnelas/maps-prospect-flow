@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { formatCep, isCepComplete, lookupCep } from "@/lib/cepLookup";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 import { createWiizeApiAccess, resolveWiizeApiAccess, type WiizeApiProfileInput } from "@/lib/wiizeApiAuth";
+import { trackSignupStart, trackSignupComplete } from "@/lib/analytics";
 
 type Mode = "login" | "signup";
 
@@ -99,8 +100,10 @@ export default function ApiLogin() {
 
   const switchMode = (nextMode: Mode) => {
     const next: Mode = API_SIGNUP_ENABLED ? nextMode : "login";
+    if (next === "signup") trackSignupStart("wiize_api");
     setMode(next);
     setStep(1);
+
     setAwaitingConfirm(null);
     setAuthMessage(null);
     const p = new URLSearchParams(params);
