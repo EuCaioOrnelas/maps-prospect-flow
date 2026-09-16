@@ -13,6 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { OutreachComposeDialog } from "@/components/admin/partners/OutreachComposeDialog";
@@ -791,6 +795,37 @@ export default function AdminInfluencerOutreach() {
         onOpenThread={() => { const p = detail; setDetail(null); setThread(p); }}
         finding={finding.includes(detail?.id)}
       />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDelete?.disqualify
+                ? `Marcar como não qualificado e excluir ${confirmDelete?.ids.length} influenciador(es)?`
+                : `Excluir ${confirmDelete?.ids.length ?? 0} influenciador(es)?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Os contatos, conversas e histórico de abordagem desses
+              influenciadores também serão removidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkBusy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={bulkBusy}
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (!confirmDelete) return;
+                if (confirmDelete.disqualify) disqualifyAndDelete(confirmDelete.ids);
+                else deleteProspects(confirmDelete.ids);
+              }}
+            >
+              {bulkBusy ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <InfluencerApproachDialog
         open={!!approach}
