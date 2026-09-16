@@ -118,31 +118,41 @@ export const TrackingTags = () => {
   useEffect(() => {
     let active = true;
     (async () => {
-      // Fonte única: função pública (tabela + secret como reserva).
-      // Usa fetch puro: não depende da sessão de login do visitante.
+      // 1) Cadastro do admin (tabela pública).
+      try {
+        const { data } = await supabase
+          .from("tracking_settings")
+          .select("gtm_id, ga4_id, meta_pixel_id, enabled")
+          .maybeSingle();
+        if (!active) return;
+        if (data) {
+          const clean = sanitize(data as TrackingSettings);
+          if (clean.ga4_id || clean.gtm_id || clean.meta_pixel_id) {
+            setCfg(clean);
+            return;
+          }
+          if (clean.enabled === false) {
+            setCfg(clean);
+            return;
+          }
+        }
+      } catch {
+        /* segue para a reserva abaixo */
+      }
+      // 2) Reserva: função pública que também lê o ID guardado nos secrets.
       try {
         const res = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tracking-config`,
           {
             headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-            signal: AbortSignal.timeout(6000),
+            signal: AbortSignal.timeout(8000),
           },
         );
-        if (res.ok) {
-          const data = (await res.json()) as TrackingSettings;
-          if (!active) return;
-          setCfg(sanitize(data));
-          return;
-        }
+        if (!res.ok || !active) return;
+        setCfg(sanitize((await res.json()) as TrackingSettings));
       } catch {
-        /* cai no plano B abaixo */
+        /* sem configuração: nada é carregado */
       }
-      const { data } = await supabase
-        .from("tracking_settings")
-        .select("gtm_id, ga4_id, meta_pixel_id, enabled")
-        .maybeSingle();
-      if (!active || !data) return;
-      setCfg(sanitize(data as TrackingSettings));
     })();
     return () => {
       active = false;
