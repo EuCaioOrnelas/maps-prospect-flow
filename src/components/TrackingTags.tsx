@@ -79,6 +79,7 @@ function loadMetaPixel(id: string) {
 }
 
 function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
+  console.log("[dbgTT] applyTags", JSON.stringify(cfg), JSON.stringify(prefs));
   if (!cfg.enabled) return;
   // Google Tag Manager: carrega com analíticos OU marketing; o próprio GTM
   // respeita o Consent Mode enviado em src/lib/consent.ts.
@@ -135,6 +136,7 @@ export const TrackingTags = () => {
 
   useEffect(() => {
     if (!cfg) return;
+    console.log("[dbgTT] cfg ready", JSON.stringify(cfg), hasConsentDecision());
     if (hasConsentDecision()) applyTags(cfg, getConsent());
     return onConsentChange((prefs) => {
       applyTags(cfg, prefs);
