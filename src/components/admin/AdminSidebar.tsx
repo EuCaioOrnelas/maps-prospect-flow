@@ -116,7 +116,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Blog", url: "/admin/blog", icon: FileText },
       { title: "Blog Analytics", url: "/admin/blog/analytics", icon: Activity },
       { title: "Emails", url: "/admin/email-tests", icon: Mail },
-      { title: "Fluxos", url: "/admin/email-flows", icon: Workflow },
+      
       { title: "Score Usuários", url: "/admin/user-scoring", icon: Trophy },
       { title: "Trial Email Flow", url: "/admin/trial-email-flow", icon: Zap },
       

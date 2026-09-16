@@ -644,7 +644,7 @@ export default function AdminDashboard() {
               { label: "Billing", href: "/admin/pix-billing", icon: DollarSign },
               { label: "Relatórios", href: "/admin/relatorios", icon: BarChart3 },
               { label: "Score", href: "/admin/user-scoring", icon: Target },
-              { label: "Fluxos Email", href: "/admin/email-flows", icon: Zap },
+              { label: "Trial Email Flow", href: "/admin/trial-email-flow", icon: Zap },
               { label: "Avisos", href: "/admin/announcements", icon: AlertCircle },
             ].map((action) => (
               <button

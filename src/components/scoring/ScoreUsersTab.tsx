@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, TrendingUp, TrendingDown, Minus, ChevronLeft, ChevronRight, Download } from "lucide-react";
-import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
+import { ScoreUserDetailDialog } from "@/components/scoring/ScoreUserDetailDialog";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -299,7 +299,7 @@ export const ScoreUsersTab = () => {
       </CardContent>
 
       {selectedUserId && (
-        <AdminUserInfoDialog
+        <ScoreUserDetailDialog
           userId={selectedUserId}
           open={!!selectedUserId}
           onOpenChange={(open) => !open && setSelectedUserId(null)}

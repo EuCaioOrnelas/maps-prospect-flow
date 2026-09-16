@@ -1,4 +1,4 @@
--- Execução automática do fluxo de e-mails do Trial (a cada 15 minutos).
+-- Execução automática do fluxo de e-mails do Trial (1x por hora).
 -- Idempotente: pode ser executado novamente.
 -- A chave abaixo corresponde ao secret LIFECYCLE_CRON_KEY do projeto.
 
