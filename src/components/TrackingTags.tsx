@@ -79,7 +79,6 @@ function loadMetaPixel(id: string) {
 }
 
 function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
-  console.log("[dbgTT] applyTags", JSON.stringify(cfg), JSON.stringify(prefs));
   if (!cfg.enabled) return;
   // Google Tag Manager: carrega com analíticos OU marketing; o próprio GTM
   // respeita o Consent Mode enviado em src/lib/consent.ts.
@@ -90,8 +89,21 @@ function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
   if (cfg.meta_pixel_id && prefs.marketing) loadMetaPixel(cfg.meta_pixel_id);
 }
 
-const isPlaceholder = (v: string | null) =>
-  !v || !v.trim() || v.trim().startsWith("@secret:");
+/** Ignora valores vazios, placeholders de secret e IDs de exemplo (G-XXXXXXXXXX). */
+const isPlaceholder = (v: string | null) => {
+  const s = (v ?? "").trim();
+  if (!s) return true;
+  if (s.startsWith("@secret:")) return true;
+  if (/^(GTM-|G-)X+$/i.test(s)) return true;
+  return false;
+};
+
+const sanitize = (cfg: TrackingSettings): TrackingSettings => ({
+  ...cfg,
+  gtm_id: isPlaceholder(cfg.gtm_id) ? null : cfg.gtm_id!.trim(),
+  ga4_id: isPlaceholder(cfg.ga4_id) ? null : cfg.ga4_id!.trim(),
+  meta_pixel_id: isPlaceholder(cfg.meta_pixel_id) ? null : cfg.meta_pixel_id!.trim(),
+});
 
 /**
  * Carrega Google Analytics 4, Google Tag Manager e Pixel do Meta conforme o
@@ -111,17 +123,15 @@ export const TrackingTags = () => {
       try {
         const res = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tracking-config`,
-          { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } },
+          {
+            headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+            signal: AbortSignal.timeout(6000),
+          },
         );
         if (res.ok) {
           const data = (await res.json()) as TrackingSettings;
           if (!active) return;
-          setCfg({
-            ...data,
-            gtm_id: isPlaceholder(data.gtm_id) ? null : data.gtm_id,
-            ga4_id: isPlaceholder(data.ga4_id) ? null : data.ga4_id,
-            meta_pixel_id: isPlaceholder(data.meta_pixel_id) ? null : data.meta_pixel_id,
-          });
+          setCfg(sanitize(data));
           return;
         }
       } catch {
@@ -132,13 +142,7 @@ export const TrackingTags = () => {
         .select("gtm_id, ga4_id, meta_pixel_id, enabled")
         .maybeSingle();
       if (!active || !data) return;
-      const row = data as TrackingSettings;
-      setCfg({
-        ...row,
-        gtm_id: isPlaceholder(row.gtm_id) ? null : row.gtm_id,
-        ga4_id: isPlaceholder(row.ga4_id) ? null : row.ga4_id,
-        meta_pixel_id: isPlaceholder(row.meta_pixel_id) ? null : row.meta_pixel_id,
-      });
+      setCfg(sanitize(data as TrackingSettings));
     })();
     return () => {
       active = false;
@@ -147,7 +151,6 @@ export const TrackingTags = () => {
 
   useEffect(() => {
     if (!cfg) return;
-    console.log("[dbgTT] cfg ready", JSON.stringify(cfg), hasConsentDecision());
     if (hasConsentDecision()) applyTags(cfg, getConsent());
     return onConsentChange((prefs) => {
       applyTags(cfg, prefs);
