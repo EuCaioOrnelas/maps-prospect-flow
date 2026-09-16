@@ -57,6 +57,13 @@
       "when": 1789521140567,
       "tag": "0007_quick_replies_steps",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789568561480,
+      "tag": "0008_lifecycle_email_infrastructure",
+      "breakpoints": true
     }
   ]
 }
