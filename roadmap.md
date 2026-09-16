@@ -1,31 +1,5 @@
-# Roadmap
-- [x] Encerrar sessões após 30 minutos sem atividade real, com prazo compartilhado e logout coordenado entre abas
-- [x] Atualizar secrets Evolution (URL/KEY)
-- [x] Auditoria Evolution em SDR/chat/CRM/IA (janela 24h, áudio, mídia, leitura, eco fromMe, transcrição)
-- [x] Reconexão automática Evolution (webhook + keepalive 5min), histórico nunca importado, conversas presas à linha DDD+8
-- [ ] Teste E2E com número Evolution real conectado (nenhum conectado ainda na conta)
-- [x] Onboarding: "Conectar número" -> /numeros
-- [x] Sidebar: Números como última opção
-- [x] Redesign página Números
-- [x] Liberar 10 números na conta do usuário
-- [x] Refinar seletor e comparativo de tipos de número
-- [x] Liberar cadastro nos CTAs e navegação pública da Wiize API
-- [x] Refinar ícones, conectores e controles do canvas de Fluxos
-- [x] Auditoria Central Intelligence: perf (consultas escopadas por telefone), dedupe de sinais, retornos decrescentes, qualidade da conversa, debounce de concorrência, outcomes sem duplicidade
-- [x] Página pública /inteligencia + link no menu e rodapé
-- [x] Reescrita da comunicação (hero, SEO, FAQ, planos, seções de vendas) para inteligência comercial
-- [ ] Validação E2E com conversa real de ponta a ponta (depende de volume de mensagens reais na conta)
-- [x] Corrigir oportunidades vazias após prospecção em contas recém-criadas (validação autenticada depende de login na prévia)
-- [ ] Implementar criptografia AES-256-GCM autocontida em cada Edge Function para chat_messages e previews, migrar legado sem destruição e auditar todos os caminhos de leitura/gravação. Bloqueio: migração legada requer execução administrativa autenticada.
-- [ ] Auditar ponta a ponta a criptografia do chat: secrets, banco externo, writers/readers, Realtime, multitenancy, migração legada e falhas de entrega.
-- [x] Refinar a página Encontre suas próximas oportunidades: título Wiize, card de abordagem premium, conteúdo centralizado e sem scroll horizontal
-- [x] Unificar perfil da empresa e serviços e adicionar expansão rápida de plano, CRM, oportunidades, números e colaboradores
-- [x] Refinar Perfil e Minha Assinatura como painel executivo Wiize, com seletor evidente, troca de plano e adicionais integrados
-- [x] Consolidar Minha Assinatura: planos com ícones, capacidade operacional, compra direta de adicionais e downloads de faturas Stripe/PIX; refinar saída e adicionais no upgrade
-- [x] Reorganizar Minha Assinatura: plano e alteração em 70/30, capacidade em painel informativo único e catálogo de adicionais visível
-- [x] Refinar compra de capacidade: catálogo premium, seleção apenas de novos pacotes, confirmação e totais operacionais claros
-- [x] Alinhar catálogo de adicionais, adicionar resumo de investimento e cobrar imediatamente no cartão/PIX antes de liberar capacidade
-
-- Chat: privacidade visual (desfoques), compromisso pelo header e mensagens agendadas (edge chat-scheduled-sender + cron por minuto). Validar em produção com envio real.
-- [x] Auditar e corrigir gatilhos, filtros e conexões dos fluxos
-- [x] Alinhar Prospecção Web ao visual da Prospecção IA, buscar meta de 30 com mínimo de 10 sites e manter somente análise/diagnóstico
+## Trial Email Flow repair and polish
+- [x] Reproduce and diagnose /admin/trial-email-flow runtime error
+- [x] Fix the page without changing lifecycle business rules
+- [x] Polish the page and verify interactive/data states
+- [x] Audit and report the complete unique file list

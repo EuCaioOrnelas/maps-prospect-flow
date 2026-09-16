@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Monitor, Smartphone, Send } from "lucide-react";
+import { AlertTriangle, Monitor, RefreshCw, Smartphone, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { LifecycleStep } from "@/hooks/useLifecycleCampaign";
@@ -20,36 +20,62 @@ export function StepPreviewDialog({ step, open, onOpenChange }: Props) {
   const [testEmail, setTestEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+
+  const loadPreview = async () => {
+    if (!step) return;
+    setLoading(true);
+    setPreviewError("");
+    setHtml("");
+    try {
+      const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
+        body: { action: "preview", stepId: step.id },
+      });
+      if (error || data?.error || !data?.html) {
+        const message = data?.error || "Não foi possível gerar a prévia";
+        setPreviewError(message);
+        toast.error(message);
+        return;
+      }
+      setHtml(data.html);
+      setSubject(data.subject || step.subject || step.name);
+    } catch {
+      setPreviewError("Não foi possível gerar a prévia");
+      toast.error("Não foi possível gerar a prévia");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!open || !step) return;
-    setLoading(true);
-    supabase.functions
-      .invoke("lifecycle-admin", { body: { action: "preview", stepId: step.id } })
-      .then(({ data, error }) => {
-        if (error || data?.error) {
-          toast.error(data?.error || "Não foi possível gerar a prévia");
-          setHtml("");
-        } else {
-          setHtml(data.html);
-          setSubject(data.subject);
-        }
-      })
-      .finally(() => setLoading(false));
+    void loadPreview();
+    // A abertura ou troca da etapa é o único gatilho automático da prévia.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, step]);
 
   const sendTest = async () => {
     if (!step) return;
-    setSending(true);
-    const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
-      body: { action: "send_test", stepId: step.id, recipientEmail: testEmail.trim() },
-    });
-    setSending(false);
-    if (error || data?.error) {
-      toast.error(data?.error || "Falha ao enviar o teste");
+    const recipient = testEmail.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(recipient)) {
+      toast.error("Informe um e-mail válido");
       return;
     }
-    toast.success(data.message || "E-mail de teste enviado");
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
+        body: { action: "send_test", stepId: step.id, recipientEmail: recipient },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || "Falha ao enviar o teste");
+        return;
+      }
+      toast.success(data.message || "E-mail de teste enviado");
+    } catch {
+      toast.error("Falha ao enviar o teste");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -77,6 +103,12 @@ export function StepPreviewDialog({ step, open, onOpenChange }: Props) {
           <div className="rounded-lg border border-border/60 bg-muted/30 p-3 flex justify-center">
             {loading ? (
               <p className="text-sm text-muted-foreground py-16">Gerando prévia...</p>
+            ) : previewError ? (
+              <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-center">
+                <AlertTriangle className="text-destructive" />
+                <p className="text-sm text-destructive">{previewError}</p>
+                <Button size="sm" variant="outline" onClick={loadPreview}><RefreshCw /> Tentar novamente</Button>
+              </div>
             ) : (
               <iframe
                 title="Prévia do e-mail"

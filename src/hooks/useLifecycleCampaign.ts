@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Tabelas novas ainda não refletidas nos tipos gerados do banco.
 const db = supabase as any;
@@ -70,14 +71,26 @@ export function useLifecycleCampaign() {
   const [deliveries, setDeliveries] = useState<LifecycleDelivery[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: camp } = await db
+    setError(null);
+    const { data: camp, error: campaignError } = await db
       .from("lifecycle_campaigns")
       .select("*")
       .eq("key", CAMPAIGN_KEY)
       .maybeSingle();
+
+    if (campaignError) {
+      setCampaign(null);
+      setSteps([]);
+      setDeliveries([]);
+      setEnrollments([]);
+      setError("Não foi possível carregar os dados do fluxo.");
+      setLoading(false);
+      return;
+    }
 
     if (!camp) {
       setCampaign(null);
@@ -87,7 +100,7 @@ export function useLifecycleCampaign() {
     }
     setCampaign(camp);
 
-    const [{ data: stepRows }, { data: deliveryRows }, { data: enrollmentRows }] = await Promise.all([
+    const [stepResult, deliveryResult, enrollmentResult] = await Promise.all([
       db.from("lifecycle_campaign_steps").select("*").eq("campaign_id", camp.id).order("day_offset"),
       db
         .from("lifecycle_email_deliveries")
@@ -98,9 +111,13 @@ export function useLifecycleCampaign() {
       db.from("lifecycle_enrollments").select("*").eq("campaign_id", camp.id).limit(5000),
     ]);
 
-    setSteps(stepRows || []);
-    setDeliveries(deliveryRows || []);
-    setEnrollments(enrollmentRows || []);
+    const requestError = stepResult.error || deliveryResult.error || enrollmentResult.error;
+    if (requestError) {
+      setError("Parte dos dados não pôde ser carregada. Tente atualizar.");
+    }
+    setSteps(stepResult.data || []);
+    setDeliveries(deliveryResult.data || []);
+    setEnrollments(enrollmentResult.data || []);
     setLoading(false);
   }, []);
 
@@ -156,7 +173,12 @@ export function useLifecycleCampaign() {
       const patch: Record<string, unknown> = { status };
       if (status === "active") patch.activated_at = campaign.activated_at || new Date().toISOString();
       if (status === "paused") patch.paused_at = new Date().toISOString();
-      await db.from("lifecycle_campaigns").update(patch).eq("id", campaign.id);
+      const { error: updateError } = await db.from("lifecycle_campaigns").update(patch).eq("id", campaign.id);
+      if (updateError) {
+        toast.error("Não foi possível alterar o status da campanha");
+        return;
+      }
+      toast.success(status === "active" ? "Campanha ativada" : status === "paused" ? "Campanha pausada" : "Campanha desativada");
       await load();
     },
     [campaign, load],
@@ -164,13 +186,14 @@ export function useLifecycleCampaign() {
 
   const saveStep = useCallback(
     async (stepId: string, patch: Partial<LifecycleStep>) => {
-      await db.from("lifecycle_campaign_steps").update(patch).eq("id", stepId);
+      const { error: updateError } = await db.from("lifecycle_campaign_steps").update(patch).eq("id", stepId);
+      if (updateError) throw updateError;
       await load();
     },
     [load],
   );
 
-  return { campaign, steps, deliveries, enrollments, metricsByStep, totals, loading, load, setStatus, saveStep };
+  return { campaign, steps, deliveries, enrollments, metricsByStep, totals, loading, error, load, setStatus, saveStep };
 }
 
 export function rate(part: number, total: number): string {

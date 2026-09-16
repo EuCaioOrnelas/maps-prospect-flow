@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 // --- Helpers locais (sem arquivos compartilhados) ---
 const LIFECYCLE_BRAND = {
   name: "Wiize",
