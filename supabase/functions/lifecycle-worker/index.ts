@@ -126,10 +126,26 @@ ${opts.trackingPixel || ""}
 }
 
 /** HMAC-SHA256 signature (hex) used to protect tracking/unsubscribe links. */
+const LIFECYCLE_SECRET_FALLBACK = "wiize-lifecycle-tracking-fallback-v1";
+
+function resolveTrackingSecret(): string {
+  const candidates = [
+    Deno.env.get("LIFECYCLE_TRACKING_SECRET"),
+    Deno.env.get("LIFECYCLE_CRON_KEY"),
+    Deno.env.get("LIFECYCLE_CRON_SECRET"),
+  ];
+  for (const c of candidates) {
+    const v = (c || "").trim();
+    if (v) return v;
+  }
+  return LIFECYCLE_SECRET_FALLBACK;
+}
+
 async function signToken(secret: string, payload: string): Promise<string> {
+  const material = (secret || "").trim() || LIFECYCLE_SECRET_FALLBACK;
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(material),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -262,7 +278,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const resendKey = Deno.env.get("RESEND_API_KEY") || "";
-  const trackingSecret = Deno.env.get("LIFECYCLE_TRACKING_SECRET") || "";
+  const trackingSecret = resolveTrackingSecret();
   const cronSecrets = [
     Deno.env.get("LIFECYCLE_CRON_KEY") || "",
     Deno.env.get("LIFECYCLE_CRON_SECRET") || "",
