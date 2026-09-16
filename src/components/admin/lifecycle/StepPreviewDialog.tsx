@@ -17,13 +17,14 @@ const SAMPLE_VARIABLES: Record<string, string> = {
   checkout_url: "https://wiize.com.br/planos",
 };
 
-const WIIZE_EMAIL_LOGO_URL = "https://wiize.com.br/assets/wiize-logo-wordmark-white.png";
+const WIIZE_EMAIL_LOGO_URL = "https://wiize-lb2.lovable.app/__l5e/assets-v1/63550fa5-ffa3-4751-a8f2-d12db32cc49c/wiize-logo-wordmark-white.png";
 
 function compilePreview(value: string) {
   return value.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_match, key: string) => SAMPLE_VARIABLES[key] || "");
 }
 
 function buildPreviewHtml(step: LifecycleStep) {
+  const trialDay = Number.isFinite(Number(step.day_offset)) ? Math.max(0, Number(step.day_offset)) : 0;
   const body = compilePreview(step.content || "")
     .replace(/<h1(\s[^>]*)?>/gi, '<h1$1 style="margin:0 0 16px;font-size:17px;line-height:1.45;color:#111827;font-weight:800;letter-spacing:0;">')
     .replace(/<h2(\s[^>]*)?>/gi, '<h2$1 style="margin:22px 0 10px;font-size:16px;line-height:1.45;color:#111827;font-weight:800;letter-spacing:0;">')
@@ -41,7 +42,7 @@ function buildPreviewHtml(step: LifecycleStep) {
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:36px 16px;"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
-<tr><td style="background:#3daa57;padding:20px 36px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td><img src="${WIIZE_EMAIL_LOGO_URL}" width="112" height="33" alt="Wiize" style="display:block;width:112px;max-width:112px;height:33px;border:0;"></td><td align="right"><span style="display:inline-block;background:#ffffff;color:#16794d;font-size:11px;font-weight:800;padding:7px 11px;border-radius:999px;">TRIAL • DIA ${step.day_offset}</span></td></tr></table></td></tr>
+<tr><td style="background:#3daa57;padding:20px 36px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td><img src="${WIIZE_EMAIL_LOGO_URL}" width="112" height="33" alt="Wiize" style="display:block;width:112px;max-width:112px;height:33px;border:0;"></td><td align="right"><span style="display:inline-block;background:#ffffff;color:#16794d;font-size:11px;font-weight:800;padding:7px 11px;border-radius:999px;">TRIAL • DIA ${trialDay}</span></td></tr></table></td></tr>
 <tr><td style="padding:38px 36px 32px;">${body}</td></tr>
 <tr><td style="padding:20px 36px;background:#f9fafb;text-align:center;border-top:1px solid #e5e7eb;"><p style="margin:0;font-size:12px;color:#9ca3af;">Wiize • Inteligência comercial para empresas</p><p style="margin:7px 0 0;font-size:12px;color:#9ca3af;text-decoration:underline;">Não quero mais receber estes e-mails</p></td></tr>
 </table></td></tr></table></body></html>`;

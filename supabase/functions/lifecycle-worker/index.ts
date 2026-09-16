@@ -5,7 +5,7 @@ const LIFECYCLE_BRAND = {
   name: "Wiize",
   color: "#3daa57",
   url: "https://wiize.com.br",
-  logo: "https://wiize.com.br/assets/wiize-logo-wordmark-white.png",
+  logo: "https://wiize-lb2.lovable.app/__l5e/assets-v1/63550fa5-ffa3-4751-a8f2-d12db32cc49c/wiize-logo-wordmark-white.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
@@ -90,7 +90,9 @@ function lifecycleLayout(opts: {
   trackingPixel?: string;
   unsubscribeUrl?: string;
   isTest?: boolean;
+  dayOffset: number;
 }): string {
+  const trialDay = Number.isFinite(Number(opts.dayOffset)) ? Math.max(0, Number(opts.dayOffset)) : 0;
   const preheaderHtml = opts.preheader
     ? `<div style="display:none;font-size:1px;color:#f4f4f5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${escapeHtml(opts.preheader)}</div>`
     : "";
@@ -111,7 +113,10 @@ ${preheaderHtml}
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
 ${testBanner}
 <tr><td style="background:${LIFECYCLE_BRAND.color};padding:20px 36px;">
-  <img src="${LIFECYCLE_BRAND.logo}" width="112" height="33" alt="${LIFECYCLE_BRAND.name}" style="display:block;width:112px;max-width:112px;height:33px;border:0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td><img src="${LIFECYCLE_BRAND.logo}" width="112" height="33" alt="${LIFECYCLE_BRAND.name}" style="display:block;width:112px;max-width:112px;height:33px;border:0;"></td>
+    <td align="right"><span style="display:inline-block;background:#ffffff;color:#16794d;font-size:11px;font-weight:800;padding:7px 11px;border-radius:999px;">TRIAL • DIA ${trialDay}</span></td>
+  </tr></table>
 </td></tr>
 <tr><td style="padding:38px 36px 32px;">
 ${opts.body}
@@ -547,7 +552,7 @@ Deno.serve(async (req) => {
       const preheader = compileTemplate(step.preheader || "", vars);
       const tracked = await injectTracking({ html: body, baseUrl: supabaseUrl, deliveryId: delivery.id, secret: trackingSecret });
       const unsubscribeUrl = await buildUnsubscribeUrl(supabaseUrl, delivery.id, trackingSecret);
-      const html = lifecycleLayout({ body: tracked, preheader, unsubscribeUrl });
+      const html = lifecycleLayout({ body: tracked, preheader, unsubscribeUrl, dayOffset: step.day_offset });
 
       if (stats.sent > 0) await new Promise((r) => setTimeout(r, 600)); // Resend rate limit
 
