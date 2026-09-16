@@ -18,6 +18,7 @@ import { useQuickReplies, applyQuickReplyVariables, quickReplySteps, type QuickR
 import { useQuickReplyContext } from "@/hooks/useQuickReplyContext";
 import { useContactAIApproach } from "@/hooks/useContactAIApproach";
 import { QuickReplyPicker } from "./QuickReplyPicker";
+import { toggleWhatsAppMarker } from "@/lib/whatsappFormat";
 
 const AI_APPROACH_QR_ID = "__ai_approach__";
 
