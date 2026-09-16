@@ -169,6 +169,9 @@ export default function AdminTrialEmailFlow() {
                       <Button size="sm" variant="outline" onClick={() => setPreviewStep(step)}>
                         <Eye size={14} className="mr-1.5" /> Visualizar
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => setSendTestStep(step)}>
+                        <Send size={14} className="mr-1.5" /> Testar
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => setEditStep(step)}>
                         <Pencil size={14} className="mr-1.5" /> Editar
                       </Button>
