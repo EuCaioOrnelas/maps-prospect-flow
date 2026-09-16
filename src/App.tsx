@@ -24,6 +24,7 @@ const CookieConsent = lazyWithRetry(() => import("@/components/CookieConsent").t
 const TrackingTags = lazyWithRetry(() => import("@/components/TrackingTags").then((m) => ({ default: m.TrackingTags })), "TrackingTags");
 import { PageVisitTracker } from "@/components/tracking/PageVisitTracker";
 import { AfterPaint } from "@/components/AfterPaint";
+import AdminTrialEmailFlow from "./pages/admin/AdminTrialEmailFlow";
 
 
 // Eager load critical pages
@@ -85,7 +86,6 @@ const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
 
 const UpgradePromo = lazyWithRetry(() => import("./pages/UpgradePromo"), "UpgradePromo");
 const AdminEmailTests = lazyWithRetry(() => import("./pages/AdminEmailTests"), "AdminEmailTests");
-const AdminTrialEmailFlow = lazyWithRetry(() => import("./pages/admin/AdminTrialEmailFlow"), "AdminTrialEmailFlow");
 const AdminUserScoring = lazyWithRetry(() => import("./pages/AdminUserScoring"), "AdminUserScoring");
 const AdminPixBilling = lazyWithRetry(() => import("./pages/AdminPixBilling"), "AdminPixBilling");
 const CancellationFeedback = lazyWithRetry(() => import("./pages/CancellationFeedback"), "CancellationFeedback");
