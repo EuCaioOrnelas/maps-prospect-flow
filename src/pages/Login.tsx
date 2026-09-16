@@ -127,67 +127,103 @@ const Login = () => {
     }
   }, [user, loading, isTrialExpired, profile, navigate, toast, mfaChecking]);
 
+  // Evita que uma chamada lenta/travada deixe o botão girando para sempre.
+  const withTimeout = async <T,>(promise: PromiseLike<T>, ms: number, fallback: T): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<T>((resolve) => {
+      timer = setTimeout(() => resolve(fallback), ms);
+    });
+    try {
+      return await Promise.race([Promise.resolve(promise), timeout]);
+    } finally {
+      clearTimeout(timer!);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return; // anti-duplo-clique
     setIsLoading(true);
 
-    // Rate limit: 5 tentativas / 15 min por e-mail (chave pública normalizada)
-    const rlKey = (email || "").trim().toLowerCase();
-    if (rlKey) {
-      const { data: rl } = await supabase.rpc("check_rate_limit", {
-        p_identifier: rlKey,
-        p_endpoint: "login",
-        p_max_requests: 5,
-        p_window_seconds: 900,
-      });
-      if (rl && (rl as any).allowed === false) {
-        const { formatRetryAfter } = await import("@/lib/rateLimitFormat");
+    try {
+      // Rate limit: 5 tentativas / 15 min por e-mail (chave pública normalizada)
+      const rlKey = (email || "").trim().toLowerCase();
+      if (rlKey) {
+        const { data: rl } = await withTimeout(
+          supabase.rpc("check_rate_limit", {
+            p_identifier: rlKey,
+            p_endpoint: "login",
+            p_max_requests: 5,
+            p_window_seconds: 900,
+          }),
+          6000,
+          { data: null } as any,
+        );
+        if (rl && (rl as any).allowed === false) {
+          const { formatRetryAfter } = await import("@/lib/rateLimitFormat");
+          setIsLoading(false);
+          toast({
+            title: "Muitas tentativas de login",
+            description: `Aguarde ${formatRetryAfter((rl as any).retry_after)} antes de tentar novamente.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      const { error } = await signIn(email, password);
+
+      if (error) {
         setIsLoading(false);
-        toast({
-          title: "Muitas tentativas de login",
-          description: `Aguarde ${formatRetryAfter((rl as any).retry_after)} antes de tentar novamente.`,
-          variant: "destructive",
-        });
+        const { title, description } = getLoginErrorMessage(error);
+        toast({ title, description, variant: "destructive" });
         return;
       }
-    }
 
-    const { error } = await signIn(email, password);
+      // Sucesso: zera contador para não punir o usuário legítimo (não bloqueia o login)
+      if (rlKey) {
+        void supabase.rpc("reset_rate_limit", { p_identifier: rlKey, p_endpoint: "login" });
+      }
 
-    if (error) {
+      // Verifica se a conta exige 2FA: se sim, mostra a segunda etapa aqui mesmo
+      mfaBlockRef.current = true;
+      setMfaChecking(true);
+      const { data: mfaStatus } = await withTimeout(
+        call2FA("status"),
+        8000,
+        { data: null, error: "timeout" } as any,
+      );
+      if (mfaStatus?.two_factor_enabled && !mfaStatus.session_verified) {
+        setIsLoading(false);
+        setMfaPending(true);
+        setMfaCode("");
+        setMfaError(null);
+        setMfaRecovery(false);
+        return;
+      }
+      mfaBlockRef.current = false;
+      setMfaChecking(false);
+
+      toast({
+        title: "Login realizado!",
+        description: "Redirecionando...",
+      });
       setIsLoading(false);
-      const { title, description } = getLoginErrorMessage(error);
+
+      // Fallback: se o redirecionamento automático não acontecer (perfil demorando),
+      // leva o usuário para o painel mesmo assim.
+      setTimeout(() => {
+        if (window.location.pathname === "/login" && !mfaBlockRef.current) {
+          navigate("/dashboard", { replace: true });
+        }
+      }, 2500);
+    } catch (err: any) {
+      mfaBlockRef.current = false;
+      setMfaChecking(false);
+      setIsLoading(false);
+      const { title, description } = getLoginErrorMessage(err instanceof Error ? err : new Error(String(err?.message || err)));
       toast({ title, description, variant: "destructive" });
-      return;
     }
-
-    // Sucesso: zera contador para não punir o usuário legítimo
-    if (rlKey) {
-      await supabase.rpc("reset_rate_limit", { p_identifier: rlKey, p_endpoint: "login" });
-    }
-
-    // Verifica se a conta exige 2FA: se sim, mostra a segunda etapa aqui mesmo
-    mfaBlockRef.current = true;
-    setMfaChecking(true);
-    const { data: mfaStatus } = await call2FA("status");
-    if (mfaStatus?.two_factor_enabled && !mfaStatus.session_verified) {
-      setIsLoading(false);
-      setMfaPending(true);
-      setMfaCode("");
-      setMfaError(null);
-      setMfaRecovery(false);
-      return;
-    }
-    mfaBlockRef.current = false;
-    setMfaChecking(false);
-
-    toast({
-      title: "Login realizado!",
-      description: "Redirecionando...",
-    });
-    // Redirect will be handled by useEffect based on trial status
-    setIsLoading(false);
   };
 
   const handleMfaSubmit = async (e: React.FormEvent) => {
