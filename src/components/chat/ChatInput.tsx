@@ -314,60 +314,32 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     const steps = quickReplySteps(qr);
     const firstText = steps.find(s => s.type === "text");
     const resolved = applyQuickReplyVariables(firstText?.content || qr.content || "", quickReplyCtx);
+    // Limpa o "/atalho" do campo imediatamente para que ele nunca seja enviado como mensagem.
+    setText("");
     setConfirmPreview(resolved);
     setConfirmQr(qr);
   }, [quickReplyCtx]);
 
   const handleConfirmSend = useCallback(async () => {
-    if (!confirmQr) return;
+    if (!confirmQr || !conversationId) return;
     const steps = confirmSteps;
-    const shortcut = confirmQr.shortcut;
+    const qr = confirmQr;
     setConfirmQr(null);
     setConfirmExpanded(false);
     setText("");
     onCancelReply?.();
     inputRef.current?.focus();
 
-    qrCancelRef.current = false;
-    setQrRun({ shortcut, total: steps.length, index: 0, waitSeconds: 0 });
-
-    try {
-      for (let i = 0; i < steps.length; i++) {
-        if (qrCancelRef.current) break;
-        const step = steps[i];
-        const wait = i === 0 ? 0 : Math.max(0, Number(step.delay_seconds) || 0) * 1000;
-        if (wait > 0) {
-          setQrRun({ shortcut, total: steps.length, index: i, waitSeconds: wait / 1000 });
-          await new Promise<void>(resolve => {
-            const start = Date.now();
-            const id = setInterval(() => {
-              if (qrCancelRef.current || Date.now() - start >= wait) { clearInterval(id); resolve(); }
-            }, 200);
-          });
-          if (qrCancelRef.current) break;
-        }
-        setQrRun(prev => (prev ? { ...prev, index: i, waitSeconds: 0 } : prev));
-
-        if (step.type === "text") {
-          if ((step.content || "").trim()) onSendMessage(step.content!.trim(), i === 0 ? replyingTo?.id : undefined);
-          continue;
-        }
-        if (!step.media_url) continue;
-        try {
-          const signed = (await resolveStorageUrl(step.media_url)) || step.media_url;
-          const res = await fetch(signed);
-          const blob = await res.blob();
-          const fname = step.media_filename || `quick-reply-${shortcut}`;
-          const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
-          onSendMedia(file, (step.content || "").trim() || undefined);
-        } catch (err) {
-          console.error("[quick-reply] media fetch failed", err);
-        }
-      }
-    } finally {
-      setQrRun(null);
-    }
-  }, [confirmQr, confirmSteps, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
+    void startQuickReplyRun({
+      conversationId,
+      quickReplyId: qr.id,
+      shortcut: qr.shortcut,
+      steps,
+      replyToId: replyingTo?.id,
+      sendText: (t, replyId, convId) => onSendMessage(t, replyId, convId),
+      sendMedia: (file, cap, convId) => onSendMedia(file, cap, convId),
+    });
+  }, [confirmQr, confirmSteps, conversationId, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (qrOpen) {
