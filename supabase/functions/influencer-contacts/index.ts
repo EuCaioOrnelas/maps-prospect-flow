@@ -29,18 +29,15 @@ const MAX_PROSPECTS_PER_RUN = 25;
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 const BAD_EMAIL = /(example\.|sentry\.|wixpress|\.png|\.jpg|\.jpeg|\.gif|\.webp|\.svg|@2x|no-?reply@|@youtube\.com|@google\.com|@sentry)/i;
 
-const SOCIAL_PATTERNS: { type: string; re: RegExp; build: (m: RegExpMatchArray) => string }[] = [
-  { type: "instagram", re: /(?:instagram\.com|instagr\.am)\/([A-Za-z0-9._]{2,30})/gi, build: (m) => `https://instagram.com/${m[1]}` },
-  { type: "tiktok", re: /tiktok\.com\/@([A-Za-z0-9._]{2,30})/gi, build: (m) => `https://tiktok.com/@${m[1]}` },
-  { type: "twitter", re: /(?:twitter\.com|x\.com)\/([A-Za-z0-9_]{2,20})/gi, build: (m) => `https://x.com/${m[1]}` },
-  { type: "linkedin", re: /linkedin\.com\/(in|company)\/([A-Za-z0-9\-_.%]{2,60})/gi, build: (m) => `https://linkedin.com/${m[1]}/${m[2]}` },
-  { type: "facebook", re: /facebook\.com\/([A-Za-z0-9.\-]{3,60})/gi, build: (m) => `https://facebook.com/${m[1]}` },
-  { type: "threads", re: /threads\.(?:net|com)\/@?([A-Za-z0-9._]{2,30})/gi, build: (m) => `https://threads.net/@${m[1]}` },
-];
+// Apenas dois tipos de contato são capturados: e-mail e Instagram.
+const INSTAGRAM_RE = /(?:instagram\.com|instagr\.am)\/([A-Za-z0-9._]{2,30})/gi;
 
-const SOCIAL_HOSTS = /(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|twitter\.com|x\.com|tiktok\.com|linkedin\.com|threads\.(net|com)|whatsapp\.com|wa\.me|t\.me|spotify\.com|linktr\.ee|beacons\.ai|discord\.gg|twitch\.tv|patreon\.com|kwai)/i;
+const SOCIAL_HOSTS = /(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|twitter\.com|x\.com|tiktok\.com|threads\.(net|com)|whatsapp\.com|wa\.me|t\.me|spotify\.com|discord\.gg|twitch\.tv|kwai|pinterest\.|apple\.com|amazon\.|google\.com\/maps)/i;
 
-const SOCIAL_JUNK = /^(p|reel|reels|explore|share|watch|profile|pages|groups|hashtag|home|feed|about|privacy|legal|policies|sharer|tr|intent|login|signup|status|i)$/i;
+// agregadores de links: não são contato, mas costumam esconder e-mail/Instagram
+const LINK_HUBS = /(linktr\.ee|beacons\.ai|linkme\.bio|bio\.link|lnk\.bio|campsite\.bio|linklist\.bio|many\.link|carrd\.co|about\.me)/i;
+
+const SOCIAL_JUNK = /^(p|reel|reels|explore|share|watch|profile|pages|groups|hashtag|home|feed|about|privacy|legal|policies|sharer|tr|intent|login|signup|accounts|status|i|stories|tv|direct)$/i;
 
 interface Found {
   type: string;
@@ -57,47 +54,65 @@ function normalize(type: string, value: string) {
   return v.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
 }
 
+// extrai apenas e-mails e perfis de Instagram
 function harvest(text: string, source: string, confidence: "alta" | "media" | "baixa"): Found[] {
   const out: Found[] = [];
   if (!text) return out;
 
+  const seen = new Set<string>();
+
   for (const raw of text.match(EMAIL_RE) ?? []) {
-    const email = raw.toLowerCase().replace(/[.,;)]+$/, "");
+    const email = raw.toLowerCase().replace(/[.,;)'"]+$/, "");
     if (BAD_EMAIL.test(email)) continue;
+    if (seen.has(`e${email}`)) continue;
+    seen.add(`e${email}`);
     out.push({ type: "email", value: email, source, confidence });
   }
 
-  for (const p of SOCIAL_PATTERNS) {
-    const re = new RegExp(p.re.source, p.re.flags);
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      const handle = m[m.length - 1];
-      if (SOCIAL_JUNK.test(handle)) continue;
-      out.push({
-        type: p.type,
-        value: p.build(m as unknown as RegExpMatchArray),
-        source,
-        confidence,
-        // referências capturadas fora de fonte oficial entram como possível correspondência
-        status: confidence === "baixa" ? "possivel" : "encontrado",
-      });
-    }
-  }
-
-  // sites e páginas de contato
-  const links = Array.from(new Set((text.match(/https?:\/\/[^\s)<>"'\\]+/g) ?? []).map((l) => l.replace(/[.,;]+$/, ""))));
-  for (const l of links.slice(0, 40)) {
-    if (SOCIAL_HOSTS.test(l)) continue;
-    const isContactPage = /(contato|contact|fale-conosco|parcerias|imprensa|midia|media-?kit|business)/i.test(l);
+  const re = new RegExp(INSTAGRAM_RE.source, INSTAGRAM_RE.flags);
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const handle = m[1];
+    if (SOCIAL_JUNK.test(handle)) continue;
+    if (seen.has(`i${handle.toLowerCase()}`)) continue;
+    seen.add(`i${handle.toLowerCase()}`);
     out.push({
-      type: isContactPage ? "contact_page" : "website",
-      value: l,
+      type: "instagram",
+      value: `https://instagram.com/${handle}`,
       source,
-      confidence: confidence === "alta" ? "alta" : "media",
+      confidence,
+      status: confidence === "baixa" ? "possivel" : "encontrado",
     });
   }
 
   return out;
+}
+
+// links a visitar em busca de e-mail/Instagram (não viram contato)
+function crawlableLinks(text: string): string[] {
+  if (!text) return [];
+  const raw = (text.match(/https?:\/\/[^\s)<>"'\\]+/g) ?? []).map((l) =>
+    l.replace(/[.,;'"]+$/, "").replace(/&amp;/g, "&"),
+  );
+  const out: string[] = [];
+  for (let l of raw) {
+    // links do YouTube vêm embrulhados em /redirect?q=<url>
+    const redirect = l.match(/youtube\.com\/redirect\?[^\s]*[?&]q=([^&\s]+)/i);
+    if (redirect) {
+      try { l = decodeURIComponent(redirect[1]); } catch { continue; }
+    }
+    if (SOCIAL_HOSTS.test(l)) continue;
+    if (/\.(png|jpe?g|gif|webp|svg|css|js|ico|mp4|pdf)(\?|$)/i.test(l)) continue;
+    out.push(l);
+  }
+  return Array.from(new Set(out));
+}
+
+function rankLinks(links: string[]): string[] {
+  const score = (l: string) =>
+    (/(contato|contact|fale-conosco|parcerias|imprensa|midia|media-?kit|business|sobre|about)/i.test(l) ? 0 : 1) +
+    (LINK_HUBS.test(l) ? -1 : 0);
+  return [...links].sort((a, b) => score(a) - score(b));
 }
 
 async function fetchPage(url: string, timeoutMs = 8000): Promise<string> {
@@ -340,35 +355,79 @@ serve(async (req) => {
         Array.isArray(p.contact_links) ? p.contact_links.join("\n") : "",
       ].filter(Boolean).join("\n");
 
-      found.push(...harvest(decodeHtmlEntities(aboutBlob), "youtube_about", "alta"));
+      const aboutText = decodeHtmlEntities(aboutBlob);
+      found.push(...harvest(aboutText, "youtube_about", "alta"));
 
       // contatos já existentes nas colunas legadas do prospect
       if (p.contact_email) found.push({ type: "email", value: p.contact_email, source: "youtube_about", confidence: "alta" });
       if (p.instagram_url) found.push({ type: "instagram", value: p.instagram_url, source: "youtube_about", confidence: "alta" });
-      if (p.website_url) found.push({ type: "website", value: p.website_url, source: "youtube_about", confidence: "media" });
 
       // descrições dos vídeos recentes (fonte oficial do criador, porém secundária)
       const { data: videos } = await admin
         .from("influencer_videos").select("description").eq("prospect_id", p.id).limit(12);
       const videoBlob = (videos ?? []).map((v: any) => v.description).filter(Boolean).join("\n");
-      if (videoBlob) found.push(...harvest(decodeHtmlEntities(videoBlob), "youtube_videos", "media"));
+      const videoText = decodeHtmlEntities(videoBlob);
+      if (videoText) found.push(...harvest(videoText, "youtube_videos", "media"));
 
-      // site oficial + página de contato
-      const sites = Array.from(new Set(
-        found.filter((f) => f.type === "website" || f.type === "contact_page").map((f) => f.value),
-      )).slice(0, 2);
+      // página pública do canal (traz links do "Sobre" que a API não devolve)
+      let channelText = "";
+      const channelUrls = [
+        p.youtube_channel_id ? `https://www.youtube.com/channel/${p.youtube_channel_id}/about?hl=pt-BR` : "",
+        p.channel_url ? `${String(p.channel_url).replace(/\/+$/, "")}/about?hl=pt-BR` : "",
+      ].filter(Boolean);
+      for (const url of channelUrls) {
+        const html = await fetchPage(url, 9000);
+        if (!html) continue;
+        channelText = decodeHtmlEntities(html.replace(/\\u0026/g, "&").replace(/\\\//g, "/"));
+        found.push(...harvest(channelText, "youtube_about", "alta"));
+        break;
+      }
 
-      for (const site of sites) {
+      // sites oficiais e agregadores de links citados pelo criador
+      const candidateLinks = rankLinks([
+        ...(p.website_url ? [String(p.website_url)] : []),
+        ...crawlableLinks(aboutText),
+        ...crawlableLinks(channelText),
+        ...crawlableLinks(videoText),
+      ]).slice(0, 4);
+
+      const visited = new Set<string>();
+      for (const site of candidateLinks) {
+        if (visited.has(site)) continue;
+        visited.add(site);
         const html = decodeHtmlEntities(await fetchPage(site));
-        if (html) found.push(...harvest(html, "site_oficial", "media"));
+        if (!html) continue;
+        const isHub = LINK_HUBS.test(site);
+        found.push(...harvest(html, isHub ? "agregador_links" : "site_oficial", "media"));
+
+        if (isHub) {
+          // dentro do agregador, visita o site próprio do criador
+          for (const inner of rankLinks(crawlableLinks(html)).slice(0, 2)) {
+            if (visited.has(inner) || LINK_HUBS.test(inner)) continue;
+            visited.add(inner);
+            const innerHtml = decodeHtmlEntities(await fetchPage(inner, 7000));
+            if (innerHtml) found.push(...harvest(innerHtml, "site_oficial", "media"));
+          }
+          continue;
+        }
+
         try {
           const origin = new URL(site).origin;
-          for (const path of ["/contato", "/contact"]) {
+          for (const path of ["/contato", "/contact", "/fale-conosco", "/parcerias", "/sobre", "/about"]) {
+            if (visited.has(origin + path)) continue;
+            visited.add(origin + path);
             const page = decodeHtmlEntities(await fetchPage(origin + path, 6000));
             if (page) found.push(...harvest(page, "pagina_contato", "media"));
           }
         } catch { /* URL inválida */ }
       }
+
+      // mantém apenas e-mail e Instagram (limpa tipos antigos: site, tiktok, etc.)
+      await admin
+        .from("influencer_contacts")
+        .delete()
+        .eq("prospect_id", p.id)
+        .not("type", "in", "(email,instagram)");
 
       const stats = await persist(admin, p.id, found);
 
@@ -379,7 +438,6 @@ serve(async (req) => {
       const legacyPatch: Record<string, unknown> = {
         contact_email: p.contact_email || pick("email"),
         instagram_url: p.instagram_url || pick("instagram"),
-        website_url: p.website_url || pick("website"),
       };
       const hasEmail = !!legacyPatch.contact_email;
       if (["novo", "qualificado", "contato_encontrado"].includes(p.status)) {
