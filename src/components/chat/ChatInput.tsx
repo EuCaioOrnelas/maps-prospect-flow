@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/privateStorage";
@@ -19,15 +19,17 @@ import { useQuickReplyContext } from "@/hooks/useQuickReplyContext";
 import { useContactAIApproach } from "@/hooks/useContactAIApproach";
 import { QuickReplyPicker } from "./QuickReplyPicker";
 import { toggleWhatsAppMarker } from "@/lib/whatsappFormat";
+import {
+  startQuickReplyRun,
+  cancelQuickReplyRun,
+  getQuickReplyRun,
+  subscribeQuickReplyRuns,
+  type QuickReplyRun,
+} from "@/lib/quickReplyRuns";
 
 const AI_APPROACH_QR_ID = "__ai_approach__";
 
-interface QrRunState {
-  shortcut: string;
-  total: number;
-  index: number;
-  waitSeconds: number;
-}
+type QrRunState = QuickReplyRun;
 
 /** Pill exibida enquanto a sequência da mensagem rápida roda, com relógio animado e contagem regressiva. */
 function QrRunningPill({ run, onStop }: { run: QrRunState; onStop: () => void }) {
