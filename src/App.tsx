@@ -560,16 +560,20 @@ const App = () => (
               </Routes>
               </PartnerTrackingProvider>
             </Suspense>
-            {/* Overlays globais: montam depois do primeiro paint (idle) e em
+            {/* Aviso de cookies: monta junto com o site (LGPD, sem atraso). */}
+            <Suspense fallback={null}>
+              <CookieConsent />
+            </Suspense>
+            {/* Demais overlays globais: montam depois do primeiro paint (idle) e em
                 chunks próprios — não competem com o conteúdo crítico. */}
             <AfterPaint>
               <Suspense fallback={null}>
                 <ActivationChecklist />
                 <TrackingTags />
-                <CookieConsent />
                 <GuidedTour />
               </Suspense>
             </AfterPaint>
+
 
             </GuidedTourProvider>
             </MetricStateCacheProvider>
