@@ -58,7 +58,7 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
           ref={ref}
           className={cn("block whitespace-pre-wrap break-words", className)}
         >
-          {text}
+          {formatted}
         </span>
       </div>
       {overflowing && (
