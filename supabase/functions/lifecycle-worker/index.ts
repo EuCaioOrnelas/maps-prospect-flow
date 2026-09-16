@@ -56,16 +56,16 @@ function escapeHtml(value: string): string {
  * de e-mail ignoram CSS externo e o editor visual gera HTML simples.
  */
 const INLINE_STYLES: Record<string, string> = {
-  h1: "margin:0 0 16px;font-size:24px;line-height:1.3;color:#18181b;font-weight:700;",
-  h2: "margin:24px 0 12px;font-size:20px;line-height:1.3;color:#18181b;font-weight:700;",
+  h1: "margin:0 0 18px;font-size:28px;line-height:1.2;color:#111827;font-weight:800;letter-spacing:0;",
+  h2: "margin:26px 0 12px;font-size:19px;line-height:1.35;color:#111827;font-weight:750;letter-spacing:0;",
   h3: "margin:20px 0 10px;font-size:17px;line-height:1.4;color:#18181b;font-weight:700;",
-  p: "margin:0 0 16px;font-size:16px;line-height:1.6;color:#3f3f46;",
-  li: "margin:0 0 8px;font-size:16px;line-height:1.6;color:#3f3f46;",
-  ul: "margin:0 0 16px;padding-left:20px;",
+  p: "margin:0 0 16px;font-size:15px;line-height:1.7;color:#4b5563;",
+  li: "margin:0 0 9px;font-size:15px;line-height:1.65;color:#374151;",
+  ul: "margin:0 0 18px;padding-left:22px;",
   ol: "margin:0 0 16px;padding-left:20px;",
   a: "color:#3daa57;",
   img: "max-width:100%;height:auto;border-radius:8px;",
-  blockquote: "margin:0 0 16px;padding:12px 16px;border-left:3px solid #3daa57;background:#f4f4f5;color:#3f3f46;font-size:16px;line-height:1.6;",
+  blockquote: "margin:20px 0;padding:18px 20px;border-left:4px solid #199b68;background:#ecfdf5;color:#1f2937;font-size:15px;line-height:1.65;border-radius:0 10px 10px 0;",
 };
 
 function styleEmailHtml(html: string): string {
@@ -101,20 +101,20 @@ function lifecycleLayout(opts: {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 ${preheaderHtml}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:36px 16px;">
 <tr><td align="center">
-<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);max-width:560px;width:100%;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
 ${testBanner}
-<tr><td style="background:${LIFECYCLE_BRAND.color};padding:22px 32px;text-align:center;">
-  <span style="color:#ffffff;font-size:20px;font-weight:700;">${LIFECYCLE_BRAND.name}</span>
+<tr><td style="background:#111827;padding:24px 36px;">
+  <span style="color:#ffffff;font-size:23px;font-weight:800;">${LIFECYCLE_BRAND.name}</span>
 </td></tr>
-<tr><td style="padding:32px;">
+<tr><td style="padding:38px 36px 32px;">
 ${opts.body}
 </td></tr>
-<tr><td style="padding:16px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;">
-  <p style="margin:0;font-size:12px;color:#a1a1aa;">Você recebeu este e-mail porque criou uma conta na ${LIFECYCLE_BRAND.name}.</p>
+<tr><td style="padding:20px 36px;background:#f9fafb;text-align:center;border-top:1px solid #e5e7eb;">
+  <p style="margin:0;font-size:12px;color:#9ca3af;">${LIFECYCLE_BRAND.name} • Inteligência comercial para empresas</p>
   ${unsubscribe}
 </td></tr>
 </table>

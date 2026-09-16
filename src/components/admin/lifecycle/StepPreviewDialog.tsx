@@ -22,18 +22,24 @@ function compilePreview(value: string) {
 }
 
 function buildPreviewHtml(step: LifecycleStep) {
-  const body = compilePreview(step.content || "");
+  const body = compilePreview(step.content || "")
+    .replace(/<h1(\s[^>]*)?>/gi, '<h1$1 style="margin:0 0 18px;font-size:28px;line-height:1.2;color:#111827;font-weight:800;letter-spacing:0;">')
+    .replace(/<h2(\s[^>]*)?>/gi, '<h2$1 style="margin:26px 0 12px;font-size:19px;line-height:1.35;color:#111827;font-weight:750;letter-spacing:0;">')
+    .replace(/<p(?![^>]*style=)(\s[^>]*)?>/gi, '<p$1 style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#4b5563;">')
+    .replace(/<li(?![^>]*style=)(\s[^>]*)?>/gi, '<li$1 style="margin:0 0 9px;font-size:15px;line-height:1.65;color:#374151;">')
+    .replace(/<ul(?![^>]*style=)(\s[^>]*)?>/gi, '<ul$1 style="margin:0 0 18px;padding-left:22px;">')
+    .replace(/<blockquote(?![^>]*style=)(\s[^>]*)?>/gi, '<blockquote$1 style="margin:20px 0;padding:18px 20px;border-left:4px solid #199b68;background:#ecfdf5;color:#1f2937;font-size:15px;line-height:1.65;border-radius:0 10px 10px 0;">');
   const preheader = compilePreview(step.preheader || "");
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
-<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);max-width:560px;width:100%;">
-<tr><td style="background:#3daa57;padding:22px 32px;text-align:center;"><span style="color:#ffffff;font-size:20px;font-weight:700;">Wiize</span></td></tr>
-<tr><td style="padding:32px;">${body}</td></tr>
-<tr><td style="padding:16px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;"><p style="margin:0;font-size:12px;color:#a1a1aa;">Você recebeu este e-mail porque criou uma conta na Wiize.</p><p style="margin:6px 0 0;font-size:12px;color:#a1a1aa;text-decoration:underline;">Não quero mais receber estes e-mails</p></td></tr>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:36px 16px;"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
+<tr><td style="background:#111827;padding:24px 36px;"><table role="presentation" width="100%"><tr><td><span style="color:#ffffff;font-size:23px;font-weight:800;">Wiize</span></td><td align="right"><span style="display:inline-block;background:#199b68;color:#ffffff;font-size:11px;font-weight:700;padding:7px 10px;border-radius:999px;">TRIAL • DIA ${step.day_offset}</span></td></tr></table></td></tr>
+<tr><td style="padding:38px 36px 32px;">${body}</td></tr>
+<tr><td style="padding:20px 36px;background:#f9fafb;text-align:center;border-top:1px solid #e5e7eb;"><p style="margin:0;font-size:12px;color:#9ca3af;">Wiize • Inteligência comercial para empresas</p><p style="margin:7px 0 0;font-size:12px;color:#9ca3af;text-decoration:underline;">Não quero mais receber estes e-mails</p></td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -88,8 +94,14 @@ export function StepPreviewDialog({ step, open, onOpenChange }: Props) {
     }
     setSending(true);
     try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) {
+        toast.error("Sua sessão expirou. Entre novamente para enviar o teste.");
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
         body: { action: "send_test", stepId: step.id, recipientEmail: recipient },
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
       });
       if (error || data?.error) {
         toast.error(data?.error || await readFunctionError(error, "Falha ao enviar o teste"));
