@@ -49,6 +49,8 @@ function loadGa4(id: string) {
     ...(import.meta.env.DEV ? { debug_mode: true } : {}),
   });
   setMeasurementId(id);
+  // Primeira visualização: a tag só existe agora, então enviamos aqui.
+  trackPageView(window.location.pathname + window.location.search);
 }
 
 function loadMetaPixel(id: string) {

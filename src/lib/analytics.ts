@@ -46,9 +46,14 @@ export function trackEvent(event: string, params: TrackParams = {}) {
   }
 }
 
-/** Visualização de página em navegação interna (SPA). */
+let lastView = { path: "", at: 0 };
+
+/** Visualização de página em navegação interna (SPA). Evita duplicidade. */
 export function trackPageView(path: string, title?: string) {
   if (!allowed()) return;
+  const now = Date.now();
+  if (lastView.path === path && now - lastView.at < 2000) return;
+  lastView = { path, at: now };
   try {
     ensureDataLayer();
     const params = {
