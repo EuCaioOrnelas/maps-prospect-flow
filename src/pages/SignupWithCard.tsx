@@ -40,7 +40,7 @@ import { stripePromise } from "@/lib/stripe";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { useRef } from "react";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
-import { trackSignUpStart, trackSignUp, trackTrialStarted } from "@/lib/analytics";
+import { trackSignupStart, trackSignupComplete, trackTrialStarted } from "@/lib/analytics";
 
 /** Rascunho dos dados (sem senha e sem cartão) para retomar após o 3DS. */
 const DRAFT_KEY = "wiize_trial_draft";
