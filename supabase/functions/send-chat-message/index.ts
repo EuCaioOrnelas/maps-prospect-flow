@@ -185,7 +185,33 @@ Deno.serve(async (req) => {
       messagePayload.document = { link: mediaLink, filename: filename || "document", caption: caption || undefined };
     } else if (type === "audio") {
       messagePayload.type = "audio";
-      messagePayload.audio = { link: mediaLink };
+      // Áudios reenviados por link ganham o rótulo "Encaminhada" no WhatsApp porque a Meta
+      // reaproveita o hash do arquivo. Fazemos upload novo em /media para obter um id fresco.
+      let freshAudioId: string | null = null;
+      if (connection.provider !== 'evolution' && mediaLink) {
+        try {
+          const fileResp = await fetch(mediaLink);
+          if (fileResp.ok) {
+            const blob = await fileResp.blob();
+            const mime = body.media_mime_type || blob.type || 'audio/ogg';
+            const form = new FormData();
+            form.append('messaging_product', 'whatsapp');
+            form.append('type', mime);
+            form.append('file', new File([blob], filename || 'audio.ogg', { type: mime }));
+            const upResp = await fetch(`https://graph.facebook.com/v21.0/${phone_number_id}/media`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${connection.access_token}` },
+              body: form,
+            });
+            const upJson = await upResp.json().catch(() => ({}));
+            if (upResp.ok && upJson?.id) freshAudioId = upJson.id;
+            else console.warn('[send-chat-message] audio upload falhou:', JSON.stringify(upJson));
+          }
+        } catch (e) {
+          console.warn('[send-chat-message] audio upload error:', (e as Error).message);
+        }
+      }
+      messagePayload.audio = freshAudioId ? { id: freshAudioId } : { link: mediaLink };
     } else if (type === "template") {
       messagePayload.type = "template";
       messagePayload.template = {
