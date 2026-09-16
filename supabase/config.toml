@@ -1,5 +1,8 @@
 project_id = "wgokhkawjdxsmvfuhazb"
 
+[functions.tracking-config]
+verify_jwt = false
+
 [functions.blog-image-upload]
 verify_jwt = false
 
