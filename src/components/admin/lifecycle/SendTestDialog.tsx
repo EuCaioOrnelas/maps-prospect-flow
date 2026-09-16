@@ -9,6 +9,17 @@ import type { LifecycleStep } from "@/hooks/useLifecycleCampaign";
 
 const STORAGE_KEY = "lifecycle_test_email";
 
+async function getFunctionError(error: unknown, fallback: string) {
+  const context = (error as { context?: Response } | null)?.context;
+  if (!context) return error instanceof Error ? error.message : fallback;
+  try {
+    const payload = await context.clone().json();
+    return payload?.error || payload?.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 interface Props {
   step: LifecycleStep | null;
   open: boolean;
@@ -32,18 +43,24 @@ export function SendTestDialog({ step, open, onOpenChange }: Props) {
     }
     setSending(true);
     try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session?.access_token) {
+        toast.error("Sua sessão expirou. Entre novamente para enviar o teste.");
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
         body: { action: "send_test", stepId: step.id, recipientEmail: to },
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
       });
       if (error || data?.error) {
-        toast.error(data?.error || "Falha ao enviar o teste");
+        toast.error(data?.error || await getFunctionError(error, "Falha ao enviar o teste"));
         return;
       }
       localStorage.setItem(STORAGE_KEY, to);
       toast.success(data.message || `E-mail de teste enviado para ${to}`);
       onOpenChange(false);
-    } catch {
-      toast.error("Falha ao enviar o teste");
+    } catch (error) {
+      toast.error(await getFunctionError(error, "Falha ao enviar o teste"));
     } finally {
       setSending(false);
     }
