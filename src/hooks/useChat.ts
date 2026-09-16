@@ -510,24 +510,24 @@ export function useChat() {
 
     const tempId = crypto.randomUUID();
     const tempMsg: ChatMessage = {
-      id: tempId, conversation_id: activeConversationId, user_id: user.id,
+      id: tempId, conversation_id: convId, user_id: user.id,
       waba_message_id: null, direction: "outbound", message_type: messageType,
       content: caption || null, media_url: signedUrl, media_mime_type: file.type,
       media_filename: file.name, media_caption: caption || null, status: "pending",
       status_updated_at: null, reply_to_message_id: null,
       metadata: { client_token: tempId }, created_at: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempMsg]);
+    if (isActive) setMessages(prev => [...prev, tempMsg]);
     const connection = connections.find(c => c.id === conversation.waba_connection_id);
     if (!connection) {
-      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+      if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
       toast.error("Conexão não encontrada");
       return;
     }
     if (connection) {
       supabase.functions.invoke("send-chat-message", {
         body: {
-          conversation_id: activeConversationId,
+          conversation_id: convId,
           phone_number_id: connection.phone_number_id,
           to: conversation.contact_phone,
           type: messageType,
@@ -541,7 +541,7 @@ export function useChat() {
       }).then(({ error: fnError }) => {
         if (fnError) {
           console.error("[sendMedia] send-chat-message error:", fnError);
-          setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+          if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
           toast.error("Falha ao enviar mídia", { description: fnError.message });
         }
       });
