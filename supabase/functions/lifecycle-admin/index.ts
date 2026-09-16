@@ -5,7 +5,7 @@ const LIFECYCLE_BRAND = {
   name: "Wiize",
   color: "#3daa57",
   url: "https://wiize.com.br",
-  logo: "https://wiize.com.br/assets/logo_wiize_white.png",
+  logo: "https://wiize.com.br/assets/wiize-logo-wordmark-white.png",
   from: "Wiize <no-reply@wiize.com.br>",
 };
 
@@ -57,8 +57,8 @@ function escapeHtml(value: string): string {
  * de e-mail ignoram CSS externo e o editor visual gera HTML simples.
  */
 const INLINE_STYLES: Record<string, string> = {
-  h1: "margin:0 0 18px;font-size:28px;line-height:1.2;color:#111827;font-weight:800;letter-spacing:0;",
-  h2: "margin:26px 0 12px;font-size:19px;line-height:1.35;color:#111827;font-weight:750;letter-spacing:0;",
+  h1: "margin:0 0 16px;font-size:17px;line-height:1.45;color:#111827;font-weight:800;letter-spacing:0;",
+  h2: "margin:22px 0 10px;font-size:16px;line-height:1.45;color:#111827;font-weight:800;letter-spacing:0;",
   h3: "margin:20px 0 10px;font-size:17px;line-height:1.4;color:#18181b;font-weight:700;",
   p: "margin:0 0 16px;font-size:15px;line-height:1.7;color:#4b5563;",
   li: "margin:0 0 9px;font-size:15px;line-height:1.65;color:#374151;",
@@ -111,7 +111,7 @@ ${preheaderHtml}
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(17,24,39,0.10);max-width:600px;width:100%;border:1px solid #e5e7eb;">
 ${testBanner}
 <tr><td style="background:${LIFECYCLE_BRAND.color};padding:20px 36px;">
-  <img src="${LIFECYCLE_BRAND.logo}" width="52" height="52" alt="${LIFECYCLE_BRAND.name}" style="display:block;width:52px;max-width:52px;height:52px;border:0;">
+  <img src="${LIFECYCLE_BRAND.logo}" width="112" height="33" alt="${LIFECYCLE_BRAND.name}" style="display:block;width:112px;max-width:112px;height:33px;border:0;">
 </td></tr>
 <tr><td style="padding:38px 36px 32px;">
 ${opts.body}
