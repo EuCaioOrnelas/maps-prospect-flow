@@ -718,20 +718,37 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                     </span>
                   </button>
                 )}
-                {quickReplies.map((qr) => (
-                  <button
-                    key={qr.id}
-                    type="button"
-                    onClick={() => void applyQuickReply(qr)}
-                    title={qr.title || qr.shortcut}
-                    className="shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-border bg-background hover:bg-primary/10 hover:border-primary/40 transition-colors"
-                  >
-                    <MessageSquareText size={13} className="text-primary shrink-0" />
-                    <span className="text-[12px] font-medium text-foreground whitespace-nowrap max-w-[140px] truncate">
-                      {qr.title || qr.shortcut}
-                    </span>
-                  </button>
-                ))}
+                {quickReplies.map((qr) => {
+                  const running = qrRun?.quickReplyId === qr.id;
+                  return (
+                    <button
+                      key={qr.id}
+                      type="button"
+                      disabled={!!qrRun}
+                      onClick={() => void applyQuickReply(qr)}
+                      title={running ? "Sequência em andamento" : (qr.title || qr.shortcut)}
+                      className={cn(
+                        "shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border transition-colors",
+                        running
+                          ? "border-primary/60 bg-primary/10"
+                          : "border-border bg-background hover:bg-primary/10 hover:border-primary/40",
+                        qrRun && !running && "opacity-50"
+                      )}
+                    >
+                      {running ? (
+                        <Clock size={13} className="text-primary shrink-0 animate-spin [animation-duration:2s]" />
+                      ) : (
+                        <MessageSquareText size={13} className="text-primary shrink-0" />
+                      )}
+                      <span className={cn(
+                        "text-[12px] font-medium whitespace-nowrap max-w-[140px] truncate",
+                        running ? "text-primary" : "text-foreground"
+                      )}>
+                        {qr.title || qr.shortcut}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
