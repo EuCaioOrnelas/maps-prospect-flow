@@ -29,18 +29,15 @@ const MAX_PROSPECTS_PER_RUN = 25;
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 const BAD_EMAIL = /(example\.|sentry\.|wixpress|\.png|\.jpg|\.jpeg|\.gif|\.webp|\.svg|@2x|no-?reply@|@youtube\.com|@google\.com|@sentry)/i;
 
-const SOCIAL_PATTERNS: { type: string; re: RegExp; build: (m: RegExpMatchArray) => string }[] = [
-  { type: "instagram", re: /(?:instagram\.com|instagr\.am)\/([A-Za-z0-9._]{2,30})/gi, build: (m) => `https://instagram.com/${m[1]}` },
-  { type: "tiktok", re: /tiktok\.com\/@([A-Za-z0-9._]{2,30})/gi, build: (m) => `https://tiktok.com/@${m[1]}` },
-  { type: "twitter", re: /(?:twitter\.com|x\.com)\/([A-Za-z0-9_]{2,20})/gi, build: (m) => `https://x.com/${m[1]}` },
-  { type: "linkedin", re: /linkedin\.com\/(in|company)\/([A-Za-z0-9\-_.%]{2,60})/gi, build: (m) => `https://linkedin.com/${m[1]}/${m[2]}` },
-  { type: "facebook", re: /facebook\.com\/([A-Za-z0-9.\-]{3,60})/gi, build: (m) => `https://facebook.com/${m[1]}` },
-  { type: "threads", re: /threads\.(?:net|com)\/@?([A-Za-z0-9._]{2,30})/gi, build: (m) => `https://threads.net/@${m[1]}` },
-];
+// Apenas dois tipos de contato são capturados: e-mail e Instagram.
+const INSTAGRAM_RE = /(?:instagram\.com|instagr\.am)\/([A-Za-z0-9._]{2,30})/gi;
 
-const SOCIAL_HOSTS = /(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|twitter\.com|x\.com|tiktok\.com|linkedin\.com|threads\.(net|com)|whatsapp\.com|wa\.me|t\.me|spotify\.com|linktr\.ee|beacons\.ai|discord\.gg|twitch\.tv|patreon\.com|kwai)/i;
+const SOCIAL_HOSTS = /(youtube\.com|youtu\.be|instagram\.com|instagr\.am|facebook\.com|twitter\.com|x\.com|tiktok\.com|threads\.(net|com)|whatsapp\.com|wa\.me|t\.me|spotify\.com|discord\.gg|twitch\.tv|kwai|pinterest\.|apple\.com|amazon\.|google\.com\/maps)/i;
 
-const SOCIAL_JUNK = /^(p|reel|reels|explore|share|watch|profile|pages|groups|hashtag|home|feed|about|privacy|legal|policies|sharer|tr|intent|login|signup|status|i)$/i;
+// agregadores de links: não são contato, mas costumam esconder e-mail/Instagram
+const LINK_HUBS = /(linktr\.ee|beacons\.ai|linkme\.bio|bio\.link|lnk\.bio|campsite\.bio|linklist\.bio|many\.link|carrd\.co|about\.me)/i;
+
+const SOCIAL_JUNK = /^(p|reel|reels|explore|share|watch|profile|pages|groups|hashtag|home|feed|about|privacy|legal|policies|sharer|tr|intent|login|signup|accounts|status|i|stories|tv|direct)$/i;
 
 interface Found {
   type: string;
@@ -57,47 +54,65 @@ function normalize(type: string, value: string) {
   return v.toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
 }
 
+// extrai apenas e-mails e perfis de Instagram
 function harvest(text: string, source: string, confidence: "alta" | "media" | "baixa"): Found[] {
   const out: Found[] = [];
   if (!text) return out;
 
+  const seen = new Set<string>();
+
   for (const raw of text.match(EMAIL_RE) ?? []) {
-    const email = raw.toLowerCase().replace(/[.,;)]+$/, "");
+    const email = raw.toLowerCase().replace(/[.,;)'"]+$/, "");
     if (BAD_EMAIL.test(email)) continue;
+    if (seen.has(`e${email}`)) continue;
+    seen.add(`e${email}`);
     out.push({ type: "email", value: email, source, confidence });
   }
 
-  for (const p of SOCIAL_PATTERNS) {
-    const re = new RegExp(p.re.source, p.re.flags);
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      const handle = m[m.length - 1];
-      if (SOCIAL_JUNK.test(handle)) continue;
-      out.push({
-        type: p.type,
-        value: p.build(m as unknown as RegExpMatchArray),
-        source,
-        confidence,
-        // referências capturadas fora de fonte oficial entram como possível correspondência
-        status: confidence === "baixa" ? "possivel" : "encontrado",
-      });
-    }
-  }
-
-  // sites e páginas de contato
-  const links = Array.from(new Set((text.match(/https?:\/\/[^\s)<>"'\\]+/g) ?? []).map((l) => l.replace(/[.,;]+$/, ""))));
-  for (const l of links.slice(0, 40)) {
-    if (SOCIAL_HOSTS.test(l)) continue;
-    const isContactPage = /(contato|contact|fale-conosco|parcerias|imprensa|midia|media-?kit|business)/i.test(l);
+  const re = new RegExp(INSTAGRAM_RE.source, INSTAGRAM_RE.flags);
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const handle = m[1];
+    if (SOCIAL_JUNK.test(handle)) continue;
+    if (seen.has(`i${handle.toLowerCase()}`)) continue;
+    seen.add(`i${handle.toLowerCase()}`);
     out.push({
-      type: isContactPage ? "contact_page" : "website",
-      value: l,
+      type: "instagram",
+      value: `https://instagram.com/${handle}`,
       source,
-      confidence: confidence === "alta" ? "alta" : "media",
+      confidence,
+      status: confidence === "baixa" ? "possivel" : "encontrado",
     });
   }
 
   return out;
+}
+
+// links a visitar em busca de e-mail/Instagram (não viram contato)
+function crawlableLinks(text: string): string[] {
+  if (!text) return [];
+  const raw = (text.match(/https?:\/\/[^\s)<>"'\\]+/g) ?? []).map((l) =>
+    l.replace(/[.,;'"]+$/, "").replace(/&amp;/g, "&"),
+  );
+  const out: string[] = [];
+  for (let l of raw) {
+    // links do YouTube vêm embrulhados em /redirect?q=<url>
+    const redirect = l.match(/youtube\.com\/redirect\?[^\s]*[?&]q=([^&\s]+)/i);
+    if (redirect) {
+      try { l = decodeURIComponent(redirect[1]); } catch { continue; }
+    }
+    if (SOCIAL_HOSTS.test(l)) continue;
+    if (/\.(png|jpe?g|gif|webp|svg|css|js|ico|mp4|pdf)(\?|$)/i.test(l)) continue;
+    out.push(l);
+  }
+  return Array.from(new Set(out));
+}
+
+function rankLinks(links: string[]): string[] {
+  const score = (l: string) =>
+    (/(contato|contact|fale-conosco|parcerias|imprensa|midia|media-?kit|business|sobre|about)/i.test(l) ? 0 : 1) +
+    (LINK_HUBS.test(l) ? -1 : 0);
+  return [...links].sort((a, b) => score(a) - score(b));
 }
 
 async function fetchPage(url: string, timeoutMs = 8000): Promise<string> {
