@@ -121,11 +121,11 @@ export const TrackingTags = () => {
     (async () => {
       // 1) Cadastro do admin (tabela pública).
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("tracking_settings")
           .select("gtm_id, ga4_id, meta_pixel_id, enabled")
           .maybeSingle();
-        console.log("[dbgTT] table", JSON.stringify(data));
+        console.log("[dbgTT] table", JSON.stringify(data), JSON.stringify(error));
         if (!active) return;
         if (data) {
           const clean = sanitize(data as TrackingSettings);
