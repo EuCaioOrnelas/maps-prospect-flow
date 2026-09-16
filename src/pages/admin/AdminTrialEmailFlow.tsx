@@ -216,6 +216,11 @@ export default function AdminTrialEmailFlow() {
         convertedUserIds={convertedUserIds}
       />
       <TestModeDialog open={testModeOpen} onOpenChange={setTestModeOpen} />
+      <SendTestDialog
+        step={sendTestStep}
+        open={!!sendTestStep}
+        onOpenChange={(o) => !o && setSendTestStep(null)}
+      />
 
       <AlertDialog open={confirmActivate} onOpenChange={setConfirmActivate}>
         <AlertDialogContent className="bg-background">
