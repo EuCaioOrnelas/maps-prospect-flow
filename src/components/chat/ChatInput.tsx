@@ -879,7 +879,9 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           }
         }}
       >
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)]">
+        {/* grid-cols-[minmax(0,1fr)] + [&>*]:min-w-0 impedem que um texto longo
+            (ex.: URL) estique a coluna e corte o rodapé/botões do popup. */}
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)] grid-cols-[minmax(0,1fr)] [&>*]:min-w-0">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base sm:text-lg">Enviar mensagem rápida?</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
