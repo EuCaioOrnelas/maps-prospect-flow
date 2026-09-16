@@ -108,6 +108,7 @@ export function useQuickReplies() {
           media_url: input.media_url ?? null,
           media_type: input.media_type ?? null,
           media_filename: input.media_filename ?? null,
+          steps: input.steps ?? [],
         })
         .eq("id", id);
       if (error) { toast.error("Erro ao atualizar: " + error.message); return null; }
@@ -124,6 +125,7 @@ export function useQuickReplies() {
           media_url: input.media_url ?? null,
           media_type: input.media_type ?? null,
           media_filename: input.media_filename ?? null,
+          steps: input.steps ?? [],
         });
       if (error) { toast.error("Erro ao criar: " + error.message); return null; }
       toast.success("Mensagem rápida criada");
