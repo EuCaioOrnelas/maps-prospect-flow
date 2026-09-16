@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/privateStorage";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,72 @@ import { QuickReplyPicker } from "./QuickReplyPicker";
 import { toggleWhatsAppMarker } from "@/lib/whatsappFormat";
 
 const AI_APPROACH_QR_ID = "__ai_approach__";
+
+interface QrRunState {
+  shortcut: string;
+  total: number;
+  index: number;
+  waitSeconds: number;
+}
+
+/** Pill exibida enquanto a sequência da mensagem rápida roda, com relógio animado e contagem regressiva. */
+function QrRunningPill({ run, onStop }: { run: QrRunState; onStop: () => void }) {
+  const [remaining, setRemaining] = useState(run.waitSeconds);
+
+  useEffect(() => {
+    setRemaining(run.waitSeconds);
+    if (run.waitSeconds <= 0) return;
+    const id = setInterval(() => setRemaining(r => Math.max(0, r - 1)), 1000);
+    return () => clearInterval(id);
+  }, [run.index, run.waitSeconds]);
+
+  const waiting = remaining > 0;
+  const pct = waiting ? remaining / run.waitSeconds : 0;
+  const circumference = 2 * Math.PI * 10;
+
+  return (
+    <div className="px-3 pt-2 pb-1">
+      <div className="inline-flex items-center gap-2.5 h-9 px-3 rounded-full border border-primary/50 bg-primary/10 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <span className="relative w-5 h-5 flex items-center justify-center shrink-0">
+          {waiting ? (
+            <>
+              <svg className="absolute inset-0 w-5 h-5 -rotate-90" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="hsl(var(--primary))" strokeOpacity="0.25" strokeWidth="2.5" />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={circumference * (1 - pct)}
+                  className="transition-[stroke-dashoffset] duration-1000 ease-linear"
+                />
+              </svg>
+              <Clock size={10} className="text-primary animate-pulse" />
+            </>
+          ) : (
+            <span className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          )}
+        </span>
+        <span className="text-[12px] font-medium text-foreground whitespace-nowrap">
+          {waiting
+            ? `Enviando /${run.shortcut} · próxima mensagem em ${remaining}s`
+            : `Enviando /${run.shortcut} · mensagem ${Math.min(run.index + 1, run.total)} de ${run.total}`}
+        </span>
+        <button
+          type="button"
+          onClick={onStop}
+          className="p-1 rounded-full hover:bg-foreground/10 transition-colors shrink-0"
+          title="Parar sequência"
+        >
+          <X size={13} className="text-muted-foreground" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface ChatInputProps {
   onSendMessage: (text: string, replyToId?: string) => void;
