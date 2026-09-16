@@ -79,7 +79,6 @@ function loadMetaPixel(id: string) {
 }
 
 function applyTags(cfg: TrackingSettings, prefs: ConsentPrefs) {
-  console.log("[dbgTT] applyTags", JSON.stringify(cfg), JSON.stringify(prefs));
   if (!cfg.enabled) return;
   // Google Tag Manager: carrega com analíticos OU marketing; o próprio GTM
   // respeita o Consent Mode enviado em src/lib/consent.ts.
@@ -121,11 +120,10 @@ export const TrackingTags = () => {
     (async () => {
       // 1) Cadastro do admin (tabela pública).
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("tracking_settings")
           .select("gtm_id, ga4_id, meta_pixel_id, enabled")
           .maybeSingle();
-        console.log("[dbgTT] table", JSON.stringify(data), JSON.stringify(error));
         if (!active) return;
         if (data) {
           const clean = sanitize(data as TrackingSettings);
@@ -150,8 +148,6 @@ export const TrackingTags = () => {
             signal: AbortSignal.timeout(8000),
           },
         );
-        const j = await res.clone().text();
-        console.log("[dbgTT] fn", res.status, j.slice(0,120));
         if (!res.ok || !active) return;
         setCfg(sanitize((await res.json()) as TrackingSettings));
       } catch {
