@@ -7,6 +7,47 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { LifecycleStep } from "@/hooks/useLifecycleCampaign";
 
+const SAMPLE_VARIABLES: Record<string, string> = {
+  "user.name": "Maria",
+  "user.email": "maria@empresa.com.br",
+  "company.name": "Empresa Exemplo",
+  "trial.days_remaining": "3",
+  "trial.end_date": new Date(Date.now() + 3 * 86400000).toLocaleDateString("pt-BR"),
+  dashboard_url: "https://wiize.com.br/dashboard",
+  checkout_url: "https://wiize.com.br/planos",
+};
+
+function compilePreview(value: string) {
+  return value.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_match, key: string) => SAMPLE_VARIABLES[key] || "");
+}
+
+function buildPreviewHtml(step: LifecycleStep) {
+  const body = compilePreview(step.content || "");
+  const preheader = compilePreview(step.preheader || "");
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${preheader}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;"><tr><td align="center">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);max-width:560px;width:100%;">
+<tr><td style="background:#3daa57;padding:22px 32px;text-align:center;"><span style="color:#ffffff;font-size:20px;font-weight:700;">Wiize</span></td></tr>
+<tr><td style="padding:32px;">${body}</td></tr>
+<tr><td style="padding:16px 32px;background:#fafafa;text-align:center;border-top:1px solid #e4e4e7;"><p style="margin:0;font-size:12px;color:#a1a1aa;">Você recebeu este e-mail porque criou uma conta na Wiize.</p><p style="margin:6px 0 0;font-size:12px;color:#a1a1aa;text-decoration:underline;">Não quero mais receber estes e-mails</p></td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+async function readFunctionError(error: unknown, fallback: string) {
+  const context = (error as { context?: Response } | null)?.context;
+  if (!context) return fallback;
+  try {
+    const payload = await context.clone().json();
+    return payload?.error || payload?.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 interface Props {
   step: LifecycleStep | null;
   open: boolean;
@@ -26,25 +67,9 @@ export function StepPreviewDialog({ step, open, onOpenChange }: Props) {
     if (!step) return;
     setLoading(true);
     setPreviewError("");
-    setHtml("");
-    try {
-      const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
-        body: { action: "preview", stepId: step.id },
-      });
-      if (error || data?.error || !data?.html) {
-        const message = data?.error || "Não foi possível gerar a prévia";
-        setPreviewError(message);
-        toast.error(message);
-        return;
-      }
-      setHtml(data.html);
-      setSubject(data.subject || step.subject || step.name);
-    } catch {
-      setPreviewError("Não foi possível gerar a prévia");
-      toast.error("Não foi possível gerar a prévia");
-    } finally {
-      setLoading(false);
-    }
+    setHtml(buildPreviewHtml(step));
+    setSubject(compilePreview(step.subject || step.name));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -67,12 +92,12 @@ export function StepPreviewDialog({ step, open, onOpenChange }: Props) {
         body: { action: "send_test", stepId: step.id, recipientEmail: recipient },
       });
       if (error || data?.error) {
-        toast.error(data?.error || "Falha ao enviar o teste");
+        toast.error(data?.error || await readFunctionError(error, "Falha ao enviar o teste"));
         return;
       }
       toast.success(data.message || "E-mail de teste enviado");
-    } catch {
-      toast.error("Falha ao enviar o teste");
+    } catch (error) {
+      toast.error(await readFunctionError(error, "Falha ao enviar o teste"));
     } finally {
       setSending(false);
     }
