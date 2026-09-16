@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import {
   Mail, Pencil, Eye, Play, Pause, Power, RefreshCw, FlaskConical, ArrowDown, Users, Send,
+  CheckCircle2, Clock3, MousePointerClick, UserRoundCheck, MailCheck, MailOpen, ShieldCheck,
+  AlertTriangle, Workflow,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +28,7 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
 };
 
 export default function AdminTrialEmailFlow() {
-  const { campaign, steps, deliveries, enrollments, metricsByStep, totals, loading, load, setStatus, saveStep } =
+  const { campaign, steps, deliveries, enrollments, metricsByStep, totals, loading, error, load, setStatus, saveStep } =
     useLifecycleCampaign();
 
   const [editStep, setEditStep] = useState<LifecycleStep | null>(null);
@@ -63,7 +65,8 @@ export default function AdminTrialEmailFlow() {
       <div className="p-6 lg:p-8 max-w-[1200px] mx-auto">
         <Card className="border-border/40">
           <CardContent className="p-10 text-center text-sm text-muted-foreground">
-            A campanha de trial ainda não foi criada no banco de dados.
+            {error || "A campanha de trial ainda não foi criada no banco de dados."}
+            {error && <div><Button size="sm" variant="outline" className="mt-4" onClick={load}><RefreshCw /> Tentar novamente</Button></div>}
           </CardContent>
         </Card>
       </div>
@@ -71,27 +74,32 @@ export default function AdminTrialEmailFlow() {
   }
 
   const stats = [
-    { label: "Usuários no fluxo", value: totals.inFlow, hint: `${totals.enrolled} inscritos no total` },
-    { label: "E-mails enviados", value: totals.sent },
-    { label: "Entregues", value: totals.delivered, hint: rate(totals.delivered, totals.sent) },
-    { label: "Aberturas", value: totals.opened, hint: rate(totals.opened, totals.sent) },
-    { label: "Cliques", value: totals.clicked, hint: rate(totals.clicked, totals.sent) },
-    { label: "Conversões", value: totals.converted, hint: rate(totals.converted, totals.enrolled) },
-    { label: "Bounce", value: totals.bounced, hint: rate(totals.bounced, totals.sent) },
-    { label: "Descadastros", value: totals.unsubscribed, hint: rate(totals.unsubscribed, totals.sent) },
+    { label: "Usuários no fluxo", value: totals.inFlow, hint: `${totals.enrolled} inscritos no total`, icon: Users },
+    { label: "E-mails enviados", value: totals.sent, icon: Send },
+    { label: "Entregues", value: totals.delivered, hint: rate(totals.delivered, totals.sent), icon: MailCheck },
+    { label: "Aberturas", value: totals.opened, hint: rate(totals.opened, totals.sent), icon: MailOpen },
+    { label: "Cliques", value: totals.clicked, hint: rate(totals.clicked, totals.sent), icon: MousePointerClick },
+    { label: "Conversões", value: totals.converted, hint: rate(totals.converted, totals.enrolled), icon: UserRoundCheck },
+    { label: "Bounce", value: totals.bounced, hint: rate(totals.bounced, totals.sent), icon: AlertTriangle },
+    { label: "Descadastros", value: totals.unsubscribed, hint: rate(totals.unsubscribed, totals.sent), icon: ShieldCheck },
   ];
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1200px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1280px] mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Mail size={20} /> Trial Email Flow
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary"><Workflow /></div>
+            <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Trial Email Flow
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {campaign.name} · 7 dias de teste + recuperação
           </p>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={`text-[11px] ${meta.className}`}>{meta.label}</Badge>
@@ -122,12 +130,22 @@ export default function AdminTrialEmailFlow() {
         </div>
       )}
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2"><AlertTriangle /> {error}</span>
+          <Button size="sm" variant="outline" onClick={load}><RefreshCw /> Tentar novamente</Button>
+        </div>
+      )}
+
       {/* Dashboard */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((s) => (
-          <Card key={s.label} className="border-border/40 bg-card/80">
+          <Card key={s.label} className="border-border/60 bg-card shadow-sm">
             <CardContent className="p-4">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+                <s.icon className="text-primary" />
+              </div>
               <p className="text-2xl font-bold text-foreground mt-1">{s.value}</p>
               {s.hint && <p className="text-[11px] text-muted-foreground mt-0.5">{s.hint}</p>}
             </CardContent>
@@ -142,16 +160,18 @@ export default function AdminTrialEmailFlow() {
       </div>
 
       {/* Fluxo */}
-      <div className="space-y-1">
+      <div className="space-y-2">
         {steps.map((step, index) => {
           const m = metricsByStep.get(step.id);
           const configured = !!step.subject && !!step.content;
           return (
             <div key={step.id}>
-              <Card className={`border-border/50 bg-card/80 ${!step.is_active ? "opacity-60" : ""}`}>
+               <Card className={`border-border/60 bg-card shadow-sm transition-colors hover:border-primary/30 ${!step.is_active ? "opacity-60" : ""}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div className="min-w-0">
+                     <div className="min-w-0 flex gap-3">
+                       <div className="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><Mail size={16} /></div>
+                       <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="text-[10px]">DIA {step.day_offset}</Badge>
                         {step.audience === "trial_ended_no_subscription" && (
@@ -161,7 +181,8 @@ export default function AdminTrialEmailFlow() {
                         )}
                         {!step.is_active && <Badge variant="outline" className="text-[10px]">Inativa</Badge>}
                         {!configured && <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30">Incompleto</Badge>}
-                      </div>
+                       </div>
+                     </div>
                       <p className="text-sm font-semibold text-foreground mt-1.5">{step.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{step.subject || "Sem assunto"}</p>
                     </div>

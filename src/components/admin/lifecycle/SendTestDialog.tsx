@@ -26,18 +26,27 @@ export function SendTestDialog({ step, open, onOpenChange }: Props) {
   const send = async () => {
     if (!step) return;
     const to = email.trim();
-    setSending(true);
-    const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
-      body: { action: "send_test", stepId: step.id, recipientEmail: to },
-    });
-    setSending(false);
-    if (error || data?.error) {
-      toast.error(data?.error || "Falha ao enviar o teste");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
+      toast.error("Informe um e-mail válido");
       return;
     }
-    localStorage.setItem(STORAGE_KEY, to);
-    toast.success(data.message || `E-mail de teste enviado para ${to}`);
-    onOpenChange(false);
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
+        body: { action: "send_test", stepId: step.id, recipientEmail: to },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || "Falha ao enviar o teste");
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY, to);
+      toast.success(data.message || `E-mail de teste enviado para ${to}`);
+      onOpenChange(false);
+    } catch {
+      toast.error("Falha ao enviar o teste");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (

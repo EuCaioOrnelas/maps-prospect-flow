@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Play } from "lucide-react";
+import { Activity, Clock3, Play, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,14 +13,17 @@ export function ExecutionLogsPanel({ onAfterRun }: { onAfterRun?: () => void }) 
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await db
+    setLoadError(false);
+    const { data, error } = await db
       .from("lifecycle_worker_runs")
       .select("*")
       .order("started_at", { ascending: false })
       .limit(50);
+    setLoadError(!!error);
     setRuns(data || []);
     setLoading(false);
   }, []);
@@ -45,12 +48,12 @@ export function ExecutionLogsPanel({ onAfterRun }: { onAfterRun?: () => void }) 
   };
 
   return (
-    <Card className="border-border/40 bg-card/80">
-      <CardContent className="p-4 space-y-3">
+    <Card className="border-border/60 bg-card shadow-sm">
+      <CardContent className="p-5 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
-            <h3 className="text-sm font-semibold">Logs de execução</h3>
-            <p className="text-xs text-muted-foreground">O processador roda automaticamente a cada 15 minutos.</p>
+            <h3 className="text-sm font-semibold flex items-center gap-2"><Activity className="text-primary" /> Logs de execução</h3>
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1"><Clock3 /> Execução automática a cada hora, no minuto zero.</p>
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={load}>
@@ -64,6 +67,11 @@ export function ExecutionLogsPanel({ onAfterRun }: { onAfterRun?: () => void }) 
 
         {loading ? (
           <p className="text-sm text-muted-foreground py-6 text-center">Carregando...</p>
+        ) : loadError ? (
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-5 text-center">
+            <p className="text-sm text-destructive">Não foi possível carregar as execuções.</p>
+            <Button size="sm" variant="outline" className="mt-3" onClick={load}><RefreshCw /> Tentar novamente</Button>
+          </div>
         ) : runs.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">Nenhuma execução registrada ainda.</p>
         ) : (
