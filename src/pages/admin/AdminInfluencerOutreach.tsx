@@ -414,6 +414,37 @@ export default function AdminInfluencerOutreach() {
                 </Button>
               </div>
 
+              {selectedIds.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.04] px-3 py-2">
+                  <span className="text-xs font-medium">
+                    {selectedIds.length} selecionado(s) — ações em massa
+                  </span>
+                  <div className="flex-1" />
+                  <Select disabled={bulkBusy} onValueChange={(v) => updateStatus(selectedIds, v)}>
+                    <SelectTrigger className="h-8 w-[200px] text-xs">
+                      <SelectValue placeholder="Alterar status para…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROSPECT_OUTREACH_STATUSES.map((s) => (
+                        <SelectItem key={s.value} value={s.value} className="text-xs">{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" className="h-8" disabled={bulkBusy}
+                    onClick={() => setConfirmDelete({ ids: selectedIds, disqualify: true })}>
+                    <Ban className="mr-2" size={14} /> Não qualificado e excluir
+                  </Button>
+                  <Button size="sm" variant="destructive" className="h-8" disabled={bulkBusy}
+                    onClick={() => setConfirmDelete({ ids: selectedIds, disqualify: false })}>
+                    {bulkBusy ? <Loader2 className="animate-spin mr-2" size={14} /> : <Trash2 className="mr-2" size={14} />}
+                    Excluir
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-8" onClick={() => setSelectedIds([])}>
+                    <XCircle size={14} />
+                  </Button>
+                </div>
+              )}
+
               <div className="rounded-xl border border-border overflow-x-auto">
                 <Table>
                   <TableHeader>
