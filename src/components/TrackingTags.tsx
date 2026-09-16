@@ -158,7 +158,7 @@ export const TrackingTags = () => {
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tracking-config`,
           {
             headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(5000),
           },
         );
         if (!active) return;
