@@ -5886,6 +5886,376 @@ export type Database = {
           },
         ]
       }
+      lifecycle_campaign_steps: {
+        Row: {
+          audience: string
+          campaign_id: string
+          content: string
+          created_at: string
+          day_offset: number
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          preheader: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          campaign_id: string
+          content?: string
+          created_at?: string
+          day_offset: number
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          preheader?: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          campaign_id?: string
+          content?: string
+          created_at?: string
+          day_offset?: number
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          preheader?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifecycle_campaign_steps_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lifecycle_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lifecycle_campaigns: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          description: string | null
+          from_email: string
+          from_name: string
+          id: string
+          key: string
+          name: string
+          paused_at: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          description?: string | null
+          from_email?: string
+          from_name?: string
+          id?: string
+          key: string
+          name: string
+          paused_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          description?: string | null
+          from_email?: string
+          from_name?: string
+          id?: string
+          key?: string
+          name?: string
+          paused_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lifecycle_email_deliveries: {
+        Row: {
+          bounced_at: string | null
+          campaign_id: string
+          clicked_at: string | null
+          complained_at: string | null
+          created_at: string
+          delivered_at: string | null
+          enrollment_id: string | null
+          error_message: string | null
+          id: string
+          is_test: boolean
+          opened_at: string | null
+          provider: string
+          provider_message_id: string | null
+          recipient_email: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          step_id: string
+          unsubscribed_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          bounced_at?: string | null
+          campaign_id: string
+          clicked_at?: string | null
+          complained_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          enrollment_id?: string | null
+          error_message?: string | null
+          id?: string
+          is_test?: boolean
+          opened_at?: string | null
+          provider?: string
+          provider_message_id?: string | null
+          recipient_email: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          step_id: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          bounced_at?: string | null
+          campaign_id?: string
+          clicked_at?: string | null
+          complained_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          enrollment_id?: string | null
+          error_message?: string | null
+          id?: string
+          is_test?: boolean
+          opened_at?: string | null
+          provider?: string
+          provider_message_id?: string | null
+          recipient_email?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          step_id?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifecycle_email_deliveries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lifecycle_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lifecycle_email_deliveries_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "lifecycle_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lifecycle_email_deliveries_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "lifecycle_campaign_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lifecycle_email_events: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          delivery_id: string | null
+          event_type: string
+          id: string
+          link_label: string | null
+          link_url: string | null
+          metadata: Json
+          provider_event_id: string | null
+          step_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          delivery_id?: string | null
+          event_type: string
+          id?: string
+          link_label?: string | null
+          link_url?: string | null
+          metadata?: Json
+          provider_event_id?: string | null
+          step_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          delivery_id?: string | null
+          event_type?: string
+          id?: string
+          link_label?: string | null
+          link_url?: string | null
+          metadata?: Json
+          provider_event_id?: string | null
+          step_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifecycle_email_events_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "lifecycle_email_deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lifecycle_enrollments: {
+        Row: {
+          anchor_at: string
+          campaign_id: string
+          completed_at: string | null
+          converted_at: string | null
+          converted_step_id: string | null
+          created_at: string
+          enrolled_at: string
+          exit_reason: string | null
+          exited_at: string | null
+          id: string
+          metadata: Json
+          recipient_email: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anchor_at: string
+          campaign_id: string
+          completed_at?: string | null
+          converted_at?: string | null
+          converted_step_id?: string | null
+          created_at?: string
+          enrolled_at?: string
+          exit_reason?: string | null
+          exited_at?: string | null
+          id?: string
+          metadata?: Json
+          recipient_email?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anchor_at?: string
+          campaign_id?: string
+          completed_at?: string | null
+          converted_at?: string | null
+          converted_step_id?: string | null
+          created_at?: string
+          enrolled_at?: string
+          exit_reason?: string | null
+          exited_at?: string | null
+          id?: string
+          metadata?: Json
+          recipient_email?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifecycle_enrollments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "lifecycle_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lifecycle_worker_locks: {
+        Row: {
+          lock_key: string
+          locked_until: string
+          updated_at: string
+        }
+        Insert: {
+          lock_key: string
+          locked_until: string
+          updated_at?: string
+        }
+        Update: {
+          lock_key?: string
+          locked_until?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lifecycle_worker_runs: {
+        Row: {
+          campaign_id: string | null
+          details: Json
+          eligible: number
+          enrolled: number
+          exited: number
+          failed: number
+          finished_at: string | null
+          id: string
+          sent: number
+          skipped: number
+          started_at: string
+          status: string
+          users_found: number
+        }
+        Insert: {
+          campaign_id?: string | null
+          details?: Json
+          eligible?: number
+          enrolled?: number
+          exited?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          sent?: number
+          skipped?: number
+          started_at?: string
+          status?: string
+          users_found?: number
+        }
+        Update: {
+          campaign_id?: string | null
+          details?: Json
+          eligible?: number
+          enrolled?: number
+          exited?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          sent?: number
+          skipped?: number
+          started_at?: string
+          status?: string
+          users_found?: number
+        }
+        Relationships: []
+      }
       member_availability: {
         Row: {
           account_owner_id: string
