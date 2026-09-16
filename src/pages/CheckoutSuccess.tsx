@@ -159,14 +159,17 @@ const CheckoutSuccess = () => {
             variant: "destructive",
           });
         } else if (!data.session) {
+          trackSignupComplete("email");
           setShowEmailVerification(true);
         } else {
+          trackSignupComplete("email");
           toast({
             title: "Conta criada com sucesso!",
             description: "Sua assinatura já está ativa.",
           });
           navigate("/dashboard");
         }
+
       }
     } catch (error: any) {
       console.error("Signup error:", error);
