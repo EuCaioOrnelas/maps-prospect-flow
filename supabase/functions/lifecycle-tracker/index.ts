@@ -1,5 +1,33 @@
-import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { lifecycleCors, verifyToken } from "../_shared/lifecycle.ts";
+// --- Helpers locais (sem arquivos compartilhados) ---
+const lifecycleCors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+async function signToken(secret: string, payload: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function verifyToken(secret: string, payload: string, signature: string): Promise<boolean> {
+  if (!signature) return false;
+  const expected = await signToken(secret, payload);
+  if (expected.length !== signature.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+  return diff === 0;
+}
+// --- fim dos helpers ---
 
 // Tracking endpoints for lifecycle emails:
 //   ?action=open        -> 1x1 pixel, records the first open
