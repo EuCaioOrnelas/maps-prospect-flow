@@ -441,35 +441,59 @@ serve(async (req) => {
         ...crawlableLinks(aboutText),
         ...crawlableLinks(channelText),
         ...crawlableLinks(videoText),
-      ]).slice(0, 4);
+      ]).slice(0, 6);
+
+      const CONTACT_PATHS = [
+        "/contato", "/contact", "/contact-us", "/fale-conosco", "/parcerias", "/publicidade",
+        "/anuncie", "/imprensa", "/press", "/midia", "/media-kit", "/sobre", "/about",
+      ];
 
       const visited = new Set<string>();
       for (const site of candidateLinks) {
         if (visited.has(site)) continue;
         visited.add(site);
-        const html = decodeHtmlEntities(await fetchPage(site));
+        let html = decodeHtmlEntities(await fetchPage(site));
+        // site renderizado por JavaScript (ou bloqueio simples): leitura em texto puro
+        if (!html || !hasEmailIn(html)) {
+          const rendered = decodeHtmlEntities(await fetchRendered(site));
+          if (rendered) html = `${html}\n${rendered}`;
+        }
         if (!html) continue;
         const isHub = LINK_HUBS.test(site);
         found.push(...harvest(html, isHub ? "agregador_links" : "site_oficial", "media"));
 
         if (isHub) {
           // dentro do agregador, visita o site próprio do criador
-          for (const inner of rankLinks(crawlableLinks(html)).slice(0, 2)) {
+          for (const inner of rankLinks(crawlableLinks(html)).slice(0, 3)) {
             if (visited.has(inner) || LINK_HUBS.test(inner)) continue;
             visited.add(inner);
-            const innerHtml = decodeHtmlEntities(await fetchPage(inner, 7000));
-            if (innerHtml) found.push(...harvest(innerHtml, "site_oficial", "media"));
+            let innerHtml = decodeHtmlEntities(await fetchPage(inner, 7000));
+            if (!innerHtml || !hasEmailIn(innerHtml)) {
+              innerHtml += `\n${decodeHtmlEntities(await fetchRendered(inner, 10000))}`;
+            }
+            if (innerHtml.trim()) found.push(...harvest(innerHtml, "site_oficial", "media"));
           }
           continue;
         }
 
         try {
           const origin = new URL(site).origin;
-          for (const path of ["/contato", "/contact", "/fale-conosco", "/parcerias", "/sobre", "/about"]) {
-            if (visited.has(origin + path)) continue;
-            visited.add(origin + path);
-            const page = decodeHtmlEntities(await fetchPage(origin + path, 6000));
-            if (page) found.push(...harvest(page, "pagina_contato", "media"));
+          // links internos que apontem para páginas de contato do próprio site
+          const internal = (html.match(/href=["']([^"']+)["']/gi) ?? [])
+            .map((h) => h.replace(/^href=["']/i, "").replace(/["']$/, ""))
+            .filter((h) => /(contato|contact|fale-conosco|parcerias|publicidade|imprensa|press|media|sobre|about)/i.test(h))
+            .map((h) => (h.startsWith("http") ? h : origin + (h.startsWith("/") ? h : `/${h}`)))
+            .filter((h) => h.startsWith(origin))
+            .slice(0, 4);
+
+          for (const target of [...CONTACT_PATHS.map((path) => origin + path), ...internal]) {
+            if (visited.has(target)) continue;
+            visited.add(target);
+            let page = decodeHtmlEntities(await fetchPage(target, 6000));
+            if (page && !hasEmailIn(page)) {
+              page += `\n${decodeHtmlEntities(await fetchRendered(target, 9000))}`;
+            }
+            if (page.trim()) found.push(...harvest(page, "pagina_contato", "media"));
           }
         } catch { /* URL inválida */ }
       }
