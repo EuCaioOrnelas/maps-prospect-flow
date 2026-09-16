@@ -105,10 +105,12 @@ export const TrackingTags = () => {
 
   useEffect(() => {
     let active = true;
+    console.log("[dbgTT] effect start");
     (async () => {
       // Fonte única: edge function pública (tabela + secret como reserva).
       try {
         const { data, error } = await supabase.functions.invoke("tracking-config");
+        console.log("[dbgTT] invoke", JSON.stringify(data), String(error));
         if (!error && data && active) {
           setCfg(data as TrackingSettings);
           return;
