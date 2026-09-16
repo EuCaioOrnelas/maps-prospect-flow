@@ -878,7 +878,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           }
         }}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)]">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)]">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base sm:text-lg">Enviar mensagem rápida?</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
@@ -913,14 +913,14 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               </button>
             )}
             {confirmSteps.length > 1 && (
-              <div className="mt-2 pt-2 border-t border-border space-y-1">
+              <div className="mt-2 pt-2 border-t border-border space-y-1 overflow-hidden">
                 {confirmSteps.map((s, i) => (
-                  <div key={s.id || i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">{i + 1}.</span>
-                    <span className="truncate flex-1">
+                  <div key={s.id || i} className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                    <span className="font-medium text-foreground shrink-0">{i + 1}.</span>
+                    <span className="truncate flex-1 min-w-0">
                       {s.type === "text" ? (s.content || "").slice(0, 60) : (s.media_filename || s.type)}
                     </span>
-                    {i > 0 && !!s.delay_seconds && <span>+{s.delay_seconds}s</span>}
+                    {i > 0 && !!s.delay_seconds && <span className="shrink-0 tabular-nums">+{s.delay_seconds}s</span>}
                   </div>
                 ))}
               </div>
