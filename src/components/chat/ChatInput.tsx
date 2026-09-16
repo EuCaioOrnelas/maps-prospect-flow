@@ -889,10 +889,10 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               <span className="font-medium text-primary">/{confirmQr?.shortcut}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border">
+          <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border min-w-0 overflow-hidden">
             <div
               className={cn(
-                "whitespace-pre-wrap break-words leading-relaxed",
+                "whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed",
                 !confirmExpanded && "max-h-[160px] overflow-hidden"
               )}
             >
