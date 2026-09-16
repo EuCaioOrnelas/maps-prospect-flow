@@ -19,6 +19,11 @@ type TrackingSettings = {
 
 const injected = new Set<string>();
 
+// ID de medição do Google Analytics 4. É um identificador público (aparece no
+// HTML de qualquer site) e fica aqui como reserva para o rastreamento continuar
+// funcionando mesmo se o cadastro do admin estiver indisponível.
+const FALLBACK_GA4_ID = "G-66RJP426C9";
+
 function loadGtm(id: string) {
   if (injected.has("gtm") || document.querySelector('script[data-tag="gtm"]')) return;
   injected.add("gtm");
@@ -149,11 +154,20 @@ export const TrackingTags = () => {
             signal: AbortSignal.timeout(8000),
           },
         );
-        if (!res.ok || !active) return;
-        setCfg(sanitize((await res.json()) as TrackingSettings));
+        if (!active) return;
+        if (res.ok) {
+          const clean = sanitize((await res.json()) as TrackingSettings);
+          if (clean.ga4_id || clean.gtm_id || clean.meta_pixel_id || clean.enabled === false) {
+            setCfg(clean);
+            return;
+          }
+        }
       } catch {
-        /* sem configuração: nada é carregado */
+        /* segue para a reserva fixa abaixo */
       }
+      // 3) Reserva fixa: garante o Analytics mesmo sem resposta do servidor.
+      if (!active) return;
+      setCfg({ gtm_id: null, ga4_id: FALLBACK_GA4_ID, meta_pixel_id: null, enabled: true });
     })();
     return () => {
       active = false;
