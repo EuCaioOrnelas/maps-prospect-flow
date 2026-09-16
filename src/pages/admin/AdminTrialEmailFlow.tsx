@@ -27,7 +27,7 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
   disabled: { label: "Desativada", className: "bg-muted text-muted-foreground border-border" },
 };
 
-export default function AdminTrialEmailFlow() {
+export function AdminTrialEmailFlow() {
   const { campaign, steps, deliveries, enrollments, metricsByStep, totals, loading, error, load, setStatus, saveStep } =
     useLifecycleCampaign();
 
@@ -261,6 +261,8 @@ export default function AdminTrialEmailFlow() {
     </div>
   );
 }
+
+export default AdminTrialEmailFlow;
 
 function Metric({ label, value, pct }: { label: string; value: number; pct?: string }) {
   return (
