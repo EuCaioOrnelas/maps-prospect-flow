@@ -112,22 +112,34 @@ export const trackSignupStart = (location: string) =>
 export const trackSignupComplete = (method = "email") =>
   trackEvent("sign_up", { method });
 
-export const trackTrialStarted = (plan?: string) =>
-  trackEvent("trial_started", { plano: plan ?? "" });
+/** Teste grátis realmente iniciado (conta criada com cartão aprovado). */
+export const trackTrialStarted = (plan?: string, id?: string) => {
+  if (id && !oncePerBrowser(`trial_${id}`)) return;
+  trackEvent("trial_started", { plano: plan ?? "", item_name: plan ?? "" });
+};
 
 /** Compra confirmada — usar apenas com pagamento realmente aprovado. */
-export const trackPurchase = (plan?: string, value?: number, method?: string) =>
+export const trackPurchase = (
+  plan?: string,
+  value?: number,
+  method?: string,
+  transactionId?: string,
+) => {
+  if (transactionId && !oncePerBrowser(`purchase_${transactionId}`)) return;
   trackEvent("purchase", {
+    transaction_id: transactionId ?? "",
     plano: plan ?? "",
     item_name: plan ?? "",
     value: value ?? 0,
     currency: "BRL",
     metodo: method ?? "",
   });
+};
 
 /** Clique em criar conta na landing do Wiize API. */
 export const trackApiSignupClick = (location: string) =>
   trackEvent("click_api_signup", { button_location: location, origem: location });
+
 
 /** Envio do formulário de contato Enterprise. */
 export const trackEnterpriseRequest = (company?: string) =>
