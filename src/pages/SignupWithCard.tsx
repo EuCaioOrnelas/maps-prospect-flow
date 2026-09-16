@@ -431,6 +431,10 @@ function SignupWithCardInner() {
     sessionStorage.removeItem("trial_plan_chosen");
     clearPersisted();
 
+    // GA4: conta criada + trial iniciado (só aqui, quando o cartão foi aprovado).
+    trackSignupComplete("email");
+    trackTrialStarted(planKey);
+
     toast({
       title: "Conta criada com sucesso!",
       description: `Cartão autenticado no banco (3D Secure). Confirme seu email para ativar o trial. Cobrança automática em ${trialEndDate}.`,
