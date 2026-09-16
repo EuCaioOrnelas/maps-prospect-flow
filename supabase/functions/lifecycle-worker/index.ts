@@ -8,6 +8,7 @@ import {
   lifecycleCors,
   lifecycleLayout,
   sendWithResend,
+  styleEmailHtml,
 } from "../_shared/lifecycle.ts";
 
 // Scheduler/worker for lifecycle campaigns.
@@ -296,7 +297,7 @@ Deno.serve(async (req) => {
         daysRemaining,
       });
 
-      const body = cleanupEmptyGreetings(compileTemplate(step.content, vars));
+      const body = styleEmailHtml(cleanupEmptyGreetings(compileTemplate(step.content, vars)));
       const subject = cleanupEmptyGreetings(compileTemplate(step.subject, vars)).trim() || step.name;
       const preheader = compileTemplate(step.preheader || "", vars);
       const tracked = await injectTracking({ html: body, baseUrl: supabaseUrl, deliveryId: delivery.id, secret: trackingSecret });

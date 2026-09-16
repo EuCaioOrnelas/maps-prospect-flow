@@ -8,6 +8,7 @@ import {
   lifecycleCors,
   lifecycleLayout,
   sendWithResend,
+  styleEmailHtml,
 } from "../_shared/lifecycle.ts";
 
 // Admin-only operations for the Trial Email Flow.
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
         daysRemaining: 3,
       });
 
-      const compiledBody = cleanupEmptyGreetings(compileTemplate(step.content || "", vars));
+      const compiledBody = styleEmailHtml(cleanupEmptyGreetings(compileTemplate(step.content || "", vars)));
       const subject = cleanupEmptyGreetings(compileTemplate(step.subject || "", vars)).trim() || step.name;
       const preheader = compileTemplate(step.preheader || "", vars);
 
