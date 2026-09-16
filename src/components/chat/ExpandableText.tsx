@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { parseWhatsAppText } from "@/lib/whatsappFormat";
 
 interface Props {
   text: string;
@@ -39,6 +40,7 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
     return () => ro.disconnect();
   }, [text, collapsedMaxHeight]);
 
+  const formatted = useMemo(() => parseWhatsAppText(text), [text]);
   const collapsed = overflowing && !expanded;
   const maxHeight = !overflowing
     ? "none"
@@ -56,7 +58,7 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
           ref={ref}
           className={cn("block whitespace-pre-wrap break-words", className)}
         >
-          {text}
+          {formatted}
         </span>
       </div>
       {overflowing && (

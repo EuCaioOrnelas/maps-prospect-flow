@@ -3,6 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+export type QuickReplyStepType = "text" | "image" | "video" | "audio" | "document";
+
+/** Uma linha da sequência: mensagem 1, 2, 3… cada uma com tipo e atraso próprios. */
+export interface QuickReplyStep {
+  id: string;
+  type: QuickReplyStepType;
+  content?: string;
+  media_url?: string | null;
+  media_filename?: string | null;
+  /** Segundos de espera ANTES de enviar este passo. */
+  delay_seconds?: number;
+}
+
 export interface QuickReply {
   id: string;
   account_owner_id: string;
@@ -13,6 +26,7 @@ export interface QuickReply {
   media_url: string | null;
   media_type: string | null;
   media_filename: string | null;
+  steps?: QuickReplyStep[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +38,28 @@ export interface QuickReplyInput {
   media_url?: string | null;
   media_type?: string | null;
   media_filename?: string | null;
+  steps?: QuickReplyStep[] | null;
+}
+
+/** Normaliza os passos salvos (compatível com mensagens antigas de passo único). */
+export function quickReplySteps(qr: QuickReply | null | undefined): QuickReplyStep[] {
+  if (!qr) return [];
+  const raw = Array.isArray(qr.steps) ? (qr.steps as QuickReplyStep[]) : [];
+  if (raw.length > 0) return raw;
+  const legacy: QuickReplyStep[] = [];
+  if (qr.media_url) {
+    legacy.push({
+      id: "legacy-media",
+      type: (qr.media_type as QuickReplyStepType) || "document",
+      media_url: qr.media_url,
+      media_filename: qr.media_filename,
+      content: qr.content || "",
+      delay_seconds: 0,
+    });
+  } else if (qr.content) {
+    legacy.push({ id: "legacy-text", type: "text", content: qr.content, delay_seconds: 0 });
+  }
+  return legacy;
 }
 
 export function useQuickReplies() {
@@ -72,6 +108,7 @@ export function useQuickReplies() {
           media_url: input.media_url ?? null,
           media_type: input.media_type ?? null,
           media_filename: input.media_filename ?? null,
+          steps: input.steps ?? [],
         })
         .eq("id", id);
       if (error) { toast.error("Erro ao atualizar: " + error.message); return null; }
@@ -88,6 +125,7 @@ export function useQuickReplies() {
           media_url: input.media_url ?? null,
           media_type: input.media_type ?? null,
           media_filename: input.media_filename ?? null,
+          steps: input.steps ?? [],
         });
       if (error) { toast.error("Erro ao criar: " + error.message); return null; }
       toast.success("Mensagem rápida criada");

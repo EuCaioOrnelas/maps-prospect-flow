@@ -14,10 +14,11 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EmojiPicker, EmojiPickerSearch, EmojiPickerCategories, EmojiPickerContent } from "@/components/ui/emoji-picker";
 import { ChatMessage } from "@/hooks/useChat";
-import { useQuickReplies, applyQuickReplyVariables, type QuickReply } from "@/hooks/useQuickReplies";
+import { useQuickReplies, applyQuickReplyVariables, quickReplySteps, type QuickReply } from "@/hooks/useQuickReplies";
 import { useQuickReplyContext } from "@/hooks/useQuickReplyContext";
 import { useContactAIApproach } from "@/hooks/useContactAIApproach";
 import { QuickReplyPicker } from "./QuickReplyPicker";
+import { toggleWhatsAppMarker } from "@/lib/whatsappFormat";
 
 const AI_APPROACH_QR_ID = "__ai_approach__";
 
@@ -225,36 +226,54 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     inputRef.current?.focus();
   }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
 
+  // Etapas resolvidas (mensagem 1, 2, 3…) da mensagem rápida selecionada.
+  const confirmSteps = useMemo(() => {
+    if (!confirmQr) return [];
+    return quickReplySteps(confirmQr).map(s => ({
+      ...s,
+      content: applyQuickReplyVariables(s.content || "", quickReplyCtx),
+    }));
+  }, [confirmQr, quickReplyCtx]);
+
   const applyQuickReply = useCallback((qr: QuickReply) => {
-    const resolved = applyQuickReplyVariables(qr.content || "", quickReplyCtx);
+    const steps = quickReplySteps(qr);
+    const firstText = steps.find(s => s.type === "text");
+    const resolved = applyQuickReplyVariables(firstText?.content || qr.content || "", quickReplyCtx);
     setConfirmPreview(resolved);
     setConfirmQr(qr);
   }, [quickReplyCtx]);
 
   const handleConfirmSend = useCallback(async () => {
     if (!confirmQr) return;
-    const qr = confirmQr;
-    const resolved = confirmPreview;
+    const steps = confirmSteps;
     setConfirmQr(null);
+    setConfirmExpanded(false);
     setText("");
-    if (qr.media_url) {
-      try {
-        const signed = (await resolveStorageUrl(qr.media_url)) || qr.media_url;
-        const res = await fetch(signed);
-        const blob = await res.blob();
-        const fname = qr.media_filename || `quick-reply-${qr.shortcut}`;
-        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
-        onSendMedia(file, resolved || undefined);
-      } catch (err) {
-        console.error("[quick-reply] media fetch failed", err);
-        if (resolved.trim()) onSendMessage(resolved, replyingTo?.id);
-      }
-    } else if (resolved.trim()) {
-      onSendMessage(resolved, replyingTo?.id);
-    }
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [confirmQr, confirmPreview, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const wait = i === 0 ? 0 : Math.max(0, Number(step.delay_seconds) || 0) * 1000;
+      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+
+      if (step.type === "text") {
+        if ((step.content || "").trim()) onSendMessage(step.content!.trim(), i === 0 ? replyingTo?.id : undefined);
+        continue;
+      }
+      if (!step.media_url) continue;
+      try {
+        const signed = (await resolveStorageUrl(step.media_url)) || step.media_url;
+        const res = await fetch(signed);
+        const blob = await res.blob();
+        const fname = step.media_filename || `quick-reply-${confirmQr.shortcut}`;
+        const file = new File([blob], fname, { type: blob.type || "application/octet-stream" });
+        onSendMedia(file, (step.content || "").trim() || undefined);
+      } catch (err) {
+        console.error("[quick-reply] media fetch failed", err);
+      }
+    }
+  }, [confirmQr, confirmSteps, onSendMedia, onSendMessage, onCancelReply, replyingTo]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (qrOpen) {
@@ -265,6 +284,21 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
         e.preventDefault();
         const pick = qrFiltered[qrIdx];
         if (pick) void applyQuickReply(pick);
+        return;
+      }
+    }
+    // Atalhos de formatação do WhatsApp: negrito (*), itálico (_), sublinhado (__), riscado (~)
+    if ((e.ctrlKey || e.metaKey) && ["b", "i", "u", "s"].includes(e.key.toLowerCase())) {
+      const el = inputRef.current;
+      if (el) {
+        e.preventDefault();
+        const marker = e.key.toLowerCase() === "b" ? "*" : e.key.toLowerCase() === "i" ? "_" : e.key.toLowerCase() === "u" ? "__" : "~";
+        const next = toggleWhatsAppMarker(el.value, el.selectionStart ?? 0, el.selectionEnd ?? 0, marker);
+        setText(next.value);
+        requestAnimationFrame(() => {
+          el.focus();
+          el.setSelectionRange(next.selectionStart, next.selectionEnd);
+        });
         return;
       }
     }
@@ -790,7 +824,20 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                 )}
               </button>
             )}
-            {confirmQr?.media_url && (
+            {confirmSteps.length > 1 && (
+              <div className="mt-2 pt-2 border-t border-border space-y-1">
+                {confirmSteps.map((s, i) => (
+                  <div key={s.id || i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">{i + 1}.</span>
+                    <span className="truncate flex-1">
+                      {s.type === "text" ? (s.content || "").slice(0, 60) : (s.media_filename || s.type)}
+                    </span>
+                    {i > 0 && !!s.delay_seconds && <span>+{s.delay_seconds}s</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {confirmSteps.length <= 1 && confirmQr?.media_url && (
               <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
                 Anexo: {confirmQr.media_filename || confirmQr.media_type}
               </div>
