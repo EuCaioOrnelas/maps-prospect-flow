@@ -715,7 +715,8 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
       {!attachments.length && (
         <div className="wa-composer-surface border-t wa-border-light">
-          {(quickReplies.length > 0 || aiApproachQR) && !qrOpen && (
+          {qrRun && <QrRunningPill run={qrRun} onStop={() => { qrCancelRef.current = true; }} />}
+          {(quickReplies.length > 0 || aiApproachQR) && !qrOpen && !qrRun && (
             <div className="relative">
               <div className="absolute left-0 top-0 bottom-0 w-4 wa-composer-fade-left pointer-events-none z-10" />
               <div className="absolute right-0 top-0 bottom-0 w-10 wa-composer-fade-right pointer-events-none z-10" />
