@@ -1,16 +1,10 @@
 // Domínio de abordagem de influenciadores: status, variáveis dinâmicas e renderização.
 // Compartilhado pelas telas de Abordagens, Campanhas, Modelos e pela ficha do influenciador.
 
+// Só trabalhamos com dois canais de contato: e-mail e Instagram.
 export const CONTACT_TYPES = [
   { value: "email", label: "E-mail", icon: "mail" },
   { value: "instagram", label: "Instagram", icon: "instagram" },
-  { value: "tiktok", label: "TikTok", icon: "music" },
-  { value: "twitter", label: "X / Twitter", icon: "twitter" },
-  { value: "linkedin", label: "LinkedIn", icon: "linkedin" },
-  { value: "facebook", label: "Facebook", icon: "facebook" },
-  { value: "threads", label: "Threads", icon: "at" },
-  { value: "website", label: "Site", icon: "globe" },
-  { value: "contact_page", label: "Página de contato", icon: "link" },
 ] as const;
 
 export const contactTypeLabel = (v: string) =>
