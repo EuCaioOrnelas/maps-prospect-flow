@@ -40,6 +40,7 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
     return () => ro.disconnect();
   }, [text, collapsedMaxHeight]);
 
+  const formatted = useMemo(() => parseWhatsAppText(text), [text]);
   const collapsed = overflowing && !expanded;
   const maxHeight = !overflowing
     ? "none"
