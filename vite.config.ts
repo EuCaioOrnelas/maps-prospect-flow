@@ -47,13 +47,15 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // index.html fica FORA do precache: HTML antigo em cache aponta para
+        // chunks que já não existem no servidor e quebra páginas novas.
+        globPatterns: ["**/*.{js,css,ico,png,svg,woff2}"],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        // Não cachear a página principal - sempre buscar do servidor
-        navigateFallback: '/index.html',
+        // Navegações sempre buscam o HTML atual no servidor (sem fallback em cache).
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.(js|css)$/,
