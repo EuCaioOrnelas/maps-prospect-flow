@@ -19,6 +19,11 @@ type TrackingSettings = {
 
 const injected = new Set<string>();
 
+// ID de medição do Google Analytics 4. É um identificador público (aparece no
+// HTML de qualquer site) e fica aqui como reserva para o rastreamento continuar
+// funcionando mesmo se o cadastro do admin estiver indisponível.
+const FALLBACK_GA4_ID = "G-66RJP426C9";
+
 function loadGtm(id: string) {
   if (injected.has("gtm") || document.querySelector('script[data-tag="gtm"]')) return;
   injected.add("gtm");
