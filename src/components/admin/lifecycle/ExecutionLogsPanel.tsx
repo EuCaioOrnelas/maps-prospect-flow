@@ -32,19 +32,24 @@ export function ExecutionLogsPanel({ onAfterRun }: { onAfterRun?: () => void }) 
 
   const runNow = async () => {
     setRunning(true);
-    const { data, error } = await supabase.functions.invoke("lifecycle-worker", { body: {} });
-    setRunning(false);
-    if (error) {
+    try {
+      const { data, error } = await supabase.functions.invoke("lifecycle-worker", { body: {} });
+      if (error || data?.error) {
+        toast.error(data?.error || "Falha ao executar o processador");
+      } else {
+        toast.success(
+          data?.skipped
+            ? "Já existe uma execução em andamento"
+            : `Execução concluída — ${data?.sent ?? 0} e-mail(s) enviado(s)`,
+        );
+      }
+    } catch {
       toast.error("Falha ao executar o processador");
-    } else {
-      toast.success(
-        data?.skipped
-          ? "Já existe uma execução em andamento"
-          : `Execução concluída — ${data?.sent ?? 0} e-mail(s) enviado(s)`,
-      );
+    } finally {
+      setRunning(false);
+      await load();
+      onAfterRun?.();
     }
-    await load();
-    onAfterRun?.();
   };
 
   return (

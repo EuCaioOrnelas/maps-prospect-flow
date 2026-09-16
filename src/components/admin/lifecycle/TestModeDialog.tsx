@@ -20,17 +20,27 @@ export function TestModeDialog({ open, onOpenChange }: Props) {
   const [result, setResult] = useState<any>(null);
 
   const run = async () => {
-    setLoading(true);
-    setResult(null);
-    const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
-      body: { action: "simulate", email: email.trim() },
-    });
-    setLoading(false);
-    if (error || data?.error) {
-      toast.error(data?.error || "Não foi possível simular");
+    const recipient = email.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(recipient)) {
+      toast.error("Informe um e-mail válido");
       return;
     }
-    setResult(data);
+    setLoading(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("lifecycle-admin", {
+        body: { action: "simulate", email: recipient },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || "Não foi possível simular");
+        return;
+      }
+      setResult(data);
+    } catch {
+      toast.error("Não foi possível simular");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
