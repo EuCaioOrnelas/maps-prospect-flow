@@ -135,15 +135,67 @@ async function fetchPage(url: string, timeoutMs = 8000): Promise<string> {
   }
 }
 
+// Cloudflare email protection: <a data-cfemail="hexhex...">
+function decodeCfEmails(s: string) {
+  return s.replace(/data-cfemail=["']([0-9a-f]+)["']/gi, (_, hex: string) => {
+    try {
+      const key = parseInt(hex.slice(0, 2), 16);
+      let email = "";
+      for (let i = 2; i < hex.length; i += 2) {
+        email += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16) ^ key);
+      }
+      return ` ${email} `;
+    } catch {
+      return " ";
+    }
+  });
+}
+
 function decodeHtmlEntities(s: string) {
-  return s
+  let out = decodeCfEmails(s)
     .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(Number(d)))
     .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    .replace(/\[at\]|\(at\)|\s+arroba\s+/gi, "@")
-    .replace(/\[dot\]|\(dot\)/gi, ".");
+    .replace(/\\u0026/g, "&")
+    .replace(/\\u0040/gi, "@")
+    .replace(/%40/gi, "@");
+
+  // mailto: em atributos, inclusive com parâmetros (?subject=)
+  out = out.replace(/mailto:([^"'\s>?&]+)/gi, (_, e) => ` ${e} `);
+
+  // e-mails ofuscados: nome (arroba) dominio (ponto) com, nome [at] dominio [dot] com
+  out = out
+    .replace(/\s*[\[({<]\s*(?:at|arroba|@)\s*[\])}>]\s*/gi, "@")
+    .replace(/\s+(?:arroba|at)\s+/gi, "@")
+    .replace(/\s*[\[({<]\s*(?:dot|ponto|\.)\s*[\])}>]\s*/gi, ".")
+    .replace(/\s+(?:ponto|dot)\s+/gi, ".");
+
+  // espaços ao redor do @ e do ponto final do domínio: "nome @ dominio . com"
+  out = out.replace(
+    /([a-zA-Z0-9._%+-]+)\s*@\s*([a-zA-Z0-9-]+(?:\s*\.\s*[a-zA-Z0-9-]+)+)/g,
+    (_, user: string, domain: string) => `${user}@${domain.replace(/\s*\.\s*/g, ".")}`,
+  );
+
+  return out;
+}
+
+// páginas que dependem de JavaScript: leitura em texto puro como último recurso
+async function fetchRendered(url: string, timeoutMs = 12000): Promise<string> {
+  try {
+    const clean = url.replace(/^https?:\/\//, "");
+    return await fetchPage(`https://r.jina.ai/http://${clean}`, timeoutMs);
+  } catch {
+    return "";
+  }
+}
+
+function hasEmailIn(text: string) {
+  for (const raw of text.match(EMAIL_RE) ?? []) {
+    if (!BAD_EMAIL.test(raw)) return true;
+  }
+  return false;
 }
 
 // ─────────────────────────── persistência (dedupe) ───────────────────────────
