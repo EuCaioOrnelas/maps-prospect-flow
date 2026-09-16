@@ -16,23 +16,30 @@ const clean = (v: string | null | undefined) => {
   return s;
 };
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  let row: Record<string, unknown> | null = null;
+async function readSettings(): Promise<Record<string, unknown> | null> {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const { data } = await supabase
+    const query = supabase
       .from("tracking_settings")
       .select("gtm_id, ga4_id, meta_pixel_id, enabled")
       .maybeSingle();
-    row = data as Record<string, unknown> | null;
+    // O banco nunca pode segurar a resposta: 2,5s no máximo.
+    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+    const result = await Promise.race([query, timeout]);
+    return (result as { data?: Record<string, unknown> } | null)?.data ?? null;
   } catch (e) {
     console.error("tracking-config: falha ao ler tracking_settings", e);
+    return null;
   }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const row = await readSettings();
 
   const body = {
     gtm_id: clean(row?.gtm_id as string | null),
@@ -44,6 +51,10 @@ Deno.serve(async (req) => {
   };
 
   return new Response(JSON.stringify(body), {
-    headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=300",
+    },
   });
 });
