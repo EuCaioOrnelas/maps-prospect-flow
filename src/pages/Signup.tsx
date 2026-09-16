@@ -8,6 +8,7 @@ import { Logo } from "@/components/Logo";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, ArrowLeft, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { trackSignupComplete, trackSignupStart } from "@/lib/analytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 import { SEO } from "@/components/SEO";
