@@ -425,7 +425,7 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
 };
 
 export const SDR_OBJECTIVE_LABEL = (id: string) =>
-  SDR_OBJECTIVES.find((o) => o.id === id)?.label ?? id;
+  SDR_OBJECTIVES.find((o) => o.id === normalizeSdrObjective(id))?.label ?? id;
 
 /** Rascunho local (retomado no card da lista) */
 export const SDR_DRAFT_STORAGE_KEY = "wiize_sdr_draft_v1";
