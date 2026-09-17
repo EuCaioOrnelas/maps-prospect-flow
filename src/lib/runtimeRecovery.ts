@@ -149,11 +149,40 @@ export function installRuntimeRecovery() {
   window.__wiizeRuntimeRecoveryInstalled = true;
 }
 
+function isRenderableComponent(value: unknown) {
+  if (typeof value === "function") return true;
+  if (typeof value === "object" && value !== null) {
+    // React.memo / forwardRef / lazy resolvem para objetos com $$typeof.
+    return "$$typeof" in (value as Record<string, unknown>);
+  }
+  return false;
+}
+
+/**
+ * Garante que o módulo carregado realmente expõe um componente React.
+ * Em produção, um chunk obsoleto (cache do Vercel / service worker) pode
+ * resolver com `default: undefined`, o que faz o React lançar o erro #306.
+ * Nesse caso tratamos como asset corrompido: limpamos cache e recarregamos.
+ */
+function normalizeComponentModule<T extends ComponentType<any>>(
+  mod: any,
+  label: string,
+): ComponentModule<T> {
+  if (mod && isRenderableComponent(mod.default)) return mod as ComponentModule<T>;
+
+  if (mod && typeof mod === "object") {
+    const fallback = Object.values(mod).find((value) => isRenderableComponent(value));
+    if (fallback) return { ...mod, default: fallback as T };
+  }
+
+  throw new Error(`Loading chunk ${label} failed (empty module)`);
+}
+
 export function lazyWithRetry<T extends ComponentType<any> = ComponentType<any>>(
   importer: () => Promise<any>,
   label: string,
 ) {
-  const load = importer as () => Promise<ComponentModule<T>>;
+  const load = async () => normalizeComponentModule<T>(await importer(), label);
   return lazy(async () => {
     try {
       return await load();
