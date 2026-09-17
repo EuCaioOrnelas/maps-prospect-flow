@@ -280,10 +280,6 @@ export function useChat() {
     loadMessages();
   }, [activeConversationId, user?.id]);
 
-  // Keep a ref to activeConversationId so the realtime channel doesn't
-  // unsubscribe/resubscribe every time the user opens a different conversation.
-  const activeConversationIdRef = useRef<string | null>(null);
-  useEffect(() => { activeConversationIdRef.current = activeConversationId; }, [activeConversationId]);
   const conversationsRef = useRef<ChatConversation[]>([]);
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
 
