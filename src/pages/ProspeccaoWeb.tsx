@@ -113,7 +113,11 @@ const ProspeccaoWeb = () => {
       .or(`owner_user_id.eq.${accountOwnerId || user.id},user_id.eq.${user.id}`)
       .limit(1)
       .maybeSingle()
-      .then(({ data }) => setCompanyProfile(data));
+      .then(({ data }) => {
+        setCompanyProfile(data);
+        // Sem perfil da empresa: obriga a criação antes de usar a página
+        if (!data) setShowCompanyOnboarding(true);
+      });
   }, [user, accountOwnerId]);
 
   const canSubmit = useMemo(
