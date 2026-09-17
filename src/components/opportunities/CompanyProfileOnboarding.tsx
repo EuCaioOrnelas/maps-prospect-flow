@@ -3,13 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Target, Sparkles, ShoppingBag, Users, Loader2, Rocket, X, Plus, Trash2, DollarSign } from "lucide-react";
+import { Building2, User, Target, Sparkles, ShoppingBag, Users, Loader2, Rocket, X, Plus, Trash2, DollarSign, Factory, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface CompanyProfile {
   company_name: string;
   attendant_name: string;
+  company_business_model: string;
   company_niche: string;
   company_differential: string;
   company_objective: string;
@@ -35,6 +36,7 @@ interface Props {
 const createEmptyCompanyProfile = (): CompanyProfile => ({
   company_name: "",
   attendant_name: "",
+  company_business_model: "",
   company_niche: "",
   company_differential: "",
   company_objective: "",
@@ -45,6 +47,7 @@ const createEmptyCompanyProfile = (): CompanyProfile => ({
 const normalizeCompanyProfile = (data?: Partial<Record<keyof CompanyProfile, unknown>> | null): CompanyProfile => ({
   company_name: typeof data?.company_name === "string" ? data.company_name : "",
   attendant_name: typeof data?.attendant_name === "string" ? data.attendant_name : "",
+  company_business_model: typeof data?.company_business_model === "string" ? data.company_business_model : "",
   company_niche: typeof data?.company_niche === "string" ? data.company_niche : "",
   company_differential: typeof data?.company_differential === "string" ? data.company_differential : "",
   company_objective: typeof data?.company_objective === "string" ? data.company_objective : "",
@@ -55,11 +58,23 @@ const normalizeCompanyProfile = (data?: Partial<Record<keyof CompanyProfile, unk
 const PROFILE_STEPS = [
   { key: "company_name", label: "Nome da sua empresa", placeholder: "Ex: Agência Digital XYZ", icon: Building2, description: "Como sua empresa se chama?" },
   { key: "attendant_name", label: "Seu nome (atendente)", placeholder: "Ex: João Silva", icon: User, description: "Quem vai fazer o contato com as oportunidades?" },
+  { key: "company_business_model", label: "Como sua empresa atua?", placeholder: "Selecione uma opção", icon: Factory, description: "Isso define o jeito que a IA escreve as abordagens" },
   { key: "company_niche", label: "Nicho da empresa", placeholder: "Ex: Marketing Digital, Consultoria Financeira, Fotografia", icon: Target, description: "Em qual segmento sua empresa atua?" },
   { key: "company_differential", label: "Diferencial da empresa", placeholder: "Ex: Atendimento personalizado, 10 anos de experiência, preço justo...", icon: Sparkles, description: "O que torna sua empresa única no mercado?" },
   { key: "company_objective", label: "Objetivo da empresa", placeholder: "Ex: Aumentar carteira de clientes, expandir para novas cidades...", icon: Rocket, description: "Qual o principal objetivo ao prospectar?" },
   { key: "company_products", label: "O que sua empresa vende?", placeholder: "Ex: Sites, gestão de redes sociais, consultorias, produtos físicos...", icon: ShoppingBag, description: "Descreva seus produtos ou serviços principais" },
   { key: "company_target_audience", label: "Para quem você vende?", placeholder: "Ex: Pequenas empresas, restaurantes, clínicas de estética...", icon: Users, description: "Quem é seu público-alvo ideal?" },
+] as const;
+
+export const BUSINESS_MODEL_OPTIONS = [
+  { value: "distribuidor", label: "Distribuidor / Atacadista", hint: "Compro e revendo produtos em volume para outros negócios" },
+  { value: "industria", label: "Indústria / Fabricante", hint: "Produzo o que vendo e forneço direto" },
+  { value: "revenda", label: "Revenda / Varejo", hint: "Vendo produtos com pronta entrega" },
+  { value: "representante", label: "Representante comercial", hint: "Represento marcas e intermedio a venda" },
+  { value: "servico", label: "Prestador de serviço", hint: "Executo um serviço para o cliente" },
+  { value: "software", label: "Software / Tecnologia", hint: "Vendo sistema, app ou plataforma" },
+  { value: "agencia", label: "Agência / Marketing", hint: "Cuido de divulgação e presença digital de clientes" },
+  { value: "outro", label: "Outro", hint: "Nenhuma das opções acima" },
 ] as const;
 
 // Total steps = profile steps + 1 services step
@@ -150,9 +165,16 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
         let profileSaved = false;
         let lastProfileErr: any = null;
         for (let attempt = 1; attempt <= 3; attempt++) {
-          const { error } = await supabase
+          const payload: any = { user_id: effectiveOwnerId, owner_user_id: effectiveOwnerId, ...form };
+          let { error } = await supabase
             .from("company_profiles" as any)
-            .upsert({ user_id: effectiveOwnerId, owner_user_id: effectiveOwnerId, ...form } as any, { onConflict: "user_id" });
+            .upsert(payload, { onConflict: "user_id" });
+          if (error && String(error.message || "").includes("company_business_model")) {
+            const { company_business_model: _omit, ...fallback } = payload;
+            ({ error } = await supabase
+              .from("company_profiles" as any)
+              .upsert(fallback, { onConflict: "user_id" }));
+          }
           if (!error) { profileSaved = true; break; }
           lastProfileErr = error;
           console.warn(`[CompanyProfileOnboarding] profile upsert attempt ${attempt} failed:`, error);
@@ -305,7 +327,31 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
                 </div>
               )}
 
-              {isLongField ? (
+              {currentProfileStep.key === "company_business_model" ? (
+                <div className="grid gap-2">
+                  {BUSINESS_MODEL_OPTIONS.map((opt) => {
+                    const selected = form.company_business_model === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, company_business_model: opt.value }))}
+                        className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
+                          selected ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                        }`}
+                      >
+                        <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
+                          {selected && <Check className="h-3 w-3" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                          <p className="text-xs text-muted-foreground">{opt.hint}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : isLongField ? (
                 <Textarea
                   value={currentValue}
                   onChange={(e) => setForm(f => ({ ...f, [currentProfileStep.key]: e.target.value }))}

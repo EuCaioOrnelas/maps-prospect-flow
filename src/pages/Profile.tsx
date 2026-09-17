@@ -50,6 +50,7 @@ import {
   ShoppingBag,
   Users,
   Rocket,
+  Factory,
   Pencil,
   DollarSign,
   Plus,
@@ -67,6 +68,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
 import { PlayCircle } from "lucide-react";
+import { BUSINESS_MODEL_OPTIONS } from "@/components/opportunities/CompanyProfileOnboarding";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
@@ -152,6 +154,7 @@ const Profile = () => {
   const [companyForm, setCompanyForm] = useState({
     company_name: "",
     attendant_name: "",
+    company_business_model: "",
     company_niche: "",
     company_differential: "",
     company_objective: "",
@@ -174,6 +177,7 @@ const Profile = () => {
           setCompanyForm({
             company_name: (data as any).company_name || "",
             attendant_name: (data as any).attendant_name || "",
+            company_business_model: (data as any).company_business_model || "",
             company_niche: (data as any).company_niche || "",
             company_differential: (data as any).company_differential || "",
             company_objective: (data as any).company_objective || "",
@@ -194,13 +198,16 @@ const Profile = () => {
     if (!user || !accountOwnerId) return;
     setIsSavingCompany(true);
     try {
-      const { error } = await supabase
+      const basePayload: any = { user_id: accountOwnerId, owner_user_id: accountOwnerId, ...companyForm };
+      let { error } = await supabase
         .from("company_profiles" as any)
-        .upsert({
-          user_id: accountOwnerId,
-          owner_user_id: accountOwnerId,
-          ...companyForm,
-        } as any, { onConflict: "user_id" });
+        .upsert(basePayload, { onConflict: "user_id" });
+      if (error && String(error.message || "").includes("company_business_model")) {
+        const { company_business_model: _omit, ...fallback } = basePayload;
+        ({ error } = await supabase
+          .from("company_profiles" as any)
+          .upsert(fallback, { onConflict: "user_id" }));
+      }
       if (error) throw error;
       setCompanyProfile({ ...companyForm, user_id: accountOwnerId, owner_user_id: accountOwnerId });
       setIsEditingCompany(false);
@@ -849,6 +856,35 @@ const Profile = () => {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Factory className="h-3.5 w-3.5" /> Como sua empresa atua
+                    </Label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {BUSINESS_MODEL_OPTIONS.map((opt) => {
+                        const selected = companyForm.company_business_model === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setCompanyForm(f => ({ ...f, company_business_model: opt.value }))}
+                            className={`flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors ${selected ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}
+                          >
+                            <div className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
+                              {selected && <Check className="h-3 w-3" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                              <p className="text-xs text-muted-foreground">{opt.hint}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      A IA usa isso para escrever a abordagem certa. Um distribuidor nunca deve receber mensagem de agência de marketing.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Target className="h-3.5 w-3.5" /> Nicho da empresa
                     </Label>
                     <Input
@@ -918,6 +954,7 @@ const Profile = () => {
                         setCompanyForm({
                           company_name: companyProfile.company_name || "",
                           attendant_name: companyProfile.attendant_name || "",
+                          company_business_model: companyProfile.company_business_model || "",
                           company_niche: companyProfile.company_niche || "",
                           company_differential: companyProfile.company_differential || "",
                           company_objective: companyProfile.company_objective || "",
@@ -939,6 +976,7 @@ const Profile = () => {
                   {[
                     { icon: Building2, label: "Empresa", value: companyProfile.company_name },
                     { icon: User, label: "Atendente", value: companyProfile.attendant_name },
+                    { icon: Factory, label: "Como atua", value: BUSINESS_MODEL_OPTIONS.find(o => o.value === companyProfile.company_business_model)?.label || "Não informado" },
                     { icon: Target, label: "Nicho", value: companyProfile.company_niche },
                     { icon: ShoppingBag, label: "Produtos/Serviços", value: companyProfile.company_products },
                     { icon: Users, label: "Público-alvo", value: companyProfile.company_target_audience },

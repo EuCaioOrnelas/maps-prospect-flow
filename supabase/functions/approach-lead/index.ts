@@ -80,6 +80,131 @@ function hasContactNumber(lead: any): boolean {
   return false;
 }
 
+// ===== Modelo de negócio de quem prospecta (impede mensagem de "agência" para quem é distribuidor) =====
+type BusinessModel =
+  | "distribuidor"
+  | "industria"
+  | "revenda"
+  | "servico"
+  | "software"
+  | "agencia"
+  | "representante"
+  | "outro";
+
+const BUSINESS_MODEL_LABELS: Record<BusinessModel, string> = {
+  distribuidor: "Distribuidor / Atacadista",
+  industria: "Indústria / Fabricante",
+  revenda: "Revenda / Varejo",
+  servico: "Prestador de serviço",
+  software: "Software / Tecnologia",
+  agencia: "Agência / Marketing",
+  representante: "Representante comercial",
+  outro: "Outro",
+};
+
+const BUSINESS_MODEL_ROLES: Record<BusinessModel, string> = {
+  distribuidor:
+    "DISTRIBUI E REVENDE PRODUTOS EM VOLUME para outros negócios. O lead é um CLIENTE COMPRADOR (ponto de venda, comércio, bar, restaurante, mercado, loja) que compra mercadoria para revender ou consumir na operação dele.",
+  industria:
+    "FABRICA/PRODUZ os próprios produtos e vende direto para empresas. O lead é um COMPRADOR/CLIENTE do produto fabricado.",
+  revenda:
+    "REVENDE produtos com pronta entrega. O lead é um COMPRADOR do produto.",
+  servico:
+    "PRESTA UM SERVIÇO operacional. O lead é uma empresa que pode CONTRATAR esse serviço.",
+  software:
+    "VENDE UM SISTEMA/SOFTWARE. O lead é uma empresa que pode USAR o sistema na operação.",
+  agencia:
+    "PRESTA SERVIÇOS DE MARKETING/PRESENÇA DIGITAL. O lead é uma empresa que pode contratar esses serviços.",
+  representante:
+    "REPRESENTA MARCAS/FABRICANTES e intermedeia a venda dos produtos representados. O lead é um COMPRADOR.",
+  outro:
+    "VENDE exatamente o que está descrito em 'Produtos/Serviços'. Nada além disso.",
+};
+
+const BUSINESS_MODEL_STRATEGY: Record<BusinessModel, string> = {
+  distribuidor:
+    "DISTRIBUIDOR/ATACADISTA: fale de MIX de produtos, condição comercial, prazo e regularidade de entrega, reposição, cobertura da região e atendimento direto sem atravessador. Gancho = a operação de COMPRA e ABASTECIMENTO do lead (o que ele vende ao cliente final, giro, sazonalidade, volume). NUNCA fale de divulgação, marketing, redes sociais, site ou captação de clientes.",
+  industria:
+    "INDÚSTRIA/FABRICANTE: fale de fornecimento direto da fábrica, volume, customização, padronização, prazo de produção e custo sem intermediário. Gancho = necessidade de insumo/produto na operação do lead.",
+  revenda:
+    "REVENDA/VAREJO: fale de disponibilidade, pronta entrega, variedade e condição de pagamento. Gancho = necessidade prática e imediata do lead.",
+  servico:
+    "SERVIÇO: fale da dor operacional que o serviço resolve e do ganho de tempo/custo ao terceirizar. Gancho = porte e rotina do negócio do lead.",
+  software:
+    "SOFTWARE: fale do processo manual que o sistema elimina e do controle que ele dá. Gancho = rotina desorganizada ou controle em papel/planilha.",
+  agencia:
+    "AGÊNCIA/MARKETING: aqui SIM use presença digital, site, redes sociais, avaliações, tráfego, captação e conversão como gancho e insight.",
+  representante:
+    "REPRESENTANTE COMERCIAL: fale das marcas representadas, acesso a condição de fábrica e atendimento local. Gancho = abastecimento e portfólio do lead.",
+  outro:
+    "Use apenas os produtos/serviços declarados no perfil. Gancho = região, tipo de negócio e necessidade prática, sem inventar serviço nenhum.",
+};
+
+function normalizeBusinessModel(raw: unknown): BusinessModel | null {
+  const v = String(raw || "").trim().toLowerCase();
+  if (!v) return null;
+  if (v in BUSINESS_MODEL_LABELS) return v as BusinessModel;
+  return null;
+}
+
+function inferBusinessModel(text: string): BusinessModel {
+  const t = (text || "").toLowerCase();
+  if (/(distribuidor|distribuidora|distribui[cç][aã]o|atacad|atacarejo|abastec)/.test(t)) return "distribuidor";
+  if (/(ind[uú]stria|industrial|f[aá]brica|fabricante|fabrica[cç][aã]o|manufatur|confec[cç])/.test(t)) return "industria";
+  if (/(representa[cç][aã]o comercial|representante comercial)/.test(t)) return "representante";
+  if (/(software|sistema|saas|aplicativo|erp|crm|plataforma|tecnologia da informa)/.test(t)) return "software";
+  if (/(marketing|ag[eê]ncia|tr[aá]fego pago|social media|seo|gest[aã]o de redes|crea[cç][aã]o de sites?)/.test(t)) return "agencia";
+  if (/(revenda|loja|varejo|com[eé]rcio|e-?commerce|papelaria|mercado)/.test(t)) return "revenda";
+  if (/(servi[cç]o|consultoria|assessoria|contabil|advoc|limpeza|facilities|manuten[cç][aã]o|instala[cç][aã]o|terceiriza|treinamento|mentoria)/.test(t)) return "servico";
+  return "outro";
+}
+
+function resolveBusinessModel(profile: any): BusinessModel {
+  const saved = normalizeBusinessModel(profile?.company_business_model);
+  if (saved) return saved;
+  const text = `${profile?.company_niche || ""} ${profile?.company_products || ""} ${profile?.company_name || ""}`;
+  return inferBusinessModel(text);
+}
+
+function formatProductCatalog(services: any): string {
+  const list = Array.isArray(services) ? services : [];
+  const items = list
+    .map((item: any) => {
+      const nome = String(item?.name || item?.nome || "").trim();
+      const desc = String(item?.description || item?.descricao || "").trim();
+      if (!nome) return "";
+      return desc ? `- ${nome}: ${desc}` : `- ${nome}`;
+    })
+    .filter(Boolean);
+  return items.length ? items.join("\n") : "";
+}
+
+function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any, catalog: string): string {
+  const blockedMarketing = model !== "agencia";
+  return `
+═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
+- Como a empresa atua: ${BUSINESS_MODEL_LABELS[model]}
+- Papel na cadeia: ${BUSINESS_MODEL_ROLES[model]}
+- O que ela entrega de fato: ${profile?.company_products || "conforme perfil"}
+${catalog ? `- Catálogo declarado:\n${catalog}` : ""}
+- Relação com este lead (${lead?.company_name || "lead"}${lead?.category ? `, ${lead.category}` : ""}): o lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que ela vende" : "um CLIENTE COMPRADOR dos produtos dela"}.
+
+ESTRATÉGIA OBRIGATÓRIA PARA ESTE MODELO:
+${BUSINESS_MODEL_STRATEGY[model]}
+
+${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insinuar marketing, divulgação, presença digital, redes sociais, tráfego pago, anúncios, site, SEO, engajamento, conversão online, "fortalecer a marca" ou "atrair mais clientes pela internet". Quem escreve NÃO vende nada disso. Se o insight que você pensou for sobre esses temas, DESCARTE e escolha outro ligado ao que a empresa realmente vende.` : ""}
+⛔ PROIBIDO tratar o lead como se ele fosse cliente de um serviço que a empresa não presta. A mensagem deve soar como alguém que ${model === "distribuidor" ? "abastece o negócio dele com produtos" : model === "industria" ? "fabrica e fornece o produto dele" : model === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}.
+`;
+}
+
+const MARKETING_TERMS = /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
+
+function messageViolatesModel(message: string, model: BusinessModel): boolean {
+  if (model === "agencia") return false;
+  return MARKETING_TERMS.test(message || "");
+}
+
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -193,19 +318,32 @@ serve(async (req) => {
     const analiseDemanda = enrichment.analise_demanda_regional || "";
     const nicheAnalysisType = enrichment.niche_analysis_type || "";
 
+    // Modelo de negócio real de quem prospecta
+    const { data: companyServices } = await supabase
+      .from("company_services")
+      .select("name, description")
+      .eq("owner_user_id", companyProfile?.owner_user_id || user.id)
+      .limit(20);
+
+    const businessModel = resolveBusinessModel(companyProfile);
+    const productCatalog = formatProductCatalog(companyServices);
+
     // Build company context
     const companyContext = companyProfile ? `
 ⚠️ INSTRUÇÃO PRIMÁRIA — PERFIL DA EMPRESA PROSPECTORA:
 - Empresa: ${companyProfile.company_name}
 - Atendente: ${companyProfile.attendant_name}
+- Como atua (modelo de negócio): ${BUSINESS_MODEL_LABELS[businessModel]}
 - Nicho de atuação: ${companyProfile.company_niche}
 - Produtos/Serviços que VENDE: ${companyProfile.company_products}
+${productCatalog ? `- Catálogo declarado:\n${productCatalog}` : ""}
 - Diferencial competitivo: ${companyProfile.company_differential}
 - Objetivo comercial: ${companyProfile.company_objective}
 - Público-alvo: ${companyProfile.company_target_audience}
 
-REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_products}". NÃO fale de serviços que a empresa NÃO oferece. Se a empresa vende internet, fale APENAS de internet. Se vende energia solar, fale APENAS de energia solar. Se vende marketing, fale de marketing. NUNCA desvie do que está descrito acima.
+REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_products}". NÃO fale de serviços que a empresa NÃO oferece. Se a empresa distribui bebidas, fale APENAS de abastecimento de bebidas. Se vende internet, fale APENAS de internet. Se vende marketing, fale de marketing. NUNCA desvie do que está descrito acima.
 ` : "";
+
 
     // Build diagnostic context if available
     const diagnosticContext = hasDiagnostic ? `
@@ -228,22 +366,9 @@ IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se nã
     // Generate a random seed to force unique messages even for similar diagnostics
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
 
-    // Determine niche category for approach strategy
-    const nicheText = companyProfile ? `${companyProfile.company_niche || ""} ${companyProfile.company_products || ""}`.toLowerCase() : "";
-    const isDigitalNiche = /(marketing|site|seo|rede social|tr[aá]fego|ads|design|conte[uú]do|social media)/.test(nicheText);
-    const isInfrastructureNiche = /(internet|provedor|fibra|telecom|solar|energia|seguran[cç]a|monitoramento|c[aâ]mera|alarme)/.test(nicheText);
-    const isProductNiche = /(uniforme|embalagem|m[aá]quina|equipamento|auto pe[cç]a|ra[cç][aã]o|insumo|fertilizante|ferramenta)/.test(nicheText);
-    const isServiceNiche = /(limpeza|facilities|bpo|terceiriza|contabilidade|advoc|consultoria|mentoria)/.test(nicheText);
-
-    const nicheStrategy = isDigitalNiche
-      ? "DIGITAL: Use dados do site, redes sociais e avaliações como gancho. Fale sobre presença digital, engajamento, conversão."
-      : isInfrastructureNiche
-      ? "INFRAESTRUTURA: NÃO fale de redes sociais ou site. Foque na REGIÃO, TIPO DE NEGÓCIO e NECESSIDADE OPERACIONAL. Ex: 'negócios como o seu na região de [cidade] costumam ter demanda por [serviço]'."
-      : isProductNiche
-      ? "PRODUTO: Foque na OPERAÇÃO do lead e como o produto resolve uma necessidade prática do dia-a-dia. Mencione o tipo de negócio e a região."
-      : isServiceNiche
-      ? "SERVIÇO: Foque no PORTE e COMPLEXIDADE do negócio do lead. Mostre como o serviço terceirizado otimiza a operação."
-      : "GENÉRICO: Use região, tipo de negócio e qualquer dado disponível. Se não há dados suficientes para personalizar, crie um gancho sobre a região e proponha uma conversa.";
+    // Estratégia de abordagem definida pelo MODELO DE NEGÓCIO real (não por palavra-chave solta)
+    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
+    const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
 
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
 
@@ -261,6 +386,7 @@ Por isso:
 - ✅ Conduza para o PRÓXIMO PASSO real (uma pergunta qualificadora, agendar uma call rápida, mandar material, etc.)
 
 ${companyContext}
+${businessModelBlock}
 ${diagnosticContext}
 
 DADOS DO LEAD:
@@ -272,7 +398,7 @@ DADOS DO LEAD:
 - Possui site: ${hasSite ? "Sim" : "Não"}
 - Redes sociais: ${socialMedia.length > 0 ? socialMedia.join(", ") : "Nenhuma"}
 
-═══ ESTRATÉGIA DE ABORDAGEM POR NICHO ═══
+═══ ESTRATÉGIA DE ABORDAGEM PELO MODELO DE NEGÓCIO ═══
 ${nicheStrategy}
 
 ═══ VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) ═══
@@ -346,6 +472,45 @@ Retorne APENAS JSON válido:
     if (!content) throw new Error("Resposta vazia da IA");
 
     const parsed = JSON.parse(content);
+
+    // Revisão final: se a mensagem ofereceu algo fora do modelo de negócio, reescreve UMA vez.
+    if (messageViolatesModel(parsed.mensagem || "", businessModel)) {
+      try {
+        const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{
+              role: "user",
+              content: `A mensagem abaixo foi escrita para um lead, mas ela oferece marketing/presença digital, e quem envia NÃO vende isso.
+
+QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
+O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
+ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+
+Reescreva mantendo o mesmo tom, tamanho e estrutura, removendo QUALQUER menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online, e trocando o ângulo pelo que a empresa realmente vende.
+
+MENSAGEM ORIGINAL:
+${parsed.mensagem}
+
+Retorne APENAS JSON: {"mensagem": "..."}`,
+            }],
+            temperature: 0.5,
+            max_tokens: 800,
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (fixRes.ok) {
+          const fixData = await fixRes.json();
+          logAiUsage({ feature: 'approach-lead-model-fix', model: 'gpt-4o-mini', usage: fixData.usage });
+          const fixed = JSON.parse(fixData.choices?.[0]?.message?.content || "{}");
+          if (fixed?.mensagem) parsed.mensagem = fixed.mensagem;
+        }
+      } catch (e) {
+        console.error("model-fix falhou", String(e));
+      }
+    }
 
     if (lead_id && !internalMode) {
       // Store the message on the lead

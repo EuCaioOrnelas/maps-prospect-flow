@@ -95,6 +95,131 @@ function hasContactNumber(lead: any): boolean {
   return false;
 }
 
+// ===== Modelo de negócio de quem prospecta (impede mensagem de "agência" para quem é distribuidor) =====
+type BusinessModel =
+  | "distribuidor"
+  | "industria"
+  | "revenda"
+  | "servico"
+  | "software"
+  | "agencia"
+  | "representante"
+  | "outro";
+
+const BUSINESS_MODEL_LABELS: Record<BusinessModel, string> = {
+  distribuidor: "Distribuidor / Atacadista",
+  industria: "Indústria / Fabricante",
+  revenda: "Revenda / Varejo",
+  servico: "Prestador de serviço",
+  software: "Software / Tecnologia",
+  agencia: "Agência / Marketing",
+  representante: "Representante comercial",
+  outro: "Outro",
+};
+
+const BUSINESS_MODEL_ROLES: Record<BusinessModel, string> = {
+  distribuidor:
+    "DISTRIBUI E REVENDE PRODUTOS EM VOLUME para outros negócios. O lead é um CLIENTE COMPRADOR (ponto de venda, comércio, bar, restaurante, mercado, loja) que compra mercadoria para revender ou consumir na operação dele.",
+  industria:
+    "FABRICA/PRODUZ os próprios produtos e vende direto para empresas. O lead é um COMPRADOR/CLIENTE do produto fabricado.",
+  revenda:
+    "REVENDE produtos com pronta entrega. O lead é um COMPRADOR do produto.",
+  servico:
+    "PRESTA UM SERVIÇO operacional. O lead é uma empresa que pode CONTRATAR esse serviço.",
+  software:
+    "VENDE UM SISTEMA/SOFTWARE. O lead é uma empresa que pode USAR o sistema na operação.",
+  agencia:
+    "PRESTA SERVIÇOS DE MARKETING/PRESENÇA DIGITAL. O lead é uma empresa que pode contratar esses serviços.",
+  representante:
+    "REPRESENTA MARCAS/FABRICANTES e intermedeia a venda dos produtos representados. O lead é um COMPRADOR.",
+  outro:
+    "VENDE exatamente o que está descrito em 'Produtos/Serviços'. Nada além disso.",
+};
+
+const BUSINESS_MODEL_STRATEGY: Record<BusinessModel, string> = {
+  distribuidor:
+    "DISTRIBUIDOR/ATACADISTA: fale de MIX de produtos, condição comercial, prazo e regularidade de entrega, reposição, cobertura da região e atendimento direto sem atravessador. Gancho = a operação de COMPRA e ABASTECIMENTO do lead (o que ele vende ao cliente final, giro, sazonalidade, volume). NUNCA fale de divulgação, marketing, redes sociais, site ou captação de clientes.",
+  industria:
+    "INDÚSTRIA/FABRICANTE: fale de fornecimento direto da fábrica, volume, customização, padronização, prazo de produção e custo sem intermediário. Gancho = necessidade de insumo/produto na operação do lead.",
+  revenda:
+    "REVENDA/VAREJO: fale de disponibilidade, pronta entrega, variedade e condição de pagamento. Gancho = necessidade prática e imediata do lead.",
+  servico:
+    "SERVIÇO: fale da dor operacional que o serviço resolve e do ganho de tempo/custo ao terceirizar. Gancho = porte e rotina do negócio do lead.",
+  software:
+    "SOFTWARE: fale do processo manual que o sistema elimina e do controle que ele dá. Gancho = rotina desorganizada ou controle em papel/planilha.",
+  agencia:
+    "AGÊNCIA/MARKETING: aqui SIM use presença digital, site, redes sociais, avaliações, tráfego, captação e conversão como gancho e insight.",
+  representante:
+    "REPRESENTANTE COMERCIAL: fale das marcas representadas, acesso a condição de fábrica e atendimento local. Gancho = abastecimento e portfólio do lead.",
+  outro:
+    "Use apenas os produtos/serviços declarados no perfil. Gancho = região, tipo de negócio e necessidade prática, sem inventar serviço nenhum.",
+};
+
+function normalizeBusinessModel(raw: unknown): BusinessModel | null {
+  const v = String(raw || "").trim().toLowerCase();
+  if (!v) return null;
+  if (v in BUSINESS_MODEL_LABELS) return v as BusinessModel;
+  return null;
+}
+
+function inferBusinessModel(text: string): BusinessModel {
+  const t = (text || "").toLowerCase();
+  if (/(distribuidor|distribuidora|distribui[cç][aã]o|atacad|atacarejo|abastec)/.test(t)) return "distribuidor";
+  if (/(ind[uú]stria|industrial|f[aá]brica|fabricante|fabrica[cç][aã]o|manufatur|confec[cç])/.test(t)) return "industria";
+  if (/(representa[cç][aã]o comercial|representante comercial)/.test(t)) return "representante";
+  if (/(software|sistema|saas|aplicativo|erp|crm|plataforma|tecnologia da informa)/.test(t)) return "software";
+  if (/(marketing|ag[eê]ncia|tr[aá]fego pago|social media|seo|gest[aã]o de redes|crea[cç][aã]o de sites?)/.test(t)) return "agencia";
+  if (/(revenda|loja|varejo|com[eé]rcio|e-?commerce|papelaria|mercado)/.test(t)) return "revenda";
+  if (/(servi[cç]o|consultoria|assessoria|contabil|advoc|limpeza|facilities|manuten[cç][aã]o|instala[cç][aã]o|terceiriza|treinamento|mentoria)/.test(t)) return "servico";
+  return "outro";
+}
+
+function resolveBusinessModel(profile: any): BusinessModel {
+  const saved = normalizeBusinessModel(profile?.company_business_model);
+  if (saved) return saved;
+  const text = `${profile?.company_niche || ""} ${profile?.company_products || ""} ${profile?.company_name || ""}`;
+  return inferBusinessModel(text);
+}
+
+function formatProductCatalog(services: any): string {
+  const list = Array.isArray(services) ? services : [];
+  const items = list
+    .map((item: any) => {
+      const nome = String(item?.name || item?.nome || "").trim();
+      const desc = String(item?.description || item?.descricao || "").trim();
+      if (!nome) return "";
+      return desc ? `- ${nome}: ${desc}` : `- ${nome}`;
+    })
+    .filter(Boolean);
+  return items.length ? items.join("\n") : "";
+}
+
+function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any, catalog: string): string {
+  const blockedMarketing = model !== "agencia";
+  return `
+═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
+- Como a empresa atua: ${BUSINESS_MODEL_LABELS[model]}
+- Papel na cadeia: ${BUSINESS_MODEL_ROLES[model]}
+- O que ela entrega de fato: ${profile?.company_products || "conforme perfil"}
+${catalog ? `- Catálogo declarado:\n${catalog}` : ""}
+- Relação com este lead (${lead?.company_name || "lead"}${lead?.category ? `, ${lead.category}` : ""}): o lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que ela vende" : "um CLIENTE COMPRADOR dos produtos dela"}.
+
+ESTRATÉGIA OBRIGATÓRIA PARA ESTE MODELO:
+${BUSINESS_MODEL_STRATEGY[model]}
+
+${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insinuar marketing, divulgação, presença digital, redes sociais, tráfego pago, anúncios, site, SEO, engajamento, conversão online, "fortalecer a marca" ou "atrair mais clientes pela internet". Quem escreve NÃO vende nada disso. Se o insight que você pensou for sobre esses temas, DESCARTE e escolha outro ligado ao que a empresa realmente vende.` : ""}
+⛔ PROIBIDO tratar o lead como se ele fosse cliente de um serviço que a empresa não presta. A mensagem deve soar como alguém que ${model === "distribuidor" ? "abastece o negócio dele com produtos" : model === "industria" ? "fabrica e fornece o produto dele" : model === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}.
+`;
+}
+
+const MARKETING_TERMS = /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
+
+function messageViolatesModel(message: string, model: BusinessModel): boolean {
+  if (model === "agencia") return false;
+  return MARKETING_TERMS.test(message || "");
+}
+
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -191,17 +316,30 @@ serve(async (req) => {
     const socialMedia = Array.isArray(lead.social_media) ? lead.social_media : [];
     const hasSite = !!lead.website && lead.website !== "-";
 
+    const { data: companyServices } = await supabase
+      .from("company_services")
+      .select("name, description")
+      .eq("owner_user_id", companyProfile?.owner_user_id || user.id)
+      .limit(20);
+
+    const businessModel = resolveBusinessModel(companyProfile);
+    const productCatalog = formatProductCatalog(companyServices);
+    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
+
     const companyContext = companyProfile ? `
 ⚠️ PERFIL DA EMPRESA QUE ESTÁ PROSPECTANDO:
 - Empresa: ${companyProfile.company_name}
 - Atendente/Vendedor: ${companyProfile.attendant_name}
+- Como atua (modelo de negócio): ${BUSINESS_MODEL_LABELS[businessModel]}
 - Nicho: ${companyProfile.company_niche}
 - Produtos/Serviços VENDIDOS: ${companyProfile.company_products}
+${productCatalog ? `- Catálogo declarado:\n${productCatalog}` : ""}
 - Diferencial: ${companyProfile.company_differential}
 - Objetivo: ${companyProfile.company_objective}
 - Público-alvo: ${companyProfile.company_target_audience}
 
 REGRA ABSOLUTA: A mensagem NUNCA deve mencionar algo que "${companyProfile.company_name}" NÃO vende. Não ofereça a solução — só plante a semente.
+${businessModelBlock}
 ` : "";
 
     const diagnosticContext = (lead.ai_score || lead.ai_diagnosis) ? `
@@ -281,8 +419,18 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
        (a) Nome: "${companyProfile?.attendant_name || "[nome]"}"
        (b) Empresa: "${companyProfile?.company_name || "[empresa]"}"
        (c) Contexto de autoridade — UMA frase curta que justifique NATURALMENTE por que essa pessoa entende do assunto que vai comentar em seguida.
-   • Exemplo estrutural (adaptar, nunca copiar literal):
-       "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda."
+    • Exemplo estrutural (adaptar ao MODELO DE NEGÓCIO, nunca copiar literal):
+       "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. ${businessModel === "distribuidor" || businessModel === "representante"
+         ? `Trabalhamos abastecendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}.`
+         : businessModel === "industria"
+         ? `Fabricamos ${companyProfile?.company_products || "nossos produtos"} e fornecemos direto para ${lead.category || "negócios como o seu"}.`
+         : businessModel === "revenda"
+         ? `Trabalhamos com ${companyProfile?.company_products || "esses produtos"} com pronta entrega para ${lead.category || "negócios da região"}.`
+         : businessModel === "software"
+         ? `Trabalhamos com ${companyProfile?.company_products || "nosso sistema"} dentro da operação de ${lead.category || "negócios como o seu"}.`
+         : businessModel === "agencia"
+         ? `Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda.`
+         : `Atendemos ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos serviços"}.`}"
    • O objetivo do contexto de autoridade NÃO é impressionar nem vender — é apenas explicar por que faz sentido essa pessoa estar comentando sobre aquele tema.
    • A autoridade deve parecer INCIDENTAL, nunca propaganda. O leitor deve pensar: "faz sentido essa pessoa entender desse assunto."
 
@@ -292,12 +440,13 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
      • tipo de serviço prestado (${companyProfile?.company_products || "serviços declarados"})
      • diferencial real declarado (${companyProfile?.company_differential || "-"})
      • rotina de análise daquele segmento ("costumo acompanhar…", "trabalho analisando…", "faço parte de uma equipe especializada em…")
-     • propósito recorrente do contato (mapear negócios locais, entender presença digital, etc.)
-   Frases modelo (adaptar ao ICP "${lead.category || "N/A"}", nunca copiar):
-     – "Trabalho analisando estratégias digitais de ${lead.category || "negócios locais"}."
-     – "Atuo com empresas que buscam fortalecer as vendas diretas."
+     • propósito recorrente do contato (mapear negócios da região, entender como o negócio se abastece/opera, etc.)
+   Frases modelo (adaptar ao ICP "${lead.category || "N/A"}" E ao modelo de negócio, nunca copiar):
+${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digitais de ${lead.category || "negócios locais"}."
      – "Faço parte de uma equipe especializada em presença digital para negócios locais."
-     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."
+     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."` : `     – "Atendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}."
+     – "Costumo acompanhar como ${lead.category || "negócios desse segmento"} organizam ${businessModel === "distribuidor" || businessModel === "industria" || businessModel === "revenda" || businessModel === "representante" ? "o abastecimento e a reposição de produtos" : "essa parte da operação"}."
+     – "Trabalho direto com ${lead.category || "negócios como o seu"} aqui na região."`}
 
    PROIBIÇÕES ABSOLUTAS (a IA NUNCA pode inventar):
      • quantidade de clientes • faturamento • anos de mercado • prêmios • certificações
@@ -384,15 +533,18 @@ PERSONALIZAÇÃO PELO PERFIL DA EMPRESA PROSPECTADORA (obrigatória)
 ═══════════════════════════════════════════
 A mensagem deve ser construída EM FUNÇÃO do que a empresa do usuário REALMENTE vende, não apenas do nicho do lead.
 Antes de escrever, cruze estes dados do perfil da empresa:
+- Modelo de negócio: ${BUSINESS_MODEL_LABELS[businessModel]}
 - Produtos/Serviços vendidos: ${companyProfile?.company_products || "N/A"}
+${productCatalog ? `${productCatalog}` : ""}
 - Nicho da empresa: ${companyProfile?.company_niche || "N/A"}
 - Diferencial real: ${companyProfile?.company_differential || "N/A"}
 - Público-alvo: ${companyProfile?.company_target_audience || "N/A"}
 - Objetivo: ${companyProfile?.company_objective || "N/A"}
 
 Regras de personalização:
+• Os eixos de ICP acima são do LEAD. Só use o eixo que combina com o que VOCÊ vende. Se você é ${BUSINESS_MODEL_LABELS[businessModel]}, eixos de marketing/tráfego/conversão só podem ser usados se você realmente vender marketing.
 • O insight deve levantar um ponto que TENHA solução natural dentro do cardápio de produtos/serviços acima. Nunca levante uma dor que sua empresa não resolve.
-• O vocabulário, exemplos e ângulo devem refletir o nicho atendido pela empresa prospectadora (ex.: se vende "sistema de delivery", fale em pedido online; se vende "gestão de tráfego", fale em captação; se vende "CRM", fale em organização de atendimento).
+• O vocabulário, exemplos e ângulo devem refletir o MODELO DE NEGÓCIO (ex.: distribuidor fala de mix, prazo, reposição e condição comercial; indústria fala de fornecimento direto e volume; software fala de processo manual; agência fala de captação).
 • Se o perfil da empresa informar um diferencial específico (metodologia, tipo de atendimento, região, especialização), use esse diferencial como pano de fundo sutil da autoridade — sem exagerar.
 • A Curiosidade e o CTA devem deixar claro que a continuação da conversa será sobre o tema que a empresa prospectadora domina, não sobre algo genérico.
 • TESTE DE ADEQUAÇÃO: depois de pronta, a mensagem deve parecer escrita por alguém que trabalha com "${companyProfile?.company_products || "os serviços da empresa"}". Se parecer genérica o suficiente para qualquer empresa, REESCREVA.
@@ -438,6 +590,8 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Está personalizada ao PERFIL DA EMPRESA que prospecta: produtos/serviços = "${companyProfile?.company_products || "N/A"}", nicho = "${companyProfile?.company_niche || "N/A"}"? A mensagem parece escrita por quem vende isso?
 
   ✓ O GANCHO e o INSIGHT têm ligação direta com "${companyProfile?.company_products || "o serviço vendido"}"? (se não, reescreva)
+  ✓ A mensagem respeita o MODELO DE NEGÓCIO "${BUSINESS_MODEL_LABELS[businessModel]}"? ${businessModel === "agencia" ? "" : "Não pode ter NENHUMA menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Se tiver, REESCREVA."}
+  ✓ O leitor entenderia que quem escreveu ${businessModel === "distribuidor" ? "abastece o negócio dele com produtos" : businessModel === "industria" ? "fabrica e fornece o produto" : businessModel === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}? (se não, reescreva)
   ✓ O CTA é obrigatoriamente uma PERGUNTA FECHADA que termina com "?"?
   ✓ O CTA pergunta se o empresário quer que você explique melhor o tema do insight (nunca é pergunta vaga tipo "faz sentido?")?
   ✓ O CTA amarra explicitamente com o tema do insight (canal próprio, agenda, retenção, etc.)?
@@ -535,6 +689,45 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       blocks[blocks.length - 1] = last;
       return blocks.join("\n\n");
     };
+
+    // Revisão final: mensagem que oferece algo fora do modelo de negócio é reescrita UMA vez.
+    if (messageViolatesModel(parsed.mensagem || "", businessModel)) {
+      try {
+        const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{
+              role: "user",
+              content: `A mensagem abaixo oferece marketing/presença digital, mas quem envia NÃO vende isso.
+
+QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
+O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
+ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+
+Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Remova QUALQUER menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online, trocando o ângulo pelo que a empresa realmente vende.
+
+MENSAGEM ORIGINAL:
+${parsed.mensagem}
+
+Retorne APENAS JSON: {"mensagem": "..."}`,
+            }],
+            temperature: 0.6,
+            max_tokens: 900,
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (fixRes.ok) {
+          const fixData = await fixRes.json();
+          logAiUsage({ feature: 'approach-lead-manual-model-fix', model: 'gpt-4o-mini', usage: fixData.usage });
+          const fixed = JSON.parse(fixData.choices?.[0]?.message?.content || "{}");
+          if (fixed?.mensagem) parsed.mensagem = fixed.mensagem;
+        }
+      } catch (e) {
+        console.error("model-fix falhou", String(e));
+      }
+    }
 
     const finalMessage = ensureClosedQuestionCTA(sanitize(parsed.mensagem || ""));
 
