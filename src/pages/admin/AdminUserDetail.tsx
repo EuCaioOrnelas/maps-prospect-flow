@@ -244,18 +244,19 @@ export default function AdminUserDetail() {
   const addExtraSearches = async (amount: number) => {
     if (!userId || !Number.isFinite(amount) || amount === 0) return;
     setSavingLimit(true);
-    const current = profile?.bonus_searches ?? 0;
-    const next = Math.max(0, current + Math.round(amount));
-    const { error } = await supabase.from("profiles").update({ bonus_searches: next }).eq("id", userId);
+    const { data, error } = await supabase.functions.invoke("admin-adjust-credits", {
+      body: { action: "grant_bonus", userId, amount: Math.round(amount) },
+    });
     setSavingLimit(false);
-    if (error) {
-      toast.error(`Erro ao ajustar: ${error.message}`);
+    const failure = error?.message || (data as any)?.error;
+    if (failure) {
+      toast.error(`Erro ao ajustar: ${failure}`);
       return;
     }
     toast.success(
       amount > 0
         ? `+${Math.round(amount)} prospecções liberadas nesta fatura.`
-        : `${Math.round(amount)} prospecções removidas do extra desta fatura.`
+        : `${Math.abs(Math.round(amount))} prospecções removidas do extra desta fatura.`
     );
     setLimitInput("");
     loadProfile();
@@ -270,13 +271,13 @@ export default function AdminUserDetail() {
       return;
     }
     setSavingLimit(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ custom_searches_limit: Math.round(value) })
-      .eq("id", userId);
+    const { data, error } = await supabase.functions.invoke("admin-adjust-credits", {
+      body: { action: "set_plan_limit", userId, value: Math.round(value) },
+    });
     setSavingLimit(false);
-    if (error) {
-      toast.error(`Erro ao salvar limite: ${error.message}`);
+    const failure = error?.message || (data as any)?.error;
+    if (failure) {
+      toast.error(`Erro ao salvar limite: ${failure}`);
       return;
     }
     toast.success("Limite do plano atualizado.");
