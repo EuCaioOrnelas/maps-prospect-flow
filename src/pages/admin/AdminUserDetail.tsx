@@ -764,3 +764,12 @@ function StatCard({
     </Card>
   );
 }
+
+function Field({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{label}</p>
+      <p className="text-sm text-foreground break-words">{value || "—"}</p>
+    </div>
+  );
+}
