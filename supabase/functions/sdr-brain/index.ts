@@ -368,9 +368,10 @@ ${p.never_wait_lead === false ? "- É aceitável encerrar a mensagem sem próxim
   - Toda pergunta de avanço deve ser fechada e oferecer duas respostas úteis: prioridade A/B, cenário A/B, próximo passo A/B ou horário A/B. Não crie falsa dicotomia e não use alternativas que pressupõem uma compra ainda não consentida.
   - A escolha guiada nunca autoriza pressão: se houver recusa clara, pedido para parar ou desinteresse, acolha, não insista e respeite os critérios de encerramento.
 ${(agent.situations ?? {}).preco === "nunca_sem_reuniao" ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
+- ${NO_SALE_RULE}
 
 PLAYBOOK DO OBJETIVO:
-${OBJECTIVE_PLAYBOOK[agent.objective] ?? "Conduza a conversa até o objetivo configurado."}
+${OBJECTIVE_PLAYBOOK[normalizeObjective(agent.objective)]}
 
 FUNIL OBRIGATÓRIO (avance um passo por vez, sem pular etapas):
 ${PIPELINE_STEPS}
