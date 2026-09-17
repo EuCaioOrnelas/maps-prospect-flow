@@ -87,7 +87,6 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "Ativação", url: "/admin/ativacao", icon: UserCheck },
       { title: "Retenção", url: "/admin/retencao", icon: Activity },
       { title: "Onboarding", url: "/admin/onboarding", icon: ClipboardList },
-      { title: "Landing Pages", url: "/admin/landing-pages", icon: Globe },
     ],
   },
   {

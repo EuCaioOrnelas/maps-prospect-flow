@@ -327,7 +327,7 @@ export default function AdminDashboard() {
         <KPICard
           label="LTV"
           value={formatCurrency(ltvData.ltv)}
-          sub={`~${ltvData.avgMonths.toFixed(1)} meses`}
+          sub={`${ltvData.avgMonths.toFixed(1)} meses pagos (média real)`}
           icon={TrendingUp}
         />
       </div>

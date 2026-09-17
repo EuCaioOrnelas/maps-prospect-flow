@@ -44,9 +44,7 @@ const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"), "Dashboard");
 const MainDashboard = lazyWithRetry(() => import("./pages/MainDashboard"), "MainDashboard");
 const Admin = lazyWithRetry(() => import("./pages/Admin"), "Admin");
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"), "AdminDashboard");
-const AdminLandingPages = lazyWithRetry(() => import("./pages/AdminLandingPages"), "AdminLandingPages");
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/AdminAnnouncements"), "AdminAnnouncements");
-const LandingPage = lazyWithRetry(() => import("./pages/LandingPage"), "LandingPage");
 const Prospeccao = lazyWithRetry(() => import("./pages/Prospeccao"), "Prospeccao");
 const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"), "ResetPassword");
@@ -425,7 +423,6 @@ const App = () => (
                   <Route path="trials" element={<AdminTrials />} />
                   <Route path="ativacao" element={<AdminAtivacao />} />
                   <Route path="retencao" element={<AdminRetencao />} />
-                  <Route path="landing-pages" element={<AdminLandingPages />} />
                   
                   {/* IA */}
                   <Route path="ia/agentes" element={<AdminIAAgentes />} />
