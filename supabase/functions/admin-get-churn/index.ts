@@ -282,8 +282,10 @@ serve(async (req) => {
 
     const expiredProfiles = profiles.filter((profile: any) => {
       if (profile.admin_assigned_plan || !profile.subscription_current_period_end) return false;
-      if (!["asaas", "stripe", "manual"].includes(profile.payment_provider || "")) return false;
-      if (!profile.plan || profile.plan === "free" || !usersWithRealPayment.has(profile.id)) return false;
+      if (!["asaas", "stripe", "manual", "pix", "abacate_pay"].includes(profile.payment_provider || "")) return false;
+      // Quem não renovou é rebaixado para "free" pelo cron de expiração. Exigir
+      // plano pago aqui escondia justamente o churn por não renovação.
+      if (!usersWithRealPayment.has(profile.id)) return false;
       const periodEnd = new Date(profile.subscription_current_period_end).getTime();
       return Number.isFinite(periodEnd) && periodEnd >= CHURN_CUTOFF_MS && periodEnd < now;
     });
