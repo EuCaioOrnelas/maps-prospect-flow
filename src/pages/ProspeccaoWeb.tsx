@@ -690,8 +690,9 @@ const ProspeccaoWeb = () => {
         <CompanyProfileOnboarding
           open={showCompanyOnboarding}
           userId={user.id}
+          ownerUserId={accountOwnerId}
           initialData={companyProfile}
-          onClose={() => setShowCompanyOnboarding(false)}
+          onClose={companyProfile ? () => setShowCompanyOnboarding(false) : undefined}
           onComplete={(p: any) => {
             setCompanyProfile(p);
             setShowCompanyOnboarding(false);
