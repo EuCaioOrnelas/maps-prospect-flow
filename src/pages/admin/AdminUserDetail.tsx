@@ -21,7 +21,46 @@ import {
   LogOut,
   Timer,
   RefreshCw,
+  IdCard,
+  Mail,
+  Phone,
+  FileText,
+  MapPin,
+  Building2,
+  CreditCard,
+  Sparkles,
+  ClipboardList,
+  ShieldCheck,
+  KeyRound,
+  Gauge,
+  Star,
+  Target,
+  Search as SearchIcon,
+  LifeBuoy,
 } from "lucide-react";
+
+/** Perguntas do onboarding exibidas no painel do admin. */
+const ONBOARDING_FIELDS: { key: string; label: string }[] = [
+  { key: "role", label: "Cargo" },
+  { key: "user_profile", label: "Perfil" },
+  { key: "service_types", label: "O que vende" },
+  { key: "main_objective", label: "Objetivo principal" },
+  { key: "biggest_challenge", label: "Maior desafio" },
+  { key: "sales_method", label: "Como vende hoje" },
+  { key: "sales_team_size", label: "Tamanho do time de vendas" },
+  { key: "team_size", label: "Tamanho da equipe" },
+  { key: "monthly_revenue", label: "Faturamento mensal" },
+  { key: "goal_90d", label: "Meta em 90 dias" },
+  { key: "previous_experience", label: "Já usou ferramenta parecida" },
+  { key: "previous_tool", label: "Ferramenta anterior" },
+];
+
+const formatOnboardingValue = (v: any): string | null => {
+  if (v === null || v === undefined || v === "") return null;
+  if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : null;
+  if (typeof v === "boolean") return v ? "Sim" : "Não";
+  return String(v);
+};
 import { toast } from "sonner";
 import { acquisitionLabel } from "@/lib/acquisitionSources";
 import { ImpersonateUserButton } from "@/components/admin/ImpersonateUserButton";
@@ -876,11 +915,22 @@ function StatCard({
   );
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
+function Field({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value?: string | null;
+  icon?: React.ReactNode;
+}) {
   return (
-    <div className="min-w-0">
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{label}</p>
-      <p className="text-sm text-foreground break-words">{value || "—"}</p>
+    <div className="min-w-0 rounded-[10px] border border-border/40 bg-muted/20 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1.5">
+        {icon && <span className="text-primary">{icon}</span>}
+        {label}
+      </p>
+      <p className="text-sm text-foreground break-words mt-0.5">{value || "—"}</p>
     </div>
   );
 }
