@@ -166,13 +166,12 @@ function resolveBusinessModel(profile: any): BusinessModel {
   return inferBusinessModel(text);
 }
 
-function formatProductCatalog(profile: any): string {
-  const raw = profile?.company_product_catalog;
-  const list = Array.isArray(raw) ? raw : [];
+function formatProductCatalog(services: any): string {
+  const list = Array.isArray(services) ? services : [];
   const items = list
     .map((item: any) => {
-      const nome = String(item?.nome || item?.name || "").trim();
-      const desc = String(item?.descricao || item?.description || "").trim();
+      const nome = String(item?.name || item?.nome || "").trim();
+      const desc = String(item?.description || item?.descricao || "").trim();
       if (!nome) return "";
       return desc ? `- ${nome}: ${desc}` : `- ${nome}`;
     })
@@ -180,8 +179,7 @@ function formatProductCatalog(profile: any): string {
   return items.length ? items.join("\n") : "";
 }
 
-function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any): string {
-  const catalog = formatProductCatalog(profile);
+function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any, catalog: string): string {
   const blockedMarketing = model !== "agencia";
   return `
 ═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
@@ -322,7 +320,7 @@ serve(async (req) => {
 
     // Modelo de negócio real de quem prospecta
     const businessModel = resolveBusinessModel(companyProfile);
-    const productCatalog = formatProductCatalog(companyProfile);
+    const productCatalog = formatProductCatalog(companyServices);
 
     // Build company context
     const companyContext = companyProfile ? `
