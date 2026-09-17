@@ -50,6 +50,7 @@ import {
   ShoppingBag,
   Users,
   Rocket,
+  Factory,
   Pencil,
   DollarSign,
   Plus,
@@ -67,6 +68,7 @@ import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useGuidedTour, resetGuidedTour } from "@/hooks/useGuidedTour";
 import { PlayCircle } from "lucide-react";
+import { BUSINESS_MODEL_OPTIONS } from "@/components/opportunities/CompanyProfileOnboarding";
 import { hasOpportunitiesAccess, getPlanDisplayName, getContactLimit } from "@/lib/planAccess";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
