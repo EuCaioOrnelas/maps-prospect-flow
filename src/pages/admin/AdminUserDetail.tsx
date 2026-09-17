@@ -224,6 +224,7 @@ export default function AdminUserDetail() {
   };
 
   const effectiveLimit = (profile?.custom_searches_limit ?? profile?.searches_limit ?? 0) as number;
+  const totalAvailable = effectiveLimit + (profile?.bonus_searches ?? 0);
 
   const sendPasswordReset = async () => {
     if (!profile?.email) return;
