@@ -672,7 +672,7 @@ serve(async (req) => {
       const subscription = best.sub;
       const priceId = best.priceId as string;
       plan = best.mappedPlan as string;
-      const basePlanLimit = limitForPlan(plan, priceId, (profile as any)?.created_at ?? (currentProfile as any)?.created_at ?? null);
+      const basePlanLimit = limitForPlan(plan, priceId, (currentProfile as any)?.created_at ?? null);
 
       try {
         if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
