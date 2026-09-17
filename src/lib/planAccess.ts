@@ -141,7 +141,9 @@ export function getPlanDisplayName(profile: ProfileLike): string {
  */
 export function getIncludedOpportunities(profile: ProfileLike): number {
   const plan = (profile?.plan || "free").toLowerCase();
-  if (plan === "growth") return isV3PlanUser(profile) ? 1000 : 3000;
+  // Enquanto `created_at` ainda não carregou, assumimos o padrão novo (1.000)
+  // para nunca exibir um limite maior do que o contratado.
+  if (plan === "growth") return !profile?.created_at || isV3PlanUser(profile) ? 1000 : 3000;
   if (plan === "scale") return 10000;
   if (plan === "start") return isLegacyPlanUser(profile) ? 1000 : 0;
   return 10;
