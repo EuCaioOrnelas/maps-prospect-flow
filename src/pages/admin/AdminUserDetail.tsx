@@ -183,6 +183,41 @@ export default function AdminUserDetail() {
     });
   };
 
+  const effectiveLimit = (profile?.custom_searches_limit ?? profile?.searches_limit ?? 0) as number;
+
+  const sendPasswordReset = async () => {
+    if (!profile?.email) return;
+    setSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setSendingReset(false);
+    if (error) toast.error(`Não foi possível enviar: ${error.message}`);
+    else toast.success(`E-mail de redefinição enviado para ${profile.email}`);
+  };
+
+  const saveLimit = async () => {
+    if (!userId) return;
+    const value = Number(limitInput);
+    if (!Number.isFinite(value) || value < 0) {
+      toast.error("Informe um número válido.");
+      return;
+    }
+    setSavingLimit(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ custom_searches_limit: Math.round(value) })
+      .eq("id", userId);
+    setSavingLimit(false);
+    if (error) {
+      toast.error(`Erro ao salvar limite: ${error.message}`);
+      return;
+    }
+    toast.success("Limite atualizado para a fatura atual.");
+    setLimitInput("");
+    loadProfile();
+  };
+
   useEffect(() => {
     if (!userId) return;
     (async () => {
