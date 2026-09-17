@@ -33,6 +33,37 @@ interface ProfileLite {
   avatar_url: string | null;
   plan: string | null;
   created_at: string;
+  phone?: string | null;
+  cpf?: string | null;
+  address?: string | null;
+  address_number?: string | null;
+  address_complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  payment_provider?: string | null;
+  subscription_price_cents?: number | null;
+  subscription_current_period_end?: string | null;
+  first_paid_at?: string | null;
+  searches_used?: number | null;
+  searches_limit?: number | null;
+  custom_searches_limit?: number | null;
+  bonus_searches?: number | null;
+  trial_end_at?: string | null;
+  trial_will_charge_at?: string | null;
+  is_blocked?: boolean | null;
+}
+
+interface Extra360 {
+  leads: number;
+  contacts: number;
+  messagesSent: number;
+  numbers: number;
+  searches: number;
+  tickets: number;
+  ratingAvg: number | null;
+  ratingCount: number;
 }
 
 interface SessionRow {
