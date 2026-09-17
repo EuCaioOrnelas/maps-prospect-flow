@@ -29,6 +29,8 @@ type Row = {
   reason: string;
 };
 
+type Breakdown = { key: string; mrr: number; count: number };
+
 type Summary = {
   total_subscriptions: number;
   stripe_count?: number;
@@ -38,6 +40,13 @@ type Summary = {
   trialing_count: number;
   trialing_mrr: number;
   excluded_count: number;
+  average_ticket?: number;
+  arr?: number;
+  canceling_count?: number;
+  canceling_mrr?: number;
+  by_provider?: Breakdown[];
+  by_plan?: Breakdown[];
+  by_interval?: Breakdown[];
 };
 
 const fmtBRL = (n: number) =>
