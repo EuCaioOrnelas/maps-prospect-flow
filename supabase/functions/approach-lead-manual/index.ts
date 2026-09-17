@@ -686,6 +686,45 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       return blocks.join("\n\n");
     };
 
+    // Revisão final: mensagem que oferece algo fora do modelo de negócio é reescrita UMA vez.
+    if (messageViolatesModel(parsed.mensagem || "", businessModel)) {
+      try {
+        const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [{
+              role: "user",
+              content: `A mensagem abaixo oferece marketing/presença digital, mas quem envia NÃO vende isso.
+
+QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
+O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
+ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+
+Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Remova QUALQUER menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online, trocando o ângulo pelo que a empresa realmente vende.
+
+MENSAGEM ORIGINAL:
+${parsed.mensagem}
+
+Retorne APENAS JSON: {"mensagem": "..."}`,
+            }],
+            temperature: 0.6,
+            max_tokens: 900,
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (fixRes.ok) {
+          const fixData = await fixRes.json();
+          logAiUsage({ feature: 'approach-lead-manual-model-fix', model: 'gpt-4o-mini', usage: fixData.usage });
+          const fixed = JSON.parse(fixData.choices?.[0]?.message?.content || "{}");
+          if (fixed?.mensagem) parsed.mensagem = fixed.mensagem;
+        }
+      } catch (e) {
+        console.error("model-fix falhou", String(e));
+      }
+    }
+
     const finalMessage = ensureClosedQuestionCTA(sanitize(parsed.mensagem || ""));
 
     const newEnrichment = {
