@@ -318,17 +318,24 @@ serve(async (req) => {
     const socialMedia = Array.isArray(lead.social_media) ? lead.social_media : [];
     const hasSite = !!lead.website && lead.website !== "-";
 
+    const businessModel = resolveBusinessModel(companyProfile);
+    const productCatalog = formatProductCatalog(companyProfile);
+    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead);
+
     const companyContext = companyProfile ? `
 ⚠️ PERFIL DA EMPRESA QUE ESTÁ PROSPECTANDO:
 - Empresa: ${companyProfile.company_name}
 - Atendente/Vendedor: ${companyProfile.attendant_name}
+- Como atua (modelo de negócio): ${BUSINESS_MODEL_LABELS[businessModel]}
 - Nicho: ${companyProfile.company_niche}
 - Produtos/Serviços VENDIDOS: ${companyProfile.company_products}
+${productCatalog ? `- Catálogo declarado:\n${productCatalog}` : ""}
 - Diferencial: ${companyProfile.company_differential}
 - Objetivo: ${companyProfile.company_objective}
 - Público-alvo: ${companyProfile.company_target_audience}
 
 REGRA ABSOLUTA: A mensagem NUNCA deve mencionar algo que "${companyProfile.company_name}" NÃO vende. Não ofereça a solução — só plante a semente.
+${businessModelBlock}
 ` : "";
 
     const diagnosticContext = (lead.ai_score || lead.ai_diagnosis) ? `
