@@ -1166,12 +1166,12 @@ export function ChatMessageArea({
                           )}
 
                           <div className={cn(
-                            "flex-1 flex items-start gap-1",
+                            "flex-1 min-w-0 flex items-start gap-1",
                             isOutbound ? "justify-end" : "justify-start",
                             selectionMode && !isOutbound && "pl-2"
                           )}>
                             <div className={cn(
-                              "relative max-w-[88%] sm:max-w-[65%] w-fit",
+                              "relative max-w-[88%] sm:max-w-[65%] w-fit min-w-0",
                               isOutbound ? "mr-[4px] sm:mr-[8px]" : "ml-[4px] sm:ml-[8px]"
                             )}>
 
