@@ -234,19 +234,29 @@ function nextScheduleOpening(schedule: any): string {
 }
 
 
+// O SDR nunca fecha venda. Só existem dois desfechos válidos:
+// reunião/demonstração agendada na agenda OU aceite do lead em receber a proposta.
+const LEGACY_OBJECTIVE_MAP: Record<string, string> = {
+  venda_direta: "proposta",
+  qualificar: "reuniao",
+  recuperar: "reuniao",
+};
+
+function normalizeObjective(id?: string | null): string {
+  if (id === "reuniao" || id === "demonstracao" || id === "proposta") return id;
+  return LEGACY_OBJECTIVE_MAP[String(id || "")] ?? "reuniao";
+}
+
+const NO_SALE_RULE =
+  "LIMITE ABSOLUTO DO SDR: você NUNCA fecha venda, nunca pede pagamento, nunca envia link de pagamento/checkout, nunca pede dados de cartão ou PIX e nunca pressiona por contratação. Seu único desfecho válido é (a) reunião/demonstração agendada com dia e horário confirmados ou (b) o lead aceitar receber a proposta. Se o lead disser que quer comprar ou pedir o link de pagamento, responda que o próximo passo é a reunião com o responsável (ou o envio da proposta, conforme o objetivo) e conduza para isso.";
+
 const OBJECTIVE_PLAYBOOK: Record<string, string> = {
   reuniao:
-    "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?') e confirme dia, horário e canal. Não fale preço fechado antes da agenda.",
+    "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp e nunca tente fechar venda; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?'), confirme dia, horário e canal e registre o compromisso na agenda. Não fale preço fechado antes da agenda.",
   demonstracao:
-    "OBJETIVO AGENDAR DEMONSTRAÇÃO: gere curiosidade mostrando UM resultado prático por vez e transforme cada dúvida em motivo para ver a ferramenta funcionando ('isso eu te mostro na tela em 15 minutos'). Feche com duas opções de horário e confirme quem participará.",
+    "OBJETIVO AGENDAR DEMONSTRAÇÃO: gere curiosidade mostrando UM resultado prático por vez e transforme cada dúvida em motivo para ver a ferramenta funcionando ('isso eu te mostro na tela em 15 minutos'). Nunca tente vender pelo chat. Feche com duas opções de horário, confirme quem participará e registre o compromisso na agenda.",
   proposta:
-    "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide. Só então anuncie o envio, envie e peça confirmação explícita de recebimento, combinando o dia da resposta.",
-  venda_direta:
-    "OBJETIVO FECHAR VENDA DIRETA: conduza para a decisão na própria conversa. Apresente a oferta certa, trate a objeção e peça o fechamento de forma direta ('te envio o link de pagamento agora?').",
-  qualificar:
-    "OBJETIVO QUALIFICAR: colete de forma natural (uma pergunta por vez) dor real, impacto/urgência, orçamento aproximado e se a pessoa decide. Não force venda nem agenda; encerre resumindo o diagnóstico e o próximo passo.",
-  recuperar:
-    "OBJETIVO RECUPERAR: retome o contexto anterior sem cobrar o lead ('vi que paramos em X'). Traga um motivo novo para retomar, reduza o atrito do próximo passo e reagende. Nunca repita a abordagem anterior.",
+    "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide, e construa o desejo. Peça o aceite explícito do lead ('posso te enviar a proposta?'), só então envie e peça confirmação de recebimento, combinando o dia da resposta. Nunca cobre pagamento nem tente fechar a venda pelo chat.",
 };
 
 const INSISTENCE_GUIDE: Record<string, string> = {
