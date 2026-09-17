@@ -994,7 +994,7 @@ ${historyText}`;
         const proposalFile = agent.closing?.proposal_file;
         const proposalAlreadySent = Boolean((session.memory as any)?.proposal_sent);
         if (
-          objectiveDone && agent.objective === "proposta" && proposalFile?.path &&
+          objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path &&
           !proposalAlreadySent && session.waba_connection_id && session.phone
         ) {
           try {
@@ -1092,7 +1092,7 @@ ${historyText}`;
                   Object.entries(analysis.identidade ?? {}).filter(([, value]) => value !== null && value !== ""),
                 ),
               },
-              ...(objectiveDone && agent.objective === "proposta" && proposalFile?.path
+              ...(objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path
                 ? { proposal_sent: true }
                 : {}),
             },
