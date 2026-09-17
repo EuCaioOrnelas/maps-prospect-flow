@@ -221,6 +221,80 @@ export default function AdminMrrAudit() {
         </Card>
       </div>
 
+      {/* Quebra do MRR ativo (trials sempre fora) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="border-border/40 bg-card/80">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">Ticket médio</div>
+            <div className="text-xl font-semibold mt-1">
+              {summary ? fmtBRL(summary.average_ticket ?? 0) : "—"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/40 bg-card/80">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">ARR projetado</div>
+            <div className="text-xl font-semibold mt-1">{summary ? fmtBRL(summary.arr ?? 0) : "—"}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/40 bg-card/80">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">Cancelam no fim do período</div>
+            <div className="text-xl font-semibold mt-1 text-orange-600">
+              {summary?.canceling_count ?? "—"}{" "}
+              <span className="text-xs text-muted-foreground font-normal">
+                ({summary ? fmtBRL(summary.canceling_mrr ?? 0) : "—"})
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/40 bg-card/80">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">MRR mensal x anual</div>
+            <div className="text-sm mt-1 space-y-0.5">
+              {(summary?.by_interval ?? []).map((b) => (
+                <div key={b.key} className="flex justify-between gap-2">
+                  <span className="text-muted-foreground">{b.key}</span>
+                  <span className="font-medium tabular-nums">{fmtBRL(b.mrr)}</span>
+                </div>
+              ))}
+              {(summary?.by_interval ?? []).length === 0 && <span className="text-muted-foreground">—</span>}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {[
+          { title: "MRR por provedor", items: summary?.by_provider ?? [] },
+          { title: "MRR por plano", items: summary?.by_plan ?? [] },
+        ].map((block) => (
+          <Card key={block.title} className="border-border/40 bg-card/80">
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground mb-2">{block.title}</div>
+              {block.items.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma assinatura no MRR.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {block.items.map((b) => (
+                    <div key={b.key} className="flex items-center justify-between text-sm">
+                      <span className="text-foreground capitalize">
+                        {b.key}{" "}
+                        <span className="text-xs text-muted-foreground">
+                          ({b.count} assinatura{b.count === 1 ? "" : "s"})
+                        </span>
+                      </span>
+                      <span className="font-medium tabular-nums">{fmtBRL(b.mrr)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-2">
         {(["all", "included", "trial", "excluded"] as Filter[]).map((f) => (
