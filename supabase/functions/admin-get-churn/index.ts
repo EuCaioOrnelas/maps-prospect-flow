@@ -71,11 +71,18 @@ serve(async (req) => {
       adminClient
         .from("subscription_events")
         .select("*")
-        .in("event_type", ["subscription_canceled", "subscription_deleted", "charge_refunded", "pix_not_renewed"])
+        .in("event_type", [
+          "subscription_canceled",
+          "subscription_deleted",
+          "charge_refunded",
+          "pix_not_renewed",
+          "subscription_expired",
+          "subscription_not_renewed",
+        ])
         .order("created_at", { ascending: false }),
       adminClient
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan, first_paid_at")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan, first_paid_at, created_at, trial_start_at")
         .order("created_at", { ascending: false }),
 
       // Vendas registradas somente após pagamento recebido. Checkout concluído não
@@ -111,6 +118,21 @@ serve(async (req) => {
     const profiles = profilesRes.data || [];
     // first_paid_at é gravado pelo webhook do cartão no 1º pagamento com valor > 0.
     profiles.forEach((p: any) => { if (p.first_paid_at) usersWithRealPayment.add(p.id); });
+
+    // Clientes LEGADOS (assinaram antes do first_paid_at existir): a prova é o
+    // período pago ir muito além da janela de trial de 7 dias. Sem isso, quem
+    // pagava desde o plano antigo nunca entrava no churn (churn travado em zero).
+    const TRIAL_WINDOW_MS = 40 * 24 * 60 * 60 * 1000;
+    profiles.forEach((p: any) => {
+      if (usersWithRealPayment.has(p.id)) return;
+      if (p.admin_assigned_plan) return;
+      if (!(p.subscription_price_cents > 0) || !p.subscription_current_period_end) return;
+      const end = new Date(p.subscription_current_period_end).getTime();
+      const base = new Date(p.created_at || 0).getTime();
+      if (Number.isFinite(end) && Number.isFinite(base) && end - base > TRIAL_WINDOW_MS) {
+        usersWithRealPayment.add(p.id);
+      }
+    });
 
     const profilesByEmail = new Map(
       profiles
@@ -260,8 +282,10 @@ serve(async (req) => {
 
     const expiredProfiles = profiles.filter((profile: any) => {
       if (profile.admin_assigned_plan || !profile.subscription_current_period_end) return false;
-      if (!["asaas", "stripe", "manual"].includes(profile.payment_provider || "")) return false;
-      if (!profile.plan || profile.plan === "free" || !usersWithRealPayment.has(profile.id)) return false;
+      if (!["asaas", "stripe", "manual", "pix", "abacate_pay"].includes(profile.payment_provider || "")) return false;
+      // Quem não renovou é rebaixado para "free" pelo cron de expiração. Exigir
+      // plano pago aqui escondia justamente o churn por não renovação.
+      if (!usersWithRealPayment.has(profile.id)) return false;
       const periodEnd = new Date(profile.subscription_current_period_end).getTime();
       return Number.isFinite(periodEnd) && periodEnd >= CHURN_CUTOFF_MS && periodEnd < now;
     });
