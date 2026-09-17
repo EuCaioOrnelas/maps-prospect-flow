@@ -216,6 +216,11 @@ export function useChat() {
     loadConversations();
   }, [user?.id, accountOwnerId, activeConnectionId]);
 
+  // Conversa aberta em um ref: usado pelo canal realtime e para descartar
+  // respostas atrasadas de conversas que já foram fechadas.
+  const activeConversationIdRef = useRef<string | null>(null);
+  activeConversationIdRef.current = activeConversationId;
+
   // Load messages for active conversation
   useEffect(() => {
     if (!activeConversationId || !user) return;
