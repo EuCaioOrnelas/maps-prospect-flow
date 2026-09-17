@@ -21,7 +21,46 @@ import {
   LogOut,
   Timer,
   RefreshCw,
+  IdCard,
+  Mail,
+  Phone,
+  FileText,
+  MapPin,
+  Building2,
+  CreditCard,
+  Sparkles,
+  ClipboardList,
+  ShieldCheck,
+  KeyRound,
+  Gauge,
+  Star,
+  Target,
+  Search as SearchIcon,
+  LifeBuoy,
 } from "lucide-react";
+
+/** Perguntas do onboarding exibidas no painel do admin. */
+const ONBOARDING_FIELDS: { key: string; label: string }[] = [
+  { key: "role", label: "Cargo" },
+  { key: "user_profile", label: "Perfil" },
+  { key: "service_types", label: "O que vende" },
+  { key: "main_objective", label: "Objetivo principal" },
+  { key: "biggest_challenge", label: "Maior desafio" },
+  { key: "sales_method", label: "Como vende hoje" },
+  { key: "sales_team_size", label: "Tamanho do time de vendas" },
+  { key: "team_size", label: "Tamanho da equipe" },
+  { key: "monthly_revenue", label: "Faturamento mensal" },
+  { key: "goal_90d", label: "Meta em 90 dias" },
+  { key: "previous_experience", label: "Já usou ferramenta parecida" },
+  { key: "previous_tool", label: "Ferramenta anterior" },
+];
+
+const formatOnboardingValue = (v: any): string | null => {
+  if (v === null || v === undefined || v === "") return null;
+  if (Array.isArray(v)) return v.length > 0 ? v.join(", ") : null;
+  if (typeof v === "boolean") return v ? "Sim" : "Não";
+  return String(v);
+};
 import { toast } from "sonner";
 import { acquisitionLabel } from "@/lib/acquisitionSources";
 import { ImpersonateUserButton } from "@/components/admin/ImpersonateUserButton";
@@ -112,6 +151,7 @@ export default function AdminUserDetail() {
 
   const [profile, setProfile] = useState<ProfileLite | null>(null);
   const [extra, setExtra] = useState<Extra360 | null>(null);
+  const [onboarding, setOnboarding] = useState<Record<string, any> | null>(null);
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitInput, setLimitInput] = useState("");
   const [sendingReset, setSendingReset] = useState(false);
@@ -184,6 +224,7 @@ export default function AdminUserDetail() {
   };
 
   const effectiveLimit = (profile?.custom_searches_limit ?? profile?.searches_limit ?? 0) as number;
+  const totalAvailable = effectiveLimit + (profile?.bonus_searches ?? 0);
 
   const sendPasswordReset = async () => {
     if (!profile?.email) return;
@@ -196,6 +237,31 @@ export default function AdminUserDetail() {
     else toast.success(`E-mail de redefinição enviado para ${profile.email}`);
   };
 
+  /**
+   * Crédito extra na fatura em aberto: soma ao saldo de bônus, sem mexer no
+   * plano nem no consumo já registrado.
+   */
+  const addExtraSearches = async (amount: number) => {
+    if (!userId || !Number.isFinite(amount) || amount === 0) return;
+    setSavingLimit(true);
+    const current = profile?.bonus_searches ?? 0;
+    const next = Math.max(0, current + Math.round(amount));
+    const { error } = await supabase.from("profiles").update({ bonus_searches: next }).eq("id", userId);
+    setSavingLimit(false);
+    if (error) {
+      toast.error(`Erro ao ajustar: ${error.message}`);
+      return;
+    }
+    toast.success(
+      amount > 0
+        ? `+${Math.round(amount)} prospecções liberadas nesta fatura.`
+        : `${Math.round(amount)} prospecções removidas do extra desta fatura.`
+    );
+    setLimitInput("");
+    loadProfile();
+  };
+
+  /** Altera o teto do plano dessa conta (vale enquanto não for removido). */
   const saveLimit = async () => {
     if (!userId) return;
     const value = Number(limitInput);
@@ -213,7 +279,7 @@ export default function AdminUserDetail() {
       toast.error(`Erro ao salvar limite: ${error.message}`);
       return;
     }
-    toast.success("Limite atualizado para a fatura atual.");
+    toast.success("Limite do plano atualizado.");
     setLimitInput("");
     loadProfile();
   };
@@ -228,9 +294,10 @@ export default function AdminUserDetail() {
 
       const { data: onb } = await supabase
         .from("user_onboarding")
-        .select("acquisition_source, acquisition_source_other")
+        .select("*")
         .eq("user_id", userId)
         .maybeSingle();
+      setOnboarding((onb as any) || null);
       setAcquisition(
         onb
           ? {
@@ -390,41 +457,39 @@ export default function AdminUserDetail() {
         </CardContent>
       </Card>
 
-      {/* Cadastro + uso + satisfação */}
+      {/* Cadastro + onboarding */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="border-border/40 lg:col-span-2">
-          <CardContent className="p-5 space-y-4">
+        <Card className="border-border/40 lg:col-span-2 overflow-hidden">
+          <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
+            <IdCard className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Dados cadastrais</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
-              <Field label="E-mail" value={profile?.email} />
-              <Field label="Telefone" value={profile?.phone} />
-              <Field label="CPF / CNPJ" value={profile?.cpf} />
+          </div>
+          <CardContent className="p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              <Field icon={<Mail className="w-3.5 h-3.5" />} label="E-mail" value={profile?.email} />
+              <Field icon={<Phone className="w-3.5 h-3.5" />} label="Telefone" value={profile?.phone} />
+              <Field icon={<FileText className="w-3.5 h-3.5" />} label="CPF / CNPJ" value={profile?.cpf} />
               <Field
+                icon={<MapPin className="w-3.5 h-3.5" />}
                 label="Endereço"
                 value={
-                  [profile?.address, profile?.address_number, profile?.address_complement]
+                  [profile?.address, profile?.address_number, profile?.address_complement, profile?.neighborhood]
                     .filter(Boolean)
                     .join(", ") || null
                 }
               />
               <Field
+                icon={<Building2 className="w-3.5 h-3.5" />}
                 label="Cidade / UF"
                 value={[profile?.city, profile?.state].filter(Boolean).join(" / ") || null}
               />
-              <Field label="CEP" value={profile?.postal_code} />
+              <Field icon={<MapPin className="w-3.5 h-3.5" />} label="CEP" value={profile?.postal_code} />
               <Field
+                icon={<Calendar className="w-3.5 h-3.5" />}
                 label="Cliente desde"
                 value={
                   profile?.created_at
-                    ? new Date(profile.created_at).toLocaleDateString("pt-BR")
-                    : null
-                }
-              />
-              <Field
-                label="Tempo de casa"
-                value={
-                  profile?.created_at
-                    ? `${Math.max(
+                    ? `${new Date(profile.created_at).toLocaleDateString("pt-BR")} · ${Math.max(
                         0,
                         Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000)
                       )} dias`
@@ -432,6 +497,19 @@ export default function AdminUserDetail() {
                 }
               />
               <Field
+                icon={<CreditCard className="w-3.5 h-3.5" />}
+                label="Forma de pagamento"
+                value={profile?.payment_provider}
+              />
+              <Field
+                icon={<DollarSign className="w-3.5 h-3.5" />}
+                label="Valor da assinatura"
+                value={
+                  profile?.subscription_price_cents ? fmtMoney(profile.subscription_price_cents / 100) : null
+                }
+              />
+              <Field
+                icon={<DollarSign className="w-3.5 h-3.5" />}
                 label="Primeiro pagamento"
                 value={
                   profile?.first_paid_at
@@ -439,16 +517,8 @@ export default function AdminUserDetail() {
                     : "Ainda não pagou"
                 }
               />
-              <Field label="Forma de pagamento" value={profile?.payment_provider} />
               <Field
-                label="Valor da assinatura"
-                value={
-                  profile?.subscription_price_cents
-                    ? fmtMoney(profile.subscription_price_cents / 100)
-                    : null
-                }
-              />
-              <Field
+                icon={<RefreshCw className="w-3.5 h-3.5" />}
                 label="Próxima renovação"
                 value={
                   profile?.subscription_current_period_end
@@ -456,77 +526,158 @@ export default function AdminUserDetail() {
                     : null
                 }
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/40">
-          <CardContent className="p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-foreground">Uso e satisfação</h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               <Field
-                label="Prospecções"
-                value={`${profile?.searches_used ?? 0} de ${effectiveLimit}${
-                  profile?.bonus_searches ? ` (+${profile.bonus_searches} bônus)` : ""
-                }`}
-              />
-              <Field label="Buscas feitas" value={String(extra?.searches ?? 0)} />
-              <Field label="Leads" value={String(extra?.leads ?? 0)} />
-              <Field label="Contatos no CRM" value={String(extra?.contacts ?? 0)} />
-              <Field label="Mensagens enviadas" value={String(extra?.messagesSent ?? 0)} />
-              <Field label="Números conectados" value={String(extra?.numbers ?? 0)} />
-              <Field label="Tickets de suporte" value={String(extra?.tickets ?? 0)} />
-              <Field
-                label="Satisfação"
+                icon={<Sparkles className="w-3.5 h-3.5" />}
+                label="Origem da aquisição"
                 value={
-                  extra?.ratingAvg
-                    ? `${extra.ratingAvg.toFixed(1)} / 5 (${extra.ratingCount} avaliações)`
-                    : "Sem avaliações"
+                  acquisition?.source === "other" && acquisition?.other
+                    ? `${acquisitionLabel(acquisition?.source)} · ${acquisition.other}`
+                    : acquisitionLabel(acquisition?.source)
                 }
               />
             </div>
           </CardContent>
         </Card>
+
+        <Card className="border-border/40 overflow-hidden">
+          <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Onboarding preenchido</h2>
+          </div>
+          <CardContent className="p-5">
+            {!onboarding ? (
+              <p className="text-sm text-muted-foreground">Este usuário não preencheu o onboarding.</p>
+            ) : onboarding.skipped ? (
+              <p className="text-sm text-muted-foreground">O usuário pulou o onboarding.</p>
+            ) : (
+              <div className="space-y-3">
+                {ONBOARDING_FIELDS.map((f) => (
+                  <Field key={f.key} label={f.label} value={formatOnboardingValue(onboarding[f.key])} />
+                ))}
+                <p className="text-[11px] text-muted-foreground pt-1">
+                  Respondido em{" "}
+                  {new Date(onboarding.completed_at || onboarding.created_at).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Ações administrativas */}
-      <Card className="border-border/40">
-        <CardContent className="p-5 flex flex-wrap items-end gap-4">
+      <Card className="border-border/40 overflow-hidden">
+        <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-primary" />
           <div>
-            <p className="text-sm font-semibold text-foreground">Ações administrativas</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Alterações valem para o período de cobrança em aberto.
+            <h2 className="text-sm font-semibold text-foreground">Ações administrativas</h2>
+            <p className="text-[11px] text-muted-foreground">
+              Créditos extras valem apenas para a fatura em aberto.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs"
-            disabled={!profile?.email || sendingReset}
-            onClick={sendPasswordReset}
-          >
-            {sendingReset ? "Enviando..." : "Enviar redefinição de senha"}
-          </Button>
-          <div className="flex items-end gap-2">
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase text-muted-foreground font-medium">
-                Limite de prospecções (atual: {effectiveLimit})
-              </label>
+        </div>
+        <CardContent className="p-5 grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Consumo da fatura atual */}
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-foreground">Prospecções nesta fatura</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold tabular-nums text-foreground">
+                {profile?.searches_used ?? 0}
+              </span>
+              <span className="text-sm text-muted-foreground">de {totalAvailable}</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{
+                  width: `${Math.min(100, totalAvailable > 0 ? ((profile?.searches_used ?? 0) / totalAvailable) * 100 : 0)}%`,
+                }}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Plano: {effectiveLimit} · Extra liberado: {profile?.bonus_searches ?? 0} · Restam{" "}
+              {Math.max(0, totalAvailable - (profile?.searches_used ?? 0))}
+            </p>
+          </div>
+
+          {/* Liberar crédito extra */}
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-foreground">Liberar prospecções extras</p>
+            <div className="flex flex-wrap gap-1.5">
+              {[100, 240, 500, 1000].map((n) => (
+                <Button
+                  key={n}
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-7"
+                  disabled={savingLimit}
+                  onClick={() => addExtraSearches(n)}
+                >
+                  +{n}
+                </Button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
               <Input
                 type="number"
                 min={0}
-                placeholder={String(effectiveLimit)}
+                placeholder="Quantidade"
                 value={limitInput}
                 onChange={(e) => setLimitInput(e.target.value)}
-                className="h-8 text-xs w-[160px]"
+                className="h-8 text-xs w-[130px]"
               />
+              <Button
+                size="sm"
+                className="text-xs h-8"
+                disabled={savingLimit || !limitInput}
+                onClick={() => addExtraSearches(Number(limitInput))}
+              >
+                Adicionar
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs h-8"
+                disabled={savingLimit || !limitInput}
+                onClick={() => addExtraSearches(-Number(limitInput))}
+              >
+                Remover
+              </Button>
             </div>
-            <Button size="sm" className="text-xs" disabled={savingLimit || !limitInput} onClick={saveLimit}>
-              {savingLimit ? "Salvando..." : "Aplicar limite"}
+            <p className="text-[11px] text-muted-foreground">
+              Soma ao saldo atual sem alterar o plano nem o consumo já registrado.
+            </p>
+          </div>
+
+          {/* Conta */}
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-foreground">Conta</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs w-full justify-start h-8"
+              disabled={!profile?.email || sendingReset}
+              onClick={sendPasswordReset}
+            >
+              <KeyRound className="w-3.5 h-3.5 mr-1.5" />
+              {sendingReset ? "Enviando..." : "Enviar redefinição de senha"}
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs w-full justify-start h-8"
+              disabled={savingLimit || !limitInput}
+              onClick={saveLimit}
+            >
+              <Gauge className="w-3.5 h-3.5 mr-1.5" />
+              Definir limite do plano como {limitInput || "—"}
+            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              O limite do plano é permanente; o crédito extra zera na próxima fatura.
+            </p>
           </div>
         </CardContent>
       </Card>
+
 
       {/* Date filter */}
       <Card className="border-border/40">
@@ -732,6 +883,47 @@ export default function AdminUserDetail() {
                   value={stats.messages_warming.toLocaleString("pt-BR")}
                 />
               </div>
+
+              {/* Consumo do plano e satisfação (histórico total da conta) */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <StatCard
+                  icon={<Target className="w-4 h-4" />}
+                  label="Prospecções da fatura"
+                  value={`${profile?.searches_used ?? 0} / ${totalAvailable}`}
+                  hint={
+                    profile?.bonus_searches
+                      ? `inclui ${profile.bonus_searches} extras liberados`
+                      : "limite do plano"
+                  }
+                />
+                <StatCard
+                  icon={<SearchIcon className="w-4 h-4" />}
+                  label="Buscas realizadas"
+                  value={(extra?.searches ?? 0).toLocaleString("pt-BR")}
+                  hint="histórico total"
+                />
+                <StatCard
+                  icon={<MessageSquare className="w-4 h-4" />}
+                  label="Contatos no CRM"
+                  value={(extra?.contacts ?? 0).toLocaleString("pt-BR")}
+                  hint="conversas abertas"
+                />
+                <StatCard
+                  icon={<LifeBuoy className="w-4 h-4" />}
+                  label="Tickets de suporte"
+                  value={(extra?.tickets ?? 0).toLocaleString("pt-BR")}
+                />
+                <StatCard
+                  icon={<Star className="w-4 h-4" />}
+                  label="Satisfação no suporte"
+                  value={extra?.ratingAvg ? `${extra.ratingAvg.toFixed(1)} / 5` : "—"}
+                  hint={
+                    extra?.ratingCount
+                      ? `${extra.ratingCount} avaliação${extra.ratingCount === 1 ? "" : "ões"}`
+                      : "sem avaliações"
+                  }
+                />
+              </div>
             </>
           )}
         </TabsContent>
@@ -765,11 +957,22 @@ function StatCard({
   );
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
+function Field({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value?: string | null;
+  icon?: React.ReactNode;
+}) {
   return (
-    <div className="min-w-0">
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{label}</p>
-      <p className="text-sm text-foreground break-words">{value || "—"}</p>
+    <div className="min-w-0 rounded-[10px] border border-border/40 bg-muted/20 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1.5">
+        {icon && <span className="text-primary">{icon}</span>}
+        {label}
+      </p>
+      <p className="text-sm text-foreground break-words mt-0.5">{value || "—"}</p>
     </div>
   );
 }
