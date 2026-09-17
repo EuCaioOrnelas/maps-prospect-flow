@@ -131,7 +131,7 @@ export function useAdminDashboard() {
     try {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, plan, payment_provider, trial_will_charge_at, searches_used, searches_limit, created_at, updated_at, is_blocked, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used")
+        .select("id, plan, payment_provider, trial_will_charge_at, trial_start_at, trial_end_at, first_paid_at, subscription_price_cents, subscription_current_period_end, searches_used, searches_limit, created_at, updated_at, is_blocked, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used")
         .order("created_at", { ascending: false });
 
       if (!profiles) return;
@@ -140,11 +140,29 @@ export function useAdminDashboard() {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      // Helper: usuário em trial = tem trial_will_charge_at futuro (ainda não foi cobrado).
-      const isTrialing = (p: any) =>
-        p.plan !== "free" &&
-        p.trial_will_charge_at &&
-        new Date(p.trial_will_charge_at).getTime() > now.getTime();
+      // Prova de pagamento real: 1ª cobrança registrada OU renovação já cobrada
+      // (período atual que vai além da janela de trial de 7 dias).
+      const hasPaid = (p: any) => {
+        if (p.first_paid_at) return true;
+        if (!p.subscription_current_period_end || !(p.subscription_price_cents > 0)) return false;
+        const end = new Date(p.subscription_current_period_end).getTime();
+        const base = new Date(p.trial_start_at || p.created_at).getTime();
+        return Number.isFinite(end) && Number.isFinite(base) && end - base > 40 * 24 * 60 * 60 * 1000;
+      };
+
+      // Helper: usuário em trial = plano pago, sem nenhum pagamento confirmado e
+      // ainda dentro da janela de teste (cobrança futura OU trial em aberto).
+      const isTrialing = (p: any) => {
+        if (p.plan === "free") return false;
+        if (hasPaid(p)) return false;
+        const charge = p.trial_will_charge_at ? new Date(p.trial_will_charge_at).getTime() : 0;
+        if (charge > now.getTime()) return true;
+        const trialEnd = p.trial_end_at ? new Date(p.trial_end_at).getTime() : 0;
+        if (trialEnd > now.getTime()) return true;
+        // Trial iniciado, nunca pago e sem período pago vigente = ainda é trial.
+        if (p.trial_start_at && !p.subscription_current_period_end) return true;
+        return false;
+      };
 
       const totalUsers = profiles.length;
       const trialingUsers = profiles.filter(isTrialing).length;
@@ -181,6 +199,7 @@ export function useAdminDashboard() {
       profiles.forEach((p) => {
         if (p.plan === "free") return;
         if (isTrialing(p)) return;
+        if (p.is_blocked) return;
         if (!planCounts[p.plan]) planCounts[p.plan] = { count: 0, revenue: 0 };
         planCounts[p.plan].count++;
         planCounts[p.plan].revenue += PLAN_PRICES_MONTHLY[p.plan] || 0;
