@@ -586,6 +586,8 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Está personalizada ao PERFIL DA EMPRESA que prospecta: produtos/serviços = "${companyProfile?.company_products || "N/A"}", nicho = "${companyProfile?.company_niche || "N/A"}"? A mensagem parece escrita por quem vende isso?
 
   ✓ O GANCHO e o INSIGHT têm ligação direta com "${companyProfile?.company_products || "o serviço vendido"}"? (se não, reescreva)
+  ✓ A mensagem respeita o MODELO DE NEGÓCIO "${BUSINESS_MODEL_LABELS[businessModel]}"? ${businessModel === "agencia" ? "" : "Não pode ter NENHUMA menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Se tiver, REESCREVA."}
+  ✓ O leitor entenderia que quem escreveu ${businessModel === "distribuidor" ? "abastece o negócio dele com produtos" : businessModel === "industria" ? "fabrica e fornece o produto" : businessModel === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}? (se não, reescreva)
   ✓ O CTA é obrigatoriamente uma PERGUNTA FECHADA que termina com "?"?
   ✓ O CTA pergunta se o empresário quer que você explique melhor o tema do insight (nunca é pergunta vaga tipo "faz sentido?")?
   ✓ O CTA amarra explicitamente com o tema do insight (canal próprio, agenda, retenção, etc.)?
