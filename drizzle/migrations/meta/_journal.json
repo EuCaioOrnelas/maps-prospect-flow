@@ -99,6 +99,13 @@
       "when": 1789672211831,
       "tag": "0013_restrict_api_key_status_writes_to_service_role",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789673317510,
+      "tag": "0014_apply_first_month_boost_commission",
+      "breakpoints": true
     }
   ]
 }
