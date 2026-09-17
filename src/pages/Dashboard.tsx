@@ -133,7 +133,12 @@ const Dashboard = () => {
         .or(`owner_user_id.eq.${ownerId},user_id.eq.${user.id}`)
         .limit(1)
         .maybeSingle();
-      if (data) setCompanyProfile(data);
+      if (data) {
+        setCompanyProfile(data);
+      } else {
+        // Sem perfil da empresa: obriga a criação antes de usar a página
+        setShowCompanyOnboarding(true);
+      }
     })();
   }, [user, accountOwnerId]);
 
