@@ -316,9 +316,15 @@ serve(async (req) => {
     const socialMedia = Array.isArray(lead.social_media) ? lead.social_media : [];
     const hasSite = !!lead.website && lead.website !== "-";
 
+    const { data: companyServices } = await supabase
+      .from("company_services")
+      .select("name, description")
+      .eq("owner_user_id", companyProfile?.owner_user_id || user.id)
+      .limit(20);
+
     const businessModel = resolveBusinessModel(companyProfile);
     const productCatalog = formatProductCatalog(companyServices);
-    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead);
+    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
 
     const companyContext = companyProfile ? `
 ⚠️ PERFIL DA EMPRESA QUE ESTÁ PROSPECTANDO:

@@ -319,6 +319,12 @@ serve(async (req) => {
     const nicheAnalysisType = enrichment.niche_analysis_type || "";
 
     // Modelo de negócio real de quem prospecta
+    const { data: companyServices } = await supabase
+      .from("company_services")
+      .select("name, description")
+      .eq("owner_user_id", companyProfile?.owner_user_id || user.id)
+      .limit(20);
+
     const businessModel = resolveBusinessModel(companyProfile);
     const productCatalog = formatProductCatalog(companyServices);
 
@@ -361,7 +367,7 @@ IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se nã
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
 
     // Estratégia de abordagem definida pelo MODELO DE NEGÓCIO real (não por palavra-chave solta)
-    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead);
+    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
     const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
 
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
