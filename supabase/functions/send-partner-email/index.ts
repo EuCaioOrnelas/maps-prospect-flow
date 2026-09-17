@@ -411,6 +411,56 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { type, to, data } = body;
 
+    // ---- Authorization -------------------------------------------------
+    // Service role (internal calls) → full access.
+    // Signed-in admin → full access.
+    // Signed-in partner → only partner-facing types, and only to their own
+    // e-mail or to the internal partners alert inbox.
+    // Anonymous → denied (prevents the endpoint being used as an open mailer).
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const INTERNAL_INBOX = "parceiros@wiize.com.br";
+    const PARTNER_ALLOWED_TYPES = [
+      "partner_withdrawal_requested",
+      "partner_goal_prize_claimed",
+      "admin_partner_alert",
+    ];
+
+    const bearer = (req.headers.get("Authorization") || "").replace("Bearer ", "").trim();
+    if (bearer !== serviceKey) {
+      const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
+      const { data: userData } = bearer ? await authClient.auth.getUser(bearer) : { data: null as any };
+      const caller = userData?.user;
+      if (!caller) {
+        return new Response(JSON.stringify({ error: "Não autorizado" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+      const { data: isAdmin } = await adminClient.rpc("has_role", { _user_id: caller.id, _role: "admin" });
+
+      if (isAdmin !== true) {
+        const { data: partner } = await adminClient
+          .from("partners")
+          .select("email")
+          .eq("user_id", caller.id)
+          .maybeSingle();
+
+        const recipient = String(to || "").trim().toLowerCase();
+        const ownEmail = String(partner?.email || "").trim().toLowerCase();
+        const allowedRecipient = recipient === INTERNAL_INBOX || (!!ownEmail && recipient === ownEmail);
+
+        if (!partner || !PARTNER_ALLOWED_TYPES.includes(String(type)) || !allowedRecipient) {
+          return new Response(JSON.stringify({ error: "Acesso negado" }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+    // --------------------------------------------------------------------
+
     if (!type || !to) {
       return new Response(JSON.stringify({ error: "Missing required fields: type, to" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

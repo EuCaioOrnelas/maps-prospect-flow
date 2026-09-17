@@ -26,6 +26,23 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Rate limit per IP so the public endpoint cannot be used to flood storage.
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+    const { data: rl } = await supabase.rpc("check_rate_limit", {
+      p_identifier: ip,
+      p_endpoint: "partner-application-upload-url",
+      p_max_requests: 20,
+      p_window_seconds: 600,
+    });
+    if (rl && (rl as any).allowed === false) {
+      return new Response(JSON.stringify({ error: "Muitas tentativas. Tente novamente em alguns minutos." }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { filename, size, application_session } = await req.json();
 
     if (!filename || typeof filename !== "string") {
