@@ -375,30 +375,27 @@ import {
 //   - sales:     multiplier on avgNewMRR (new sales per month)
 //   - expansion: multiplier on avgExpansionMRR (upgrades / extra seats)
 //
+// O cenário REALISTA é o run-rate observado (sem inventar crescimento).
+// Pessimista/Otimista são apenas bandas de sensibilidade em torno do real.
 const SCENARIO_MULT = {
-  pessimistic: { churn: 1.5,   sales: 0.65, expansion: 0.3 },
-  realistic:   { churn: 1.0,   sales: 1.0,  expansion: 1.0 },
-  optimistic:  { churn: 0.667, sales: 1.3,  expansion: 1.4 },
+  pessimistic: { churn: 1.3, sales: 0.75, expansion: 0.5 },
+  realistic:   { churn: 1.0, sales: 1.0,  expansion: 1.0 },
+  optimistic:  { churn: 0.8, sales: 1.25, expansion: 1.3 },
 };
 
-// SALES_RAMP: month-by-month behavioral curve over 12 months.
-//   - Pess: contracts in months 1-3, slow recovery after
-//   - Real: gentle compound growth (+2-4% / month)
-//   - Otim: accelerated ramp, decelerating at the end
+// Sem curvas inventadas: o realista repete o desempenho observado.
+// Pessimista desacelera de forma suave e otimista acelera de forma suave.
+const flat = (v: number) => Array.from({ length: 12 }, () => v);
 const SALES_RAMP = {
-  pessimistic: [0.60, 0.50, 0.45, 0.50, 0.58, 0.65, 0.72, 0.78, 0.84, 0.90, 0.95, 1.00],
-  realistic:   [1.00, 1.02, 1.05, 1.08, 1.11, 1.15, 1.19, 1.23, 1.27, 1.31, 1.36, 1.40],
-  optimistic:  [1.05, 1.12, 1.20, 1.30, 1.40, 1.50, 1.58, 1.65, 1.70, 1.74, 1.77, 1.80],
+  pessimistic: Array.from({ length: 12 }, (_, i) => Math.max(0.6, 1 - i * 0.03)),
+  realistic:   flat(1),
+  optimistic:  Array.from({ length: 12 }, (_, i) => Math.min(1.4, 1 + i * 0.03)),
 };
 
-// CHURN_RAMP: spike pattern for churn over 12 months.
-//   - Pess: peaks in month 2-3 (operational deterioration)
-//   - Real: flat (uses base churn)
-//   - Otim: continuous improvement
 const CHURN_RAMP = {
-  pessimistic: [1.20, 1.30, 1.25, 1.15, 1.08, 1.03, 1.00, 0.98, 0.96, 0.95, 0.94, 0.93],
-  realistic:   [1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00],
-  optimistic:  [0.95, 0.92, 0.89, 0.86, 0.84, 0.82, 0.80, 0.78, 0.77, 0.76, 0.75, 0.74],
+  pessimistic: flat(1),
+  realistic:   flat(1),
+  optimistic:  flat(1),
 };
 
 const COLORS = {
