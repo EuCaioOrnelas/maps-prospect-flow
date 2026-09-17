@@ -111,6 +111,10 @@ export default function AdminUserDetail() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [profile, setProfile] = useState<ProfileLite | null>(null);
+  const [extra, setExtra] = useState<Extra360 | null>(null);
+  const [savingLimit, setSavingLimit] = useState(false);
+  const [limitInput, setLimitInput] = useState("");
+  const [sendingReset, setSendingReset] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [acquisition, setAcquisition] = useState<{
     source: string | null;
