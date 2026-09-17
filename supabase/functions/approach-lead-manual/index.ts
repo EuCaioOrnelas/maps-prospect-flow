@@ -415,8 +415,18 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
        (a) Nome: "${companyProfile?.attendant_name || "[nome]"}"
        (b) Empresa: "${companyProfile?.company_name || "[empresa]"}"
        (c) Contexto de autoridade — UMA frase curta que justifique NATURALMENTE por que essa pessoa entende do assunto que vai comentar em seguida.
-   • Exemplo estrutural (adaptar, nunca copiar literal):
-       "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda."
+    • Exemplo estrutural (adaptar ao MODELO DE NEGÓCIO, nunca copiar literal):
+       "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. ${businessModel === "distribuidor" || businessModel === "representante"
+         ? `Trabalhamos abastecendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}.`
+         : businessModel === "industria"
+         ? `Fabricamos ${companyProfile?.company_products || "nossos produtos"} e fornecemos direto para ${lead.category || "negócios como o seu"}.`
+         : businessModel === "revenda"
+         ? `Trabalhamos com ${companyProfile?.company_products || "esses produtos"} com pronta entrega para ${lead.category || "negócios da região"}.`
+         : businessModel === "software"
+         ? `Trabalhamos com ${companyProfile?.company_products || "nosso sistema"} dentro da operação de ${lead.category || "negócios como o seu"}.`
+         : businessModel === "agencia"
+         ? `Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda.`
+         : `Atendemos ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos serviços"}.`}"
    • O objetivo do contexto de autoridade NÃO é impressionar nem vender — é apenas explicar por que faz sentido essa pessoa estar comentando sobre aquele tema.
    • A autoridade deve parecer INCIDENTAL, nunca propaganda. O leitor deve pensar: "faz sentido essa pessoa entender desse assunto."
 
