@@ -234,19 +234,29 @@ function nextScheduleOpening(schedule: any): string {
 }
 
 
+// O SDR nunca fecha venda. Só existem dois desfechos válidos:
+// reunião/demonstração agendada na agenda OU aceite do lead em receber a proposta.
+const LEGACY_OBJECTIVE_MAP: Record<string, string> = {
+  venda_direta: "proposta",
+  qualificar: "reuniao",
+  recuperar: "reuniao",
+};
+
+function normalizeObjective(id?: string | null): string {
+  if (id === "reuniao" || id === "demonstracao" || id === "proposta") return id;
+  return LEGACY_OBJECTIVE_MAP[String(id || "")] ?? "reuniao";
+}
+
+const NO_SALE_RULE =
+  "LIMITE ABSOLUTO DO SDR: você NUNCA fecha venda, nunca pede pagamento, nunca envia link de pagamento/checkout, nunca pede dados de cartão ou PIX e nunca pressiona por contratação. Seu único desfecho válido é (a) reunião/demonstração agendada com dia e horário confirmados ou (b) o lead aceitar receber a proposta. Se o lead disser que quer comprar ou pedir o link de pagamento, responda que o próximo passo é a reunião com o responsável (ou o envio da proposta, conforme o objetivo) e conduza para isso.";
+
 const OBJECTIVE_PLAYBOOK: Record<string, string> = {
   reuniao:
-    "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?') e confirme dia, horário e canal. Não fale preço fechado antes da agenda.",
+    "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp e nunca tente fechar venda; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?'), confirme dia, horário e canal e registre o compromisso na agenda. Não fale preço fechado antes da agenda.",
   demonstracao:
-    "OBJETIVO AGENDAR DEMONSTRAÇÃO: gere curiosidade mostrando UM resultado prático por vez e transforme cada dúvida em motivo para ver a ferramenta funcionando ('isso eu te mostro na tela em 15 minutos'). Feche com duas opções de horário e confirme quem participará.",
+    "OBJETIVO AGENDAR DEMONSTRAÇÃO: gere curiosidade mostrando UM resultado prático por vez e transforme cada dúvida em motivo para ver a ferramenta funcionando ('isso eu te mostro na tela em 15 minutos'). Nunca tente vender pelo chat. Feche com duas opções de horário, confirme quem participará e registre o compromisso na agenda.",
   proposta:
-    "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide. Só então anuncie o envio, envie e peça confirmação explícita de recebimento, combinando o dia da resposta.",
-  venda_direta:
-    "OBJETIVO FECHAR VENDA DIRETA: conduza para a decisão na própria conversa. Apresente a oferta certa, trate a objeção e peça o fechamento de forma direta ('te envio o link de pagamento agora?').",
-  qualificar:
-    "OBJETIVO QUALIFICAR: colete de forma natural (uma pergunta por vez) dor real, impacto/urgência, orçamento aproximado e se a pessoa decide. Não force venda nem agenda; encerre resumindo o diagnóstico e o próximo passo.",
-  recuperar:
-    "OBJETIVO RECUPERAR: retome o contexto anterior sem cobrar o lead ('vi que paramos em X'). Traga um motivo novo para retomar, reduza o atrito do próximo passo e reagende. Nunca repita a abordagem anterior.",
+    "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide, e construa o desejo. Peça o aceite explícito do lead ('posso te enviar a proposta?'), só então envie e peça confirmação de recebimento, combinando o dia da resposta. Nunca cobre pagamento nem tente fechar a venda pelo chat.",
 };
 
 const INSISTENCE_GUIDE: Record<string, string> = {
@@ -305,8 +315,9 @@ function agentBrief(agent: any) {
     .join("\n");
   return `
 NOME DO SDR: ${agent.name}
-  OBJETIVO FINAL: ${agent.objective}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO: ${agent.objective_custom}` : ""}
+  OBJETIVO FINAL: ${normalizeObjective(agent.objective)}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO (válida apenas se não contrariar o limite abaixo): ${agent.objective_custom}` : ""}
 CRITÉRIO DE SUCESSO: ${(c.success_criteria || []).join(", ") || "-"}
+${NO_SALE_RULE}
 
 EMPRESA: ${k.company || "-"}
 NICHO: ${k.niche || "-"} | PÚBLICO-ALVO: ${k.audience || "-"}
@@ -357,9 +368,10 @@ ${p.never_wait_lead === false ? "- É aceitável encerrar a mensagem sem próxim
   - Toda pergunta de avanço deve ser fechada e oferecer duas respostas úteis: prioridade A/B, cenário A/B, próximo passo A/B ou horário A/B. Não crie falsa dicotomia e não use alternativas que pressupõem uma compra ainda não consentida.
   - A escolha guiada nunca autoriza pressão: se houver recusa clara, pedido para parar ou desinteresse, acolha, não insista e respeite os critérios de encerramento.
 ${(agent.situations ?? {}).preco === "nunca_sem_reuniao" ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
+- ${NO_SALE_RULE}
 
 PLAYBOOK DO OBJETIVO:
-${OBJECTIVE_PLAYBOOK[agent.objective] ?? "Conduza a conversa até o objetivo configurado."}
+${OBJECTIVE_PLAYBOOK[normalizeObjective(agent.objective)]}
 
 FUNIL OBRIGATÓRIO (avance um passo por vez, sem pular etapas):
 ${PIPELINE_STEPS}
@@ -648,6 +660,7 @@ Regras absolutas:
 - Nunca invente informações que não estejam no conhecimento fornecido.
 - Faça no máximo UMA pergunta por resposta.
 - Siga o micro-objetivo e o passo do funil definidos pela análise, sem forçar a venda nem pular etapas.
+- NUNCA feche venda, nunca peça pagamento e nunca envie link de pagamento/checkout. O desfecho é sempre a reunião/demonstração agendada ou o aceite do lead em receber a proposta. Se o lead pedir para comprar, conduza para a reunião com o responsável (ou para o envio da proposta).
 - Personalize com fatos reais do lead e do negócio cadastrado. Demonstre expertise conectando a dor ao impacto e ao produto ideal; não despeje catálogo nem use elogios genéricos.
 - Use o nome conhecido com moderação. Se o nome estiver ausente, pergunte-o antes da primeira pergunta diagnóstica; não faça duas perguntas na mesma resposta.
 - Não repita perguntas respondidas no histórico, na memória ou na análise comercial. Confirme brevemente fatos pesquisados quando necessário e pergunte apenas o próximo dado ainda desconhecido.
@@ -690,7 +703,7 @@ Escreva a sequência de mensagens.`;
 
     // ---------- CAMADA 8: Validação / Autocrítica ----------
     const validatorSystem = `Você é um revisor crítico de mensagens de vendas no WhatsApp.
-Checklist: respondeu o lead? avançou a negociação? manteve contexto? usou o nome conhecido sem perguntar novamente? evitou perguntar fatos já presentes na análise/memória/histórico? identificou ou avançou respeitosamente até o decisor? objetivo continua vivo? soa humano? mensagens curtas? educada? não insistiu demais? criou valor? conectou dor ao produto certo sem inventar? toda pergunta de avanço tem exatamente duas alternativas reais? horários vieram da agenda? gatilho comercial tem fundamento explícito? respeitou eventual recusa? tem próximo passo?
+Checklist: evitou qualquer tentativa de fechar venda, cobrança ou link de pagamento? conduziu para reunião agendada ou para o aceite da proposta? respondeu o lead? avançou a negociação? manteve contexto? usou o nome conhecido sem perguntar novamente? evitou perguntar fatos já presentes na análise/memória/histórico? identificou ou avançou respeitosamente até o decisor? objetivo continua vivo? soa humano? mensagens curtas? educada? não insistiu demais? criou valor? conectou dor ao produto certo sem inventar? toda pergunta de avanço tem exatamente duas alternativas reais? horários vieram da agenda? gatilho comercial tem fundamento explícito? respeitou eventual recusa? tem próximo passo?
 Se reprovar em qualquer item, reescreva.
 REGRA ABSOLUTA: o campo "mensagens_finais" contém APENAS o texto que será enviado ao lead, escrito em segunda pessoa falando COM ele. Nunca coloque ali crítica, análise, instrução interna, comentário sobre "as mensagens propostas", nem frases como "é importante apresentar...". Toda crítica vai exclusivamente no campo "motivo".
 Responda SEMPRE em JSON: {"aprovado": boolean, "checklist": {"[item]": boolean}, "mensagens_finais": [string], "motivo": string}`;
@@ -982,7 +995,7 @@ ${historyText}`;
         const proposalFile = agent.closing?.proposal_file;
         const proposalAlreadySent = Boolean((session.memory as any)?.proposal_sent);
         if (
-          objectiveDone && agent.objective === "proposta" && proposalFile?.path &&
+          objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path &&
           !proposalAlreadySent && session.waba_connection_id && session.phone
         ) {
           try {
@@ -1080,7 +1093,7 @@ ${historyText}`;
                   Object.entries(analysis.identidade ?? {}).filter(([, value]) => value !== null && value !== ""),
                 ),
               },
-              ...(objectiveDone && agent.objective === "proposta" && proposalFile?.path
+              ...(objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path
                 ? { proposal_sent: true }
                 : {}),
             },
