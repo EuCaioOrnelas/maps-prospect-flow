@@ -362,22 +362,9 @@ IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se nã
     // Generate a random seed to force unique messages even for similar diagnostics
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
 
-    // Determine niche category for approach strategy
-    const nicheText = companyProfile ? `${companyProfile.company_niche || ""} ${companyProfile.company_products || ""}`.toLowerCase() : "";
-    const isDigitalNiche = /(marketing|site|seo|rede social|tr[aá]fego|ads|design|conte[uú]do|social media)/.test(nicheText);
-    const isInfrastructureNiche = /(internet|provedor|fibra|telecom|solar|energia|seguran[cç]a|monitoramento|c[aâ]mera|alarme)/.test(nicheText);
-    const isProductNiche = /(uniforme|embalagem|m[aá]quina|equipamento|auto pe[cç]a|ra[cç][aã]o|insumo|fertilizante|ferramenta)/.test(nicheText);
-    const isServiceNiche = /(limpeza|facilities|bpo|terceiriza|contabilidade|advoc|consultoria|mentoria)/.test(nicheText);
-
-    const nicheStrategy = isDigitalNiche
-      ? "DIGITAL: Use dados do site, redes sociais e avaliações como gancho. Fale sobre presença digital, engajamento, conversão."
-      : isInfrastructureNiche
-      ? "INFRAESTRUTURA: NÃO fale de redes sociais ou site. Foque na REGIÃO, TIPO DE NEGÓCIO e NECESSIDADE OPERACIONAL. Ex: 'negócios como o seu na região de [cidade] costumam ter demanda por [serviço]'."
-      : isProductNiche
-      ? "PRODUTO: Foque na OPERAÇÃO do lead e como o produto resolve uma necessidade prática do dia-a-dia. Mencione o tipo de negócio e a região."
-      : isServiceNiche
-      ? "SERVIÇO: Foque no PORTE e COMPLEXIDADE do negócio do lead. Mostre como o serviço terceirizado otimiza a operação."
-      : "GENÉRICO: Use região, tipo de negócio e qualquer dado disponível. Se não há dados suficientes para personalizar, crie um gancho sobre a região e proponha uma conversa.";
+    // Estratégia de abordagem definida pelo MODELO DE NEGÓCIO real (não por palavra-chave solta)
+    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead);
+    const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
 
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
 
