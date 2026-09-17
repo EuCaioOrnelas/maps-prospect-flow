@@ -127,17 +127,65 @@ export default function AdminUserDetail() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
 
+  const loadProfile = async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select(
+        "id, name, email, avatar_url, plan, created_at, phone, cpf, address, address_number, address_complement, neighborhood, city, state, postal_code, payment_provider, subscription_price_cents, subscription_current_period_end, first_paid_at, searches_used, searches_limit, custom_searches_limit, bonus_searches, trial_end_at, trial_will_charge_at, is_blocked"
+      )
+      .eq("id", userId)
+      .maybeSingle();
+    setProfile((data as any) || null);
+  };
+
+  const loadExtra = async () => {
+    if (!userId) return;
+    const [leadsRes, convRes, msgRes, numbersRes, searchRes, ticketsRes] = await Promise.all([
+      supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("chat_conversations").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase
+        .from("chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("direction", "outbound"),
+      supabase.from("user_waba_connections").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("search_history").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("support_tickets").select("id").eq("user_id", userId),
+    ]);
+
+    const ticketIds = ((ticketsRes.data as any[]) || []).map((t) => t.id);
+    let ratingAvg: number | null = null;
+    let ratingCount = 0;
+    if (ticketIds.length > 0) {
+      const { data: ratings } = await supabase
+        .from("support_ratings")
+        .select("stars")
+        .in("ticket_id", ticketIds);
+      const stars = ((ratings as any[]) || []).map((r) => Number(r.stars)).filter((n) => n > 0);
+      ratingCount = stars.length;
+      if (stars.length > 0) ratingAvg = stars.reduce((a, b) => a + b, 0) / stars.length;
+    }
+
+    setExtra({
+      leads: leadsRes.count || 0,
+      contacts: convRes.count || 0,
+      messagesSent: msgRes.count || 0,
+      numbers: numbersRes.count || 0,
+      searches: searchRes.count || 0,
+      tickets: ticketIds.length,
+      ratingAvg,
+      ratingCount,
+    });
+  };
+
   useEffect(() => {
     if (!userId) return;
     (async () => {
       setLoadingProfile(true);
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, name, email, avatar_url, plan, created_at")
-        .eq("id", userId)
-        .maybeSingle();
-      setProfile((data as any) || null);
+      await loadProfile();
       setLoadingProfile(false);
+      loadExtra();
 
       const { data: onb } = await supabase
         .from("user_onboarding")
