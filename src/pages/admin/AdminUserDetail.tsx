@@ -883,6 +883,47 @@ export default function AdminUserDetail() {
                   value={stats.messages_warming.toLocaleString("pt-BR")}
                 />
               </div>
+
+              {/* Consumo do plano e satisfação (histórico total da conta) */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <StatCard
+                  icon={<Target className="w-4 h-4" />}
+                  label="Prospecções da fatura"
+                  value={`${profile?.searches_used ?? 0} / ${totalAvailable}`}
+                  hint={
+                    profile?.bonus_searches
+                      ? `inclui ${profile.bonus_searches} extras liberados`
+                      : "limite do plano"
+                  }
+                />
+                <StatCard
+                  icon={<SearchIcon className="w-4 h-4" />}
+                  label="Buscas realizadas"
+                  value={(extra?.searches ?? 0).toLocaleString("pt-BR")}
+                  hint="histórico total"
+                />
+                <StatCard
+                  icon={<MessageSquare className="w-4 h-4" />}
+                  label="Contatos no CRM"
+                  value={(extra?.contacts ?? 0).toLocaleString("pt-BR")}
+                  hint="conversas abertas"
+                />
+                <StatCard
+                  icon={<LifeBuoy className="w-4 h-4" />}
+                  label="Tickets de suporte"
+                  value={(extra?.tickets ?? 0).toLocaleString("pt-BR")}
+                />
+                <StatCard
+                  icon={<Star className="w-4 h-4" />}
+                  label="Satisfação no suporte"
+                  value={extra?.ratingAvg ? `${extra.ratingAvg.toFixed(1)} / 5` : "—"}
+                  hint={
+                    extra?.ratingCount
+                      ? `${extra.ratingCount} avaliação${extra.ratingCount === 1 ? "" : "ões"}`
+                      : "sem avaliações"
+                  }
+                />
+              </div>
             </>
           )}
         </TabsContent>
