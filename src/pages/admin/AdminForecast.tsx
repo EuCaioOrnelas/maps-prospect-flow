@@ -466,13 +466,14 @@ export default function AdminForecast() {
       let clients = currentClients;
 
       for (let i = 0; i < 12; i++) {
-        const effectiveChurn = Math.min(realChurnRate * mult.churn * churnRamp[i], 0.15);
+        const effectiveChurn = Math.min(realChurnRate * mult.churn * churnRamp[i], 0.25);
         const churnLoss = mrr * effectiveChurn;
         const newM = avgNewMRR * mult.sales * salesRamp[i];
         // Expansion scales with client base
         const expM = (avgExpansionMRR / currentClients) * clients * mult.expansion;
-        
-        const nextMRR = Math.max(currentMRR * 0.35, mrr + newM + expM - churnLoss);
+
+        // Sem piso artificial: se o churn supera as vendas, a projeção cai de verdade.
+        const nextMRR = Math.max(0, mrr + newM + expM - churnLoss);
         
         // Update client count
         const lostClients = clients * effectiveChurn;
