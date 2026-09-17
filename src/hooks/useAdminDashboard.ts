@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CHURN_METRICS_SINCE, fetchPayingUserIds } from "@/lib/adminMetrics";
+import {
+  CHURN_METRICS_SINCE,
+  fetchPayingUserIds,
+  fetchRevenuePerUser,
+  monthsBetween,
+  type UserRevenue,
+} from "@/lib/adminMetrics";
 
 interface DashboardStats {
   totalUsers: number;
@@ -78,6 +84,8 @@ interface PayingProfile {
   subscription_current_period_end: string | null;
   subscription_price_cents: number | null;
   created_at: string;
+  first_paid_at?: string | null;
+  trial_will_charge_at?: string | null;
 }
 
 const PLAN_PRICES_MONTHLY: Record<string, number> = {
@@ -95,6 +103,8 @@ export function useAdminDashboard() {
   const [otherMRR, setOtherMRR] = useState<OtherMRRData | null>(null);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [payingProfiles, setPayingProfiles] = useState<PayingProfile[]>([]);
+  // Receita real já recebida por usuário (base do LTV observado).
+  const [revenueByUser, setRevenueByUser] = useState<Map<string, UserRevenue>>(new Map());
   // Churn calculado SOMENTE pelo novo sistema de gerenciamento (exclui Stripe).
   // Fonte: tabela subscription_cancellations onde provider != 'stripe', últimos 30 dias.
   const [newSystemChurn, setNewSystemChurn] = useState<{ cancellations30d: number; payingUsersCount: number }>({ cancellations30d: 0, payingUsersCount: 0 });
@@ -406,6 +416,15 @@ export function useAdminDashboard() {
     }
   }, []);
 
+  const loadRevenue = useCallback(async () => {
+    try {
+      setRevenueByUser(await fetchRevenuePerUser(supabase));
+    } catch (err) {
+      console.error("[useAdminDashboard] revenue per user failed:", err);
+      setRevenueByUser(new Map());
+    }
+  }, []);
+
   const loadAlerts = useCallback(async () => {
     try {
       const alertsList: any[] = [];
@@ -491,7 +510,15 @@ export function useAdminDashboard() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      await Promise.all([loadStats(), loadStripeMRR(), loadNonStripeMRR(), loadAlerts(), loadNewSystemChurn(), loadAsaasLive()]);
+      await Promise.all([
+        loadStats(),
+        loadStripeMRR(),
+        loadNonStripeMRR(),
+        loadAlerts(),
+        loadNewSystemChurn(),
+        loadAsaasLive(),
+        loadRevenue(),
+      ]);
       setLoading(false);
     })();
   }, []);
@@ -528,33 +555,53 @@ export function useAdminDashboard() {
     return totalSubscribers > 0 ? totalMRR / totalSubscribers : 0;
   }, [totalMRR, totalSubscribers]);
 
-  // LTV: a fórmula clássica (ticket ÷ churn) explode com base pequena — com 4
-  // assinantes, 1 cancelamento vira "15 meses de vida". Então limitamos a
-  // projeção ao horizonte observável: no máximo 12 meses e nunca mais que o
-  // dobro do tempo médio de assinatura PAGA já observado.
+  // LTV OBSERVADO: média do que cada cliente JÁ pagou de verdade, e média do
+  // tempo real de casa contado do primeiro pagamento. Nada de projeção pelo
+  // churn (com base pequena a fórmula clássica explode).
   const ltvData = useMemo(() => {
-    if (payingProfiles.length === 0) return { avgMonths: 0, ltv: 0 };
-
     const now = Date.now();
-    const MONTH_MS = 1000 * 60 * 60 * 24 * 30;
-    const TRIAL_MS = 1000 * 60 * 60 * 24 * 7;
+    const perUser: { revenue: number; months: number }[] = [];
+    const counted = new Set<string>();
 
-    let totalMonths = 0;
     for (const p of payingProfiles) {
-      const willCharge = (p as any).trial_will_charge_at
-        ? new Date((p as any).trial_will_charge_at).getTime()
-        : null;
-      const paidStart = willCharge ?? new Date(p.created_at).getTime() + TRIAL_MS;
-      totalMonths += Math.max(0, (now - paidStart) / MONTH_MS);
+      const rev = revenueByUser.get(p.id);
+      const profileFirstPaid = p.first_paid_at ? new Date(p.first_paid_at).getTime() : NaN;
+      const firstPaid =
+        rev?.firstPaidAt ??
+        (Number.isFinite(profileFirstPaid)
+          ? profileFirstPaid
+          : p.trial_will_charge_at
+            ? new Date(p.trial_will_charge_at).getTime()
+            : NaN);
+
+      if (!Number.isFinite(firstPaid) || firstPaid > now) continue;
+
+      const months = Math.max(0, monthsBetween(firstPaid, now));
+      const monthlyPrice = (p.subscription_price_cents || 0) / 100;
+      // Pagamentos registrados; quando o provedor não grava no banco (Stripe),
+      // estimamos pelo número de cobranças já vencidas desde o 1º pagamento.
+      const estimated = monthlyPrice > 0 ? Math.max(1, Math.floor(months) + 1) * monthlyPrice : 0;
+      const revenue = Math.max(rev?.total ?? 0, estimated);
+      if (revenue <= 0) continue;
+
+      counted.add(p.id);
+      perUser.push({ revenue, months: Math.max(months, 0) });
     }
 
-    const avgMonths = totalMonths / payingProfiles.length;
-    const observedCap = Math.max(1, avgMonths * 2);
-    const churnMonths = churnRate > 0 ? 100 / churnRate : Infinity;
-    const expectedMonths = Math.min(12, observedCap, Math.max(1, churnMonths));
+    // Clientes que já pagaram mas não estão mais na base ativa também contam
+    // para a média histórica de valor gerado.
+    revenueByUser.forEach((rev, userId) => {
+      if (counted.has(userId) || rev.total <= 0) return;
+      const start = rev.firstPaidAt ?? now;
+      perUser.push({ revenue: rev.total, months: Math.max(0, monthsBetween(start, now)) });
+    });
 
-    return { avgMonths: expectedMonths, ltv: expectedMonths * averageTicket };
-  }, [payingProfiles, averageTicket, churnRate]);
+    if (perUser.length === 0) return { avgMonths: 0, ltv: 0 };
+
+    const ltv = perUser.reduce((a, b) => a + b.revenue, 0) / perUser.length;
+    const avgMonths = perUser.reduce((a, b) => a + b.months, 0) / perUser.length;
+    return { avgMonths, ltv };
+  }, [payingProfiles, revenueByUser]);
 
 
 

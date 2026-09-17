@@ -421,6 +421,37 @@ Deno.serve(async (req) => {
       return b.monthly_mrr - a.monthly_mrr;
     });
 
+    // Quebra do MRR ATIVO (trials nunca entram) por provedor, meio e plano.
+    const counted = rows.filter((r) => r.counted_in_mrr);
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const groupBy = (keyFn: (r: Row) => string) => {
+      const m = new Map<string, { key: string; mrr: number; count: number }>();
+      for (const r of counted) {
+        const key = keyFn(r) || "outro";
+        const cur = m.get(key) || { key, mrr: 0, count: 0 };
+        cur.mrr += r.monthly_mrr;
+        cur.count += 1;
+        m.set(key, cur);
+      }
+      return Array.from(m.values())
+        .map((v) => ({ ...v, mrr: round2(v.mrr) }))
+        .sort((a, b) => b.mrr - a.mrr);
+    };
+
+    const byProvider = groupBy((r) =>
+      (r.provider ?? "stripe") === "asaas"
+        ? (r.price_id || "").toUpperCase().includes("PIX")
+          ? "Asaas (PIX)"
+          : "Asaas (cartão)"
+        : "Stripe (cartão)",
+    );
+    const byPlan = groupBy((r) => r.plan || "desconhecido");
+    const byInterval = groupBy((r) => (r.interval === "year" ? "Anual" : "Mensal"));
+    const cancelingCount = counted.filter((r) => r.cancel_at_period_end).length;
+    const cancelingMrr = round2(
+      counted.filter((r) => r.cancel_at_period_end).reduce((a, b) => a + b.monthly_mrr, 0),
+    );
+
     return new Response(
       JSON.stringify({
         summary: {
@@ -428,10 +459,17 @@ Deno.serve(async (req) => {
           stripe_count: wiizeSubs.length,
           asaas_count: rows.length - wiizeSubs.length,
           active_count: activeCount,
-          active_mrr: Math.round(totalActiveMrr * 100) / 100,
+          active_mrr: round2(totalActiveMrr),
           trialing_count: trialingCount,
-          trialing_mrr: Math.round(totalTrialingMrr * 100) / 100,
+          trialing_mrr: round2(totalTrialingMrr),
           excluded_count: rows.length - activeCount - trialingCount,
+          average_ticket: activeCount > 0 ? round2(totalActiveMrr / activeCount) : 0,
+          arr: round2(totalActiveMrr * 12),
+          canceling_count: cancelingCount,
+          canceling_mrr: cancelingMrr,
+          by_provider: byProvider,
+          by_plan: byPlan,
+          by_interval: byInterval,
         },
         rows,
         generated_at: new Date().toISOString(),

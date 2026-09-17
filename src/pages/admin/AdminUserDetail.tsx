@@ -33,6 +33,37 @@ interface ProfileLite {
   avatar_url: string | null;
   plan: string | null;
   created_at: string;
+  phone?: string | null;
+  cpf?: string | null;
+  address?: string | null;
+  address_number?: string | null;
+  address_complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  payment_provider?: string | null;
+  subscription_price_cents?: number | null;
+  subscription_current_period_end?: string | null;
+  first_paid_at?: string | null;
+  searches_used?: number | null;
+  searches_limit?: number | null;
+  custom_searches_limit?: number | null;
+  bonus_searches?: number | null;
+  trial_end_at?: string | null;
+  trial_will_charge_at?: string | null;
+  is_blocked?: boolean | null;
+}
+
+interface Extra360 {
+  leads: number;
+  contacts: number;
+  messagesSent: number;
+  numbers: number;
+  searches: number;
+  tickets: number;
+  ratingAvg: number | null;
+  ratingCount: number;
 }
 
 interface SessionRow {
@@ -80,6 +111,10 @@ export default function AdminUserDetail() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [profile, setProfile] = useState<ProfileLite | null>(null);
+  const [extra, setExtra] = useState<Extra360 | null>(null);
+  const [savingLimit, setSavingLimit] = useState(false);
+  const [limitInput, setLimitInput] = useState("");
+  const [sendingReset, setSendingReset] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [acquisition, setAcquisition] = useState<{
     source: string | null;
@@ -96,17 +131,100 @@ export default function AdminUserDetail() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
 
+  const loadProfile = async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select(
+        "id, name, email, avatar_url, plan, created_at, phone, cpf, address, address_number, address_complement, neighborhood, city, state, postal_code, payment_provider, subscription_price_cents, subscription_current_period_end, first_paid_at, searches_used, searches_limit, custom_searches_limit, bonus_searches, trial_end_at, trial_will_charge_at, is_blocked"
+      )
+      .eq("id", userId)
+      .maybeSingle();
+    setProfile((data as any) || null);
+  };
+
+  const loadExtra = async () => {
+    if (!userId) return;
+    const [leadsRes, convRes, msgRes, numbersRes, searchRes, ticketsRes] = await Promise.all([
+      supabase.from("leads").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("chat_conversations").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase
+        .from("chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("direction", "outbound"),
+      supabase.from("user_waba_connections").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("search_history").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("support_tickets").select("id").eq("user_id", userId),
+    ]);
+
+    const ticketIds = ((ticketsRes.data as any[]) || []).map((t) => t.id);
+    let ratingAvg: number | null = null;
+    let ratingCount = 0;
+    if (ticketIds.length > 0) {
+      const { data: ratings } = await supabase
+        .from("support_ratings")
+        .select("stars")
+        .in("ticket_id", ticketIds);
+      const stars = ((ratings as any[]) || []).map((r) => Number(r.stars)).filter((n) => n > 0);
+      ratingCount = stars.length;
+      if (stars.length > 0) ratingAvg = stars.reduce((a, b) => a + b, 0) / stars.length;
+    }
+
+    setExtra({
+      leads: leadsRes.count || 0,
+      contacts: convRes.count || 0,
+      messagesSent: msgRes.count || 0,
+      numbers: numbersRes.count || 0,
+      searches: searchRes.count || 0,
+      tickets: ticketIds.length,
+      ratingAvg,
+      ratingCount,
+    });
+  };
+
+  const effectiveLimit = (profile?.custom_searches_limit ?? profile?.searches_limit ?? 0) as number;
+
+  const sendPasswordReset = async () => {
+    if (!profile?.email) return;
+    setSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setSendingReset(false);
+    if (error) toast.error(`Não foi possível enviar: ${error.message}`);
+    else toast.success(`E-mail de redefinição enviado para ${profile.email}`);
+  };
+
+  const saveLimit = async () => {
+    if (!userId) return;
+    const value = Number(limitInput);
+    if (!Number.isFinite(value) || value < 0) {
+      toast.error("Informe um número válido.");
+      return;
+    }
+    setSavingLimit(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ custom_searches_limit: Math.round(value) })
+      .eq("id", userId);
+    setSavingLimit(false);
+    if (error) {
+      toast.error(`Erro ao salvar limite: ${error.message}`);
+      return;
+    }
+    toast.success("Limite atualizado para a fatura atual.");
+    setLimitInput("");
+    loadProfile();
+  };
+
   useEffect(() => {
     if (!userId) return;
     (async () => {
       setLoadingProfile(true);
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, name, email, avatar_url, plan, created_at")
-        .eq("id", userId)
-        .maybeSingle();
-      setProfile((data as any) || null);
+      await loadProfile();
       setLoadingProfile(false);
+      loadExtra();
 
       const { data: onb } = await supabase
         .from("user_onboarding")
@@ -269,6 +387,144 @@ export default function AdminUserDetail() {
               Detalhes: <span className="text-foreground">{acquisition.other}</span>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Cadastro + uso + satisfação */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="border-border/40 lg:col-span-2">
+          <CardContent className="p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Dados cadastrais</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+              <Field label="E-mail" value={profile?.email} />
+              <Field label="Telefone" value={profile?.phone} />
+              <Field label="CPF / CNPJ" value={profile?.cpf} />
+              <Field
+                label="Endereço"
+                value={
+                  [profile?.address, profile?.address_number, profile?.address_complement]
+                    .filter(Boolean)
+                    .join(", ") || null
+                }
+              />
+              <Field
+                label="Cidade / UF"
+                value={[profile?.city, profile?.state].filter(Boolean).join(" / ") || null}
+              />
+              <Field label="CEP" value={profile?.postal_code} />
+              <Field
+                label="Cliente desde"
+                value={
+                  profile?.created_at
+                    ? new Date(profile.created_at).toLocaleDateString("pt-BR")
+                    : null
+                }
+              />
+              <Field
+                label="Tempo de casa"
+                value={
+                  profile?.created_at
+                    ? `${Math.max(
+                        0,
+                        Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000)
+                      )} dias`
+                    : null
+                }
+              />
+              <Field
+                label="Primeiro pagamento"
+                value={
+                  profile?.first_paid_at
+                    ? new Date(profile.first_paid_at).toLocaleDateString("pt-BR")
+                    : "Ainda não pagou"
+                }
+              />
+              <Field label="Forma de pagamento" value={profile?.payment_provider} />
+              <Field
+                label="Valor da assinatura"
+                value={
+                  profile?.subscription_price_cents
+                    ? fmtMoney(profile.subscription_price_cents / 100)
+                    : null
+                }
+              />
+              <Field
+                label="Próxima renovação"
+                value={
+                  profile?.subscription_current_period_end
+                    ? new Date(profile.subscription_current_period_end).toLocaleDateString("pt-BR")
+                    : null
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/40">
+          <CardContent className="p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-foreground">Uso e satisfação</h2>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <Field
+                label="Prospecções"
+                value={`${profile?.searches_used ?? 0} de ${effectiveLimit}${
+                  profile?.bonus_searches ? ` (+${profile.bonus_searches} bônus)` : ""
+                }`}
+              />
+              <Field label="Buscas feitas" value={String(extra?.searches ?? 0)} />
+              <Field label="Leads" value={String(extra?.leads ?? 0)} />
+              <Field label="Contatos no CRM" value={String(extra?.contacts ?? 0)} />
+              <Field label="Mensagens enviadas" value={String(extra?.messagesSent ?? 0)} />
+              <Field label="Números conectados" value={String(extra?.numbers ?? 0)} />
+              <Field label="Tickets de suporte" value={String(extra?.tickets ?? 0)} />
+              <Field
+                label="Satisfação"
+                value={
+                  extra?.ratingAvg
+                    ? `${extra.ratingAvg.toFixed(1)} / 5 (${extra.ratingCount} avaliações)`
+                    : "Sem avaliações"
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Ações administrativas */}
+      <Card className="border-border/40">
+        <CardContent className="p-5 flex flex-wrap items-end gap-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Ações administrativas</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Alterações valem para o período de cobrança em aberto.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled={!profile?.email || sendingReset}
+            onClick={sendPasswordReset}
+          >
+            {sendingReset ? "Enviando..." : "Enviar redefinição de senha"}
+          </Button>
+          <div className="flex items-end gap-2">
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase text-muted-foreground font-medium">
+                Limite de prospecções (atual: {effectiveLimit})
+              </label>
+              <Input
+                type="number"
+                min={0}
+                placeholder={String(effectiveLimit)}
+                value={limitInput}
+                onChange={(e) => setLimitInput(e.target.value)}
+                className="h-8 text-xs w-[160px]"
+              />
+            </div>
+            <Button size="sm" className="text-xs" disabled={savingLimit || !limitInput} onClick={saveLimit}>
+              {savingLimit ? "Salvando..." : "Aplicar limite"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -506,5 +762,14 @@ function StatCard({
         {hint && <p className="text-[10px] text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
+  );
+}
+
+function Field({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{label}</p>
+      <p className="text-sm text-foreground break-words">{value || "—"}</p>
+    </div>
   );
 }

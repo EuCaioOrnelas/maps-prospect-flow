@@ -182,4 +182,72 @@ export async function fetchPayingUserIds(supabase: any): Promise<Set<string>> {
   return paying;
 }
 
+export type UserRevenue = {
+  /** Total efetivamente recebido desse usuário (em reais). */
+  total: number;
+  /** Data do primeiro pagamento confirmado. */
+  firstPaidAt: number | null;
+  /** Data do último pagamento confirmado. */
+  lastPaidAt: number | null;
+};
+
+const addPayment = (
+  map: Map<string, UserRevenue>,
+  userId: string | null | undefined,
+  amount: number,
+  when: string | null | undefined
+) => {
+  if (!userId || !Number.isFinite(amount) || amount <= 0) return;
+  const ts = when ? new Date(when).getTime() : NaN;
+  const cur = map.get(userId) || { total: 0, firstPaidAt: null, lastPaidAt: null };
+  cur.total += amount;
+  if (Number.isFinite(ts)) {
+    cur.firstPaidAt = cur.firstPaidAt === null ? ts : Math.min(cur.firstPaidAt, ts);
+    cur.lastPaidAt = cur.lastPaidAt === null ? ts : Math.max(cur.lastPaidAt, ts);
+  }
+  map.set(userId, cur);
+};
+
+/**
+ * Receita REAL já recebida por usuário, somando todas as fontes de pagamento
+ * registradas no banco. Base do LTV observado (nada de projeção).
+ */
+export async function fetchRevenuePerUser(supabase: any): Promise<Map<string, UserRevenue>> {
+  const map = new Map<string, UserRevenue>();
+
+  const [pix, custom, sales, upgrades] = await Promise.all([
+    supabase
+      .from("pix_invoices")
+      .select("user_id, amount_cents, paid_at, created_at, status")
+      .in("status", ["paid", "RECEIVED", "CONFIRMED", "received", "confirmed"]),
+    supabase
+      .from("custom_subscription_payments")
+      .select("user_id, amount_cents, paid_at")
+      .not("paid_at", "is", null),
+    supabase.from("partner_sales").select("customer_user_id, amount_cents, created_at"),
+    supabase.from("subscription_upgrades").select("user_id, amount_cents, created_at"),
+  ]);
+
+  ((pix.data as any[]) || []).forEach((r) =>
+    addPayment(map, r?.user_id, (r?.amount_cents || 0) / 100, r?.paid_at || r?.created_at)
+  );
+  ((custom.data as any[]) || []).forEach((r) =>
+    addPayment(map, r?.user_id, (r?.amount_cents || 0) / 100, r?.paid_at)
+  );
+  ((sales.data as any[]) || []).forEach((r) =>
+    addPayment(map, r?.customer_user_id, (r?.amount_cents || 0) / 100, r?.created_at)
+  );
+  ((upgrades.data as any[]) || []).forEach((r) =>
+    addPayment(map, r?.user_id, (r?.amount_cents || 0) / 100, r?.created_at)
+  );
+
+  return map;
+}
+
+/** Meses completos entre duas datas (mínimo 1 quando já houve pagamento). */
+export function monthsBetween(startMs: number, endMs: number): number {
+  const MONTH_MS = 1000 * 60 * 60 * 24 * 30.44;
+  return Math.max(0, (endMs - startMs) / MONTH_MS);
+}
+
 

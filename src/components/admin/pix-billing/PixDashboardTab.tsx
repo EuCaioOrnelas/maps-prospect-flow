@@ -50,6 +50,8 @@ export function PixDashboardTab() {
   const [loading, setLoading] = useState(true);
   const [stageMetrics, setStageMetrics] = useState<StageMetric[]>([]);
   const [asaasInvoices, setAsaasInvoices] = useState<AsaasInvoice[]>([]);
+  const [invoicesFromDb, setInvoicesFromDb] = useState(false);
+  const [asaasUnavailable, setAsaasUnavailable] = useState(false);
 
   useEffect(() => {
     loadMetrics();
@@ -78,6 +80,7 @@ export function PixDashboardTab() {
       let pixReceivedThisMonth = 0;
       let invoicesList: AsaasInvoice[] = [];
 
+      let asaasOk = false;
       try {
         const { data: asaasData, error: asaasError } = await supabase.functions.invoke("admin-asaas-stats");
         if (!asaasError && asaasData?.summary) {
@@ -90,11 +93,59 @@ export function PixDashboardTab() {
           pixOverdueCount = s.pix_overdue_count_90d || 0;
           pixReceivedThisMonth = s.pix_received_this_month || 0;
           invoicesList = (asaasData.pix_invoices || []) as AsaasInvoice[];
+          asaasOk = true;
         }
       } catch (err) {
         console.warn("Asaas stats not available:", err);
       }
 
+      // Fallback: quando a consulta em tempo real falha ou volta vazia, usamos
+      // as faturas gravadas no banco para a tela nunca ficar muda.
+      let usedFallback = false;
+      if (invoicesList.length === 0) {
+        const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: localInvoices } = await supabase
+          .from("pix_invoices")
+          .select("id, customer_name, customer_email, amount_cents, status, description, due_date, paid_at, invoice_url, created_at")
+          .gte("created_at", since)
+          .order("created_at", { ascending: false })
+          .limit(300);
+
+        const rows = (localInvoices as any[]) || [];
+        if (rows.length > 0) {
+          usedFallback = true;
+          invoicesList = rows.map((r) => ({
+            id: r.id,
+            customer_name: r.customer_name || "—",
+            customer_email: r.customer_email || null,
+            customer_doc: null,
+            value: (r.amount_cents || 0) / 100,
+            status: String(r.status || "").toUpperCase(),
+            description: r.description || null,
+            due_date: r.due_date || null,
+            payment_date: r.paid_at || null,
+            invoice_url: r.invoice_url || null,
+          }));
+
+          if (!asaasOk) {
+            const paidStatuses = ["PAID", "RECEIVED", "CONFIRMED"];
+            pixPaidCount = invoicesList.filter((i) => paidStatuses.includes(i.status)).length;
+            pixPendingCount = invoicesList.filter((i) => i.status === "PENDING").length;
+            pixOverdueCount = invoicesList.filter((i) => i.status === "OVERDUE").length;
+            pixReceivedThisMonth = invoicesList
+              .filter(
+                (i) =>
+                  paidStatuses.includes(i.status) &&
+                  i.payment_date &&
+                  new Date(i.payment_date).getTime() >= new Date(monthStart).getTime()
+              )
+              .reduce((a, b) => a + b.value, 0);
+          }
+        }
+      }
+
+      setInvoicesFromDb(usedFallback);
+      setAsaasUnavailable(!asaasOk);
       setAsaasInvoices(invoicesList);
 
       setMetrics({
@@ -275,6 +326,16 @@ export function PixDashboardTab() {
           <CardTitle className="text-sm font-medium text-foreground font-sans">Funil de Renovação por Etapa</CardTitle>
         </CardHeader>
         <CardContent>
+          {stageMetrics.every((s) => s.sent === 0) ? (
+            <div className="text-center py-8 space-y-1">
+              <p className="text-sm text-muted-foreground">
+                Nenhum e-mail de renovação foi enviado ainda.
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                O funil aparece automaticamente no primeiro envio.
+              </p>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -309,10 +370,6 @@ export function PixDashboardTab() {
               </tbody>
             </table>
           </div>
-          {stageMetrics.every(s => s.sent === 0) && (
-            <p className="text-center text-muted-foreground text-sm py-8">
-              Nenhum dado de tracking ainda. Os dados aparecerão conforme os emails de renovação forem enviados.
-            </p>
           )}
         </CardContent>
       </Card>
@@ -321,16 +378,31 @@ export function PixDashboardTab() {
       <Card className="border-border/50">
         <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium text-foreground font-sans">
-            Faturas PIX (Asaas) — últimos 90 dias
+            Faturas PIX · últimos 90 dias
+            {invoicesFromDb && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">(registro interno)</span>
+            )}
           </CardTitle>
-          <Badge variant="outline" className="text-xs">
-            {asaasInvoices.length} fatura{asaasInvoices.length === 1 ? "" : "s"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {asaasUnavailable && (
+              <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-500 border-yellow-500/30">
+                Consulta ao Asaas indisponível
+              </Badge>
+            )}
+            <Badge variant="outline" className="text-xs">
+              {asaasInvoices.length} fatura{asaasInvoices.length === 1 ? "" : "s"}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={loadMetrics} className="h-7 gap-1.5 text-xs">
+              <RefreshCw size={13} /> Recarregar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {asaasInvoices.length === 0 ? (
             <p className="text-center text-muted-foreground text-sm py-8">
-              Nenhuma fatura PIX encontrada nos últimos 90 dias na sua conta Asaas.
+              {asaasUnavailable
+                ? "Não foi possível consultar o Asaas agora e não há faturas registradas internamente nos últimos 90 dias."
+                : "Nenhuma fatura PIX nos últimos 90 dias."}
             </p>
           ) : (
             <div className="overflow-x-auto">
