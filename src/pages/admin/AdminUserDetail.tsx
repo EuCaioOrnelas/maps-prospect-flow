@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Clock,
@@ -152,6 +153,7 @@ export default function AdminUserDetail() {
   const [profile, setProfile] = useState<ProfileLite | null>(null);
   const [extra, setExtra] = useState<Extra360 | null>(null);
   const [onboarding, setOnboarding] = useState<Record<string, any> | null>(null);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitInput, setLimitInput] = useState("");
   const [sendingReset, setSendingReset] = useState(false);
@@ -244,18 +246,19 @@ export default function AdminUserDetail() {
   const addExtraSearches = async (amount: number) => {
     if (!userId || !Number.isFinite(amount) || amount === 0) return;
     setSavingLimit(true);
-    const current = profile?.bonus_searches ?? 0;
-    const next = Math.max(0, current + Math.round(amount));
-    const { error } = await supabase.from("profiles").update({ bonus_searches: next }).eq("id", userId);
+    const { data, error } = await supabase.functions.invoke("admin-adjust-credits", {
+      body: { action: "grant_bonus", userId, amount: Math.round(amount) },
+    });
     setSavingLimit(false);
-    if (error) {
-      toast.error(`Erro ao ajustar: ${error.message}`);
+    const failure = error?.message || (data as any)?.error;
+    if (failure) {
+      toast.error(`Erro ao ajustar: ${failure}`);
       return;
     }
     toast.success(
       amount > 0
         ? `+${Math.round(amount)} prospecções liberadas nesta fatura.`
-        : `${Math.round(amount)} prospecções removidas do extra desta fatura.`
+        : `${Math.abs(Math.round(amount))} prospecções removidas do extra desta fatura.`
     );
     setLimitInput("");
     loadProfile();
@@ -270,13 +273,13 @@ export default function AdminUserDetail() {
       return;
     }
     setSavingLimit(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ custom_searches_limit: Math.round(value) })
-      .eq("id", userId);
+    const { data, error } = await supabase.functions.invoke("admin-adjust-credits", {
+      body: { action: "set_plan_limit", userId, value: Math.round(value) },
+    });
     setSavingLimit(false);
-    if (error) {
-      toast.error(`Erro ao salvar limite: ${error.message}`);
+    const failure = error?.message || (data as any)?.error;
+    if (failure) {
+      toast.error(`Erro ao salvar limite: ${failure}`);
       return;
     }
     toast.success("Limite do plano atualizado.");
@@ -531,7 +534,22 @@ export default function AdminUserDetail() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 overflow-hidden lg:col-span-2">
+        <Card
+          role={onboarding && !onboarding.skipped ? "button" : undefined}
+          tabIndex={onboarding && !onboarding.skipped ? 0 : undefined}
+          onClick={() => onboarding && !onboarding.skipped && setOnboardingOpen(true)}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && onboarding && !onboarding.skipped) {
+              e.preventDefault();
+              setOnboardingOpen(true);
+            }
+          }}
+          className={`border-border/40 overflow-hidden lg:col-span-2 ${
+            onboarding && !onboarding.skipped
+              ? "cursor-pointer transition-colors hover:border-primary/40 hover:bg-muted/20"
+              : ""
+          }`}
+        >
           <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
             <ClipboardList className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Onboarding preenchido</h2>
@@ -543,18 +561,60 @@ export default function AdminUserDetail() {
               <p className="text-sm text-muted-foreground">O usuário pulou o onboarding.</p>
             ) : (
               <div className="space-y-3">
-                {ONBOARDING_FIELDS.map((f) => (
-                  <Field key={f.key} label={f.label} value={formatOnboardingValue(onboarding[f.key])} />
-                ))}
-                <p className="text-[11px] text-muted-foreground pt-1">
-                  Respondido em{" "}
-                  {new Date(onboarding.completed_at || onboarding.created_at).toLocaleDateString("pt-BR")}
-                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ONBOARDING_FIELDS.filter((f) => formatOnboardingValue(onboarding[f.key]))
+                    .slice(0, 4)
+                    .map((f) => (
+                      <Badge key={f.key} variant="outline" className="text-[11px] font-normal">
+                        {f.label}: {formatOnboardingValue(onboarding[f.key])}
+                      </Badge>
+                    ))}
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[11px] text-muted-foreground">
+                    Respondido em{" "}
+                    {new Date(onboarding.completed_at || onboarding.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOnboardingOpen(true);
+                    }}
+                  >
+                    Ver respostas
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Popup com todas as respostas do onboarding */}
+      <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <ClipboardList className="w-4 h-4 text-primary" />
+              Onboarding de {profile?.name || profile?.email || "usuário"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {ONBOARDING_FIELDS.map((f) => (
+              <Field key={f.key} label={f.label} value={formatOnboardingValue(onboarding?.[f.key])} />
+            ))}
+            {onboarding && (
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Respondido em{" "}
+                {new Date(onboarding.completed_at || onboarding.created_at).toLocaleDateString("pt-BR")}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Ações administrativas */}
       <Card className="border-border/40 overflow-hidden">
