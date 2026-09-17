@@ -80,6 +80,133 @@ function hasContactNumber(lead: any): boolean {
   return false;
 }
 
+// ===== Modelo de negócio de quem prospecta (impede mensagem de "agência" para quem é distribuidor) =====
+type BusinessModel =
+  | "distribuidor"
+  | "industria"
+  | "revenda"
+  | "servico"
+  | "software"
+  | "agencia"
+  | "representante"
+  | "outro";
+
+const BUSINESS_MODEL_LABELS: Record<BusinessModel, string> = {
+  distribuidor: "Distribuidor / Atacadista",
+  industria: "Indústria / Fabricante",
+  revenda: "Revenda / Varejo",
+  servico: "Prestador de serviço",
+  software: "Software / Tecnologia",
+  agencia: "Agência / Marketing",
+  representante: "Representante comercial",
+  outro: "Outro",
+};
+
+const BUSINESS_MODEL_ROLES: Record<BusinessModel, string> = {
+  distribuidor:
+    "DISTRIBUI E REVENDE PRODUTOS EM VOLUME para outros negócios. O lead é um CLIENTE COMPRADOR (ponto de venda, comércio, bar, restaurante, mercado, loja) que compra mercadoria para revender ou consumir na operação dele.",
+  industria:
+    "FABRICA/PRODUZ os próprios produtos e vende direto para empresas. O lead é um COMPRADOR/CLIENTE do produto fabricado.",
+  revenda:
+    "REVENDE produtos com pronta entrega. O lead é um COMPRADOR do produto.",
+  servico:
+    "PRESTA UM SERVIÇO operacional. O lead é uma empresa que pode CONTRATAR esse serviço.",
+  software:
+    "VENDE UM SISTEMA/SOFTWARE. O lead é uma empresa que pode USAR o sistema na operação.",
+  agencia:
+    "PRESTA SERVIÇOS DE MARKETING/PRESENÇA DIGITAL. O lead é uma empresa que pode contratar esses serviços.",
+  representante:
+    "REPRESENTA MARCAS/FABRICANTES e intermedeia a venda dos produtos representados. O lead é um COMPRADOR.",
+  outro:
+    "VENDE exatamente o que está descrito em 'Produtos/Serviços'. Nada além disso.",
+};
+
+const BUSINESS_MODEL_STRATEGY: Record<BusinessModel, string> = {
+  distribuidor:
+    "DISTRIBUIDOR/ATACADISTA: fale de MIX de produtos, condição comercial, prazo e regularidade de entrega, reposição, cobertura da região e atendimento direto sem atravessador. Gancho = a operação de COMPRA e ABASTECIMENTO do lead (o que ele vende ao cliente final, giro, sazonalidade, volume). NUNCA fale de divulgação, marketing, redes sociais, site ou captação de clientes.",
+  industria:
+    "INDÚSTRIA/FABRICANTE: fale de fornecimento direto da fábrica, volume, customização, padronização, prazo de produção e custo sem intermediário. Gancho = necessidade de insumo/produto na operação do lead.",
+  revenda:
+    "REVENDA/VAREJO: fale de disponibilidade, pronta entrega, variedade e condição de pagamento. Gancho = necessidade prática e imediata do lead.",
+  servico:
+    "SERVIÇO: fale da dor operacional que o serviço resolve e do ganho de tempo/custo ao terceirizar. Gancho = porte e rotina do negócio do lead.",
+  software:
+    "SOFTWARE: fale do processo manual que o sistema elimina e do controle que ele dá. Gancho = rotina desorganizada ou controle em papel/planilha.",
+  agencia:
+    "AGÊNCIA/MARKETING: aqui SIM use presença digital, site, redes sociais, avaliações, tráfego, captação e conversão como gancho e insight.",
+  representante:
+    "REPRESENTANTE COMERCIAL: fale das marcas representadas, acesso a condição de fábrica e atendimento local. Gancho = abastecimento e portfólio do lead.",
+  outro:
+    "Use apenas os produtos/serviços declarados no perfil. Gancho = região, tipo de negócio e necessidade prática, sem inventar serviço nenhum.",
+};
+
+function normalizeBusinessModel(raw: unknown): BusinessModel | null {
+  const v = String(raw || "").trim().toLowerCase();
+  if (!v) return null;
+  if (v in BUSINESS_MODEL_LABELS) return v as BusinessModel;
+  return null;
+}
+
+function inferBusinessModel(text: string): BusinessModel {
+  const t = (text || "").toLowerCase();
+  if (/(distribuidor|distribuidora|distribui[cç][aã]o|atacad|atacarejo|abastec)/.test(t)) return "distribuidor";
+  if (/(ind[uú]stria|industrial|f[aá]brica|fabricante|fabrica[cç][aã]o|manufatur|confec[cç])/.test(t)) return "industria";
+  if (/(representa[cç][aã]o comercial|representante comercial)/.test(t)) return "representante";
+  if (/(software|sistema|saas|aplicativo|erp|crm|plataforma|tecnologia da informa)/.test(t)) return "software";
+  if (/(marketing|ag[eê]ncia|tr[aá]fego pago|social media|seo|gest[aã]o de redes|crea[cç][aã]o de sites?)/.test(t)) return "agencia";
+  if (/(revenda|loja|varejo|com[eé]rcio|e-?commerce|papelaria|mercado)/.test(t)) return "revenda";
+  if (/(servi[cç]o|consultoria|assessoria|contabil|advoc|limpeza|facilities|manuten[cç][aã]o|instala[cç][aã]o|terceiriza|treinamento|mentoria)/.test(t)) return "servico";
+  return "outro";
+}
+
+function resolveBusinessModel(profile: any): BusinessModel {
+  const saved = normalizeBusinessModel(profile?.company_business_model);
+  if (saved) return saved;
+  const text = `${profile?.company_niche || ""} ${profile?.company_products || ""} ${profile?.company_name || ""}`;
+  return inferBusinessModel(text);
+}
+
+function formatProductCatalog(profile: any): string {
+  const raw = profile?.company_product_catalog;
+  const list = Array.isArray(raw) ? raw : [];
+  const items = list
+    .map((item: any) => {
+      const nome = String(item?.nome || item?.name || "").trim();
+      const desc = String(item?.descricao || item?.description || "").trim();
+      if (!nome) return "";
+      return desc ? `- ${nome}: ${desc}` : `- ${nome}`;
+    })
+    .filter(Boolean);
+  return items.length ? items.join("\n") : "";
+}
+
+function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any): string {
+  const catalog = formatProductCatalog(profile);
+  const blockedMarketing = model !== "agencia";
+  return `
+═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
+- Como a empresa atua: ${BUSINESS_MODEL_LABELS[model]}
+- Papel na cadeia: ${BUSINESS_MODEL_ROLES[model]}
+- O que ela entrega de fato: ${profile?.company_products || "conforme perfil"}
+${catalog ? `- Catálogo declarado:\n${catalog}` : ""}
+- Relação com este lead (${lead?.company_name || "lead"}${lead?.category ? `, ${lead.category}` : ""}): o lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que ela vende" : "um CLIENTE COMPRADOR dos produtos dela"}.
+
+ESTRATÉGIA OBRIGATÓRIA PARA ESTE MODELO:
+${BUSINESS_MODEL_STRATEGY[model]}
+
+${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insinuar marketing, divulgação, presença digital, redes sociais, tráfego pago, anúncios, site, SEO, engajamento, conversão online, "fortalecer a marca" ou "atrair mais clientes pela internet". Quem escreve NÃO vende nada disso. Se o insight que você pensou for sobre esses temas, DESCARTE e escolha outro ligado ao que a empresa realmente vende.` : ""}
+⛔ PROIBIDO tratar o lead como se ele fosse cliente de um serviço que a empresa não presta. A mensagem deve soar como alguém que ${model === "distribuidor" ? "abastece o negócio dele com produtos" : model === "industria" ? "fabrica e fornece o produto dele" : model === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}.
+`;
+}
+
+const MARKETING_TERMS = /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
+
+function messageViolatesModel(message: string, model: BusinessModel): boolean {
+  if (model === "agencia") return false;
+  return MARKETING_TERMS.test(message || "");
+}
+
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
