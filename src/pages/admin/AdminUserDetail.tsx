@@ -196,6 +196,31 @@ export default function AdminUserDetail() {
     else toast.success(`E-mail de redefinição enviado para ${profile.email}`);
   };
 
+  /**
+   * Crédito extra na fatura em aberto: soma ao saldo de bônus, sem mexer no
+   * plano nem no consumo já registrado.
+   */
+  const addExtraSearches = async (amount: number) => {
+    if (!userId || !Number.isFinite(amount) || amount === 0) return;
+    setSavingLimit(true);
+    const current = profile?.bonus_searches ?? 0;
+    const next = Math.max(0, current + Math.round(amount));
+    const { error } = await supabase.from("profiles").update({ bonus_searches: next }).eq("id", userId);
+    setSavingLimit(false);
+    if (error) {
+      toast.error(`Erro ao ajustar: ${error.message}`);
+      return;
+    }
+    toast.success(
+      amount > 0
+        ? `+${Math.round(amount)} prospecções liberadas nesta fatura.`
+        : `${Math.round(amount)} prospecções removidas do extra desta fatura.`
+    );
+    setLimitInput("");
+    loadProfile();
+  };
+
+  /** Altera o teto do plano dessa conta (vale enquanto não for removido). */
   const saveLimit = async () => {
     if (!userId) return;
     const value = Number(limitInput);
@@ -213,7 +238,7 @@ export default function AdminUserDetail() {
       toast.error(`Erro ao salvar limite: ${error.message}`);
       return;
     }
-    toast.success("Limite atualizado para a fatura atual.");
+    toast.success("Limite do plano atualizado.");
     setLimitInput("");
     loadProfile();
   };
@@ -228,9 +253,10 @@ export default function AdminUserDetail() {
 
       const { data: onb } = await supabase
         .from("user_onboarding")
-        .select("acquisition_source, acquisition_source_other")
+        .select("*")
         .eq("user_id", userId)
         .maybeSingle();
+      setOnboarding((onb as any) || null);
       setAcquisition(
         onb
           ? {
