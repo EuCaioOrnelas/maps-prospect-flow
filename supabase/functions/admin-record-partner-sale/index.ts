@@ -57,7 +57,7 @@ serve(async (req) => {
       }
       partnerLeadId = existingLead.id;
       await supabaseAdmin.from("partner_leads").update({
-        is_paid: true, paid_at: paid_at || new Date().toISOString(),
+        is_paid: true, is_trial: false, paid_at: paid_at || new Date().toISOString(),
         current_plan: plan, last_activity_at: new Date().toISOString(),
       }).eq("id", existingLead.id);
     } else {

@@ -78,6 +78,27 @@
       "when": 1789671625358,
       "tag": "0010_fix_register_partner_click_ambiguous_column",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789671887760,
+      "tag": "0011_fix_partner_lead_guard_no_mrr_column",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789671962354,
+      "tag": "0012_fix_commission_trigger_profiles_lookup",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789672211831,
+      "tag": "0013_restrict_api_key_status_writes_to_service_role",
+      "breakpoints": true
     }
   ]
 }
