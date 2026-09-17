@@ -18,47 +18,47 @@ export function getSdrLimit(profile: any): number {
   return Number.isFinite(limit) ? limit : 99;
 }
 
-export type SdrObjective =
-  | "reuniao"
-  | "demonstracao"
-  | "proposta"
-  | "venda_direta"
-  | "qualificar"
-  | "recuperar";
+// O SDR nunca fecha venda: ele conduz até a reunião/demonstração agendada
+// ou até o lead aceitar receber a proposta.
+export type SdrObjective = "reuniao" | "demonstracao" | "proposta";
+
+/** Objetivos legados (contas antigas) convertidos para os objetivos válidos */
+const LEGACY_OBJECTIVE_MAP: Record<string, SdrObjective> = {
+  venda_direta: "proposta",
+  qualificar: "reuniao",
+  recuperar: "reuniao",
+};
+
+export function normalizeSdrObjective(id?: string | null): SdrObjective {
+  if (id === "reuniao" || id === "demonstracao" || id === "proposta") return id;
+  return LEGACY_OBJECTIVE_MAP[String(id || "")] ?? "reuniao";
+}
 
 export const SDR_OBJECTIVES: { id: SdrObjective; label: string; hint?: string }[] = [
-  { id: "reuniao", label: "Marcar reunião", hint: "Conduz até data e horário confirmados" },
-  { id: "demonstracao", label: "Agendar demonstração", hint: "Gera curiosidade e agenda a demo" },
-  { id: "proposta", label: "Enviar proposta", hint: "Levanta requisitos e envia a proposta" },
-  { id: "venda_direta", label: "Fechar venda direta", hint: "Ideal para ticket até R$ 500/mês" },
-  { id: "qualificar", label: "Qualificar oportunidades", hint: "Descobre dor, orçamento e decisor" },
-  { id: "recuperar", label: "Recuperar oportunidades", hint: "Reativa leads parados ou frios" },
+  { id: "reuniao", label: "Marcar reunião", hint: "Conduz até data e horário confirmados na agenda" },
+  { id: "demonstracao", label: "Agendar demonstração", hint: "Gera curiosidade e agenda a demo com horário" },
+  { id: "proposta", label: "Enviar proposta", hint: "Conduz até o lead aceitar receber a proposta" },
 ];
 
 /** Critério de sucesso derivado do objetivo (não editável pelo usuário) */
-export const SDR_SUCCESS_BY_OBJECTIVE: Record<SdrObjective, string> = {
-  reuniao: "Reunião marcada com data e horário confirmados",
-  demonstracao: "Demonstração agendada com data e horário confirmados",
-  proposta: "Proposta enviada e confirmada como recebida pelo lead",
-  venda_direta: "Venda fechada e pagamento encaminhado",
-  qualificar: "Lead qualificado com dor, orçamento e decisor identificados",
-  recuperar: "Oportunidade reativada e próximo passo agendado",
+export const SDR_SUCCESS_BY_OBJECTIVE: Record<string, string> = {
+  reuniao: "Reunião marcada com data e horário confirmados na agenda",
+  demonstracao: "Demonstração agendada com data e horário confirmados na agenda",
+  proposta: "Lead aceitou receber a proposta e confirmou o recebimento",
+  // legados
+  venda_direta: "Lead aceitou receber a proposta e confirmou o recebimento",
+  qualificar: "Reunião marcada com data e horário confirmados na agenda",
+  recuperar: "Reunião marcada com data e horário confirmados na agenda",
 };
 
 /** Playbook usado pelo cérebro: muda de verdade a forma de conduzir a conversa */
-export const SDR_OBJECTIVE_PLAYBOOK: Record<SdrObjective, string> = {
+export const SDR_OBJECTIVE_PLAYBOOK: Record<string, string> = {
   reuniao:
-    "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?') e confirme dia, horário e canal. Não fale preço fechado antes da agenda.",
+    "OBJETIVO MARCAR REUNIÃO: toda a conversa converge para uma agenda. Nunca resolva tudo pelo WhatsApp e nunca tente fechar venda; use a reunião como o lugar onde a dúvida será respondida. Ofereça sempre DUAS janelas concretas (ex.: 'amanhã 10h ou 15h?'), confirme dia, horário e canal e registre na agenda. Não fale preço fechado antes da agenda.",
   demonstracao:
-    "OBJETIVO AGENDAR DEMONSTRAÇÃO: gere curiosidade mostrando UM resultado prático por vez e transforme cada dúvida em motivo para ver a ferramenta funcionando ('isso eu te mostro na tela em 15 minutos'). Feche com duas opções de horário e confirme quem participará.",
+    "OBJETIVO AGENDAR DEMONSTRAÇÃO: gere curiosidade mostrando UM resultado prático por vez e transforme cada dúvida em motivo para ver a ferramenta funcionando ('isso eu te mostro na tela em 15 minutos'). Nunca tente vender pelo chat. Feche com duas opções de horário, confirme quem participará e registre na agenda.",
   proposta:
-    "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide. Só então anuncie o envio, envie e peça confirmação explícita de recebimento, combinando o dia da resposta.",
-  venda_direta:
-    "OBJETIVO FECHAR VENDA DIRETA: conduza para a decisão na própria conversa. Apresente a oferta certa, trate a objeção e peça o fechamento de forma direta ('te envio o link de pagamento agora?'). Ticket baixo permite falar valor após a dor estar clara.",
-  qualificar:
-    "OBJETIVO QUALIFICAR: colete de forma natural (uma pergunta por vez) dor real, impacto/urgência, orçamento aproximado e se a pessoa decide. Não force venda nem agenda; encerre resumindo o diagnóstico e o próximo passo.",
-  recuperar:
-    "OBJETIVO RECUPERAR: retome o contexto anterior sem cobrar o lead ('vi que paramos em X'). Traga uma novidade ou um motivo novo para retomar, reduza o atrito do próximo passo e reagende. Nunca repita a mesma abordagem anterior.",
+    "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide, e construa o desejo. Peça o aceite explícito do lead para receber a proposta ('posso te enviar a proposta?'), envie e peça confirmação de recebimento, combinando o dia da resposta. Nunca cobre pagamento nem tente fechar a venda pelo chat.",
 };
 
 export const SDR_WEEKDAYS = [
