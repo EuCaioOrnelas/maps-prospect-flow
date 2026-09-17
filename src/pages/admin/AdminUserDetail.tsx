@@ -440,32 +440,14 @@ export default function AdminUserDetail() {
       </div>
 
 
-      {/* Aquisição */}
-      <Card className="border-border/40">
-        <CardContent className="p-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">
-            Origem da aquisição
-          </div>
-          <Badge variant="outline" className="text-xs">
-            {acquisitionLabel(acquisition?.source)}
-          </Badge>
-          {acquisition?.source === "other" && acquisition?.other && (
-            <div className="text-sm text-muted-foreground">
-              Detalhes: <span className="text-foreground">{acquisition.other}</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Cadastro + onboarding */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="border-border/40 lg:col-span-2 overflow-hidden">
+      {/* Cadastro (largura total) */}
+      <Card className="border-border/40 overflow-hidden w-full">
           <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
             <IdCard className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Dados cadastrais</h2>
           </div>
           <CardContent className="p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               <Field icon={<Mail className="w-3.5 h-3.5" />} label="E-mail" value={profile?.email} />
               <Field icon={<Phone className="w-3.5 h-3.5" />} label="Telefone" value={profile?.phone} />
               <Field icon={<FileText className="w-3.5 h-3.5" />} label="CPF / CNPJ" value={profile?.cpf} />
@@ -526,20 +508,30 @@ export default function AdminUserDetail() {
                     : null
                 }
               />
-              <Field
-                icon={<Sparkles className="w-3.5 h-3.5" />}
-                label="Origem da aquisição"
-                value={
-                  acquisition?.source === "other" && acquisition?.other
-                    ? `${acquisitionLabel(acquisition?.source)} · ${acquisition.other}`
-                    : acquisitionLabel(acquisition?.source)
-                }
-              />
             </div>
+          </CardContent>
+      </Card>
+
+      {/* Aquisição + Onboarding lado a lado */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="border-border/40 overflow-hidden">
+          <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-foreground">Origem da aquisição</h2>
+          </div>
+          <CardContent className="p-5 space-y-3">
+            <Badge variant="outline" className="text-xs">
+              {acquisitionLabel(acquisition?.source)}
+            </Badge>
+            {acquisition?.source === "other" && acquisition?.other && (
+              <p className="text-sm text-muted-foreground">
+                Detalhes: <span className="text-foreground">{acquisition.other}</span>
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 overflow-hidden">
+        <Card className="border-border/40 overflow-hidden lg:col-span-2">
           <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
             <ClipboardList className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Onboarding preenchido</h2>
