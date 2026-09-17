@@ -234,13 +234,13 @@ function ReplyQuote({ replyMsg }: { replyMsg: ChatMessage | undefined }) {
   const color = isSelf ? "hsl(var(--primary))" : "#1f7aec";
   return (
     <div
-      className="mx-[4px] mt-[4px] mb-[3px] rounded-[6px] bg-black/[0.07] dark:bg-white/[0.09] px-[8px] py-[5px] border-l-[3px] cursor-pointer"
+      className="mx-[4px] mt-[4px] mb-[3px] min-w-0 max-w-full overflow-hidden rounded-[6px] bg-black/[0.07] dark:bg-white/[0.09] px-[8px] py-[5px] border-l-[3px] cursor-pointer"
       style={{ borderLeftColor: color }}
     >
       <p className="text-[11px] font-semibold leading-[15px]" style={{ color }}>
         {isSelf ? "Você" : "Contato"}
       </p>
-      <p className="text-[12px] leading-[16px] truncate text-foreground/75">
+      <p className="text-[12px] leading-[16px] truncate text-foreground/75 [overflow-wrap:anywhere]">
         {replyMsg.content || "📎 Mídia"}
       </p>
     </div>

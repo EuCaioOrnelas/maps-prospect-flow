@@ -49,14 +49,17 @@ export function ExpandableText({ text, collapseKey, className, collapsedMaxHeigh
       : `${collapsedMaxHeight}px`;
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0 max-w-full">
       <div
         className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
         style={{ maxHeight }}
       >
         <span
           ref={ref}
-          className={cn("block whitespace-pre-wrap break-words", className)}
+          className={cn(
+            "block whitespace-pre-wrap break-words [overflow-wrap:anywhere] [word-break:break-word]",
+            className
+          )}
         >
           {formatted}
         </span>
