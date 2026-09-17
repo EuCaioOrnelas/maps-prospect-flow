@@ -82,7 +82,7 @@ serve(async (req) => {
         .order("created_at", { ascending: false }),
       adminClient
         .from("profiles")
-        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan, first_paid_at")
+        .select("id, email, name, plan, payment_provider, subscription_current_period_end, subscription_price_cents, admin_assigned_plan, first_paid_at, created_at, trial_start_at")
         .order("created_at", { ascending: false }),
 
       // Vendas registradas somente após pagamento recebido. Checkout concluído não
