@@ -532,7 +532,22 @@ export default function AdminUserDetail() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 overflow-hidden lg:col-span-2">
+        <Card
+          role={onboarding && !onboarding.skipped ? "button" : undefined}
+          tabIndex={onboarding && !onboarding.skipped ? 0 : undefined}
+          onClick={() => onboarding && !onboarding.skipped && setOnboardingOpen(true)}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && onboarding && !onboarding.skipped) {
+              e.preventDefault();
+              setOnboardingOpen(true);
+            }
+          }}
+          className={`border-border/40 overflow-hidden lg:col-span-2 ${
+            onboarding && !onboarding.skipped
+              ? "cursor-pointer transition-colors hover:border-primary/40 hover:bg-muted/20"
+              : ""
+          }`}
+        >
           <div className="px-5 py-3 border-b border-border/40 bg-muted/30 flex items-center gap-2">
             <ClipboardList className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">Onboarding preenchido</h2>
@@ -544,18 +559,60 @@ export default function AdminUserDetail() {
               <p className="text-sm text-muted-foreground">O usuário pulou o onboarding.</p>
             ) : (
               <div className="space-y-3">
-                {ONBOARDING_FIELDS.map((f) => (
-                  <Field key={f.key} label={f.label} value={formatOnboardingValue(onboarding[f.key])} />
-                ))}
-                <p className="text-[11px] text-muted-foreground pt-1">
-                  Respondido em{" "}
-                  {new Date(onboarding.completed_at || onboarding.created_at).toLocaleDateString("pt-BR")}
-                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ONBOARDING_FIELDS.filter((f) => formatOnboardingValue(onboarding[f.key]))
+                    .slice(0, 4)
+                    .map((f) => (
+                      <Badge key={f.key} variant="outline" className="text-[11px] font-normal">
+                        {f.label}: {formatOnboardingValue(onboarding[f.key])}
+                      </Badge>
+                    ))}
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[11px] text-muted-foreground">
+                    Respondido em{" "}
+                    {new Date(onboarding.completed_at || onboarding.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOnboardingOpen(true);
+                    }}
+                  >
+                    Ver respostas
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Popup com todas as respostas do onboarding */}
+      <Dialog open={onboardingOpen} onOpenChange={setOnboardingOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <ClipboardList className="w-4 h-4 text-primary" />
+              Onboarding de {profile?.name || profile?.email || "usuário"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {ONBOARDING_FIELDS.map((f) => (
+              <Field key={f.key} label={f.label} value={formatOnboardingValue(onboarding?.[f.key])} />
+            ))}
+            {onboarding && (
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Respondido em{" "}
+                {new Date(onboarding.completed_at || onboarding.created_at).toLocaleDateString("pt-BR")}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Ações administrativas */}
       <Card className="border-border/40 overflow-hidden">
