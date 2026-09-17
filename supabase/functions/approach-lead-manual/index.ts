@@ -436,12 +436,13 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
      • tipo de serviço prestado (${companyProfile?.company_products || "serviços declarados"})
      • diferencial real declarado (${companyProfile?.company_differential || "-"})
      • rotina de análise daquele segmento ("costumo acompanhar…", "trabalho analisando…", "faço parte de uma equipe especializada em…")
-     • propósito recorrente do contato (mapear negócios locais, entender presença digital, etc.)
-   Frases modelo (adaptar ao ICP "${lead.category || "N/A"}", nunca copiar):
-     – "Trabalho analisando estratégias digitais de ${lead.category || "negócios locais"}."
-     – "Atuo com empresas que buscam fortalecer as vendas diretas."
+     • propósito recorrente do contato (mapear negócios da região, entender como o negócio se abastece/opera, etc.)
+   Frases modelo (adaptar ao ICP "${lead.category || "N/A"}" E ao modelo de negócio, nunca copiar):
+${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digitais de ${lead.category || "negócios locais"}."
      – "Faço parte de uma equipe especializada em presença digital para negócios locais."
-     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."
+     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."` : `     – "Atendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}."
+     – "Costumo acompanhar como ${lead.category || "negócios desse segmento"} organizam ${businessModel === "distribuidor" || businessModel === "industria" || businessModel === "revenda" || businessModel === "representante" ? "o abastecimento e a reposição de produtos" : "essa parte da operação"}."
+     – "Trabalho direto com ${lead.category || "negócios como o seu"} aqui na região."`}
 
    PROIBIÇÕES ABSOLUTAS (a IA NUNCA pode inventar):
      • quantidade de clientes • faturamento • anos de mercado • prêmios • certificações
