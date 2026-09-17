@@ -66,8 +66,9 @@ function limitForPlanByUser(planKey: string, createdAt?: string | null): number 
   return table[planKey] ?? PLAN_LIMITS.free;
 }
 
-function limitForPlan(plan: string, priceId?: string | null): number {
+function limitForPlan(plan: string, priceId?: string | null, createdAt?: string | null): number {
   if (priceId && PRICE_LIMIT_OVERRIDE[priceId] !== undefined) return PRICE_LIMIT_OVERRIDE[priceId];
+  if (isV3User(createdAt)) return PLAN_LIMITS_V3[plan] ?? PLAN_LIMITS_V3["free"];
   return PLAN_LIMITS[plan] ?? PLAN_LIMITS["free"];
 }
 
@@ -671,7 +672,7 @@ serve(async (req) => {
       const subscription = best.sub;
       const priceId = best.priceId as string;
       plan = best.mappedPlan as string;
-      const basePlanLimit = limitForPlan(plan, priceId);
+      const basePlanLimit = limitForPlan(plan, priceId, (profile as any)?.created_at ?? (currentProfile as any)?.created_at ?? null);
 
       try {
         if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
