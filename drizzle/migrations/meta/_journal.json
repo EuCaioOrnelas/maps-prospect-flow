@@ -71,6 +71,13 @@
       "when": 1789671534023,
       "tag": "0009_harden_partner_leads_and_privileged_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789671625358,
+      "tag": "0010_fix_register_partner_click_ambiguous_column",
+      "breakpoints": true
     }
   ]
 }
