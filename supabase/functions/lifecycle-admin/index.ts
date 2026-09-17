@@ -326,12 +326,28 @@ Deno.serve(async (req) => {
       if (!step) return json({ error: "Etapa não encontrada" }, 404);
 
       const campaign = (step as any).lifecycle_campaigns;
+      const targetEmail = (body?.recipientEmail as string) || userData.user?.email || "";
+
+      // Uses the recipient's real data whenever the e-mail belongs to a real
+      // account, so the test renders exactly what that person would receive.
+      let realProfile: any = null;
+      if (targetEmail) {
+        const { data } = await service
+          .from("profiles")
+          .select("id, email, name, trial_end_at")
+          .ilike("email", targetEmail)
+          .maybeSingle();
+        realProfile = data || null;
+      }
+
       const sampleEnd = new Date(Date.now() + 3 * 86400000);
+      const realTrialEnd = realProfile?.trial_end_at ? new Date(realProfile.trial_end_at) : null;
+      const trialEnd = realTrialEnd && !Number.isNaN(realTrialEnd.getTime()) ? realTrialEnd : sampleEnd;
       const vars = buildVars({
-        name: body?.sampleName || "Maria",
-        email: body?.recipientEmail || userData.user?.email || "",
-        trialEnd: sampleEnd,
-        daysRemaining: 3,
+        name: realProfile?.name || body?.sampleName || "Maria",
+        email: realProfile?.email || targetEmail,
+        trialEnd,
+        daysRemaining: Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / 86400000)),
       });
 
       const compiledBody = styleEmailHtml(cleanupEmptyGreetings(compileTemplate(step.content || "", vars)));
