@@ -47,7 +47,6 @@ import {
   MonitorPlay,
   FileText,
   ShoppingCart,
-  Filter,
   RefreshCw,
   Infinity as InfinityIcon,
   SlidersHorizontal,
