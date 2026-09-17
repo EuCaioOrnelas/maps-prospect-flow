@@ -382,6 +382,7 @@ Por isso:
 - ✅ Conduza para o PRÓXIMO PASSO real (uma pergunta qualificadora, agendar uma call rápida, mandar material, etc.)
 
 ${companyContext}
+${businessModelBlock}
 ${diagnosticContext}
 
 DADOS DO LEAD:
@@ -393,7 +394,7 @@ DADOS DO LEAD:
 - Possui site: ${hasSite ? "Sim" : "Não"}
 - Redes sociais: ${socialMedia.length > 0 ? socialMedia.join(", ") : "Nenhuma"}
 
-═══ ESTRATÉGIA DE ABORDAGEM POR NICHO ═══
+═══ ESTRATÉGIA DE ABORDAGEM PELO MODELO DE NEGÓCIO ═══
 ${nicheStrategy}
 
 ═══ VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) ═══
