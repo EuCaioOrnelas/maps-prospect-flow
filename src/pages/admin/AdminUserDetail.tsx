@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Clock,
@@ -152,6 +153,7 @@ export default function AdminUserDetail() {
   const [profile, setProfile] = useState<ProfileLite | null>(null);
   const [extra, setExtra] = useState<Extra360 | null>(null);
   const [onboarding, setOnboarding] = useState<Record<string, any> | null>(null);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitInput, setLimitInput] = useState("");
   const [sendingReset, setSendingReset] = useState(false);
