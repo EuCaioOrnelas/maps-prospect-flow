@@ -112,6 +112,7 @@ export default function AdminUserDetail() {
 
   const [profile, setProfile] = useState<ProfileLite | null>(null);
   const [extra, setExtra] = useState<Extra360 | null>(null);
+  const [onboarding, setOnboarding] = useState<Record<string, any> | null>(null);
   const [savingLimit, setSavingLimit] = useState(false);
   const [limitInput, setLimitInput] = useState("");
   const [sendingReset, setSendingReset] = useState(false);
