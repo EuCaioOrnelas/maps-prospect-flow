@@ -315,8 +315,9 @@ function agentBrief(agent: any) {
     .join("\n");
   return `
 NOME DO SDR: ${agent.name}
-  OBJETIVO FINAL: ${agent.objective}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO: ${agent.objective_custom}` : ""}
+  OBJETIVO FINAL: ${normalizeObjective(agent.objective)}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO (válida apenas se não contrariar o limite abaixo): ${agent.objective_custom}` : ""}
 CRITÉRIO DE SUCESSO: ${(c.success_criteria || []).join(", ") || "-"}
+${NO_SALE_RULE}
 
 EMPRESA: ${k.company || "-"}
 NICHO: ${k.niche || "-"} | PÚBLICO-ALVO: ${k.audience || "-"}
