@@ -385,8 +385,19 @@ const PRICE_LIMIT_OVERRIDE: Record<string, number> = {
   "price_1UBNs5K8CM0R6xMMJAnZEQdm": 1000, // Growth IA R$396/mês (v3)
 };
 
-function limitForPlan(plan: string, priceId?: string | null): number {
+// Grandfathering v3 (corte 2026-09-03): contas criadas a partir do corte usam
+// os limites novos (Growth = 1.000 oportunidades); legadas mantêm 3.000.
+const PLAN_LIMITS_V3: Record<string, number> = { free: 10, start: 1000, growth: 1000, scale: 10000 };
+const V3_CUTOFF_MS = Date.parse("2026-09-03T00:00:00Z");
+function isV3User(createdAt?: string | null): boolean {
+  if (!createdAt) return false;
+  const t = Date.parse(createdAt);
+  return !Number.isNaN(t) && t >= V3_CUTOFF_MS;
+}
+
+function limitForPlan(plan: string, priceId?: string | null, createdAt?: string | null): number {
   if (priceId && PRICE_LIMIT_OVERRIDE[priceId] !== undefined) return PRICE_LIMIT_OVERRIDE[priceId];
+  if (isV3User(createdAt)) return PLAN_LIMITS_V3[plan] ?? PLAN_LIMITS_V3["free"];
   return PLAN_LIMITS[plan] ?? PLAN_LIMITS["free"];
 }
 
@@ -584,7 +595,7 @@ serve(async (req) => {
           // Find user by email and update their subscription
           const { data: profile, error: profileError } = await supabaseClient
             .from("profiles")
-            .select("id, searches_used, searches_limit, plan")
+            .select("id, searches_used, searches_limit, plan, created_at")
             .eq("email", customerEmail)
             .maybeSingle();
 
@@ -604,7 +615,7 @@ serve(async (req) => {
               const priceId = priceItem?.id;
               const stripePriceCents = priceItem?.unit_amount || 0;
               const plan = PRICE_TO_PLAN[priceId] || "free";
-              const basePlanLimit = limitForPlan(plan, priceId);
+              const basePlanLimit = limitForPlan(plan, priceId, (profile as any)?.created_at);
 
               const isPaidCheckout = session.payment_status === "paid" && (session.amount_total || 0) > 0;
 
@@ -783,7 +794,7 @@ serve(async (req) => {
         if (customer && !customer.deleted && customer.email) {
           const { data: profile } = await supabaseClient
             .from("profiles")
-            .select("id, searches_used, searches_limit, plan")
+            .select("id, searches_used, searches_limit, plan, created_at")
             .eq("email", customer.email)
             .maybeSingle();
 
@@ -793,7 +804,7 @@ serve(async (req) => {
               const priceId = priceItem2?.id;
               const subPriceCents = priceItem2?.unit_amount || 0;
               const plan = PRICE_TO_PLAN[priceId] || "free";
-              const basePlanLimit = limitForPlan(plan, priceId);
+              const basePlanLimit = limitForPlan(plan, priceId, (profile as any)?.created_at);
 
               // Calculate period end from Stripe (CRITICAL for check-subscription)
               const subscriptionEndIso = subscription.current_period_end
@@ -964,7 +975,7 @@ serve(async (req) => {
         if (customer && !customer.deleted && customer.email) {
           const { data: profile } = await supabaseClient
             .from("profiles")
-            .select("id, plan, searches_limit, searches_used")
+            .select("id, plan, searches_limit, searches_used, created_at")
             .eq("email", customer.email)
             .maybeSingle();
 
@@ -1059,14 +1070,14 @@ serve(async (req) => {
           if (customerEmail) {
             const { data: profile } = await supabaseClient
               .from("profiles")
-              .select("id, plan, searches_used, searches_limit")
+              .select("id, plan, searches_used, searches_limit, created_at")
               .eq("email", customerEmail)
               .maybeSingle();
 
             if (profile) {
               const priceId = subscription.items.data[0]?.price.id;
               const plan = PRICE_TO_PLAN[priceId] || profile.plan;
-              const basePlanLimit = limitForPlan(plan, priceId);
+              const basePlanLimit = limitForPlan(plan, priceId, (profile as any)?.created_at);
               
               // Calculate subscription end date
               const subscriptionEnd = subscription.current_period_end 
@@ -1199,7 +1210,7 @@ serve(async (req) => {
           if (customer && !customer.deleted && customer.email) {
             const { data: profile } = await supabaseClient
               .from("profiles")
-              .select("id, plan, searches_limit, searches_used")
+              .select("id, plan, searches_limit, searches_used, created_at")
               .eq("email", customer.email)
               .maybeSingle();
 
@@ -1470,7 +1481,7 @@ serve(async (req) => {
 
         const { data: profile } = await supabaseClient
           .from("profiles")
-          .select("id, plan, searches_limit, searches_used")
+          .select("id, plan, searches_limit, searches_used, created_at")
           .eq("email", customer.email)
           .maybeSingle();
         if (!profile) {
@@ -1480,7 +1491,7 @@ serve(async (req) => {
 
         const priceId = subscription.items.data[0]?.price.id;
         const plan = PRICE_TO_PLAN[priceId] || "free";
-        const planLimit = limitForPlan(plan, priceId);
+        const planLimit = limitForPlan(plan, priceId, (profile as any)?.created_at);
         const trialEnd = subscription.trial_end
           ? new Date(subscription.trial_end * 1000).toISOString()
           : null;

@@ -216,16 +216,29 @@ export function useChat() {
     loadConversations();
   }, [user?.id, accountOwnerId, activeConnectionId]);
 
+  // Conversa aberta em um ref: usado pelo canal realtime e para descartar
+  // respostas atrasadas de conversas que já foram fechadas.
+  const activeConversationIdRef = useRef<string | null>(null);
+  activeConversationIdRef.current = activeConversationId;
+
   // Load messages for active conversation
   useEffect(() => {
     if (!activeConversationId || !user) return;
-    const isFirstLoadForConv = loadedMessagesForConvRef.current !== activeConversationId;
+    const convId = activeConversationId;
+    const isFirstLoadForConv = loadedMessagesForConvRef.current !== convId;
+
+    // Ao trocar de conversa, limpa imediatamente a lista: sem isso as mensagens
+    // (inclusive as otimistas) do contato anterior continuam aparecendo na tela
+    // do novo contato até o carregamento terminar.
+    if (isFirstLoadForConv) setMessages([]);
 
     const loadMessages = async () => {
       if (isFirstLoadForConv) setLoadingMessages(true);
       const { data: secureData, error } = await supabase.functions.invoke("chat-secure-read", {
-        body: { action: "messages", conversation_id: activeConversationId, limit: 200 },
+        body: { action: "messages", conversation_id: convId, limit: 200 },
       });
+      // Resposta atrasada de uma conversa que já não está aberta: descarta.
+      if (loadedMessagesForConvRef.current !== convId && activeConversationIdRef.current !== convId) return;
       if (error) {
         console.error("[chat] secure message load failed", error);
         setLoadingMessages(false);
@@ -237,6 +250,7 @@ export function useChat() {
       const data = ((rawData as any[]) || []).map((m) =>
         m.media_url && signedMap.has(m.media_url) ? { ...m, media_url: signedMap.get(m.media_url)! } : m
       );
+      if (activeConversationIdRef.current !== convId) return;
       // Avoid clobbering an optimistic/realtime-updated list when re-running for
       // the same conversation (e.g. user object got a new reference on refocus).
       if (isFirstLoadForConv) {
@@ -246,31 +260,31 @@ export function useChat() {
         setMessages(prev => {
           const map = new Map<string, ChatMessage>();
           for (const m of fresh) map.set(m.id, m);
-          // Keep any optimistic/local messages that aren't in the fresh server set
-          for (const m of prev) if (!map.has(m.id)) map.set(m.id, m);
+          // Keep any optimistic/local messages that aren't in the fresh server set,
+          // mas somente as que pertencem a esta conversa.
+          for (const m of prev) {
+            if (m.conversation_id && m.conversation_id !== convId) continue;
+            if (!map.has(m.id)) map.set(m.id, m);
+          }
           return Array.from(map.values()).sort(
             (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
         });
       }
-      loadedMessagesForConvRef.current = activeConversationId;
+      loadedMessagesForConvRef.current = convId;
       setLoadingMessages(false);
       // Mark as read
       await supabase
         .from("chat_conversations")
         .update({ unread_count: 0 })
-        .eq("id", activeConversationId);
+        .eq("id", convId);
       setConversations(prev =>
-        prev.map(c => c.id === activeConversationId ? { ...c, unread_count: 0 } : c)
+        prev.map(c => c.id === convId ? { ...c, unread_count: 0 } : c)
       );
     };
     loadMessages();
   }, [activeConversationId, user?.id]);
 
-  // Keep a ref to activeConversationId so the realtime channel doesn't
-  // unsubscribe/resubscribe every time the user opens a different conversation.
-  const activeConversationIdRef = useRef<string | null>(null);
-  useEffect(() => { activeConversationIdRef.current = activeConversationId; }, [activeConversationId]);
   const conversationsRef = useRef<ChatConversation[]>([]);
   useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
 
