@@ -2484,7 +2484,7 @@ export default function OpportunitiesManagement() {
           userId={user.id}
           ownerUserId={accountOwnerId}
           initialData={companyProfile}
-          onClose={() => setShowOnboarding(false)}
+          onClose={companyProfile ? () => setShowOnboarding(false) : undefined}
           onComplete={(profile) => {
             setCompanyProfile(profile);
             setShowOnboarding(false);

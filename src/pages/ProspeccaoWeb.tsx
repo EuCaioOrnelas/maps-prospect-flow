@@ -113,7 +113,11 @@ const ProspeccaoWeb = () => {
       .or(`owner_user_id.eq.${accountOwnerId || user.id},user_id.eq.${user.id}`)
       .limit(1)
       .maybeSingle()
-      .then(({ data }) => setCompanyProfile(data));
+      .then(({ data }) => {
+        setCompanyProfile(data);
+        // Sem perfil da empresa: obriga a criação antes de usar a página
+        if (!data) setShowCompanyOnboarding(true);
+      });
   }, [user, accountOwnerId]);
 
   const canSubmit = useMemo(
@@ -686,8 +690,9 @@ const ProspeccaoWeb = () => {
         <CompanyProfileOnboarding
           open={showCompanyOnboarding}
           userId={user.id}
+          ownerUserId={accountOwnerId}
           initialData={companyProfile}
-          onClose={() => setShowCompanyOnboarding(false)}
+          onClose={companyProfile ? () => setShowCompanyOnboarding(false) : undefined}
           onComplete={(p: any) => {
             setCompanyProfile(p);
             setShowCompanyOnboarding(false);

@@ -133,7 +133,12 @@ const Dashboard = () => {
         .or(`owner_user_id.eq.${ownerId},user_id.eq.${user.id}`)
         .limit(1)
         .maybeSingle();
-      if (data) setCompanyProfile(data);
+      if (data) {
+        setCompanyProfile(data);
+      } else {
+        // Sem perfil da empresa: obriga a criação antes de usar a página
+        setShowCompanyOnboarding(true);
+      }
     })();
   }, [user, accountOwnerId]);
 
@@ -1255,7 +1260,7 @@ const Dashboard = () => {
           userId={user.id}
           ownerUserId={accountOwnerId}
           initialData={companyProfile}
-          onClose={() => { setShowCompanyOnboarding(false); setPendingSearch(false); }}
+          onClose={companyProfile ? () => { setShowCompanyOnboarding(false); setPendingSearch(false); } : undefined}
           onComplete={(profile) => {
             setCompanyProfile(profile);
             setShowCompanyOnboarding(false);
