@@ -1260,7 +1260,7 @@ const Dashboard = () => {
           userId={user.id}
           ownerUserId={accountOwnerId}
           initialData={companyProfile}
-          onClose={() => { setShowCompanyOnboarding(false); setPendingSearch(false); }}
+          onClose={companyProfile ? () => { setShowCompanyOnboarding(false); setPendingSearch(false); } : undefined}
           onComplete={(profile) => {
             setCompanyProfile(profile);
             setShowCompanyOnboarding(false);
