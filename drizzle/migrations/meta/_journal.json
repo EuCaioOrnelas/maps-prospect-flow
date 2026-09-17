@@ -85,6 +85,13 @@
       "when": 1789671887760,
       "tag": "0011_fix_partner_lead_guard_no_mrr_column",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789671962354,
+      "tag": "0012_fix_commission_trigger_profiles_lookup",
+      "breakpoints": true
     }
   ]
 }
