@@ -320,19 +320,26 @@ serve(async (req) => {
     const analiseDemanda = enrichment.analise_demanda_regional || "";
     const nicheAnalysisType = enrichment.niche_analysis_type || "";
 
+    // Modelo de negócio real de quem prospecta
+    const businessModel = resolveBusinessModel(companyProfile);
+    const productCatalog = formatProductCatalog(companyProfile);
+
     // Build company context
     const companyContext = companyProfile ? `
 ⚠️ INSTRUÇÃO PRIMÁRIA — PERFIL DA EMPRESA PROSPECTORA:
 - Empresa: ${companyProfile.company_name}
 - Atendente: ${companyProfile.attendant_name}
+- Como atua (modelo de negócio): ${BUSINESS_MODEL_LABELS[businessModel]}
 - Nicho de atuação: ${companyProfile.company_niche}
 - Produtos/Serviços que VENDE: ${companyProfile.company_products}
+${productCatalog ? `- Catálogo declarado:\n${productCatalog}` : ""}
 - Diferencial competitivo: ${companyProfile.company_differential}
 - Objetivo comercial: ${companyProfile.company_objective}
 - Público-alvo: ${companyProfile.company_target_audience}
 
-REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_products}". NÃO fale de serviços que a empresa NÃO oferece. Se a empresa vende internet, fale APENAS de internet. Se vende energia solar, fale APENAS de energia solar. Se vende marketing, fale de marketing. NUNCA desvie do que está descrito acima.
+REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_products}". NÃO fale de serviços que a empresa NÃO oferece. Se a empresa distribui bebidas, fale APENAS de abastecimento de bebidas. Se vende internet, fale APENAS de internet. Se vende marketing, fale de marketing. NUNCA desvie do que está descrito acima.
 ` : "";
+
 
     // Build diagnostic context if available
     const diagnosticContext = hasDiagnostic ? `
