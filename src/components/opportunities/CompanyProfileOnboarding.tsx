@@ -165,9 +165,16 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
         let profileSaved = false;
         let lastProfileErr: any = null;
         for (let attempt = 1; attempt <= 3; attempt++) {
-          const { error } = await supabase
+          const payload: any = { user_id: effectiveOwnerId, owner_user_id: effectiveOwnerId, ...form };
+          let { error } = await supabase
             .from("company_profiles" as any)
-            .upsert({ user_id: effectiveOwnerId, owner_user_id: effectiveOwnerId, ...form } as any, { onConflict: "user_id" });
+            .upsert(payload, { onConflict: "user_id" });
+          if (error && String(error.message || "").includes("company_business_model")) {
+            const { company_business_model: _omit, ...fallback } = payload;
+            ({ error } = await supabase
+              .from("company_profiles" as any)
+              .upsert(fallback, { onConflict: "user_id" }));
+          }
           if (!error) { profileSaved = true; break; }
           lastProfileErr = error;
           console.warn(`[CompanyProfileOnboarding] profile upsert attempt ${attempt} failed:`, error);

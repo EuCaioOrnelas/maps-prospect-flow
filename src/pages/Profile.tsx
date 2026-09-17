@@ -198,13 +198,16 @@ const Profile = () => {
     if (!user || !accountOwnerId) return;
     setIsSavingCompany(true);
     try {
-      const { error } = await supabase
+      const basePayload: any = { user_id: accountOwnerId, owner_user_id: accountOwnerId, ...companyForm };
+      let { error } = await supabase
         .from("company_profiles" as any)
-        .upsert({
-          user_id: accountOwnerId,
-          owner_user_id: accountOwnerId,
-          ...companyForm,
-        } as any, { onConflict: "user_id" });
+        .upsert(basePayload, { onConflict: "user_id" });
+      if (error && String(error.message || "").includes("company_business_model")) {
+        const { company_business_model: _omit, ...fallback } = basePayload;
+        ({ error } = await supabase
+          .from("company_profiles" as any)
+          .upsert(fallback, { onConflict: "user_id" }));
+      }
       if (error) throw error;
       setCompanyProfile({ ...companyForm, user_id: accountOwnerId, owner_user_id: accountOwnerId });
       setIsEditingCompany(false);
