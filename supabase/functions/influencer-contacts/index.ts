@@ -22,7 +22,7 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-const MAX_PROSPECTS_PER_RUN = 25;
+const MAX_PROSPECTS_PER_RUN = 8;
 
 // ─────────────────────────── extração ───────────────────────────
 
@@ -394,8 +394,13 @@ serve(async (req) => {
     }
 
     const results: any[] = [];
+    // orçamento de tempo: a plataforma corta a requisição em 150s
+    const deadline = Date.now() + 110_000;
+    const outOfTime = () => Date.now() > deadline;
+    const pending: string[] = [];
 
     for (const p of prospects) {
+      if (outOfTime()) { pending.push(p.id); continue; }
       const found: Found[] = [];
       const yt = ytById.get(p.youtube_channel_id);
 
@@ -450,6 +455,7 @@ serve(async (req) => {
 
       const visited = new Set<string>();
       for (const site of candidateLinks) {
+        if (outOfTime()) break;
         if (visited.has(site)) continue;
         visited.add(site);
         let html = decodeHtmlEntities(await fetchPage(site));
@@ -487,6 +493,7 @@ serve(async (req) => {
             .slice(0, 4);
 
           for (const target of [...CONTACT_PATHS.map((path) => origin + path), ...internal]) {
+            if (outOfTime()) break;
             if (visited.has(target)) continue;
             visited.add(target);
             let page = decodeHtmlEntities(await fetchPage(target, 6000));
@@ -530,7 +537,7 @@ serve(async (req) => {
       });
     }
 
-    return json({ ok: true, results });
+    return json({ ok: true, results, pending, partial: pending.length > 0 });
   } catch (e) {
     console.error("[influencer-contacts]", e);
     return json({ error: (e as Error).message }, 500);
