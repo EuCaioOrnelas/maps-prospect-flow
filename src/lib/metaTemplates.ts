@@ -1,5 +1,5 @@
 /**
- * Regras e vocabulário oficiais da WhatsApp Business Platform (Graph API v21.0)
+ * Regras e vocabulário oficiais da WhatsApp Business Platform (Graph API v25.0)
  * usados pelo gerenciador de templates da Wiize.
  *
  * Tudo aqui é espelhado no backend (supabase/functions/meta-templates/index.ts);

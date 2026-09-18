@@ -30,7 +30,7 @@ export const OfficialAPISection = () => {
 
  const trustBadges = [
  { label: "Meta Business Partner", sublabel: "Integração Oficial" },
- { label: "Cloud API v21.0", sublabel: "Versão Mais Recente" },
+ { label: "Cloud API v25.0", sublabel: "Versão Mais Recente" },
  { label: "LGPD Compliant", sublabel: "Dados Protegidos" },
  { label: "99.9% Uptime", sublabel: "Alta Disponibilidade" },
  ];
