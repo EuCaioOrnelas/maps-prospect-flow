@@ -16,6 +16,16 @@ const json = (payload: unknown, status = 200) =>
   });
 
 const VALID_CATEGORIES = ["MARKETING", "UTILITY", "AUTHENTICATION"];
+// Same Meta App already used by the existing embedded signup flow.
+const META_APP_ID = "988774494328539";
+// Limits published by the WhatsApp Cloud API for template header samples.
+const MEDIA_LIMITS: Record<string, number> = {
+  "image/jpeg": 5 * 1024 * 1024,
+  "image/png": 5 * 1024 * 1024,
+  "video/mp4": 16 * 1024 * 1024,
+  "video/3gpp": 16 * 1024 * 1024,
+  "application/pdf": 16 * 1024 * 1024,
+};
 const NAME_RE = /^[a-z0-9_]{1,512}$/;
 
 type Component = Record<string, any>;
@@ -310,11 +320,98 @@ Deno.serve(async (req) => {
       return json({ success: true, synced: rows.length, removed: stale.length, waba_id: wabaId });
     }
 
+    /* ---------------------------------------------------------- UPLOAD MEDIA */
+    if (action === "upload_media") {
+      const fileName = String(body?.file_name || "arquivo");
+      const mime = String(body?.mime_type || "");
+      const b64 = String(body?.file_base64 || "");
+      if (!b64) return json({ error: "validation_error", message: "Nenhum arquivo recebido." }, 400);
+      if (!MEDIA_LIMITS[mime]) {
+        return json({
+          error: "unsupported_media",
+          message: "Formato não suportado pela Meta para cabeçalho de template.",
+        }, 400);
+      }
+
+      let bytes: Uint8Array;
+      try {
+        const bin = atob(b64);
+        bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      } catch (_) {
+        return json({ error: "validation_error", message: "Arquivo inválido." }, 400);
+      }
+
+      const limit = MEDIA_LIMITS[mime];
+      if (bytes.length > limit) {
+        return json({
+          error: "file_too_large",
+          message: `Arquivo muito grande. O limite para este formato é ${Math.round(limit / (1024 * 1024))} MB.`,
+        }, 400);
+      }
+
+      // Meta Resumable Upload API — creates a session, uploads the bytes and
+      // returns the handle used as the template header example.
+      const sessionUrl = `${GRAPH}/${META_APP_ID}/uploads?file_name=${encodeURIComponent(fileName)}` +
+        `&file_length=${bytes.length}&file_type=${encodeURIComponent(mime)}`;
+      const sessionRes = await fetch(sessionUrl, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const sessionPayload = await sessionRes.json().catch(() => ({}));
+      if (!sessionRes.ok || !sessionPayload?.id) {
+        const err = safeMetaError(sessionPayload);
+        console.error("[meta-templates] upload session failed", err);
+        await audit(false, sessionRes.status, { step: "session", error: err });
+        return json({ error: "meta_error", message: humanizeMetaError(err), details: err }, 400);
+      }
+
+      const uploadRes = await fetch(`${GRAPH}/${sessionPayload.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `OAuth ${token}`,
+          file_offset: "0",
+          "Content-Type": "application/octet-stream",
+        },
+        body: bytes,
+      });
+      const uploadPayload = await uploadRes.json().catch(() => ({}));
+      if (!uploadRes.ok || !uploadPayload?.h) {
+        const err = safeMetaError(uploadPayload);
+        console.error("[meta-templates] upload failed", err);
+        await audit(false, uploadRes.status, { step: "upload", error: err });
+        return json({ error: "meta_error", message: humanizeMetaError(err), details: err }, 400);
+      }
+
+      await audit(true, 200, { step: "upload", file_name: fileName, mime, bytes: bytes.length });
+      return json({ success: true, handle: uploadPayload.h });
+    }
+
     /* ---------------------------------------------------------------- CREATE */
     if (action === "create") {
       const payloadIn = body?.template || {};
       const errors = validateTemplate(payloadIn);
       if (errors.length) return json({ error: "validation_error", errors }, 400);
+
+      // Never create a duplicate: Meta rejects same name+language anyway.
+      const { data: existing } = await admin
+        .from("meta_whatsapp_templates")
+        .select("id, meta_template_id, status")
+        .eq("owner_user_id", ownerId)
+        .eq("waba_id", wabaId)
+        .eq("name", payloadIn.name)
+        .eq("language", payloadIn.language)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (existing) {
+        return json({
+          error: "already_exists",
+          message: "Já existe um template com esse nome e idioma nesta conta. Use Sincronizar para atualizar os dados.",
+          id: (existing as any).meta_template_id,
+          status: (existing as any).status,
+        }, 409);
+      }
+
 
       const metaBody = {
         name: payloadIn.name,

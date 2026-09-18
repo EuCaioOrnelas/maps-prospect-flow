@@ -98,6 +98,26 @@ export function useMetaWhatsAppTemplates() {
     return true;
   }, [invoke, load, toast]);
 
+  /** Sends the file to the Edge Function, which performs Meta's official upload. */
+  const uploadMedia = useCallback(async (file: File): Promise<{ handle?: string; error?: string }> => {
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+      reader.onerror = () => reject(new Error("read_error"));
+      reader.readAsDataURL(file);
+    }).catch(() => "");
+    if (!base64) return { error: "Não foi possível ler o arquivo selecionado." };
+
+    const res = await invoke({
+      action: "upload_media",
+      file_name: file.name,
+      mime_type: file.type,
+      file_base64: base64,
+    });
+    if (!res.ok) return { error: res.message };
+    return { handle: res.data?.handle };
+  }, [invoke]);
+
   const create = useCallback(async (draft: DraftTemplate) => {
     const res = await invoke({
       action: "create",
@@ -116,7 +136,10 @@ export function useMetaWhatsAppTemplates() {
       });
       return false;
     }
-    toast({ title: "Enviado para análise", description: "A Meta vai revisar o template. O status é atualizado ao sincronizar." });
+    toast({
+      title: "Template enviado para a Meta",
+      description: `Status retornado: ${res.data?.status ?? "PENDING"} · ID ${res.data?.id ?? "—"}`,
+    });
     await load();
     return true;
   }, [invoke, load, toast]);
@@ -151,5 +174,5 @@ export function useMetaWhatsAppTemplates() {
     return true;
   }, [invoke, load, toast]);
 
-  return { templates, loading, syncing, loadError, connection, load, sync, create, update, remove };
+  return { templates, loading, syncing, loadError, connection, load, sync, create, update, remove, uploadMedia };
 }

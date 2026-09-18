@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, Info, Upload, FileText } from "lucide-react";
 import { TemplatePreview } from "./TemplatePreview";
 import {
   DraftTemplate, TEMPLATE_CATEGORIES, TEMPLATE_LANGUAGES, emptyDraft,
@@ -27,7 +27,25 @@ interface TemplateBuilderDialogProps {
   initialDraft?: DraftTemplate | null;
   editing?: boolean;
   onSubmit: (draft: DraftTemplate) => Promise<boolean>;
+  onUploadMedia: (file: File) => Promise<{ handle?: string; error?: string }>;
 }
+
+type MediaFormat = "IMAGE" | "VIDEO" | "DOCUMENT";
+
+const ACCEPT: Record<MediaFormat, string> = {
+  IMAGE: "image/jpeg,image/png",
+  VIDEO: "video/mp4,video/3gpp",
+  DOCUMENT: "application/pdf",
+};
+
+// Limits published by the WhatsApp Cloud API for template header samples.
+const MEDIA_LIMITS: Record<string, number> = {
+  "image/jpeg": 5 * 1024 * 1024,
+  "image/png": 5 * 1024 * 1024,
+  "video/mp4": 16 * 1024 * 1024,
+  "video/3gpp": 16 * 1024 * 1024,
+  "application/pdf": 16 * 1024 * 1024,
+};
 
 const HEADER_OPTIONS = [
   { value: "NONE", label: "Nenhum" },
@@ -46,19 +64,61 @@ const FieldError = ({ message }: { message?: string }) =>
   ) : null;
 
 export function TemplateBuilderDialog({
-  open, onOpenChange, initialDraft, editing = false, onSubmit,
+  open, onOpenChange, initialDraft, editing = false, onSubmit, onUploadMedia,
 }: TemplateBuilderDialogProps) {
   const [draft, setDraft] = useState<DraftTemplate>(initialDraft ?? emptyDraft());
   const [submitting, setSubmitting] = useState(false);
+  const [submitStage, setSubmitStage] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [touched, setTouched] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+  const [uploadStage, setUploadStage] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setDraft(initialDraft ?? emptyDraft());
       setTouched(false);
+      setMediaFile(null);
+      setMediaPreviewUrl(null);
+      setUploadStage(null);
+      setUploadError(null);
+      setSubmitStage(null);
     }
   }, [open, initialDraft]);
+
+  useEffect(() => () => { if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl); }, [mediaPreviewUrl]);
+
+  const handleFile = async (file: File) => {
+    setUploadError(null);
+    const limit = MEDIA_LIMITS[file.type];
+    if (!limit) {
+      setUploadError("Formato não suportado pela Meta para este tipo de cabeçalho.");
+      return;
+    }
+    if (file.size > limit) {
+      setUploadError(`Arquivo muito grande. O limite para este formato é ${Math.round(limit / (1024 * 1024))} MB.`);
+      return;
+    }
+
+    setMediaFile(file);
+    if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+    setMediaPreviewUrl(file.type.startsWith("application/") ? null : URL.createObjectURL(file));
+
+    setUploadStage("Enviando arquivo para a Meta…");
+    const res = await onUploadMedia(file);
+    if (res.error || !res.handle) {
+      setUploadStage(null);
+      setUploadError(res.error || "Não foi possível enviar o arquivo para a Meta.");
+      setDraft((d) => ({ ...d, headerHandle: "" }));
+      return;
+    }
+    setDraft((d) => ({ ...d, headerHandle: res.handle as string }));
+    setUploadStage(null);
+  };
 
   const set = <K extends keyof DraftTemplate>(key: K, value: DraftTemplate[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -91,7 +151,9 @@ export function TemplateBuilderDialog({
       return;
     }
     setSubmitting(true);
+    setSubmitStage("Enviando template para análise da Meta…");
     const ok = await onSubmit(draft);
+    setSubmitStage(ok ? "Template criado." : null);
     setSubmitting(false);
     setConfirmOpen(false);
     if (ok) onOpenChange(false);
@@ -205,17 +267,64 @@ export function TemplateBuilderDialog({
                 )}
 
                 {["IMAGE", "VIDEO", "DOCUMENT"].includes(draft.headerFormat) && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Handle do arquivo de exemplo</Label>
-                    <Input
-                      value={draft.headerHandle}
-                      onChange={(e) => set("headerHandle", e.target.value)}
-                      placeholder="4::aW1hZ2UvcG5n..."
-                      className="mt-1.5 font-mono text-xs"
+                  <div className="space-y-2.5">
+                    <Label className="text-xs text-muted-foreground">Arquivo de exemplo</Label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept={ACCEPT[draft.headerFormat as MediaFormat]}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        e.target.value = "";
+                        if (f) handleFile(f);
+                      }}
                     />
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      A Meta exige um arquivo de exemplo para templates com mídia. O handle é gerado pelo upload
-                      resumable da Meta e dá contexto ao time de análise.
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button" variant="outline" size="sm" className="gap-1.5"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={!!uploadStage}
+                      >
+                        {uploadStage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {draft.headerHandle ? "Trocar arquivo" : "Enviar arquivo"}
+                      </Button>
+                      {mediaFile && (
+                        <span className="text-xs text-muted-foreground">
+                          {mediaFile.name} · {(mediaFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
+                      )}
+                    </div>
+
+                    {mediaPreviewUrl && draft.headerFormat === "IMAGE" && (
+                      <img
+                        src={mediaPreviewUrl}
+                        alt="Prévia do arquivo do cabeçalho"
+                        className="max-h-40 rounded-lg border border-border object-contain"
+                      />
+                    )}
+                    {mediaPreviewUrl && draft.headerFormat === "VIDEO" && (
+                      <video src={mediaPreviewUrl} controls className="max-h-40 rounded-lg border border-border w-full" />
+                    )}
+                    {mediaFile && draft.headerFormat === "DOCUMENT" && (
+                      <div className="flex items-center gap-2 rounded-lg border border-border p-2.5 text-xs text-muted-foreground">
+                        <FileText className="h-4 w-4" aria-hidden /> {mediaFile.name} ({mediaFile.type || "documento"})
+                      </div>
+                    )}
+
+                    {uploadStage && (
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden /> {uploadStage}
+                      </p>
+                    )}
+                    {uploadError && <FieldError message={uploadError} />}
+                    {!uploadStage && draft.headerHandle && (
+                      <p className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Arquivo enviado à Meta.
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Limites da Meta: imagem JPG/PNG até 5 MB, vídeo MP4/3GP até 16 MB, documento PDF até 16 MB.
                     </p>
                     <FieldError message={showErrors ? errors.headerHandle : undefined} />
                   </div>
@@ -376,7 +485,8 @@ export function TemplateBuilderDialog({
             </div>
           </div>
 
-          <DialogFooter className="pt-3 border-t border-border/50">
+          <DialogFooter className="pt-3 border-t border-border/50 sm:justify-between">
+            <p className="text-xs text-muted-foreground self-center">{submitStage || uploadStage || ""}</p>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancelar</Button>
             <Button
               onClick={() => { setTouched(true); if (!list.length) setConfirmOpen(true); }}
