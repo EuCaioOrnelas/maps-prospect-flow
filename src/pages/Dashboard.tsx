@@ -135,6 +135,8 @@ const Dashboard = () => {
         .maybeSingle();
       if (data) {
         setCompanyProfile(data);
+        // Perfil antigo sem o tipo de atuação: obriga a completar
+        if (isBusinessModelMissing(data)) setShowCompanyOnboarding(true);
       } else {
         // Sem perfil da empresa: obriga a criação antes de usar a página
         setShowCompanyOnboarding(true);
