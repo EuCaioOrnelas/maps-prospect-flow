@@ -102,10 +102,14 @@ export function OutreachComposeDialog({ open, onOpenChange, targets, onCreated }
           items,
         },
       });
-      const duplicates = ((data as any)?.skipped ?? []).filter((s: any) =>
+      let payload: any = data;
+      if (error && (error as any)?.context?.json) {
+        try { payload = await (error as any).context.json(); } catch { /* ignora */ }
+      }
+      const duplicates = (payload?.skipped ?? []).filter((s: any) =>
         String(s?.reason || "").toLowerCase().includes("já recebeu"),
       );
-      if (((data as any)?.error || error) && duplicates.length && !allowDuplicates) {
+      if ((payload?.error || error) && duplicates.length && !allowDuplicates) {
         toast({
           title: "Contatos já abordados",
           description: "Ative “Permitir reenvio” para enviar novamente para esses contatos.",
