@@ -22,7 +22,12 @@ const json = (body: unknown, status = 200) =>
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const OPENAI_MODEL = "gpt-4o-mini";
-const TEMPLATE_VERSION = 2;
+const TEMPLATE_VERSION = 3;
+const GENERIC_REFERENCE_TERMS = [
+  "alinhamento com o icp", "forte alinhamento", "engajamento adequado",
+  "conteúdo relevante", "conteudo relevante", "ramo de marketing b2b",
+  "o canal '", 'o canal "', "apresenta um", "perfil relevante",
+];
 
 // ───────────────────────── pesquisa: YouTube ─────────────────────────
 async function yt(path: string, params: Record<string, string>, key: string) {
@@ -123,7 +128,11 @@ function fallbackReference(prospect: any) {
 
 function sanitizeReference(value: unknown, prospect: any) {
   const reference = String(value || "").replace(/[\r\n]+/g, " ").replace(/[.!?]+$/g, "").trim().slice(0, 140);
-  return /^(d[oa]s?|de (?:um|uma))\b/i.test(reference) ? reference : fallbackReference(prospect);
+  const lower = reference.toLocaleLowerCase("pt-BR");
+  const isGenericAnalysis = GENERIC_REFERENCE_TERMS.some((term) => lower.includes(term));
+  return /^(d[oa]s?|de (?:um|uma))\b/i.test(reference) && !isGenericAnalysis
+    ? reference
+    : fallbackReference(prospect);
 }
 
 function buildFixedEmail(prospect: any, reference: string) {
@@ -131,7 +140,7 @@ function buildFixedEmail(prospect: any, reference: string) {
   const subjectName = String(prospect?.channel_name || name).trim().slice(0, 180);
   return {
     subject: `Parceria com ${subjectName} - Wiize`,
-    message: `Olá, ${name}! Tudo bem?\n\nMeu nome é Caio e sou fundador da Wiize, um software com tudo o que empresas precisam para vender B2B em um só lugar. Hoje, mais de 600 empresas utilizam a plataforma.\n\nConheci seu conteúdo através ${reference} e achei que existe uma conexão muito interessante com o que estamos construindo.\n\nA Wiize reúne prospecção com IA, SDR inteligente que vende no automático e agenda reuniões, IA de análise de engajamento e gestão comercial completa em um só lugar.\n\nEstamos em uma etapa de crescimento nas redes sociais e selecionando alguns criadores e especialistas para construir parcerias comerciais de longo prazo.\n\nO modelo é simples: você apresenta a Wiize para sua audiência através de um link personalizado e cupom próprio. Para cada cliente que comprar pelo seu link ou cupom, você recebe 50% de comissão sobre a assinatura do primeiro mês + 10% de comissão recorrente, podendo chegar a 15%.\n\nAcredito que seu conteúdo tenha bastante sinergia com a Wiize.\n\nSe fizer sentido, posso te enviar mais detalhes da parceria.\n\nAbraço,\n\nCaio | Fundador da Wiize\n\n(44) 9 9148-7211\n\nhttps://www.wiize.com.br/`,
+    message: `Olá, ${name}! Tudo bem?\n\nMeu nome é Caio e sou fundador da Wiize, um software com tudo o que empresas precisam para vender B2B em um só lugar. Hoje, mais de 600 empresas utilizam a plataforma.\n\nConheci seu conteúdo através ${reference} e achei que existe uma conexão muito interessante com o que estamos construindo.\n\nA Wiize reúne prospecção com IA, SDR inteligente que vende no automático e agenda reuniões, IA de análise de engajamento e gestão comercial completa em um só lugar.\n\nEstamos em uma etapa de crescimento nas redes sociais e selecionando alguns criadores e especialistas para construir parcerias comerciais de longo prazo.\n\nO modelo é simples: você apresenta a Wiize para sua audiência através de um link personalizado e cupom próprio. Para cada cliente que comprar pelo seu link ou cupom, você recebe 50% de comissão sobre a assinatura do primeiro mês + 10% de comissão recorrente, podendo chegar a 15%.\n\nAcredito que seu conteúdo tenha bastante sinergia com a Wiize.\n\nSe fizer sentido, posso te enviar mais detalhes da parceria.\n\nAbraço,\nCaio | Fundador da Wiize\n(44) 9 9148-7211\nhttps://www.wiize.com.br/`,
   };
 }
 
@@ -241,6 +250,11 @@ serve(async (req) => {
     if (!prospect) return json({ error: "Influenciador não encontrado." }, 404);
 
     const { data: contacts } = await admin.from("influencer_contacts").select("*").eq("prospect_id", prospectId);
+    const { data: storedVideos } = await admin.from("influencer_videos")
+      .select("title,description,published_at,view_count")
+      .eq("prospect_id", prospectId)
+      .order("published_at", { ascending: false })
+      .limit(30);
 
     // 1) Pesquisa real de conteúdos (YouTube quando houver channel_id + chave).
     let research: any = null;
@@ -251,6 +265,18 @@ serve(async (req) => {
       } catch (e) {
         console.error("[research] youtube falhou", String(e));
       }
+    }
+    if (!research && storedVideos?.length) {
+      research = {
+        description: prospect.channel_description || "",
+        recent: storedVideos.slice(0, 18).map((video: any) => ({
+          title: video.title,
+          description: video.description || "",
+          published_at: video.published_at,
+          views: Number(video.view_count || 0),
+        })),
+        top: [],
+      };
     }
 
     const variant = Number(body.variant || 0);
