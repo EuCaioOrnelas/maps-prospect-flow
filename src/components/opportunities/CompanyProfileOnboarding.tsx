@@ -81,7 +81,7 @@ export const BUSINESS_MODEL_OPTIONS = [
 const TOTAL_STEPS = PROFILE_STEPS.length + 1;
 const SERVICES_STEP_INDEX = PROFILE_STEPS.length;
 
-export const isBusinessModelMissing = (profile?: Partial<Record<string, unknown>> | null) =>
+export const isBusinessModelMissing = (profile?: any) =>
   !!profile && !String((profile as any)?.company_business_model || "").trim();
 
 const BUSINESS_MODEL_STEP_INDEX = PROFILE_STEPS.findIndex((s) => s.key === "company_business_model");
