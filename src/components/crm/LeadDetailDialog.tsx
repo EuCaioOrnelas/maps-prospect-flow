@@ -1358,47 +1358,13 @@ export const LeadDetailDialog = ({
               <div className="space-y-6">
                 <div className="rounded-xl border border-border/60 bg-card p-4">
                   <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" /> Notas
+                    <FileText className="w-4 h-4 text-primary" /> Notas da equipe
                   </h4>
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Escreva uma nota..."
-                    className="text-sm min-h-[80px] resize-none"
-                  />
-                </div>
-                <Button size="sm" onClick={handleAddNote} className="w-full" disabled={!newNote.trim()}>
-                  <Plus className="w-4 h-4 mr-1" /> Adicionar
-                </Button>
-
-                <div className="space-y-2">
-                  {notes.map((note) => (
-                    <div key={note.id} className="bg-muted/40 rounded-lg p-3 group relative">
-                      <p className="text-sm whitespace-pre-wrap pr-8">{note.content}</p>
-                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {format(new Date(note.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </p>
-                      <button
-                        onClick={() => setDeleteNoteId(note.id)}
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition-opacity"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {notes.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-6">
-                      Nenhuma nota adicionada
-                    </p>
-                  )}
-                </div>
-                </div>
+                  <LeadNotesChat leadId={lead.id} />
                 </div>
               </div>
             )}
+
 
             {/* Deals Tab */}
             {activeTab === 'deals' && (
