@@ -115,8 +115,8 @@ const ProspeccaoWeb = () => {
       .maybeSingle()
       .then(({ data }) => {
         setCompanyProfile(data);
-        // Sem perfil da empresa: obriga a criação antes de usar a página
-        if (!data) setShowCompanyOnboarding(true);
+        // Sem perfil da empresa (ou sem o tipo de atuação): obriga a completar antes de usar a página
+        if (!data || isBusinessModelMissing(data)) setShowCompanyOnboarding(true);
       });
   }, [user, accountOwnerId]);
 
