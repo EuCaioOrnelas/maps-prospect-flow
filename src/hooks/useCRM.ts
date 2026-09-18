@@ -488,7 +488,7 @@ export const useCRM = () => {
       return [];
     }
 
-    return (data?.notes || []) as Array<Record<string, unknown>>;
+    return (data?.notes || []) as Array<{ id: string; lead_id: string; user_id: string; content: string; created_at: string; reply_to_id: string | null }>;
   };
 
 
