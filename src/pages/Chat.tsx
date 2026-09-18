@@ -482,7 +482,6 @@ const Chat = () => {
       />
     </SidebarProvider>
     </>
-    </>
   );
 };
 
