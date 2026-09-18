@@ -42,7 +42,7 @@ export default function MetaWhatsAppTemplates() {
   const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
   const {
-    templates, loading, syncing, loadError, connection, sync, create, update, remove,
+    templates, loading, syncing, loadError, connection, sync, create, update, remove, uploadMedia,
   } = useMetaWhatsAppTemplates();
 
   const [search, setSearch] = useState("");
