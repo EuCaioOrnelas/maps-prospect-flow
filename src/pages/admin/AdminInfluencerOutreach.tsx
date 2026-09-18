@@ -867,7 +867,50 @@ export default function AdminInfluencerOutreach() {
         email={approach?.email ?? ""}
         onSent={() => { loadProspects(); loadCampaigns(); }}
       />
+
+      {/* Progresso do envio em segundo plano */}
+      {queueProgress && (
+        <div className="fixed bottom-4 right-4 z-50 w-[320px] rounded-2xl border border-border bg-background p-4 shadow-lg">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold truncate">
+                {queueProgress.finished ? "Envio concluído" : "Enviando abordagens..."}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{queueProgress.name}</p>
+            </div>
+            {queueProgress.finished ? (
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setQueueProgress(null)}
+                aria-label="Fechar"
+              >
+                <XCircle size={14} />
+              </button>
+            ) : (
+              <Loader2 className="animate-spin text-primary shrink-0" size={14} />
+            )}
+          </div>
+          <Progress
+            value={queueProgress.total ? (queueProgress.done / queueProgress.total) * 100 : 0}
+            className="h-2 mt-3"
+          />
+          <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{queueProgress.done}/{queueProgress.total} processados</span>
+            <span>
+              {queueProgress.sent} enviados
+              {queueProgress.failed > 0 ? ` · ${queueProgress.failed} falhas` : ""}
+            </span>
+          </div>
+          {!queueProgress.finished && (
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Pode continuar usando a página — o envio segue em segundo plano.
+            </p>
+          )}
+        </div>
+      )}
     </div>
+
     </TooltipProvider>
   );
 }
