@@ -44,6 +44,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { UpgradeModal } from "@/components/whatsapp/UpgradeModal";
 import { hasSDRAccess } from "@/lib/planAccess";
 import { Lock, Settings } from "lucide-react";
+import { SEO } from "@/components/SEO";
 
 // Onboarding modal removido — apenas o GuidedTour orienta novos usuários.
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -597,6 +598,7 @@ const Dashboard = () => {
     }
   };
 
+      <SEO title="Prospecção" />
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full max-w-full bg-background relative overflow-x-hidden">

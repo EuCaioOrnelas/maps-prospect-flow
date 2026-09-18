@@ -33,6 +33,7 @@ import { useWebhookGate } from "@/hooks/useWebhookGate";
 import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 import { BackupProgressBanner } from "@/components/chat/BackupProgressBanner";
 
+import { SEO } from "@/components/SEO";
 const Chat = () => {
   const { user, accountOwnerId, profile: authProfile } = useAuth();
   useAutoScoreTracking("chat");
@@ -195,6 +196,8 @@ const Chat = () => {
   const showDisconnectedOverlay = !chat.loading && hasConnection && chat.allConnectionsExpired;
 
   return (
+    <> 
+      <SEO title="Chat" />
     <SidebarProvider>
       <div className="h-[100dvh] flex w-full wa-app-bg overflow-hidden">
         <AppSidebar profile={profile} />
@@ -478,6 +481,7 @@ const Chat = () => {
         context="chat"
       />
     </SidebarProvider>
+    </>
   );
 };
 
@@ -500,4 +504,3 @@ const FeatureCard = ({
 );
 
 export default Chat;
-

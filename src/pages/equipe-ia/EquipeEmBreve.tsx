@@ -86,7 +86,7 @@ export default function EquipeEmBreve() {
 
   return (
     <>
-      <SEO title="Equipe IA — Em breve na Wiize" />
+      <SEO title="Equipe IA" />
       <div className="flex min-h-screen bg-background">
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">

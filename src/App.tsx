@@ -12,6 +12,7 @@ import { MetricStateCacheProvider } from "@/hooks/useMetricStateCache";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEO } from "./components/SEO";
 const ActivationChecklist = lazyWithRetry(() => import("@/components/dashboard/ActivationChecklist").then((m) => ({ default: m.ActivationChecklist })), "ActivationChecklist");
 import { GuidedTourProvider } from "@/hooks/useGuidedTour";
 const GuidedTour = lazyWithRetry(() => import("@/components/onboarding/GuidedTour").then((m) => ({ default: m.GuidedTour })), "GuidedTour");
@@ -24,6 +25,7 @@ const CookieConsent = lazyWithRetry(() => import("@/components/CookieConsent").t
 const TrackingTags = lazyWithRetry(() => import("@/components/TrackingTags").then((m) => ({ default: m.TrackingTags })), "TrackingTags");
 import { PageVisitTracker } from "@/components/tracking/PageVisitTracker";
 import { AfterPaint } from "@/components/AfterPaint";
+import { TabTitleManager } from "@/components/TabTitleManager";
 import AdminTrialEmailFlow from "./pages/admin/AdminTrialEmailFlow";
 
 
@@ -295,12 +297,14 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <PasswordRecoveryRedirect />
+          <TabTitleManager />
 
           <AuthProvider>
             <MetricStateCacheProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
               <PartnerTrackingProvider>
+              <SEO />
               <PageVisitTracker />
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />

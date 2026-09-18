@@ -169,7 +169,7 @@ export default function CRMSales() {
   return (
     <div className="min-h-screen bg-background relative">
       <BackgroundGlow />
-      <SEO title="Vendas & Receita — CRM" description="Controle financeiro das vendas fechadas no CRM" />
+      <SEO title="Vendas & Receita" description="Controle financeiro das vendas fechadas no CRM" />
       <AppSidebar profile={profile || sidebarProfile} />
       <MobileNav profile={profile || sidebarProfile} />
 
