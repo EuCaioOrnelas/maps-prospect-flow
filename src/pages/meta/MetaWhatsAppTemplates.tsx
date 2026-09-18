@@ -301,6 +301,7 @@ export default function MetaWhatsAppTemplates() {
         initialDraft={initialDraft}
         editing={!!editingRow}
         onSubmit={handleSubmit}
+        onUploadMedia={uploadMedia}
       />
 
       <TemplateDetailsSheet

@@ -151,7 +151,9 @@ export function TemplateBuilderDialog({
       return;
     }
     setSubmitting(true);
+    setSubmitStage("Enviando template para análise da Meta…");
     const ok = await onSubmit(draft);
+    setSubmitStage(ok ? "Template criado." : null);
     setSubmitting(false);
     setConfirmOpen(false);
     if (ok) onOpenChange(false);
