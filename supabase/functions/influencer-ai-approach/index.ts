@@ -96,8 +96,8 @@ Sua tarefa NÃO é escrever nem reescrever o e-mail. A copy é fixa. Você deve 
 "Conheci seu conteúdo através de [REFERÊNCIA] e achei que existe uma conexão muito interessante com o que estamos construindo."
 
 REGRAS DA REFERÊNCIA:
-- Use apenas conteúdos, vídeos, posts, temas ou canais presentes nos DADOS PESQUISADOS.
-- Prefira um conteúdo específico e relevante. Exemplo: "do seu vídeo sobre gestão comercial".
+- Se houver vídeos ou posts nos DADOS PESQUISADOS, escolha o TÍTULO EXATO de um conteúdo relacionado a vendas, B2B, prospecção, CRM, gestão, negócios, marketing ou IA.
+- Nesse caso, escreva exatamente: "do seu vídeo ‘TÍTULO EXATO’". Não resuma, interprete ou reescreva o título.
 - Quando só houver dados gerais, use o canal ou perfil real. Exemplo: "do canal Empresa X" ou "do seu perfil no Instagram".
 - A referência deve começar com "do", "da", "de um" ou "de uma", encaixando naturalmente depois de "através".
 - Máximo de 140 caracteres, sem ponto final, elogio ou afirmação inventada.
@@ -133,6 +133,16 @@ function sanitizeReference(value: unknown, prospect: any) {
   return /^(d[oa]s?|de (?:um|uma))\b/i.test(reference) && !isGenericAnalysis
     ? reference
     : fallbackReference(prospect);
+}
+
+function verifiedContentReference(value: unknown, prospect: any, research: any) {
+  const proposed = sanitizeReference(value, prospect);
+  const normalizedProposed = proposed.toLocaleLowerCase("pt-BR");
+  const titles = [...(research?.recent ?? []), ...(research?.top ?? [])]
+    .map((item: any) => String(item?.title || "").trim())
+    .filter(Boolean);
+  const exactTitle = titles.find((title: string) => normalizedProposed.includes(title.toLocaleLowerCase("pt-BR")));
+  return exactTitle ? `do seu vídeo “${exactTitle.slice(0, 110)}”` : fallbackReference(prospect);
 }
 
 function buildFixedEmail(prospect: any, reference: string) {
@@ -289,7 +299,7 @@ serve(async (req) => {
     ], openaiKey, variant > 0 ? 0.85 : 0.6);
 
     // 3) A IA escolhe apenas a referência; assunto e copy permanecem determinísticos.
-    const reference = sanitizeReference(out?.referencia, prospect);
+    const reference = verifiedContentReference(out?.referencia, prospect, research);
     const fixedEmail = buildFixedEmail(prospect, reference);
 
     const analysis = {
