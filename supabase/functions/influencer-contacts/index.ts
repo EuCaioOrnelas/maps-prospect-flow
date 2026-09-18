@@ -22,7 +22,7 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-const MAX_PROSPECTS_PER_RUN = 25;
+const MAX_PROSPECTS_PER_RUN = 8;
 
 // ─────────────────────────── extração ───────────────────────────
 
