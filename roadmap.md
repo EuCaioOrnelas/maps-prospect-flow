@@ -25,4 +25,4 @@
 - [x] Restringir a IA à personalização do nome e da referência ao conteúdo/canal
 - [x] Validar e publicar a geração atualizada
 
-- [ ] Corrigir referência de conteúdo e assinatura na geração de campanhas de influenciadores.
+- [x] Corrigir referência de conteúdo e assinatura na geração de campanhas de influenciadores.
