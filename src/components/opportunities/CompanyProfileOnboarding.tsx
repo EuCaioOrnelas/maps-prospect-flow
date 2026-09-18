@@ -282,10 +282,14 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Sparkles size={18} className="text-primary" />
             </div>
-            {isEditing ? "Editar Perfil de Prospecção" : "Configure seu Perfil de Prospecção"}
+            {mustFillBusinessModel
+              ? "Confirme como sua empresa atua"
+              : isEditing ? "Editar Perfil de Prospecção" : "Configure seu Perfil de Prospecção"}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
+            {mustFillBusinessModel
+              ? "Falta essa informação no seu perfil. Sem ela a IA pode escrever abordagens fora do seu tipo de negócio."
+              : isEditing
               ? "Atualize as informações da sua empresa para manter as mensagens de IA sempre relevantes."
               : "Para gerar mensagens personalizadas com IA, precisamos entender melhor sua empresa."}
           </DialogDescription>
