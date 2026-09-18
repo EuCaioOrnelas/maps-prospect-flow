@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
-import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, ChevronDown, ChevronUp, Sparkles, Clock } from "lucide-react";
+import { Send, Smile, Mic, Plus, X, ImageIcon, FileText, Film, Trash2, MessageSquareText, Sparkles, Clock, AudioLines } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveStorageUrl } from "@/lib/privateStorage";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -154,8 +155,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   const [waveformBars, setWaveformBars] = useState<number[]>([]);
   const [qrIdx, setQrIdx] = useState(0);
   const [confirmQr, setConfirmQr] = useState<QuickReply | null>(null);
-  const [confirmPreview, setConfirmPreview] = useState("");
-  const [confirmExpanded, setConfirmExpanded] = useState(false);
+  const [confirmTextEdits, setConfirmTextEdits] = useState<Record<string, string>>({});
   // A execução da mensagem rápida vive fora do componente: é por conversa e
   // continua rodando mesmo se o atendente trocar de contato.
   const qrRun = useSyncExternalStore<QrRunState | null>(
@@ -304,28 +304,26 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
   // Etapas resolvidas (mensagem 1, 2, 3…) da mensagem rápida selecionada.
   const confirmSteps = useMemo(() => {
     if (!confirmQr) return [];
-    return quickReplySteps(confirmQr).map(s => ({
-      ...s,
-      content: applyQuickReplyVariables(s.content || "", quickReplyCtx),
-    }));
-  }, [confirmQr, quickReplyCtx]);
+    return quickReplySteps(confirmQr).map((s, index) => {
+      const key = s.id || String(index);
+      const resolved = applyQuickReplyVariables(s.content || "", quickReplyCtx);
+      return { ...s, content: s.type === "text" ? (confirmTextEdits[key] ?? resolved) : resolved };
+    });
+  }, [confirmQr, confirmTextEdits, quickReplyCtx]);
 
   const applyQuickReply = useCallback((qr: QuickReply) => {
-    const steps = quickReplySteps(qr);
-    const firstText = steps.find(s => s.type === "text");
-    const resolved = applyQuickReplyVariables(firstText?.content || qr.content || "", quickReplyCtx);
     // Limpa o "/atalho" do campo imediatamente para que ele nunca seja enviado como mensagem.
     setText("");
-    setConfirmPreview(resolved);
+    setConfirmTextEdits({});
     setConfirmQr(qr);
-  }, [quickReplyCtx]);
+  }, []);
 
   const handleConfirmSend = useCallback(async () => {
     if (!confirmQr || !conversationId) return;
     const steps = confirmSteps;
     const qr = confirmQr;
     setConfirmQr(null);
-    setConfirmExpanded(false);
+    setConfirmTextEdits({});
     setText("");
     onCancelReply?.();
     inputRef.current?.focus();
@@ -872,13 +870,13 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
           if (!open) {
             setText("");
             setConfirmQr(null);
-            setConfirmExpanded(false);
+            setConfirmTextEdits({});
           }
         }}
       >
         {/* grid-cols-[minmax(0,1fr)] + [&>*]:min-w-0 impedem que um texto longo
             (ex.: URL) estique a coluna e corte o rodapé/botões do popup. */}
-        <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-md p-4 sm:p-6 rounded-[var(--radius-card)] grid-cols-[minmax(0,1fr)] [&>*]:min-w-0">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[88vh] overflow-hidden p-4 sm:p-6 rounded-[var(--radius-card)] grid-cols-[minmax(0,1fr)] [&>*]:min-w-0">
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base sm:text-lg">Enviar mensagem rápida?</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">
@@ -886,50 +884,40 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               <span className="font-medium text-primary">/{confirmQr?.shortcut}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground border border-border min-w-0 overflow-hidden">
-            <div
-              className={cn(
-                "whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed",
-                !confirmExpanded && "max-h-[160px] overflow-hidden"
-              )}
-            >
-              {confirmPreview || "(sem texto)"}
-            </div>
-            {confirmPreview.length > 220 && (
-              <button
-                type="button"
-                onClick={() => setConfirmExpanded(v => !v)}
-                className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-              >
-                {confirmExpanded ? (
-                  <>
-                    Ver menos <ChevronUp size={14} />
-                  </>
-                ) : (
-                  <>
-                    Ver mais <ChevronDown size={14} />
-                  </>
-                )}
-              </button>
-            )}
-            {confirmSteps.length > 1 && (
-              <div className="mt-2 pt-2 border-t border-border space-y-1 overflow-hidden">
-                {confirmSteps.map((s, i) => (
-                  <div key={s.id || i} className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-                    <span className="font-medium text-foreground shrink-0">{i + 1}.</span>
-                    <span className="truncate flex-1 min-w-0">
-                      {s.type === "text" ? (s.content || "").slice(0, 60) : (s.media_filename || s.type)}
-                    </span>
-                    {i > 0 && !!s.delay_seconds && <span className="shrink-0 tabular-nums">+{s.delay_seconds}s</span>}
+          <div className="min-w-0 space-y-2 overflow-y-auto pr-1 wa-scrollbar">
+            {confirmSteps.map((step, index) => {
+              const key = step.id || String(index);
+              const StepIcon = step.type === "audio" ? AudioLines : step.type === "image" ? ImageIcon : step.type === "video" ? Film : step.type === "document" ? FileText : MessageSquareText;
+              const typeLabel = step.type === "audio" ? "Áudio" : step.type === "image" ? "Imagem" : step.type === "video" ? "Vídeo" : step.type === "document" ? "Documento" : "Texto";
+              return (
+                <div key={key} className="rounded-lg border border-border bg-muted/40 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-xs">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary/10 font-semibold text-primary">{index + 1}</span>
+                    <StepIcon size={14} className="shrink-0 text-primary" />
+                    <span className="font-medium text-foreground">{typeLabel}</span>
+                    {index > 0 && !!step.delay_seconds && (
+                      <span className="ml-auto flex items-center gap-1 text-muted-foreground tabular-nums">
+                        <Clock size={12} /> após {step.delay_seconds}s
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-            {confirmSteps.length <= 1 && confirmQr?.media_url && (
-              <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
-                Anexo: {confirmQr.media_filename || confirmQr.media_type}
-              </div>
-            )}
+                  {step.type === "text" ? (
+                    <Textarea
+                      value={step.content || ""}
+                      onChange={(event) => setConfirmTextEdits((current) => ({ ...current, [key]: event.target.value }))}
+                      rows={3}
+                      className="min-h-[76px] resize-y bg-background text-sm leading-relaxed"
+                      aria-label={`Editar texto da mensagem ${index + 1}`}
+                    />
+                  ) : (
+                    <div className="flex min-w-0 items-center gap-2 rounded-md bg-background px-3 py-2 text-sm text-muted-foreground">
+                      <StepIcon size={16} className="shrink-0" />
+                      <span className="truncate">{step.media_filename || typeLabel}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <DialogFooter className="w-full min-w-0 flex-col-reverse sm:flex-row sm:justify-end sm:space-x-0 gap-2 sm:gap-3">
             <Button
@@ -938,7 +926,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               onClick={() => {
                 setText("");
                 setConfirmQr(null);
-                setConfirmExpanded(false);
+                setConfirmTextEdits({});
               }}
             >
               Cancelar

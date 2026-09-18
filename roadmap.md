@@ -17,3 +17,5 @@
 - [x] Deixar o campo de notas flutuante, compacto e expansível por linhas
 - [x] Ajustar bordas do Chat e das mensagens rápidas ao padrão Wiize
 - [x] Posicionar a resposta entre as mensagens rápidas e o campo de digitação
+- [x] Estender o fundo das notas até o final do cartão
+- [x] Mostrar a sequência completa na confirmação da mensagem rápida e permitir editar textos

@@ -77,11 +77,13 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
   };
 
   return (
-    <div className={cn("flex flex-col rounded-lg border wa-border-light wa-app-bg overflow-hidden", className)}>
+    <div
+      className={cn("flex flex-col rounded-lg border wa-border-light wa-chat-bg overflow-hidden", className)}
+      style={{ ["--wa-chat-bg-pattern" as string]: `url(${waChatBgUrl})` }}
+    >
       <div
         ref={scrollRef}
-        className={cn("flex-1 overflow-y-auto px-3 sm:px-5 py-3 space-y-1 wa-chat-bg wa-scrollbar", heightClass)}
-        style={{ ["--wa-chat-bg-pattern" as string]: `url(${waChatBgUrl})` }}
+        className={cn("flex-1 overflow-y-auto px-3 sm:px-5 py-3 space-y-1 wa-scrollbar", heightClass)}
       >
         <div className="wa-chat-glow" />
         {loading && notes.length === 0 && (
@@ -211,7 +213,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
         })}
       </div>
 
-       <div className="relative -mt-1 px-2.5 pb-2.5 sm:px-3 sm:pb-3">
+        <div className="relative px-2.5 pb-2.5 pt-1 sm:px-3 sm:pb-3">
         {replyTo && (
            <div className="mx-1 mb-2 flex items-start gap-2 rounded-lg bg-card border border-border border-l-2 border-l-primary px-3 py-2 shadow-sm">
             <div className="min-w-0 flex-1">
