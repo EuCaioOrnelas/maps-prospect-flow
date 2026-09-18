@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":

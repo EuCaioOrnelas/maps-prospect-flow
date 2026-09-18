@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Inline E.164 formatter para Meta Cloud API (sem "+"). Suporta global (BR + intl).
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 function formatPhoneForMeta(phone: string): string {
   const raw = String(phone || "").trim();
   if (!raw) return "";

@@ -8,7 +8,7 @@
  * META_API_VERSION (funções de servidor).
  */
 export const META_API_VERSION =
-  (import.meta.env.VITE_META_API_VERSION as string | undefined) || "v21.0";
+  (import.meta.env.VITE_META_API_VERSION as string | undefined) || "v25.0";
 
 /** Base da Graph API já com a versão central aplicada. */
 export const META_GRAPH_BASE = `https://graph.facebook.com/${META_API_VERSION}`;

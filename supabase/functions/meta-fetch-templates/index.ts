@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
