@@ -537,7 +537,7 @@ serve(async (req) => {
       });
     }
 
-    return json({ ok: true, results });
+    return json({ ok: true, results, pending, partial: pending.length > 0 });
   } catch (e) {
     console.error("[influencer-contacts]", e);
     return json({ error: (e as Error).message }, 500);
