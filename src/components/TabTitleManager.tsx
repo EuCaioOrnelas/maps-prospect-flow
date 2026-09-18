@@ -7,6 +7,35 @@ type TabTitleRule = {
 };
 
 const TAB_TITLE_RULES: TabTitleRule[] = [
+  { pattern: /^\/$/, label: "Início" },
+  { pattern: /^\/login\/?$/, label: "Entrar" },
+  { pattern: /^\/signup(?:\/.*)?$/, label: "Criar Conta" },
+  { pattern: /^\/forgot-password\/?$/, label: "Recuperar Senha" },
+  { pattern: /^\/reset-password\/?$/, label: "Redefinir Senha" },
+  { pattern: /^\/onboarding\/?$/, label: "Primeiros Passos" },
+  { pattern: /^\/demonstracao\/?$/, label: "Demonstração" },
+  { pattern: /^\/tour-(?:completo|guiado)\/?$/, label: "Tour Guiado" },
+  { pattern: /^\/enterprise\/?$/, label: "Enterprise" },
+  { pattern: /^\/blog(?:\/.*)?$/, label: "Blog" },
+  { pattern: /^\/produtos\/[^/]+\/?$/, label: "Produto" },
+  { pattern: /^\/contato\/?$/, label: "Contato" },
+  { pattern: /^\/terms\/?$/, label: "Termos de Uso" },
+  { pattern: /^\/privacy\/?$/, label: "Privacidade" },
+  { pattern: /^\/refund-policy\/?$/, label: "Reembolso" },
+  { pattern: /^\/seguranca-faq\/?$/, label: "Segurança" },
+  { pattern: /^\/diretrizes-de-envio\/?$/, label: "Diretrizes de Envio" },
+  { pattern: /^\/ajuda(?:\/.*)?$/, label: "Central de Ajuda" },
+  { pattern: /^\/inteligencia\/?$/, label: "Inteligência Wiize" },
+  { pattern: /^\/upgrade(?:-promo)?\/?$/, label: "Upgrade" },
+  { pattern: /^\/checkout-(?:pix|card|success|failed)\/?$/, label: "Checkout" },
+  { pattern: /^\/renewal-success\/?$/, label: "Assinatura Renovada" },
+  { pattern: /^\/thank-you\/?$/, label: "Obrigado" },
+  { pattern: /^\/avaliacao\/[^/]+\/?$/, label: "Avaliação" },
+  { pattern: /^\/descadastro\/?$/, label: "Descadastro" },
+  { pattern: /^\/shared-report\/[^/]+\/?$/, label: "Relatório" },
+  { pattern: /^\/acesso-negado\/?$/, label: "Acesso Negado" },
+  { pattern: /^\/prospeccao\/?$/, label: "Prospecção" },
+
   { pattern: /^\/dashboard\/?$/, label: "Painel" },
   { pattern: /^\/reports\/prospeccao\/?$/, label: "Relatórios de Prospecção" },
   { pattern: /^\/profile\/?$/, label: "Meu Perfil" },
@@ -71,7 +100,13 @@ const TAB_TITLE_RULES: TabTitleRule[] = [
   { pattern: /^\/partners\/niveis\/?$/, label: "Parceiros - Níveis" },
   { pattern: /^\/partners\/(?:dados-bancarios|banco)\/?$/, label: "Parceiros - Dados Bancários" },
   { pattern: /^\/partners\/?$/, label: "Parceiros - Painel" },
+  { pattern: /^\/partners\/login\/?$/, label: "Parceiros - Entrar" },
+  { pattern: /^\/(?:partners\/apply|wiize-partners\/candidatura)\/?$/, label: "Parceiros - Candidatura" },
+  { pattern: /^\/(?:partners\/terms|parceiros\/termos)\/?$/, label: "Parceiros - Termos" },
+  { pattern: /^\/(?:partners\/verify|parceiros\/verificar)\/?$/, label: "Parceiros - Verificação" },
+  { pattern: /^\/parceiros\/?$/, label: "Parceiros" },
 
+  { pattern: /^\/api\/login\/?$/, label: "API - Entrar" },
   { pattern: /^\/api\/dashboard\/?$/, label: "API - Painel" },
   { pattern: /^\/api\/keys\/?$/, label: "API - Chaves" },
   { pattern: /^\/api\/usage\/?$/, label: "API - Consumo" },
@@ -82,7 +117,7 @@ const TAB_TITLE_RULES: TabTitleRule[] = [
 
 function getTabTitle(pathname: string) {
   const rule = TAB_TITLE_RULES.find(({ pattern }) => pattern.test(pathname));
-  return rule ? `Wiize - ${rule.label}` : null;
+  return rule ? `Wiize - ${rule.label}` : "Wiize";
 }
 
 export function TabTitleManager() {
@@ -90,8 +125,6 @@ export function TabTitleManager() {
 
   useEffect(() => {
     const title = getTabTitle(pathname);
-    if (!title) return;
-
     const applyTitle = () => {
       if (document.title !== title) document.title = title;
     };

@@ -6,4 +6,4 @@
 
 ## Títulos das abas
 - [x] Centralizar os títulos das áreas internas no padrão “Wiize - Página”
-- [ ] Verificar a navegação entre Chat, Parceiros, Prospecção, CRM e Admin
+- [x] Verificar a navegação entre Chat, Parceiros, Prospecção, CRM e Admin
