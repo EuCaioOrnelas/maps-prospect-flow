@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -57,7 +58,7 @@ const exchangeCodeForToken = async (code: string, appSecret: string, redirectUri
     params.set("redirect_uri", redirectUri);
   }
 
-  const response = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${params.toString()}`);
+  const response = await fetch(`https://graph.facebook.com/${META_API_VERSION}/oauth/access_token?${params.toString()}`);
   const data = await response.json();
 
   return { data, redirectUri };
@@ -128,7 +129,7 @@ Deno.serve(async (req) => {
     const accessToken = tokenData.access_token;
     console.log("[meta-embedded-signup] ✅ Token obtained");
 
-    const debugUrl = `https://graph.facebook.com/v21.0/debug_token?input_token=${accessToken}&access_token=${META_APP_ID}|${META_APP_SECRET}`;
+    const debugUrl = `https://graph.facebook.com/${META_API_VERSION}/debug_token?input_token=${accessToken}&access_token=${META_APP_ID}|${META_APP_SECRET}`;
     const debugRes = await fetch(debugUrl);
     const debugData = await debugRes.json();
 
@@ -148,12 +149,12 @@ Deno.serve(async (req) => {
     }
 
     if (wabaId) {
-      const wabaRes = await fetch(`https://graph.facebook.com/v21.0/${wabaId}?access_token=${accessToken}`);
+      const wabaRes = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${wabaId}?access_token=${accessToken}`);
       const wabaData = await wabaRes.json();
       businessName = wabaData.name || null;
       console.log("[meta-embedded-signup] WABA info:", JSON.stringify(wabaData).substring(0, 300));
 
-      const phonesRes = await fetch(`https://graph.facebook.com/v21.0/${wabaId}/phone_numbers?access_token=${accessToken}`);
+      const phonesRes = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${wabaId}/phone_numbers?access_token=${accessToken}`);
       const phonesData = await phonesRes.json();
 
       if (phonesData.data?.length > 0) {
@@ -234,7 +235,7 @@ Deno.serve(async (req) => {
 
     let webhookVerifiedAt: string | null = null;
     try {
-      const subscribeRes = await fetch(`https://graph.facebook.com/v21.0/${wabaId}/subscribed_apps`, {
+      const subscribeRes = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${wabaId}/subscribed_apps`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ access_token: accessToken }),

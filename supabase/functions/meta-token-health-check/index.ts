@@ -5,6 +5,7 @@
 // to avoid false positives (e.g. permanent/never-expiring tokens).
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
     let isHardAuthFailure = false;
     try {
       const res = await fetch(
-        `https://graph.facebook.com/v21.0/me?access_token=${encodeURIComponent(conn.access_token)}`,
+        `https://graph.facebook.com/${META_API_VERSION}/me?access_token=${encodeURIComponent(conn.access_token)}`,
       );
       const body = await res.json().catch(() => ({} as any));
       if (res.ok && body?.id) {
@@ -74,7 +75,7 @@ Deno.serve(async (req) => {
         // and subscribed_apps are independent states.
         if (conn.waba_id) {
           const subscriptionRes = await fetch(
-            `https://graph.facebook.com/v21.0/${conn.waba_id}/subscribed_apps`,
+            `https://graph.facebook.com/${META_API_VERSION}/${conn.waba_id}/subscribed_apps`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },

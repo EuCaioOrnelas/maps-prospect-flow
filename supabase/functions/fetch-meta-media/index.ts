@@ -2,7 +2,8 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const GRAPH_VERSION = "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const GRAPH_VERSION = META_API_VERSION;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });

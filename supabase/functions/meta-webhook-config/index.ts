@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,7 +12,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const VERIFY_TOKEN = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") ?? "wiize-meta-webhook-2026";
-const GRAPH_VERSION = "v21.0";
+const GRAPH_VERSION = META_API_VERSION;
 const META_APP_ID = Deno.env.get("META_APP_ID") ?? "988774494328539";
 
 // Callback do próprio backend atual. Pode ser sobrescrito via env META_WEBHOOK_CALLBACK_URL.

@@ -4,6 +4,7 @@
 //  2) tick     -> chamado pelo cron (wa-flow-scheduler) para nós de espera / inatividade
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const MESSAGE_PREFIX = "enc:v1:";
 const messageEncoder = new TextEncoder();
 let messageKeyPromise: Promise<CryptoKey> | null = null;
@@ -262,7 +263,7 @@ async function igSend(ctx: SendCtx, payload: Record<string, any>, logText: strin
   const messages = igMessagesFromPayload(payload, logText);
   let ok = true;
   for (const message of messages) {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${ctx.igUserId}/messages`, {
+    const res = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${ctx.igUserId}/messages`, {
       method: "POST",
       headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ recipient: { id: ctx.to }, message }),
@@ -281,7 +282,7 @@ async function igSend(ctx: SendCtx, payload: Record<string, any>, logText: strin
 /** Responde publicamente a um comentário do Instagram. */
 async function igReplyComment(ctx: SendCtx, commentId: string, message: string) {
   if (!commentId || !message?.trim()) return false;
-  const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/replies`, {
+  const res = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${commentId}/replies`, {
     method: "POST",
     headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ message: message.slice(0, 2200) }),
@@ -297,7 +298,7 @@ async function igReplyComment(ctx: SendCtx, commentId: string, message: string) 
 /** Oculta/exibe um comentário do Instagram. */
 async function igHideComment(ctx: SendCtx, commentId: string, hide: boolean) {
   if (!commentId) return false;
-  const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}`, {
+  const res = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${commentId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ hide }),
@@ -366,7 +367,7 @@ async function evolutionSend(ctx: SendCtx, payload: Record<string, any>, logText
 async function metaSend(ctx: SendCtx, payload: Record<string, any>, logText: string, logType = "text") {
   if (ctx.channel === "instagram") return await igSend(ctx, payload, logText, logType);
   if (ctx.provider === "evolution") return await evolutionSend(ctx, payload, logText, logType);
-  const res = await fetch(`https://graph.facebook.com/v21.0/${ctx.phoneNumberId}/messages`, {
+  const res = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${ctx.phoneNumberId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${ctx.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: ctx.to, ...payload }),

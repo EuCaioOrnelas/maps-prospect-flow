@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 // ========== INLINED AI KEY CRYPTO (sem _shared) ==========
 // Decriptação AES-256-GCM da chave OpenAI do cliente (BYOK).
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 function masterSecrets(): string[] {
   const list: string[] = [];
   const primary = Deno.env.get("AI_CREDENTIALS_SECRET");
@@ -1028,7 +1029,7 @@ ${historyText}`;
               }
             } else if (signed?.signedUrl && connection?.access_token) {
               const proposalResponse = await fetch(
-                `https://graph.facebook.com/v21.0/${session.phone_number_id || connection.phone_number_id}/messages`,
+                `https://graph.facebook.com/${META_API_VERSION}/${session.phone_number_id || connection.phone_number_id}/messages`,
                 {
                   method: "POST",
                   headers: {

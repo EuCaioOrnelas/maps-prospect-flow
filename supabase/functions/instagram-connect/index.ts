@@ -3,6 +3,7 @@
 // Autocontido (sem _shared).
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -13,7 +14,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const META_APP_ID = Deno.env.get("META_APP_ID") ?? "988774494328539";
 const META_APP_SECRET = Deno.env.get("META_APP_SECRET") ?? "";
-const GRAPH = "https://graph.facebook.com/v21.0";
+const GRAPH = `https://graph.facebook.com/${META_API_VERSION}`;
 const MAX_ACCOUNTS = 2;
 const IG_SUBSCRIBED_FIELDS = "messages,messaging_postbacks,messaging_optins,message_reactions,comments,mentions";
 

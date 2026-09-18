@@ -24,6 +24,7 @@ import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { ResponsiblesPicker } from "@/components/meta/ResponsiblesPicker";
 import { useWabaResponsibles } from "@/hooks/useWabaResponsibles";
 import { startChatBackup } from "@/hooks/useChatBackup";
+import { META_GRAPH_BASE } from "@/lib/metaApi";
 
 interface MetaManualSetupProps {
   onConnectionSaved: (connection: WabaConnection | null) => void;
@@ -124,7 +125,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
     try {
       // Validate token by fetching phone info from Meta
       const validateRes = await fetch(
-        `https://graph.facebook.com/v21.0/${cleanPhoneId(cleanPhone)}?access_token=${encodeURIComponent(cleanToken)}`
+        `${META_GRAPH_BASE}/${cleanPhoneId(cleanPhone)}?access_token=${encodeURIComponent(cleanToken)}`
       );
       const validateData = await validateRes.json();
 
@@ -145,7 +146,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
       let businessName: string | null = null;
       try {
         const wabaRes = await fetch(
-          `https://graph.facebook.com/v21.0/${cleanWaba}?access_token=${encodeURIComponent(cleanToken)}`
+          `${META_GRAPH_BASE}/${cleanWaba}?access_token=${encodeURIComponent(cleanToken)}`
         );
         const wabaData = await wabaRes.json();
         if (!wabaData?.error) businessName = wabaData?.name || null;
@@ -215,7 +216,7 @@ export const MetaManualSetup = ({ onConnectionSaved, isAddingExtra, embedded }: 
 
       // Try to subscribe webhook (best-effort)
       try {
-        await fetch(`https://graph.facebook.com/v21.0/${cleanWaba}/subscribed_apps`, {
+        await fetch(`${META_GRAPH_BASE}/${cleanWaba}/subscribed_apps`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ access_token: cleanToken }),
