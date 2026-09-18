@@ -28,6 +28,7 @@ import {
   Workflow,
   LayoutDashboard as LayoutDashboardIcon,
   Megaphone as MegaphoneIcon,
+  MessageSquare as MessageSquareIcon,
   FileText,
   Phone,
   RotateCcw,
@@ -416,6 +417,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     {[
                       { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon, tour: "sidebar-meta-dashboard" },
                       { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon, tour: "sidebar-meta-campanhas" },
+                      { title: "Templates", url: "/meta/templates", icon: MessageSquareIcon, tour: "sidebar-meta-templates" },
                       { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon, tour: "sidebar-meta-configuracoes" },
                     ].map((item) => {
                       const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;

@@ -73,6 +73,7 @@ const TAB_TITLE_RULES: TabTitleRule[] = [
 
   { pattern: /^\/meta\/campanhas\/?$/, label: "Campanhas Meta" },
   { pattern: /^\/meta\/templates\/?$/, label: "Templates Meta" },
+  { pattern: /^\/meta\/modelos-internos\/?$/, label: "Modelos internos" },
   { pattern: /^\/meta\/configuracoes\/?$/, label: "Configurações Meta" },
   { pattern: /^\/meta\/?$/, label: "Meta" },
   { pattern: /^\/numeros\/comparativo\/?$/, label: "Comparativo de Números" },

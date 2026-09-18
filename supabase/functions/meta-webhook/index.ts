@@ -1026,6 +1026,33 @@ Deno.serve(async (req) => {
               raw_payload: value,
             });
 
+            // === Template status updates from Meta ===
+            if (field === 'message_template_status_update' || field === 'template_category_update') {
+              try {
+                const metaTemplateId = value.message_template_id
+                  ? String(value.message_template_id)
+                  : null;
+                const newStatus = String(value.event || value.new_status || '').toUpperCase();
+                const patch: Record<string, unknown> = {
+                  last_synced_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+                if (newStatus) patch.status = newStatus;
+                if (value.reason) patch.rejected_reason = String(value.reason);
+                if (value.new_category) patch.category = String(value.new_category).toUpperCase();
+
+                let q = supabase.from('meta_whatsapp_templates').update(patch).eq('waba_id', wabaId);
+                q = metaTemplateId
+                  ? q.eq('meta_template_id', metaTemplateId)
+                  : q.eq('name', String(value.message_template_name || ''))
+                      .eq('language', String(value.message_template_language || ''));
+                const { error: tplErr } = await q;
+                if (tplErr) console.error('[meta-webhook] template status update error:', tplErr);
+              } catch (e) {
+                console.error('[meta-webhook] template status handler error:', e);
+              }
+            }
+
             // === Quality drop notification (yellow / red) ===
             if (field === 'phone_number_quality_update') {
               const newQuality = String(value.new_quality_score || value.new_quality || '').toUpperCase();

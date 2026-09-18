@@ -6394,6 +6394,45 @@ export type Database = {
           },
         ]
       }
+      meta_template_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          owner_user_id: string
+          status_code: number | null
+          success: boolean
+          template_id: string | null
+          waba_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          owner_user_id: string
+          status_code?: number | null
+          success?: boolean
+          template_id?: string | null
+          waba_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          owner_user_id?: string
+          status_code?: number | null
+          success?: boolean
+          template_id?: string | null
+          waba_id?: string | null
+        }
+        Relationships: []
+      }
       meta_user_settings: {
         Row: {
           created_at: string
@@ -6480,6 +6519,77 @@ export type Database = {
           waba_id?: string | null
         }
         Relationships: []
+      }
+      meta_whatsapp_templates: {
+        Row: {
+          category: string | null
+          components: Json
+          connection_id: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          language: string
+          last_synced_at: string | null
+          meta_template_id: string | null
+          name: string
+          owner_user_id: string
+          quality_score: string | null
+          raw: Json
+          rejected_reason: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          waba_id: string
+        }
+        Insert: {
+          category?: string | null
+          components?: Json
+          connection_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          language: string
+          last_synced_at?: string | null
+          meta_template_id?: string | null
+          name: string
+          owner_user_id: string
+          quality_score?: string | null
+          raw?: Json
+          rejected_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          waba_id: string
+        }
+        Update: {
+          category?: string | null
+          components?: Json
+          connection_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          language?: string
+          last_synced_at?: string | null
+          meta_template_id?: string | null
+          name?: string
+          owner_user_id?: string
+          quality_score?: string | null
+          raw?: Json
+          rejected_reason?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          waba_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_whatsapp_templates_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_waba_connections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_bump_events: {
         Row: {
