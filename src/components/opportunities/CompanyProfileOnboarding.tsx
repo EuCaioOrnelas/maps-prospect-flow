@@ -102,7 +102,7 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
   useEffect(() => {
     if (!open) return;
     setForm(initialData ? normalizeCompanyProfile(initialData) : createEmptyCompanyProfile());
-    setStep(0);
+    setStep(isBusinessModelMissing(initialData) ? Math.max(0, BUSINESS_MODEL_STEP_INDEX) : 0);
 
     // Load existing services
     const loadServices = async () => {
