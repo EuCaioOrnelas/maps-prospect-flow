@@ -26,6 +26,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<LeadNoteMessage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const byId = useMemo(() => Object.fromEntries(notes.map((n) => [n.id, n])), [notes]);
 
@@ -33,6 +34,13 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [notes.length]);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "40px";
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 40), 128)}px`;
+  }, [draft]);
 
   const handleSend = async () => {
     const text = draft.trim();
@@ -203,9 +211,9 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
         })}
       </div>
 
-       <div className="border-t wa-border-light wa-input-bar p-2.5 sm:p-3">
+       <div className="relative -mt-1 px-2.5 pb-2.5 sm:px-3 sm:pb-3">
         {replyTo && (
-          <div className="flex items-start gap-2 mb-2 rounded-md bg-muted/60 border-l-2 border-primary px-2 py-1.5">
+           <div className="mx-1 mb-2 flex items-start gap-2 rounded-lg bg-card border border-border border-l-2 border-l-primary px-3 py-2 shadow-sm">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-medium text-primary">
                 Respondendo {replyTo.user_id === currentUserId ? "você mesmo" : authorLabel(authors[replyTo.user_id])}
@@ -218,8 +226,9 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
           </div>
         )}
 
-         <div className="flex items-end gap-2 rounded-lg border wa-input-border wa-input-field p-1.5">
+          <div className="flex items-end gap-2 rounded-lg border wa-input-border wa-input-field p-1 shadow-md">
           <Textarea
+             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, 4000))}
             onKeyDown={(e) => {
@@ -230,13 +239,14 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
             }}
             placeholder={leadId ? "Escreva para a equipe..." : "Salve o contato no CRM para escrever"}
             disabled={!leadId}
-             className="min-h-[40px] max-h-32 border-0 bg-transparent text-sm resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+              rows={1}
+              className="h-10 min-h-10 max-h-32 overflow-y-auto border-0 bg-transparent px-3 py-2.5 text-sm leading-5 resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 wa-scrollbar"
           />
           <Button
             size="icon"
             onClick={handleSend}
             disabled={!draft.trim() || sending || !leadId}
-             className="shrink-0 rounded-lg"
+              className="size-10 shrink-0 rounded-lg"
             aria-label="Enviar nota"
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

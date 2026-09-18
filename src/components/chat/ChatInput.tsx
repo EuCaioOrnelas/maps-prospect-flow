@@ -572,23 +572,6 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
   return (
     <>
-      {replyingTo && !attachments.length && (() => {
-        const isSelf = replyingTo.direction === "outbound";
-        const color = isSelf ? "hsl(var(--primary))" : "#1f7aec";
-        return (
-          <div className="flex items-center gap-2.5 mx-4 mt-2 px-3 py-2 rounded-t-xl bg-muted/70 border border-b-0 border-border/60">
-            <div className="w-[3px] self-stretch rounded-full shrink-0" style={{ backgroundColor: color }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[11.5px] font-semibold leading-[16px]" style={{ color }}>{isSelf ? "Você" : "Contato"}</p>
-              <p className="text-[12.5px] leading-[17px] truncate text-foreground/80">{replyingTo.content || "📎 Mídia"}</p>
-            </div>
-            <button onClick={onCancelReply} className="p-1 rounded-full hover:bg-foreground/10 transition-colors">
-              <X size={16} className="text-muted-foreground" />
-            </button>
-          </div>
-        );
-      })()}
-
       {/* Multi-attachment WhatsApp-style preview */}
       {attachments.length > 0 && (
         <div className="mx-3 mb-2 rounded-xl wa-input-field border wa-border-light overflow-hidden">
@@ -710,7 +693,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                     type="button"
                     onClick={() => void applyQuickReply(aiApproachQR)}
                     title={aiApproachQR.title || "Abordagem IA"}
-                    className="shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors"
+                    className="shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors"
                   >
                     <Sparkles size={13} className="text-primary shrink-0" />
                     <span className="text-[12px] font-semibold text-primary whitespace-nowrap max-w-[180px] truncate">
@@ -728,7 +711,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                       onClick={() => void applyQuickReply(qr)}
                       title={running ? "Sequência em andamento" : (qr.title || qr.shortcut)}
                       className={cn(
-                        "shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-full border transition-colors",
+                        "shrink-0 snap-start inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border transition-colors",
                         running
                           ? "border-primary/60 bg-primary/10"
                           : "border-border bg-background hover:bg-primary/10 hover:border-primary/40",
@@ -750,6 +733,20 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {replyingTo && (
+            <div className="mx-3 mt-2 flex items-start gap-2 rounded-lg border border-border border-l-2 border-l-primary bg-card px-3 py-2 shadow-sm">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-medium text-primary">
+                  Respondendo {replyingTo.direction === "outbound" ? "você mesmo" : "o contato"}
+                </p>
+                <p className="text-[11px] text-muted-foreground line-clamp-1">{replyingTo.content || "Mídia"}</p>
+              </div>
+              <button type="button" onClick={onCancelReply} className="p-1 rounded-md hover:bg-secondary transition-colors" aria-label="Cancelar resposta">
+                <X size={14} className="text-muted-foreground" />
+              </button>
             </div>
           )}
 
@@ -786,7 +783,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               </div>
             )}
 
-            <div className="flex-1 wa-input-field flex items-end rounded-[21px] overflow-hidden border wa-input-border transition-all">
+            <div className="flex-1 wa-input-field flex items-end rounded-lg overflow-hidden border wa-input-border transition-all">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowAttach(!showAttach); setEmojiOpen(false); }}
                 className="wa-attach-btn p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity"

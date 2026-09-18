@@ -12,3 +12,8 @@
 - [x] Alinhar cores e acabamento das notas internas ao Chat Wiize
 - [x] Refazer a tela sem número conectado com explicação e ação de conexão
 - [x] Validar compilação e comportamento nas telas afetadas
+
+## Campos de mensagem
+- [x] Deixar o campo de notas flutuante, compacto e expansível por linhas
+- [x] Ajustar bordas do Chat e das mensagens rápidas ao padrão Wiize
+- [x] Posicionar a resposta entre as mensagens rápidas e o campo de digitação
