@@ -94,7 +94,7 @@ function formatEmailBody(text: string) {
 // v2: mesma logo da landing page (ícone + wordmark), 261x80px, ~4KB otimizada.
 const LOGO_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/agent-media/email%2Fwiize-logo-v2.png";
 
-function layout(bodyHtml: string, unsubscribeUrl: string) {
+function layout(bodyHtml: string, _unsubscribeUrl?: string) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;padding:0;background:#eef1ef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2328;">
@@ -105,12 +105,10 @@ function layout(bodyHtml: string, unsubscribeUrl: string) {
 <tr><td align="center" style="padding:26px 32px 18px;border-bottom:1px solid #f0f2f1;text-align:center;">
 <img src="${LOGO_URL}" width="131" height="40" alt="Wiize" style="display:block;margin:0 auto;width:131px;max-width:131px;height:40px;border:0;outline:none;text-decoration:none;">
 </td></tr>
-<tr><td style="padding:30px 32px 14px;font-size:15.5px;line-height:1.75;color:#1f2328;">
+<tr><td style="padding:30px 32px 26px;font-size:15.5px;line-height:1.75;color:#1f2328;">
 ${bodyHtml}
 </td></tr>
-<tr><td style="padding:4px 32px 24px;font-size:11px;line-height:1.5;color:#9aa2a8;text-align:center;">
-Não deseja receber novos contatos? <a href="${unsubscribeUrl}" style="color:#7a8580;text-decoration:underline;">Descadastre-se</a>.
-</td></tr>
+
 </table>
 </td></tr></table>
 </body></html>`;
