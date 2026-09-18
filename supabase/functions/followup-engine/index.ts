@@ -27,7 +27,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 const REPLY_LOCAL = "parcerias";
 const REPLY_DOMAIN = "wiize.com.br";
-const FROM = `Parcerias Wiize <${REPLY_LOCAL}@${REPLY_DOMAIN}>`;
+const FROM = `Caio da Wiize <${REPLY_LOCAL}@${REPLY_DOMAIN}>`;
 const APP_URL = "https://wiize.com.br";
 const BRAND = "#0E7C3A";
 const LOGO_URL =
@@ -100,6 +100,21 @@ function htmlToText(html: string) {
     .trim();
 }
 
+function formatEmailBody(text: string) {
+  return String(text || "")
+    .split(/\n{2,}/)
+    .map((paragraph, index) => {
+      let content = esc(paragraph).replace(/\n/g, "<br>");
+      content = content
+        .replace(/(prospecção com IA|SDR inteligente|IA de análise de engajamento|gestão comercial completa)/gi, "<strong>$1</strong>")
+        .replace(/(50% de comissão|10% de comissão recorrente|15%)/gi, "<strong>$1</strong>")
+        .replace(/(https:\/\/www\.wiize\.com\.br\/?)/gi, '<a href="$1" style="color:#0E7C3A;text-decoration:underline;">$1</a>');
+      const isGreeting = index === 0 && /^olá[,!]/i.test(paragraph.trim());
+      return `<p style="margin:0 0 ${index === 0 ? "20" : "18"}px;${isGreeting ? "font-weight:600;" : ""}">${content}</p>`;
+    })
+    .join("");
+}
+
 function layout(bodyHtml: string, unsubscribeUrl: string) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
@@ -108,22 +123,14 @@ function layout(bodyHtml: string, unsubscribeUrl: string) {
 <tr><td align="center">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #e3e7e4;border-radius:18px;overflow:hidden;">
 <tr><td style="height:5px;background:${BRAND};font-size:0;line-height:0;">&nbsp;</td></tr>
-<tr><td style="padding:26px 32px 18px;border-bottom:1px solid #f0f2f1;">
-<img src="${LOGO_URL}" width="131" height="40" alt="Wiize" style="display:block;width:131px;max-width:131px;height:40px;border:0;outline:none;text-decoration:none;">
-<div style="margin-top:8px;font-size:11px;color:#7a8580;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;">Parcerias &amp; Criadores</div>
+<tr><td align="center" style="padding:26px 32px 18px;border-bottom:1px solid #f0f2f1;text-align:center;">
+<img src="${LOGO_URL}" width="131" height="40" alt="Wiize" style="display:block;margin:0 auto;width:131px;max-width:131px;height:40px;border:0;outline:none;text-decoration:none;">
 </td></tr>
-<tr><td style="padding:26px 32px 8px;font-size:15.5px;line-height:1.7;color:#1f2328;">${bodyHtml}</td></tr>
-<tr><td style="padding:18px 32px 8px;font-size:14px;line-height:1.6;color:#4b5563;border-top:1px solid #eceeed;">
-Atenciosamente,<br><strong style="color:#0f172a;">Equipe de Parcerias Wiize</strong><br>
-<a href="${APP_URL}" style="color:${BRAND};text-decoration:none;font-weight:600;">wiize.com.br</a>
+<tr><td style="padding:30px 32px 14px;font-size:15.5px;line-height:1.75;color:#1f2328;">${bodyHtml}</td></tr>
+<tr><td style="padding:4px 32px 24px;font-size:11px;line-height:1.5;color:#9aa2a8;text-align:center;">
+Não deseja receber novos contatos? <a href="${unsubscribeUrl}" style="color:#7a8580;text-decoration:underline;">Descadastre-se</a>.
 </td></tr>
-<tr><td style="padding:12px 32px 26px;">
-<div style="background:#f7f9f8;border-radius:12px;padding:14px 16px;font-size:12px;line-height:1.6;color:#8b9490;">
-Você recebeu este e-mail porque identificamos seu canal como potencial parceiro da Wiize.
-Se preferir não receber novos contatos, <a href="${unsubscribeUrl}" style="color:#6b7280;text-decoration:underline;">clique aqui para se descadastrar</a>.
-</div></td></tr>
 </table>
-<div style="max-width:600px;margin:14px auto 0;font-size:11px;color:#9aa2a8;text-align:center;">Wiize · Plataforma de crescimento comercial · Brasil</div>
 </td></tr></table></body></html>`;
 }
 
@@ -540,7 +547,7 @@ serve(async (req) => {
         const unsubscribeUrl = `${APP_URL}/descadastro?token=${tok}`;
         const oneClick = `${supabaseUrl}/functions/v1/influencer-outreach?action=unsubscribe&confirm=1&token=${encodeURIComponent(tok)}`;
         const html = layout(
-          generated.bodyText.split(/\n{2,}/).map((p) => `<p style="margin:0 0 14px;">${esc(p).replace(/\n/g, "<br>")}</p>`).join(""),
+          formatEmailBody(generated.bodyText),
           unsubscribeUrl,
         );
 
@@ -550,7 +557,7 @@ serve(async (req) => {
           reply_to: `${REPLY_LOCAL}@${REPLY_DOMAIN}`,
           subject: generated.subject,
           html,
-          text: `${generated.bodyText}\n\nAtenciosamente,\nEquipe de Parcerias Wiize\n${APP_URL}\n\nPara não receber novos contatos: ${unsubscribeUrl}`,
+          text: `${generated.bodyText}\n\nPara não receber novos contatos: ${unsubscribeUrl}`,
           headers: {
             "List-Unsubscribe": `<${oneClick}>, <mailto:${REPLY_LOCAL}@${REPLY_DOMAIN}?subject=unsubscribe>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
