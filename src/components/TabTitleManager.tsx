@@ -19,7 +19,6 @@ const TAB_TITLE_RULES: TabTitleRule[] = [
   { pattern: /^\/tour-(?:completo|guiado)\/?$/, label: "Tour Guiado" },
   { pattern: /^\/enterprise\/?$/, label: "Enterprise" },
   { pattern: /^\/blog(?:\/.*)?$/, label: "Blog" },
-  { pattern: /^\/produtos\/[^/]+\/?$/, label: "Produto" },
   { pattern: /^\/contato\/?$/, label: "Contato" },
   { pattern: /^\/terms\/?$/, label: "Termos de Uso" },
   { pattern: /^\/privacy\/?$/, label: "Privacidade" },
@@ -118,6 +117,7 @@ const TAB_TITLE_RULES: TabTitleRule[] = [
 ];
 
 function getTabTitle(pathname: string) {
+  if (BRAND_ONLY_PATTERNS.some((p) => p.test(pathname))) return "Wiize";
   const rule = TAB_TITLE_RULES.find(({ pattern }) => pattern.test(pathname));
   return rule ? `Wiize - ${rule.label}` : "Wiize";
 }
