@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLeadNotes, type LeadNoteAuthor, type LeadNoteMessage } from "@/hooks/useLeadNotes";
 import { getChatAvatarColor, getChatInitials } from "@/lib/chatAvatar";
+import waChatBgUrl from "@/assets/wa-chat-bg.png";
 
 interface Props {
   leadId?: string | null;
@@ -68,8 +69,13 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
   };
 
   return (
-    <div className={cn("flex flex-col rounded-xl border border-border/60 bg-card overflow-hidden", className)}>
-      <div ref={scrollRef} className={cn("flex-1 overflow-y-auto px-3 py-3 space-y-1 bg-muted/20", heightClass)}>
+    <div className={cn("flex flex-col rounded-lg border wa-border-light wa-app-bg overflow-hidden", className)}>
+      <div
+        ref={scrollRef}
+        className={cn("flex-1 overflow-y-auto px-3 sm:px-5 py-3 space-y-1 wa-chat-bg wa-scrollbar", heightClass)}
+        style={{ ["--wa-chat-bg-pattern" as string]: `url(${waChatBgUrl})` }}
+      >
+        <div className="wa-chat-glow" />
         {loading && notes.length === 0 && (
           <div className="flex justify-center py-8 text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -77,9 +83,11 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
         )}
 
         {!loading && notes.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-10">
-            {emptyHint || "Nenhuma nota ainda. Converse com sua equipe sobre este contato."}
-          </p>
+          <div className="flex justify-center py-10">
+            <p className="wa-date-badge max-w-sm rounded-lg px-3 py-2 text-center text-xs leading-relaxed shadow-sm">
+              {emptyHint || "Nenhuma mensagem interna ainda. Inicie a conversa com sua equipe sobre este contato."}
+            </p>
+          </div>
         )}
 
         {notes.map((note, index) => {
@@ -94,7 +102,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
             <div key={note.id}>
               {newDay && (
                 <div className="flex justify-center my-3">
-                  <span className="text-[10px] uppercase tracking-wide bg-background border border-border/60 text-muted-foreground px-2 py-0.5 rounded-full">
+                   <span className="wa-date-badge text-[10px] uppercase tracking-wide px-2.5 py-1 rounded-lg shadow-sm">
                     {format(new Date(note.created_at), "dd 'de' MMMM yyyy", { locale: ptBR })}
                   </span>
                 </div>
@@ -112,7 +120,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
                     {firstOfGroup && (
                       <Avatar className="w-7 h-7">
                         {author?.avatar_url && <AvatarImage src={author.avatar_url} alt={authorLabel(author)} />}
-                        <AvatarFallback className={cn("text-[10px] text-white", getChatAvatarColor(note.user_id))}>
+                         <AvatarFallback className={cn("text-[10px] text-primary-foreground", getChatAvatarColor(note.user_id))}>
                           {getChatInitials(authorLabel(author), note.user_id)}
                         </AvatarFallback>
                       </Avatar>
@@ -123,17 +131,17 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
                 <div
                   data-note-id={note.id}
                   className={cn(
-                    "max-w-[78%] min-w-0 rounded-2xl px-3 py-2 transition-shadow",
+                     "max-w-[84%] sm:max-w-[68%] min-w-0 rounded-[7.5px] px-[9px] pt-[5px] pb-[3px] shadow-[0_1px_0.5px_rgba(11,20,26,.13)] transition-shadow",
                     mine
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-card border border-border/60 text-foreground rounded-bl-md",
+                       ? "wa-bubble-out"
+                       : "wa-bubble-in",
                   )}
                 >
                   {firstOfGroup && (
                     <p
                       className={cn(
                         "text-[11px] font-semibold mb-0.5",
-                        mine ? "text-primary-foreground/80" : "text-primary",
+                         mine ? "text-emerald-100" : "text-primary",
                       )}
                     >
                       {mine ? "Você" : authorLabel(author)}
@@ -147,8 +155,8 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
                       className={cn(
                         "w-full text-left mb-1 rounded-md border-l-2 px-2 py-1 text-[11px] line-clamp-2",
                         mine
-                          ? "border-primary-foreground/50 bg-primary-foreground/10 text-primary-foreground/80"
-                          : "border-primary/60 bg-muted/60 text-muted-foreground",
+                           ? "border-primary-foreground/50 bg-primary-foreground/10 wa-text-muted"
+                           : "border-primary/60 bg-foreground/5 wa-text-muted",
                       )}
                     >
                       <span className="font-medium">
@@ -158,12 +166,12 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
                     </button>
                   )}
 
-                  <p className="text-sm whitespace-pre-wrap break-words">{note.content}</p>
+                   <p className="text-[14.2px] leading-[18px] whitespace-pre-wrap break-words wa-text-primary">{note.content}</p>
 
                   <div
                     className={cn(
                       "flex items-center gap-2 mt-1",
-                      mine ? "justify-end text-primary-foreground/70" : "justify-end text-muted-foreground",
+                       "justify-end wa-text-timestamp",
                     )}
                   >
                     <button
@@ -195,7 +203,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
         })}
       </div>
 
-      <div className="border-t border-border/60 bg-card p-2.5">
+       <div className="border-t wa-border-light wa-input-bar p-2.5 sm:p-3">
         {replyTo && (
           <div className="flex items-start gap-2 mb-2 rounded-md bg-muted/60 border-l-2 border-primary px-2 py-1.5">
             <div className="min-w-0 flex-1">
@@ -210,7 +218,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
           </div>
         )}
 
-        <div className="flex items-end gap-2">
+         <div className="flex items-end gap-2 rounded-lg border wa-input-border wa-input-field p-1.5">
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value.slice(0, 4000))}
@@ -222,13 +230,13 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
             }}
             placeholder={leadId ? "Escreva para a equipe..." : "Salve o contato no CRM para escrever"}
             disabled={!leadId}
-            className="min-h-[44px] max-h-32 text-sm resize-none"
+             className="min-h-[40px] max-h-32 border-0 bg-transparent text-sm resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <Button
             size="icon"
             onClick={handleSend}
             disabled={!draft.trim() || sending || !leadId}
-            className="shrink-0"
+             className="shrink-0 rounded-lg"
             aria-label="Enviar nota"
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
