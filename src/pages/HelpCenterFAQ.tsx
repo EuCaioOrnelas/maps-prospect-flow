@@ -169,7 +169,7 @@ const _legacyCategories = [
     questions: [
       {
         question: "O que é a Meta API Oficial?",
-        answer: "A Meta API Oficial (Cloud API v21.0) é a interface autorizada pelo Meta/Facebook para envio de mensagens via WhatsApp Business. Ela oferece máxima confiabilidade, criptografia de ponta a ponta e conformidade total com as políticas do WhatsApp."
+        answer: "A Meta API Oficial (Cloud API v25.0) é a interface autorizada pelo Meta/Facebook para envio de mensagens via WhatsApp Business. Ela oferece máxima confiabilidade, criptografia de ponta a ponta e conformidade total com as políticas do WhatsApp."
       },
       {
         question: "O Wiize é um Meta Business Partner?",

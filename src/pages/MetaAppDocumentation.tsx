@@ -28,7 +28,7 @@ const MetaAppDocumentation = () => {
             <Tag text="WhatsApp Cloud API" />
             <Tag text="Embedded Signup (OAuth)" />
             <Tag text="Facebook Login JS SDK" />
-            <Tag text="Graph API v21.0" />
+            <Tag text="Graph API v25.0" />
           </div>
         </section>
 
@@ -61,7 +61,7 @@ const MetaAppDocumentation = () => {
             <PermissionRow
               permission="whatsapp_business_messaging"
               usage="Send message templates via WhatsApp Cloud API endpoint /{phone_number_id}/messages"
-              endpoint="POST /v21.0/{phone_number_id}/messages"
+              endpoint="POST /v25.0/{phone_number_id}/messages"
             />
             <PermissionRow
               permission="whatsapp_business_management"
