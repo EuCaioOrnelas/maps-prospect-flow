@@ -96,7 +96,6 @@ const CookiePanel = (props: CookiePanelProps) => {
   const decide = (value: ConsentPrefs) => {
     saveConsent(value);
     onDecision?.(value);
-    setShowPrefs(false);
     close();
   };
 
