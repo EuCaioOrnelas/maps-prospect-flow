@@ -23,4 +23,4 @@
 ## Abordagem de influenciadores
 - [x] Padronizar assunto e corpo dos e-mails de parceria
 - [x] Restringir a IA à personalização do nome e da referência ao conteúdo/canal
-- [ ] Validar e publicar a geração atualizada
+- [x] Validar e publicar a geração atualizada
