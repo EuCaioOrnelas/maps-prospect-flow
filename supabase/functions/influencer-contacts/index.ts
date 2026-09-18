@@ -493,6 +493,7 @@ serve(async (req) => {
             .slice(0, 4);
 
           for (const target of [...CONTACT_PATHS.map((path) => origin + path), ...internal]) {
+            if (outOfTime()) break;
             if (visited.has(target)) continue;
             visited.add(target);
             let page = decodeHtmlEntities(await fetchPage(target, 6000));
