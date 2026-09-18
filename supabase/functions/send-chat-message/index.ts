@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const MESSAGE_PREFIX = "enc:v1:";
 const messageEncoder = new TextEncoder();
 let messageKeyPromise: Promise<CryptoKey> | null = null;
@@ -198,7 +199,7 @@ Deno.serve(async (req) => {
             form.append('messaging_product', 'whatsapp');
             form.append('type', mime);
             form.append('file', new File([blob], filename || 'audio.ogg', { type: mime }));
-            const upResp = await fetch(`https://graph.facebook.com/v21.0/${phone_number_id}/media`, {
+            const upResp = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${phone_number_id}/media`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${connection.access_token}` },
               body: form,
@@ -303,7 +304,7 @@ Deno.serve(async (req) => {
       }
     } else {
       const metaResponse = await fetch(
-        `https://graph.facebook.com/v21.0/${phone_number_id}/messages`,
+        `https://graph.facebook.com/${META_API_VERSION}/${phone_number_id}/messages`,
         {
           method: "POST",
           headers: {

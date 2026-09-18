@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Inline E.164 formatter para Meta Cloud API (sem "+"). Suporta global (BR + intl).
 // Regras: "+"/"00" => E.164 explícito; 10–11 dígitos sem DDI => Brasil (prefixa 55);
 // 55 + DDD + 8 dígitos => insere 9º dígito; valida faixa 10–15 dígitos.
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 function formatPhoneForMeta(phone: string): string {
   const raw = String(phone || "").trim();
   if (!raw) return "";
@@ -125,7 +126,7 @@ Deno.serve(async (req) => {
       if (tpl?.name) templateRow = tpl as any;
     }
 
-    const metaUrl = `https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`;
+    const metaUrl = `https://graph.facebook.com/${META_API_VERSION}/${conn.phone_number_id}/messages`;
     const metaHeaders = {
       Authorization: `Bearer ${conn.access_token}`,
       "Content-Type": "application/json",

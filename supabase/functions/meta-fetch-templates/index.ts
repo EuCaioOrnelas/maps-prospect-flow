@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -31,7 +32,7 @@ serve(async (req) => {
       });
     }
 
-    const url = `https://graph.facebook.com/v21.0/${waba_id}/message_templates?limit=100&fields=id,name,status,category,language,components`;
+    const url = `https://graph.facebook.com/${META_API_VERSION}/${waba_id}/message_templates?limit=100&fields=id,name,status,category,language,components`;
 
     const response = await fetch(url, {
       headers: {

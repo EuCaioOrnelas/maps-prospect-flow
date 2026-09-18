@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const MESSAGE_PREFIX = "enc:v1:";
 const messageEncoder = new TextEncoder();
 let messageKeyPromise: Promise<CryptoKey> | null = null;
@@ -269,7 +270,7 @@ Deno.serve(async (req) => {
             headers: { apikey: Deno.env.get("EVOLUTION_API_KEY") || "", "Content-Type": "application/json" },
             body: JSON.stringify({ number: String(session.phone).replace(/\D/g, ""), text: template.body || `[${template.name}]` }),
           })
-        : await fetch(`https://graph.facebook.com/v21.0/${session.phone_number_id || connection.phone_number_id}/messages`, {
+        : await fetch(`https://graph.facebook.com/${META_API_VERSION}/${session.phone_number_id || connection.phone_number_id}/messages`, {
             method: "POST",
             headers: { Authorization: `Bearer ${connection.access_token}`, "Content-Type": "application/json" },
             body: JSON.stringify({

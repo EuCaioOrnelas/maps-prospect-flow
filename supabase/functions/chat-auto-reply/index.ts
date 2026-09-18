@@ -7,6 +7,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const MESSAGE_PREFIX = "enc:v1:";
 const messageEncoder = new TextEncoder();
 let messageKeyPromise: Promise<CryptoKey> | null = null;
@@ -190,7 +191,7 @@ serve(async (req) => {
         type: "text",
         text: { body: resolvedMessage },
       };
-      metaRes = await fetch(`https://graph.facebook.com/v21.0/${conn.phone_number_id}/messages`, {
+      metaRes = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${conn.phone_number_id}/messages`, {
         method: "POST",
         headers: { Authorization: `Bearer ${conn.access_token}`, "Content-Type": "application/json" },
         body: JSON.stringify(payload),

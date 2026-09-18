@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
 const MESSAGE_PREFIX = "enc:v1:";
 const messageEncoder = new TextEncoder();
 let messageKeyPromise: Promise<CryptoKey> | null = null;
@@ -179,7 +180,7 @@ Deno.serve(async (req) => {
       const wabaId = connRow?.waba_id;
       if (wabaId) {
         const tplResp = await fetch(
-          `https://graph.facebook.com/v21.0/${wabaId}/message_templates?limit=100&fields=name,language,components&name=${encodeURIComponent(template_name)}`,
+          `https://graph.facebook.com/${META_API_VERSION}/${wabaId}/message_templates?limit=100&fields=name,language,components&name=${encodeURIComponent(template_name)}`,
           { headers: { Authorization: `Bearer ${access_token}` } }
         );
         const tplJson = await tplResp.json();
@@ -397,7 +398,7 @@ Deno.serve(async (req) => {
           }
 
           const response = await fetch(
-            `https://graph.facebook.com/v21.0/${phone_number_id}/messages`,
+            `https://graph.facebook.com/${META_API_VERSION}/${phone_number_id}/messages`,
             {
               method: "POST",
               headers: {
