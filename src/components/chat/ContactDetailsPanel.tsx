@@ -26,6 +26,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
+import { LeadNotesChat } from "@/components/crm/LeadNotesChat";
+
 import { SDRStatusBanner } from "@/components/sdr/SDRStatusBanner";
 
 import type { ChatConversation, ChatMessage } from "@/hooks/useChat";
@@ -271,36 +273,6 @@ export function ContactDetailsPanel({
     } catch { toast.error("Erro ao apagar"); }
   };
 
-  const handleAddNote = async () => {
-    const content = noteDraft.trim();
-    if (!content) return;
-    if (!lead?.id) {
-      toast.error("Salve o contato no CRM antes de adicionar notas");
-      return;
-    }
-    if (!user || !accountOwnerId) return;
-    setSavingNote(true);
-    try {
-      const { data, error } = await supabase
-        .from("lead_notes")
-        .insert({
-          lead_id: lead.id,
-          user_id: user.id,
-          owner_user_id: accountOwnerId,
-          content,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      setNotes((prev) => [data, ...prev]);
-      setNoteDraft("");
-      toast.success("Nota adicionada");
-    } catch (e: any) {
-      toast.error("Erro ao salvar nota: " + (e?.message || ""));
-    } finally {
-      setSavingNote(false);
-    }
-  };
 
   const handleRequireLead = () => {
     toast.error("Salve o contato no CRM primeiro");
