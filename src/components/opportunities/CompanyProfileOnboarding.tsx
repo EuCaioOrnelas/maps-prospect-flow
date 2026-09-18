@@ -262,7 +262,7 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent
         className="sm:max-w-lg max-h-[90vh] overflow-y-auto"
-        hideCloseButton={!isEditing}
+        hideCloseButton={!canDismiss}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
