@@ -25,6 +25,7 @@ const CookieConsent = lazyWithRetry(() => import("@/components/CookieConsent").t
 const TrackingTags = lazyWithRetry(() => import("@/components/TrackingTags").then((m) => ({ default: m.TrackingTags })), "TrackingTags");
 import { PageVisitTracker } from "@/components/tracking/PageVisitTracker";
 import { AfterPaint } from "@/components/AfterPaint";
+import { TabTitleManager } from "@/components/TabTitleManager";
 import AdminTrialEmailFlow from "./pages/admin/AdminTrialEmailFlow";
 
 
@@ -296,6 +297,7 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <PasswordRecoveryRedirect />
+          <TabTitleManager />
 
           <AuthProvider>
             <MetricStateCacheProvider>

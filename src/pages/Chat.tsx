@@ -481,6 +481,7 @@ const Chat = () => {
         context="chat"
       />
     </SidebarProvider>
+    </>
   );
 };
 
@@ -503,6 +504,4 @@ const FeatureCard = ({
 );
 
 export default Chat;
-
-    <>
 
