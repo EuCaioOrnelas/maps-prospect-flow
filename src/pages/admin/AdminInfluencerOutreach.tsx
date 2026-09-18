@@ -210,12 +210,33 @@ export default function AdminInfluencerOutreach() {
     setRecipients(data ?? []);
   };
 
-  const runQueue = async (campaignId: string) => {
-    if (runningRef.current) return;
+  /** Conta o andamento real da fila direto no banco (não depende do dialog aberto). */
+  const fetchQueueStats = async (campaignId: string) => {
+    const { data } = await (supabase as any)
+      .from("influencer_campaign_recipients").select("status").eq("campaign_id", campaignId);
+    const rows = data ?? [];
+    const sent = rows.filter((r: any) => ["enviado", "respondido"].includes(r.status)).length;
+    const failed = rows.filter((r: any) => r.status === "falhou").length;
+    const cancelled = rows.filter((r: any) => r.status === "cancelado").length;
+    return { total: rows.length, sent, failed, done: sent + failed + cancelled };
+  };
+
+  const runQueue = async (campaignId: string, campaignName?: string) => {
+    if (runningRef.current) {
+      toast({ title: "Já existe um envio em andamento", description: "Aguarde a fila atual terminar." });
+      return;
+    }
     runningRef.current = campaignId;
     setProcessing(campaignId);
+    const name = campaignName
+      || campaigns.find((c) => c.id === campaignId)?.name
+      || "Campanha de abordagem";
+    const initial = await fetchQueueStats(campaignId);
+    setQueueProgress({ campaignId, name, finished: false, ...initial });
     try {
-      for (let i = 0; i < 60; i++) {
+      // Lotes controlados: campanhas grandes seguem rodando em segundo plano,
+      // sem travar a interface, até esvaziar a fila.
+      for (let i = 0; i < 400; i++) {
         const { data, error } = await supabase.functions.invoke("influencer-outreach", {
           body: { action: "process", campaign_id: campaignId },
         });
@@ -223,16 +244,23 @@ export default function AdminInfluencerOutreach() {
         if ((data as any)?.error) throw new Error((data as any).error);
         await loadCampaigns();
         if (openCampaign?.id === campaignId) await loadRecipients(campaignId);
+        const stats = await fetchQueueStats(campaignId);
+        setQueueProgress({ campaignId, name, finished: false, ...stats });
         if (((data as any).remaining ?? 0) === 0) break;
       }
-      toast({ title: "Envio concluído", description: "A fila da campanha foi processada." });
+      const final = await fetchQueueStats(campaignId);
+      setQueueProgress({ campaignId, name, finished: true, ...final });
+      toast({ title: "Envio concluído", description: `${final.sent} e-mail(s) enviado(s).` });
+      setTimeout(() => setQueueProgress((p) => (p?.campaignId === campaignId && p.finished ? null : p)), 12000);
     } catch (e: any) {
+      setQueueProgress((p) => (p ? { ...p, finished: true } : p));
       toast({ title: "Falha no envio", description: e.message, variant: "destructive" });
     } finally {
       runningRef.current = null;
       setProcessing(null);
     }
   };
+
 
   const campaignAction = async (action: string, campaignId: string) => {
     const { error } = await supabase.functions.invoke("influencer-outreach", { body: { action, campaign_id: campaignId } });
