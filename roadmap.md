@@ -19,3 +19,8 @@
 - [x] Posicionar a resposta entre as mensagens rápidas e o campo de digitação
 - [x] Estender o fundo das notas até o final do cartão
 - [x] Mostrar a sequência completa na confirmação da mensagem rápida e permitir editar textos
+
+## Abordagem de influenciadores
+- [x] Padronizar assunto e corpo dos e-mails de parceria
+- [x] Restringir a IA à personalização do nome e da referência ao conteúdo/canal
+- [x] Validar e publicar a geração atualizada

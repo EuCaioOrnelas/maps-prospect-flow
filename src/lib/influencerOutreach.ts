@@ -95,6 +95,13 @@ const firstName = (name?: string | null) => {
   return first ? first.charAt(0).toUpperCase() + first.slice(1) : "";
 };
 
+const contentReference = (prospect: any) => {
+  const channelName = String(prospect?.channel_name || "").trim();
+  const summary = String(prospect?.ai_summary || "").split(".")[0]?.trim();
+  if (summary) return `do seu conteúdo sobre ${summary}`;
+  return channelName ? `do canal ${channelName}` : "do seu conteúdo";
+};
+
 export const OUTREACH_VARIABLES: OutreachVariable[] = [
   { key: "nome", label: "Nome do criador", resolve: (p) => p.channel_name || "" },
   { key: "nome_canal", label: "Nome do canal", resolve: (p) => p.channel_name || "" },
@@ -108,6 +115,7 @@ export const OUTREACH_VARIABLES: OutreachVariable[] = [
   { key: "fit_score", label: "Fit Score", resolve: (p) => String(p.fit_score ?? "") },
   { key: "categoria", label: "Categoria de fit", resolve: (p) => p.fit_category || "" },
   { key: "tema_canal", label: "Tema do canal", resolve: (p) => (p.ai_summary || "").split(".")[0] || "" },
+  { key: "referencia_conteudo", label: "Conteúdo ou canal", resolve: (p) => contentReference(p) },
   { key: "ultimo_video", label: "Último vídeo (data)", resolve: (p) => (p.latest_video_at ? new Date(p.latest_video_at).toLocaleDateString("pt-BR") : "") },
   { key: "canal_url", label: "URL do canal", resolve: (p) => p.channel_url || "" },
   { key: "instagram", label: "Instagram", resolve: (p, c) => contactValue(c, "instagram") || p.instagram_url || "" },
@@ -127,7 +135,7 @@ export function renderTemplate(text: string, prospect: any, contacts?: any[]): s
 
 /** Converte texto simples digitado no editor em HTML seguro para e-mail. */
 export function textToEmailHtml(text: string): string {
-  const escaped = (text || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
+  const escaped = (text || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] ?? c));
   return escaped
     .split(/\n{2,}/)
     .map((p) => `<p style="margin:0 0 14px;">${p.replace(/\n/g, "<br>")}</p>`)
@@ -147,15 +155,29 @@ export function emailHtmlToText(html: string): string {
     .trim();
 }
 
-export const DEFAULT_TEMPLATE_BODY = `Olá {{primeiro_nome}}, tudo bem?
+export const DEFAULT_TEMPLATE_BODY = `Olá, {{primeiro_nome}}! Tudo bem?
 
-Acompanhei o canal {{nome_canal}} e gostei muito da forma como você trata os temas de {{tema_canal}}.
+Meu nome é Caio e sou fundador da Wiize, um software com tudo o que empresas precisam para vender B2B em um só lugar. Hoje, mais de 600 empresas utilizam a plataforma.
 
-Sei que por trás de cada vídeo existem horas de roteiro, gravação, edição e postagem — e nem sempre o retorno financeiro acompanha esse esforço.
+Conheci seu conteúdo através {{referencia_conteudo}} e achei que existe uma conexão muito interessante com o que estamos construindo.
 
-Sou da Wiize, plataforma brasileira de prospecção, CRM e atendimento com IA para times comerciais B2B. Estamos selecionando criadores para o Wiize Partners: você ganha um novo tema de conteúdo para a sua audiência e uma nova fonte de renda recorrente, com comissão sobre cada cliente indicado e material pronto de divulgação — sem precisar produzir mais vídeos por mês.
+A Wiize reúne prospecção com IA, SDR inteligente que vende no automático e agenda reuniões, IA de análise de engajamento e gestão comercial completa em um só lugar.
 
-Faz sentido conversarmos 15 minutos nesta semana? Se preferir, respondo por aqui mesmo com todos os detalhes.`;
+Estamos em uma etapa de crescimento nas redes sociais e selecionando alguns criadores e especialistas para construir parcerias comerciais de longo prazo.
 
-export const DEFAULT_TEMPLATE_SUBJECT = "Parceria Wiize com o canal {{nome_canal}}";
+O modelo é simples: você apresenta a Wiize para sua audiência através de um link personalizado e cupom próprio. Para cada cliente que comprar pelo seu link ou cupom, você recebe 50% de comissão sobre a assinatura do primeiro mês + 10% de comissão recorrente, podendo chegar a 15%.
+
+Acredito que seu conteúdo tenha bastante sinergia com a Wiize.
+
+Se fizer sentido, posso te enviar mais detalhes da parceria.
+
+Abraço,
+
+Caio | Fundador da Wiize
+
+(44) 9 9148-7211
+
+https://www.wiize.com.br/`;
+
+export const DEFAULT_TEMPLATE_SUBJECT = "Parceria com {{nome_canal}} - Wiize";
 

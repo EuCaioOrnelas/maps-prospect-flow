@@ -22,7 +22,7 @@ const json = (body: unknown, status = 200) =>
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const OPENAI_MODEL = "gpt-4o-mini";
-const WHATSAPP = "(44) 99148-7211";
+const TEMPLATE_VERSION = 2;
 
 // ───────────────────────── pesquisa: YouTube ─────────────────────────
 async function yt(path: string, params: Record<string, string>, key: string) {
@@ -85,50 +85,18 @@ async function openai(messages: unknown[], apiKey: string, temperature = 0.6) {
   }
 }
 
-const SYSTEM = `Você é o Caio, fundador da Wiize, escrevendo pessoalmente a PRIMEIRA mensagem para um criador/profissional que você identificou como POTENCIAL PARCEIRO ESTRATÉGICO.
+const SYSTEM = `Você pesquisa o conteúdo de um criador ou especialista para personalizar uma abordagem comercial da Wiize.
 
-PERGUNTA QUE ORIENTA TUDO: "Por que especificamente essa pessoa seria uma boa parceira da Wiize, e como iniciar essa conversa mostrando que eu realmente entendi o trabalho dela?"
+Sua tarefa NÃO é escrever nem reescrever o e-mail. A copy é fixa. Você deve identificar somente a referência real que completará esta frase:
+"Conheci seu conteúdo através de [REFERÊNCIA] e achei que existe uma conexão muito interessante com o que estamos construindo."
 
-CONCEITO — PARCERIA, NUNCA AFILIAÇÃO:
-- É o Programa de Parceiros Wiize. PROIBIDAS as palavras/ideias: afiliado, programa de afiliados, link de afiliado, cupom, renda extra, "ganhe dinheiro divulgando", "vender para ganhar comissão", multinível.
-- A pessoa é abordada pela autoridade, conhecimento, audiência e relacionamento com empresas que já possui — não como divulgador.
-- Tese: "existe uma oportunidade de parceria entre o que você já faz e o que estamos construindo".
-
-POSICIONAMENTO DA WIIZE:
-- "plataforma unificada de inteligência comercial para empresas venderem B2B, reunindo prospecção, CRM, IA e gestão comercial em um só lugar" (pode adaptar a redação ao perfil).
-- NUNCA reduzir a: ferramenta de prospecção, de leads, CRM, automação, disparador ou ferramenta de WhatsApp. Escolha só os componentes que conversam com o perfil da pessoa.
-
-REGRA ABSOLUTA — NUNCA INVENTAR:
-- Só cite vídeos, posts, temas, projetos, números ou resultados que estejam explicitamente nos DADOS PESQUISADOS. Use títulos reais, exatos.
-- Proibido afirmar que assiste, acompanha, conhece a audiência ou viu algo que não está nos dados.
-- Sem material concreto, escreva algo honesto e mais curto ("Dei uma olhada no seu trabalho e..."), sem fingir intimidade.
-
-ELOGIO ESPECÍFICO (obrigatório quando houver base):
-- Diga O QUE chamou atenção e, se possível, POR QUÊ. Ex.: "gostei da forma como você trata X sem ficar na teoria", "achei interessante o ponto que você levanta sobre Y".
-- Proibidos elogios que serviriam para qualquer pessoa: "seu conteúdo é incrível", "trabalho sensacional", "adorei seu perfil", "você é uma grande autoridade".
-
-ESTRUTURA (adapte, nunca copie literalmente):
-1. Abertura humana e direta: "Oi {nome}, aqui é o Caio, fundador da Wiize." Sem "espero que esteja bem", sem introdução corporativa.
-2. Reconhecimento específico e real do trabalho dela.
-3. Ponte: existe conexão entre o que ela já faz/ensina e o que estamos construindo na Wiize.
-4. Apresentação da Wiize como plataforma unificada de inteligência comercial B2B, adaptada ao perfil.
-5. Convite à parceria: "Estamos selecionando alguns profissionais e criadores do mercado para o nosso programa de parceiros" (ou variação).
-6. Estrutura da parceria (benefício, não pitch): 50% de comissão na primeira mensalidade de cada cliente indicado; depois comissão recorrente que começa em 10% e pode chegar a 20% conforme o volume de clientes.
-7. Potencial financeiro em linguagem condicional: tickets mais altos, planos/contratos acima de R$10 mil, "uma única indicação pode representar milhares de reais em comissão — em alguns casos até R$5 mil dependendo do plano e do contrato". NUNCA prometer ganhos.
-8. Desejo: nova frente de receita sobre algo que ela já construiu, sem criar produto próprio nem montar operação comercial (adapte: especialista, criador, agência, consultor).
-9. CTA curto em forma de pergunta: "Posso te explicar como funciona?" / "Faz sentido eu te mostrar como estruturamos essa parceria?".
-10. WhatsApp ${WHATSAPP} é opcional, no máximo uma menção discreta ao final.
-
-TOM: humano, confiante, inteligente, direto, cordial, empreendedor — o fundador falando, não um SDR nem um robô. Levemente informal quando combinar com o perfil. Nada de emojis em excesso, formalidade exagerada ou pressa em fechar.
-
-TAMANHO: 120–200 palavras (qualidade acima de quantidade; mais curta se houver pouca informação real).
-
-CHECKLIST INTERNO ANTES DE RESPONDER (se falhar, reescreva antes de devolver):
-- Essa pessoa acreditaria que eu pesquisei o trabalho dela?
-- O elogio poderia ser enviado para qualquer outro influenciador? Se sim, especifique mais.
-- A mensagem parece proposta de afiliado? Se sim, reformule como parceria.
-- A Wiize parece "mais uma ferramenta"? Se sim, reforce a plataforma unificada.
-- Está vendendo demais? Reduza o pitch e aumente a curiosidade.
+REGRAS DA REFERÊNCIA:
+- Use apenas conteúdos, vídeos, posts, temas ou canais presentes nos DADOS PESQUISADOS.
+- Prefira um conteúdo específico e relevante. Exemplo: "do seu vídeo sobre gestão comercial".
+- Quando só houver dados gerais, use o canal ou perfil real. Exemplo: "do canal Empresa X" ou "do seu perfil no Instagram".
+- A referência deve começar com "do", "da", "de um" ou "de uma", encaixando naturalmente depois de "através".
+- Máximo de 140 caracteres, sem ponto final, elogio ou afirmação inventada.
+- Nunca altere valores, oferta, assinatura ou qualquer outra parte do e-mail.
 
 Responda SOMENTE em JSON com este formato:
 {
@@ -138,9 +106,34 @@ Responda SOMENTE em JSON com este formato:
   "oportunidade": "por que essa pessoa seria uma boa parceira da Wiize",
   "personalizado": true,
   "confianca": "alta|media|baixa",
-  "assunto": "assunto do e-mail, curto e pessoal",
-  "mensagem": "texto final da abordagem, com quebras de linha entre parágrafos, sem assinatura corporativa"
+  "referencia": "trecho curto e verdadeiro que começa com do/da/de um/de uma"
 }`;
+
+function firstName(value: unknown) {
+  const clean = String(value || "").replace(/[^\p{L}\p{N}\s._-]/gu, "").trim();
+  const first = clean.split(/[\s._-]+/)[0] || "";
+  return first ? first.charAt(0).toUpperCase() + first.slice(1) : "Olá";
+}
+
+function fallbackReference(prospect: any) {
+  const name = String(prospect?.channel_name || "").trim();
+  if (name) return prospect?.platform === "instagram" ? `do perfil ${name} no Instagram` : `do canal ${name}`;
+  return prospect?.platform === "instagram" ? "do seu perfil no Instagram" : "do seu canal";
+}
+
+function sanitizeReference(value: unknown, prospect: any) {
+  const reference = String(value || "").replace(/[\r\n]+/g, " ").replace(/[.!?]+$/g, "").trim().slice(0, 140);
+  return /^(d[oa]s?|de (?:um|uma))\b/i.test(reference) ? reference : fallbackReference(prospect);
+}
+
+function buildFixedEmail(prospect: any, reference: string) {
+  const name = firstName(prospect?.channel_name);
+  const subjectName = String(prospect?.channel_name || name).trim().slice(0, 180);
+  return {
+    subject: `Parceria com ${subjectName} - Wiize`,
+    message: `Olá, ${name}! Tudo bem?\n\nMeu nome é Caio e sou fundador da Wiize, um software com tudo o que empresas precisam para vender B2B em um só lugar. Hoje, mais de 600 empresas utilizam a plataforma.\n\nConheci seu conteúdo através ${reference} e achei que existe uma conexão muito interessante com o que estamos construindo.\n\nA Wiize reúne prospecção com IA, SDR inteligente que vende no automático e agenda reuniões, IA de análise de engajamento e gestão comercial completa em um só lugar.\n\nEstamos em uma etapa de crescimento nas redes sociais e selecionando alguns criadores e especialistas para construir parcerias comerciais de longo prazo.\n\nO modelo é simples: você apresenta a Wiize para sua audiência através de um link personalizado e cupom próprio. Para cada cliente que comprar pelo seu link ou cupom, você recebe 50% de comissão sobre a assinatura do primeiro mês + 10% de comissão recorrente, podendo chegar a 15%.\n\nAcredito que seu conteúdo tenha bastante sinergia com a Wiize.\n\nSe fizer sentido, posso te enviar mais detalhes da parceria.\n\nAbraço,\n\nCaio | Fundador da Wiize\n\n(44) 9 9148-7211\n\nhttps://www.wiize.com.br/`,
+  };
+}
 
 function buildResearchPrompt(p: any, contacts: any[], research: any, variant: number, previous: string[]) {
   const dados: Record<string, unknown> = {
@@ -174,23 +167,6 @@ function buildResearchPrompt(p: any, contacts: any[], research: any, variant: nu
 }
 
 /** Controle de qualidade determinístico antes de devolver a mensagem. */
-function qualityCheck(out: any) {
-  const issues: string[] = [];
-  let msg = String(out?.mensagem || "").trim();
-  const words = msg.split(/\s+/).filter(Boolean).length;
-  if (!msg) issues.push("Mensagem vazia.");
-  if (words < 100) issues.push("Mensagem muito curta.");
-  if (words > 240) issues.push("Mensagem longa demais.");
-  if (!/\?/.test(msg)) issues.push("Sem pergunta final (CTA).");
-  const genericos = /(seu conte[úu]do é incr[íi]vel|adorei seu perfil|trabalho sensacional|espero que esta mensagem|grande autoridade)/i;
-  if (genericos.test(msg)) issues.push("Elogio genérico detectado.");
-  if (/afiliad|cupom|renda extra|multin[íi]vel/i.test(msg)) issues.push("Linguagem de afiliado detectada — deveria soar como parceria.");
-  if (!/parceri/i.test(msg)) issues.push("A mensagem não posiciona a oportunidade como parceria.");
-  // Nunca prometer ganho garantido.
-  msg = msg.replace(/voc[êe] (vai|irá) (ganhar|faturar|receber)/gi, "é possível chegar a");
-  return { message: msg, words, issues };
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -228,7 +204,8 @@ serve(async (req) => {
       const { data } = await admin.from("influencer_ai_approaches")
         .select("*").eq("prospect_id", prospectId)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      return json({ ok: true, approach: data ?? null });
+      const isCurrentTemplate = Number((data?.analysis as any)?.template_version || 0) === TEMPLATE_VERSION;
+      return json({ ok: true, approach: isCurrentTemplate ? data : null });
     }
 
     // Salva edições manuais do admin no rascunho.
@@ -285,8 +262,9 @@ serve(async (req) => {
       { role: "user", content: buildResearchPrompt(prospect, contacts ?? [], research, variant, previous) },
     ], openaiKey, variant > 0 ? 0.85 : 0.6);
 
-    // 3) Controle de qualidade.
-    const qc = qualityCheck(out);
+    // 3) A IA escolhe apenas a referência; assunto e copy permanecem determinísticos.
+    const reference = sanitizeReference(out?.referencia, prospect);
+    const fixedEmail = buildFixedEmail(prospect, reference);
 
     const analysis = {
       nicho: String(out?.nicho || prospect.fit_category || "Não identificado"),
@@ -295,8 +273,10 @@ serve(async (req) => {
       oportunidade: String(out?.oportunidade || ""),
       personalizado: out?.personalizado !== false,
       confianca: String(out?.confianca || "media"),
-      palavras: qc.words,
-      alertas: qc.issues,
+      referencia,
+      template_version: TEMPLATE_VERSION,
+      palavras: fixedEmail.message.split(/\s+/).filter(Boolean).length,
+      alertas: [],
     };
 
     const researchMeta = {
@@ -307,20 +287,20 @@ serve(async (req) => {
       tem_bio: !!(research?.description || prospect.channel_description),
     };
 
-    const subject = String(out?.assunto || `Parceria Wiize com ${prospect.channel_name}`).slice(0, 300);
+    const subject = fixedEmail.subject.slice(0, 300);
 
     const { data: saved } = await admin.from("influencer_ai_approaches").insert({
       prospect_id: prospectId,
       admin_id: u.user.id,
       channel: prospect.platform || "youtube",
       subject,
-      message: qc.message.slice(0, 8000),
+      message: fixedEmail.message.slice(0, 8000),
       analysis,
       research: researchMeta,
       status: "rascunho",
     }).select("*").maybeSingle();
 
-    return json({ ok: true, approach: saved, analysis, research: researchMeta, subject, message: qc.message });
+    return json({ ok: true, approach: saved, analysis, research: researchMeta, subject, message: fixedEmail.message });
   } catch (e: any) {
     console.error("[influencer-ai-approach]", e);
     return json({ error: e?.message || "Erro inesperado." }, 500);
