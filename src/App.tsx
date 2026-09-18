@@ -12,6 +12,7 @@ import { MetricStateCacheProvider } from "@/hooks/useMetricStateCache";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SEO } from "./components/SEO";
 const ActivationChecklist = lazyWithRetry(() => import("@/components/dashboard/ActivationChecklist").then((m) => ({ default: m.ActivationChecklist })), "ActivationChecklist");
 import { GuidedTourProvider } from "@/hooks/useGuidedTour";
 const GuidedTour = lazyWithRetry(() => import("@/components/onboarding/GuidedTour").then((m) => ({ default: m.GuidedTour })), "GuidedTour");
@@ -301,6 +302,7 @@ const App = () => (
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
               <PartnerTrackingProvider>
+              <SEO />
               <PageVisitTracker />
               <Routes>
                 <Route path="/" element={<LightThemeWrapper><Index /></LightThemeWrapper>} />

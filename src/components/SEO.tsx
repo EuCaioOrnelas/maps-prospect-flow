@@ -99,7 +99,7 @@ export const SEO = ({
   noIndex = false,
   jsonLd,
 }: SEOProps) => {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : defaultMeta.title;
+  const fullTitle = title ? `Wiize - ${title.replace(/ | Wiize/g, '').replace(/Wiize - /g, '')}` : defaultMeta.title;
 
   // Build JSON-LD array
   const schemas: Record<string, unknown>[] = [

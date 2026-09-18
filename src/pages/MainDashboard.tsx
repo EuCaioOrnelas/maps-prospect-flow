@@ -133,7 +133,7 @@ export default function MainDashboard() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
         <BackgroundGlow />
-        <SEO title="Cockpit de Crescimento | Wiize" description="Dashboard executivo de prospecção, receita e performance comercial" />
+        <SEO title="Cockpit de Crescimento" description="Dashboard executivo de prospecção, receita e performance comercial" />
         <AppSidebar profile={profile} />
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <AppHeader profile={profile} />
