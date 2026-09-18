@@ -5630,6 +5630,8 @@ export type Database = {
           id: string
           lead_id: string
           owner_user_id: string | null
+          reply_to_id: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -5638,6 +5640,8 @@ export type Database = {
           id?: string
           lead_id: string
           owner_user_id?: string | null
+          reply_to_id?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -5646,6 +5650,8 @@ export type Database = {
           id?: string
           lead_id?: string
           owner_user_id?: string | null
+          reply_to_id?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -5654,6 +5660,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_notes_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "lead_notes"
             referencedColumns: ["id"]
           },
         ]

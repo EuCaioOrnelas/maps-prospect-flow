@@ -106,6 +106,13 @@
       "when": 1789673317510,
       "tag": "0014_apply_first_month_boost_commission",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789742519191,
+      "tag": "0015_lead_notes_thread",
+      "breakpoints": true
     }
   ]
 }
