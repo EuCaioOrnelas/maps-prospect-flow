@@ -51,7 +51,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
-import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
+import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { buildTourDemoSearchHistory } from "@/lib/publicDemo";
 import { AutoApproachPrefs, EMPTY_AUTO_APPROACH, saveAutoApproachPrefs, clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
