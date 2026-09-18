@@ -162,17 +162,12 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
                     <button
                       type="button"
                       onClick={() => scrollToNote(parent.id)}
-                      className={cn(
-                        "w-full text-left mb-1 rounded-md border-l-2 px-2 py-1 text-[11px] line-clamp-2",
-                        mine
-                           ? "border-primary-foreground/50 bg-primary-foreground/10 wa-text-muted"
-                           : "border-primary/60 bg-foreground/5 wa-text-muted",
-                      )}
+                      className="wa-quote w-full text-left mb-1 rounded-md border-l-2 border-primary/70 px-2 py-1 text-[11px] line-clamp-2"
                     >
-                      <span className="font-medium">
+                      <span className="font-semibold wa-accent-text">
                         {parent.user_id === currentUserId ? "Você" : authorLabel(authors[parent.user_id])}
                       </span>
-                      : {parent.content}
+                      <span className="wa-quote-text">: {parent.content}</span>
                     </button>
                   )}
 

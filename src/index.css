@@ -1331,7 +1331,19 @@ input::placeholder, textarea::placeholder {
 .landing-light .wa-bubble-out .wa-text-timestamp,
 .landing-light .wa-bubble-in .wa-text-timestamp { color: rgba(11,31,23,0.55); }
 .wa-bubble-out .wa-text-muted,
-.wa-bubble-in .wa-text-muted { color: rgba(233,237,239,0.6); }
+.wa-bubble-in .wa-text-muted { color: rgba(233,237,239,0.72); }
+.landing-light .wa-bubble-out .wa-text-muted,
+.landing-light .wa-bubble-in .wa-text-muted { color: rgba(11,31,23,0.62); }
+
+/* Citação (responder) dentro do balão */
+.wa-bubble-out .wa-quote,
+.wa-bubble-in .wa-quote { background-color: rgba(255,255,255,0.08); }
+.wa-bubble-out .wa-quote .wa-quote-text,
+.wa-bubble-in .wa-quote .wa-quote-text { color: rgba(233,237,239,0.85); }
+.landing-light .wa-bubble-out .wa-quote,
+.landing-light .wa-bubble-in .wa-quote { background-color: rgba(11,31,23,0.06); }
+.landing-light .wa-bubble-out .wa-quote .wa-quote-text,
+.landing-light .wa-bubble-in .wa-quote .wa-quote-text { color: rgba(11,31,23,0.78); }
 
 /* ─── Date badge ─── */
 .wa-date-badge { background-color: hsl(220 18% 8%); color: rgba(233,237,239,0.9); }

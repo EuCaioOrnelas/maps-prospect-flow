@@ -480,7 +480,7 @@ export function useChat() {
   }, [activeConversationId, user, accountOwnerId, conversations, connections]);
 
   // Send media message
-  const sendMedia = useCallback(async (file: File, caption?: string, targetConversationId?: string) => {
+  const sendMedia = useCallback(async (file: File, caption?: string, targetConversationId?: string, replyToId?: string) => {
     const convId = targetConversationId || activeConversationId;
     if (!convId || !user) return;
     const conversation = conversations.find(c => c.id === convId);
@@ -528,7 +528,7 @@ export function useChat() {
       waba_message_id: null, direction: "outbound", message_type: messageType,
       content: caption || null, media_url: signedUrl, media_mime_type: file.type,
       media_filename: file.name, media_caption: caption || null, status: "pending",
-      status_updated_at: null, reply_to_message_id: null,
+      status_updated_at: null, reply_to_message_id: replyToId || null,
       metadata: { client_token: tempId }, created_at: new Date().toISOString(),
     };
     if (isActive) setMessages(prev => [...prev, tempMsg]);
@@ -551,6 +551,7 @@ export function useChat() {
           media_mime_type: file.type,
           client_token: tempId,
           waba_connection_id: connection.id,
+          reply_to_message_id: replyToId || null,
         },
       }).then(({ error: fnError }) => {
         if (fnError) {

@@ -93,7 +93,7 @@ function QrRunningPill({ run, onStop }: { run: QrRunState; onStop: () => void })
 
 interface ChatInputProps {
   onSendMessage: (text: string, replyToId?: string, conversationId?: string) => void;
-  onSendMedia: (file: File, caption?: string, conversationId?: string) => void;
+  onSendMedia: (file: File, caption?: string, conversationId?: string, replyToId?: string) => void;
   replyingTo?: ChatMessage | null;
   onCancelReply?: () => void;
   /** External files (e.g. dropped on the message area) — preview opens automatically */
@@ -286,11 +286,17 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
 
   const handleSend = useCallback(() => {
     if (attachments.length) {
-      // Send each file; caption attached to the first one (WhatsApp behavior)
+      // Send each file; caption e resposta ficam na primeira (comportamento WhatsApp)
       attachments.forEach((a, i) => {
-        onSendMedia(a.file, i === 0 ? (caption || undefined) : undefined);
+        onSendMedia(
+          a.file,
+          i === 0 ? (caption || undefined) : undefined,
+          undefined,
+          i === 0 ? replyingTo?.id : undefined,
+        );
       });
       clearAttachments();
+      onCancelReply?.();
       return;
     }
     if (!text.trim()) return;
@@ -372,12 +378,28 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     }
   };
 
+  // Colar print da área de transferência: alguns navegadores não populam
+  // clipboardData.files, então lemos também os items (kind === "file").
   const handlePaste = (e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.files;
-    if (items && items.length > 0) {
-      e.preventDefault();
-      addFiles(Array.from(items));
+    const dt = e.clipboardData;
+    if (!dt) return;
+    const collected: File[] = [];
+    if (dt.files && dt.files.length > 0) collected.push(...Array.from(dt.files));
+    if (!collected.length && dt.items) {
+      for (const item of Array.from(dt.items)) {
+        if (item.kind !== "file") continue;
+        const f = item.getAsFile();
+        if (f) collected.push(f);
+      }
     }
+    if (!collected.length) return;
+    e.preventDefault();
+    const named = collected.map((f) => {
+      if (f.name && f.name !== "image.png") return f;
+      const ext = (f.type.split("/")[1] || "png").replace(/[^\w]/g, "");
+      return new File([f], `print_${Date.now()}.${ext}`, { type: f.type || "image/png" });
+    });
+    addFiles(named);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
