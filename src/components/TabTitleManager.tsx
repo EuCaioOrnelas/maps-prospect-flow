@@ -6,8 +6,10 @@ type TabTitleRule = {
   label: string;
 };
 
+// Páginas de vendas e de produtos usam apenas "Wiize" na aba.
+const BRAND_ONLY_PATTERNS: RegExp[] = [/^\/$/, /^\/produtos(?:\/.*)?$/];
+
 const TAB_TITLE_RULES: TabTitleRule[] = [
-  { pattern: /^\/$/, label: "Início" },
   { pattern: /^\/login\/?$/, label: "Entrar" },
   { pattern: /^\/signup(?:\/.*)?$/, label: "Criar Conta" },
   { pattern: /^\/forgot-password\/?$/, label: "Recuperar Senha" },

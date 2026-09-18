@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Cookie, Shield, Info, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Cookie, Shield, Info, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ALL_GRANTED,
@@ -15,8 +15,8 @@ interface CookiePanelProps {
   title?: string;
   message?: string;
   acceptText?: string;
-
   customizeText?: string;
+  rejectText?: string;
   icon?: "cookie" | "shield" | "info";
   className?: string;
   privacyHref?: string;
@@ -53,17 +53,24 @@ const CATEGORIES: {
   },
 ];
 
+/** Recusa apenas os cookies de marketing/anúncios. Essenciais, funcionais e
+ *  analíticos continuam ativos para o site funcionar e ser medido. */
+const MARKETING_DENIED: ConsentPrefs = {
+  necessary: true,
+  functional: true,
+  analytics: true,
+  marketing: false,
+};
+
 const CookiePanel = (props: CookiePanelProps) => {
   const {
-    title = "Sua privacidade, sua escolha",
-    message =
-      "Usamos cookies para operar a plataforma, manter sua sessão segura, medir o uso e melhorar sua experiência.",
-    acceptText = "Aceitar todos",
-
-    customizeText = "Personalizar",
+    message = "Usamos cookies para oferecer a melhor experiência, manter sua sessão segura, analisar o uso do site e personalizar conteúdos e anúncios.",
+    acceptText = "Aceitar cookies",
+    customizeText = "Configurar cookies",
+    rejectText = "Rejeitar cookies não necessários",
     icon = "cookie",
     className,
-    privacyHref = "/privacidade",
+    privacyHref = "/privacy",
     termsHref = "/terms",
     onDecision,
   } = props;
@@ -72,9 +79,6 @@ const CookiePanel = (props: CookiePanelProps) => {
   const [render, setRender] = useState(false);
   const [showPrefs, setShowPrefs] = useState(false);
   const [prefs, setPrefs] = useState<ConsentPrefs>(getConsent());
-
-  const prefsRef = useRef<HTMLDivElement | null>(null);
-  const [prefsHeight, setPrefsHeight] = useState(0);
 
   useEffect(() => {
     if (!hasConsentDecision()) {
@@ -86,11 +90,6 @@ const CookiePanel = (props: CookiePanelProps) => {
     }
     setPrefs(getConsent());
   }, []);
-
-  useEffect(() => {
-    if (showPrefs && prefsRef.current) setPrefsHeight(prefsRef.current.scrollHeight);
-    else setPrefsHeight(0);
-  }, [showPrefs, prefs]);
 
   const close = () => {
     setVisible(false);
@@ -114,79 +113,110 @@ const CookiePanel = (props: CookiePanelProps) => {
       aria-modal="false"
       aria-label="Aviso de cookies"
       className={cn(
-        "fixed bottom-3 left-3 right-3 z-[100] max-h-[75vh] overflow-visible sm:bottom-6 sm:left-6 sm:right-auto sm:w-[min(560px,calc(100vw-3rem))]",
-        "transition-all duration-700",
-        visible
-          ? "opacity-100 translate-x-0 [transition-timing-function:cubic-bezier(0.34,1.4,0.64,1)]"
-          : "opacity-0 -translate-x-14 [transition-timing-function:cubic-bezier(0.4,0,1,1)]",
+        "fixed inset-x-0 bottom-0 z-[100] border-t border-border/60 bg-card text-card-foreground shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.35)]",
+        "transition-all duration-500",
+        visible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0",
         className,
       )}
     >
-      <div className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-[0_4px_6px_-2px_rgba(0,0,0,0.08),0_12px_24px_-4px_rgba(0,0,0,0.16),0_24px_48px_-8px_rgba(0,0,0,0.24)] overflow-hidden max-h-[inherit] overflow-y-auto">
-        <div className="h-1 w-full bg-primary" />
-        <div className="relative p-4 sm:p-5">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 sm:size-9">
-                <IconEl className="size-4" />
-              </span>
-              <p className="text-sm font-semibold leading-tight">{title}</p>
-            </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
-              {message} Cookies essenciais são sempre ativos. Veja nossa{" "}
-              <a href={privacyHref} className="text-primary hover:underline">
-                Política de Privacidade
+      <div className="mx-auto max-h-[70vh] w-full max-w-[1400px] overflow-y-auto px-4 py-4 sm:px-8 sm:py-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <IconEl className="size-4" />
+            </span>
+            <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
+              {message} Para mais informações, consulte nosso{" "}
+              <a href={privacyHref} className="font-semibold text-foreground hover:underline">
+                Aviso de Privacidade
               </a>{" "}
               e os{" "}
-              <a href={termsHref} className="text-primary hover:underline">
+              <a href={termsHref} className="font-semibold text-foreground hover:underline">
                 Termos de Uso
               </a>
               .
             </p>
           </div>
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:shrink-0">
+            <button
+              type="button"
+              onClick={() => decide(MARKETING_DENIED)}
+              className="rounded-lg border border-border/70 px-3 py-2 text-[11px] font-normal text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+            >
+              {rejectText}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPrefs((p) => !p)}
+              aria-expanded={showPrefs}
+              className="rounded-lg border border-border px-4 py-2 text-xs font-medium transition-colors hover:bg-muted sm:text-sm"
+            >
+              {customizeText}
+            </button>
             <button
               type="button"
               onClick={() => decide(ALL_GRANTED)}
-              className="flex-1 rounded-xl bg-primary px-3 py-2.5 text-xs sm:text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary/90"
+              className="rounded-lg bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary/90 sm:text-sm"
             >
               {acceptText}
             </button>
           </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => setShowPrefs((p) => !p)}
-            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-            aria-expanded={showPrefs}
-          >
-            {customizeText}
-            {showPrefs ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-          </button>
-
-          <div
-            className="overflow-hidden transition-all duration-300"
-            style={{ height: prefsHeight ? `${prefsHeight}px` : "0px" }}
-          >
-            <div ref={prefsRef} className="pt-3 space-y-2.5">
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Estas são as categorias de cookies utilizadas na plataforma:
-              </p>
-              {CATEGORIES.map((c) => (
-                <div key={c.field} className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded border border-border bg-primary/15 text-primary">
-                    <Check className="size-3.5" />
-                  </span>
-                  <div>
-                    <p className="text-xs font-medium">{c.title}</p>
-                    <p className="text-[11px] leading-relaxed text-muted-foreground">{c.desc}</p>
-                  </div>
-                </div>
-              ))}
+        {showPrefs && (
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {CATEGORIES.map((c) => {
+                const checked = c.locked ? true : prefs[c.field];
+                return (
+                  <label
+                    key={c.field}
+                    className={cn(
+                      "flex items-start gap-3 rounded-xl border border-border/70 p-3",
+                      c.locked ? "cursor-default opacity-90" : "cursor-pointer hover:border-primary/50",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded border",
+                        checked
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-transparent",
+                      )}
+                    >
+                      <Check className="size-3.5" />
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={checked}
+                      disabled={c.locked}
+                      onChange={(e) =>
+                        setPrefs((p) => ({ ...p, [c.field]: e.target.checked, necessary: true }))
+                      }
+                    />
+                    <span>
+                      <span className="block text-xs font-medium">{c.title}</span>
+                      <span className="block text-[11px] leading-relaxed text-muted-foreground">
+                        {c.desc}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => decide({ ...prefs, necessary: true })}
+                className="rounded-lg border border-border px-4 py-2 text-xs font-medium transition-colors hover:bg-muted sm:text-sm"
+              >
+                Salvar preferências
+              </button>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
