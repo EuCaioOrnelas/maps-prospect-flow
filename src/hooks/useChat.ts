@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPhoneForMeta } from "@/lib/phoneUtils";
 import { resolveStorageUrl, resolveStorageUrls } from "@/lib/privateStorage";
+import { META_GRAPH_BASE } from "@/lib/metaApi";
 
 export interface ChatConversation {
   id: string;
@@ -96,7 +97,7 @@ export function useChat() {
   // Validate a single token against Graph API (lightweight debug_token or /me check)
   const validateToken = useCallback(async (accessToken: string): Promise<boolean> => {
     try {
-      const res = await fetch(`https://graph.facebook.com/v21.0/me?access_token=${encodeURIComponent(accessToken)}`, {
+      const res = await fetch(`${META_GRAPH_BASE}/me?access_token=${encodeURIComponent(accessToken)}`, {
         method: "GET",
       });
       if (!res.ok) return false;

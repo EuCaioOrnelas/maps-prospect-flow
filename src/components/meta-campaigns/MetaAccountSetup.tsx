@@ -14,6 +14,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import type { WabaConnection } from "@/pages/MetaCampaigns";
+import { META_API_VERSION } from "@/lib/metaApi";
 
 const META_APP_ID = "988774494328539";
 
@@ -62,7 +63,7 @@ export const MetaAccountSetup = ({ onConnectionSaved, isAddingExtra }: MetaAccou
         appId: META_APP_ID,
         cookie: true,
         xfbml: false,
-        version: "v21.0",
+        version: META_API_VERSION,
       });
       setSdkLoaded(true);
     };

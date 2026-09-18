@@ -52,7 +52,8 @@ async function logAiUsage(p: {
 }
 // ---- fim registro de custo de IA ----
 
-const GRAPH_VERSION = "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const GRAPH_VERSION = META_API_VERSION;
 
 // ---- Criptografia de mensagens (AES-256-GCM, inline; sem módulo compartilhado) ----
 const MESSAGE_PREFIX = "enc:v1:";

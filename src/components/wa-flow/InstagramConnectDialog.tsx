@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Instagram, Loader2, PowerOff, RefreshCw, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { useInstagramAccounts, IG_MAX_ACCOUNTS } from "@/hooks/useInstagramAccounts";
 import { cn } from "@/lib/utils";
+import { META_API_VERSION } from "@/lib/metaApi";
 
 const META_APP_ID = "988774494328539";
 const IG_SCOPES = [
@@ -41,7 +42,7 @@ export function InstagramConnectDialog({ open, onOpenChange }: Props) {
       return;
     }
     window.fbAsyncInit = () => {
-      window.FB.init({ appId: META_APP_ID, cookie: true, xfbml: false, version: "v21.0" });
+      window.FB.init({ appId: META_APP_ID, cookie: true, xfbml: false, version: META_API_VERSION });
       setSdkLoaded(true);
     };
     if (!document.getElementById("facebook-jssdk")) {
