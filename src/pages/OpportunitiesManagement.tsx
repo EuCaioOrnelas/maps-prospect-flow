@@ -236,6 +236,8 @@ export default function OpportunitiesManagement() {
 
       if (data) {
         setCompanyProfile(data);
+        // Perfil antigo sem o tipo de atuação: obriga a completar
+        if (isBusinessModelMissing(data)) setShowOnboarding(true);
         // Check last_message_sent_at for cooldown
         if ((data as any).last_message_sent_at) {
           const lastSent = new Date((data as any).last_message_sent_at).getTime();
