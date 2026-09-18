@@ -66,7 +66,7 @@ const MetaAppDocumentation = () => {
             <PermissionRow
               permission="whatsapp_business_management"
               usage="Embedded Signup OAuth flow, list phone numbers, register webhooks via /{WABA_ID}/subscribed_apps"
-              endpoint="GET /v21.0/{WABA_ID}/phone_numbers, POST /v21.0/{WABA_ID}/subscribed_apps"
+              endpoint="GET /v25.0/{WABA_ID}/phone_numbers, POST /v25.0/{WABA_ID}/subscribed_apps"
             />
             <PermissionRow
               permission="business_management"
