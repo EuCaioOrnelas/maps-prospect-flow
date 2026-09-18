@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 // ========== INLINED AI KEY CRYPTO (sem _shared) ==========
 // Decriptação AES-256-GCM da chave OpenAI do cliente (BYOK).
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 function masterSecrets(): string[] {
   const list: string[] = [];
   const primary = Deno.env.get("AI_CREDENTIALS_SECRET");

@@ -2,7 +2,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 const GRAPH_VERSION = META_API_VERSION;
 
 Deno.serve(async (req) => {

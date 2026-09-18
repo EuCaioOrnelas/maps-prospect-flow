@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 const GRAPH_VERSION = META_API_VERSION;
 const GRAPH = `https://graph.facebook.com/${GRAPH_VERSION}`;
 

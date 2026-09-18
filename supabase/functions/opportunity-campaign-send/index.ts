@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Inline E.164 formatter para Meta Cloud API (sem "+"). Suporta global (BR + intl).
 // Regras: "+"/"00" => E.164 explícito; 10–11 dígitos sem DDI => Brasil (prefixa 55);
 // 55 + DDD + 8 dígitos => insere 9º dígito; valida faixa 10–15 dígitos.
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 function formatPhoneForMeta(phone: string): string {
   const raw = String(phone || "").trim();
   if (!raw) return "";

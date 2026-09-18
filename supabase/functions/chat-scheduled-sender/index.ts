@@ -2,7 +2,7 @@
 // Executado por cron (pg_cron + pg_net). Arquivo único, sem imports compartilhados.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 const MESSAGE_PREFIX = "enc:v1:";
 const messageEncoder = new TextEncoder();
 let messageKeyPromise: Promise<CryptoKey> | null = null;

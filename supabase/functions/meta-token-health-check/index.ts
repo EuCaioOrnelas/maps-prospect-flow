@@ -5,7 +5,7 @@
 // to avoid false positives (e.g. permanent/never-expiring tokens).
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
-const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v21.0";
+const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
