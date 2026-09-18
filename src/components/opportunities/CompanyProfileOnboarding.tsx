@@ -81,12 +81,19 @@ export const BUSINESS_MODEL_OPTIONS = [
 const TOTAL_STEPS = PROFILE_STEPS.length + 1;
 const SERVICES_STEP_INDEX = PROFILE_STEPS.length;
 
+export const isBusinessModelMissing = (profile?: Partial<Record<string, unknown>> | null) =>
+  !!profile && !String((profile as any)?.company_business_model || "").trim();
+
+const BUSINESS_MODEL_STEP_INDEX = PROFILE_STEPS.findIndex((s) => s.key === "company_business_model");
+
 export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete, onClose, initialData }: Props) {
   const { toast } = useToast();
   const effectiveOwnerId = ownerUserId || userId;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const isEditing = !!initialData;
+  const mustFillBusinessModel = isBusinessModelMissing(initialData);
+  const canDismiss = isEditing && !mustFillBusinessModel;
 
   const [form, setForm] = useState<CompanyProfile>(() => normalizeCompanyProfile(initialData));
   const [services, setServices] = useState<ServiceItem[]>([{ name: "", average_ticket: 0, description: "" }]);
