@@ -103,7 +103,7 @@ export default function AdminInfluencerOutreach() {
     // inclusive os que ainda não têm e-mail descoberto.
     const { data } = await (supabase as any)
       .from("influencer_prospects")
-      .select("*")
+      .select("*, influencer_videos(title, published_at)")
       .in("status", QUALIFIED_STATUSES)
       .order("fit_score", { ascending: false })
       .limit(600);

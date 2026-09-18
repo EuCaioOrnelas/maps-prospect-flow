@@ -95,11 +95,43 @@ const firstName = (name?: string | null) => {
   return first ? first.charAt(0).toUpperCase() + first.slice(1) : "";
 };
 
+const WIIZE_CONTENT_TERMS = [
+  "b2b", "venda", "vendas", "comercial", "prospecção", "prospeccao", "sdr",
+  "crm", "cliente", "clientes", "negócio", "negocio", "negócios", "negocios",
+  "empreendedor", "empresa", "empresas", "marketing", "gestão", "gestao",
+  "automação", "automacao", "inteligência artificial", "inteligencia artificial", "ia",
+];
+
+const normalizedSearchText = (value: unknown) => String(value || "")
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase();
+
 const contentReference = (prospect: any) => {
   const channelName = String(prospect?.channel_name || "").trim();
-  const summary = String(prospect?.ai_summary || "").split(".")[0]?.trim();
-  if (summary) return `do seu conteúdo sobre ${summary}`;
-  return channelName ? `do canal ${channelName}` : "do seu conteúdo";
+  const videos = Array.isArray(prospect?.influencer_videos) ? prospect.influencer_videos : [];
+  const ranked = videos
+    .map((video: any) => {
+      const title = String(video?.title || "").trim();
+      const normalizedTitle = normalizedSearchText(title);
+      const score = WIIZE_CONTENT_TERMS.reduce(
+        (total, term) => total + (normalizedTitle.includes(normalizedSearchText(term)) ? 1 : 0),
+        0,
+      );
+      return { title, score, publishedAt: String(video?.published_at || "") };
+    })
+    .filter((video: { title: string; score: number }) => video.title && video.score > 0)
+    .sort((a: { score: number; publishedAt: string }, b: { score: number; publishedAt: string }) =>
+      b.score - a.score || b.publishedAt.localeCompare(a.publishedAt),
+    );
+
+  if (ranked[0]?.title) return `do seu vídeo “${ranked[0].title}”`;
+  if (channelName) {
+    return prospect?.platform === "instagram"
+      ? `do seu perfil ${channelName} no Instagram`
+      : `do canal ${channelName}`;
+  }
+  return prospect?.platform === "instagram" ? "do seu perfil no Instagram" : "do seu canal";
 };
 
 export const OUTREACH_VARIABLES: OutreachVariable[] = [
@@ -172,11 +204,8 @@ Acredito que seu conteúdo tenha bastante sinergia com a Wiize.
 Se fizer sentido, posso te enviar mais detalhes da parceria.
 
 Abraço,
-
 Caio | Fundador da Wiize
-
 (44) 9 9148-7211
-
 https://www.wiize.com.br/`;
 
 export const DEFAULT_TEMPLATE_SUBJECT = "Parceria com {{nome_canal}} - Wiize";
