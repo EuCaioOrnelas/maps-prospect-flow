@@ -455,6 +455,7 @@ serve(async (req) => {
 
       const visited = new Set<string>();
       for (const site of candidateLinks) {
+        if (outOfTime()) break;
         if (visited.has(site)) continue;
         visited.add(site);
         let html = decodeHtmlEntities(await fetchPage(site));
