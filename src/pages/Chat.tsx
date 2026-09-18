@@ -482,6 +482,7 @@ const Chat = () => {
       />
     </SidebarProvider>
     </>
+    </>
   );
 };
 
@@ -504,4 +505,3 @@ const FeatureCard = ({
 );
 
 export default Chat;
-
