@@ -26,3 +26,4 @@
 - [x] Validar e publicar a geração atualizada
 
 - [x] Corrigir referência de conteúdo e assinatura na geração de campanhas de influenciadores.
+- [x] Centralizar a logo, melhorar a formatação e simplificar o rodapé dos e-mails de influenciadores.
