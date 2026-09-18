@@ -64,19 +64,61 @@ const FieldError = ({ message }: { message?: string }) =>
   ) : null;
 
 export function TemplateBuilderDialog({
-  open, onOpenChange, initialDraft, editing = false, onSubmit,
+  open, onOpenChange, initialDraft, editing = false, onSubmit, onUploadMedia,
 }: TemplateBuilderDialogProps) {
   const [draft, setDraft] = useState<DraftTemplate>(initialDraft ?? emptyDraft());
   const [submitting, setSubmitting] = useState(false);
+  const [submitStage, setSubmitStage] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [touched, setTouched] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+  const [uploadStage, setUploadStage] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setDraft(initialDraft ?? emptyDraft());
       setTouched(false);
+      setMediaFile(null);
+      setMediaPreviewUrl(null);
+      setUploadStage(null);
+      setUploadError(null);
+      setSubmitStage(null);
     }
   }, [open, initialDraft]);
+
+  useEffect(() => () => { if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl); }, [mediaPreviewUrl]);
+
+  const handleFile = async (file: File) => {
+    setUploadError(null);
+    const limit = MEDIA_LIMITS[file.type];
+    if (!limit) {
+      setUploadError("Formato não suportado pela Meta para este tipo de cabeçalho.");
+      return;
+    }
+    if (file.size > limit) {
+      setUploadError(`Arquivo muito grande. O limite para este formato é ${Math.round(limit / (1024 * 1024))} MB.`);
+      return;
+    }
+
+    setMediaFile(file);
+    if (mediaPreviewUrl) URL.revokeObjectURL(mediaPreviewUrl);
+    setMediaPreviewUrl(file.type.startsWith("application/") ? null : URL.createObjectURL(file));
+
+    setUploadStage("Enviando arquivo para a Meta…");
+    const res = await onUploadMedia(file);
+    if (res.error || !res.handle) {
+      setUploadStage(null);
+      setUploadError(res.error || "Não foi possível enviar o arquivo para a Meta.");
+      setDraft((d) => ({ ...d, headerHandle: "" }));
+      return;
+    }
+    setDraft((d) => ({ ...d, headerHandle: res.handle as string }));
+    setUploadStage(null);
+  };
 
   const set = <K extends keyof DraftTemplate>(key: K, value: DraftTemplate[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
