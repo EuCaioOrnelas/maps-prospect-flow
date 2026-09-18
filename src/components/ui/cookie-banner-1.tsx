@@ -65,8 +65,7 @@ const CookiePanel = (props: CookiePanelProps) => {
   const {
     message = "Usamos cookies para oferecer a melhor experiência, manter sua sessão segura, analisar o uso do site e personalizar conteúdos e anúncios.",
     acceptText = "Aceitar cookies",
-    customizeText = "Configurar cookies",
-    rejectText = "Rejeitar cookies não necessários",
+    rejectText = "Rejeitar cookies",
     icon = "cookie",
     className,
     privacyHref = "/privacy",
@@ -76,7 +75,6 @@ const CookiePanel = (props: CookiePanelProps) => {
 
   const [visible, setVisible] = useState(false);
   const [render, setRender] = useState(false);
-  const [showPrefs, setShowPrefs] = useState(false);
   const [prefs, setPrefs] = useState<ConsentPrefs>(getConsent());
 
   useEffect(() => {
