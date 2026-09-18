@@ -66,6 +66,8 @@ import { openStorageUrl } from '@/lib/privateStorage';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 import { LeadSalesBlock } from '@/components/crm/LeadSalesBlock';
 import { useAuth } from '@/contexts/AuthContext';
+import { LeadNotesChat } from '@/components/crm/LeadNotesChat';
+
 
 
 
