@@ -250,6 +250,7 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
 
   const handleClose = () => {
     if (saving) return;
+    if (!canDismiss) return;
     if (onClose) onClose();
   };
 
