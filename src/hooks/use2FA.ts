@@ -9,6 +9,11 @@ export interface TwoFactorStatus {
 }
 
 export async function call2FA<T = any>(action: string, payload: Record<string, unknown> = {}) {
+  // Sem sessão ativa o invoke envia a chave anônima e a função responde 401.
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) {
+    return { data: null as T | null, error: "unauthorized" as string | null };
+  }
   const { data, error } = await supabase.functions.invoke("security-2fa", {
     body: { action, ...payload },
   });
