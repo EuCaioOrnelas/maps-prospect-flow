@@ -91,7 +91,12 @@ export default function AdminInfluencerOutreach() {
   const [openCampaign, setOpenCampaign] = useState<any | null>(null);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [processing, setProcessing] = useState<string | null>(null);
+  // Progresso do envio em segundo plano (continua rodando ao trocar de aba/dialog)
+  const [queueProgress, setQueueProgress] = useState<
+    null | { campaignId: string; name: string; total: number; done: number; sent: number; failed: number; finished: boolean }
+  >(null);
   const runningRef = useRef<string | null>(null);
+
 
   // ── Modelos ───────────────────────────────────────────────────────────────
   const [templates, setTemplates] = useState<any[]>([]);
@@ -205,12 +210,33 @@ export default function AdminInfluencerOutreach() {
     setRecipients(data ?? []);
   };
 
-  const runQueue = async (campaignId: string) => {
-    if (runningRef.current) return;
+  /** Conta o andamento real da fila direto no banco (não depende do dialog aberto). */
+  const fetchQueueStats = async (campaignId: string) => {
+    const { data } = await (supabase as any)
+      .from("influencer_campaign_recipients").select("status").eq("campaign_id", campaignId);
+    const rows = data ?? [];
+    const sent = rows.filter((r: any) => ["enviado", "respondido"].includes(r.status)).length;
+    const failed = rows.filter((r: any) => r.status === "falhou").length;
+    const cancelled = rows.filter((r: any) => r.status === "cancelado").length;
+    return { total: rows.length, sent, failed, done: sent + failed + cancelled };
+  };
+
+  const runQueue = async (campaignId: string, campaignName?: string) => {
+    if (runningRef.current) {
+      toast({ title: "Já existe um envio em andamento", description: "Aguarde a fila atual terminar." });
+      return;
+    }
     runningRef.current = campaignId;
     setProcessing(campaignId);
+    const name = campaignName
+      || campaigns.find((c) => c.id === campaignId)?.name
+      || "Campanha de abordagem";
+    const initial = await fetchQueueStats(campaignId);
+    setQueueProgress({ campaignId, name, finished: false, ...initial });
     try {
-      for (let i = 0; i < 60; i++) {
+      // Lotes controlados: campanhas grandes seguem rodando em segundo plano,
+      // sem travar a interface, até esvaziar a fila.
+      for (let i = 0; i < 400; i++) {
         const { data, error } = await supabase.functions.invoke("influencer-outreach", {
           body: { action: "process", campaign_id: campaignId },
         });
@@ -218,16 +244,23 @@ export default function AdminInfluencerOutreach() {
         if ((data as any)?.error) throw new Error((data as any).error);
         await loadCampaigns();
         if (openCampaign?.id === campaignId) await loadRecipients(campaignId);
+        const stats = await fetchQueueStats(campaignId);
+        setQueueProgress({ campaignId, name, finished: false, ...stats });
         if (((data as any).remaining ?? 0) === 0) break;
       }
-      toast({ title: "Envio concluído", description: "A fila da campanha foi processada." });
+      const final = await fetchQueueStats(campaignId);
+      setQueueProgress({ campaignId, name, finished: true, ...final });
+      toast({ title: "Envio concluído", description: `${final.sent} e-mail(s) enviado(s).` });
+      setTimeout(() => setQueueProgress((p) => (p?.campaignId === campaignId && p.finished ? null : p)), 12000);
     } catch (e: any) {
+      setQueueProgress((p) => (p ? { ...p, finished: true } : p));
       toast({ title: "Falha no envio", description: e.message, variant: "destructive" });
     } finally {
       runningRef.current = null;
       setProcessing(null);
     }
   };
+
 
   const campaignAction = async (action: string, campaignId: string) => {
     const { error } = await supabase.functions.invoke("influencer-outreach", { body: { action, campaign_id: campaignId } });
@@ -834,7 +867,50 @@ export default function AdminInfluencerOutreach() {
         email={approach?.email ?? ""}
         onSent={() => { loadProspects(); loadCampaigns(); }}
       />
+
+      {/* Progresso do envio em segundo plano */}
+      {queueProgress && (
+        <div className="fixed bottom-4 right-4 z-50 w-[320px] rounded-2xl border border-border bg-background p-4 shadow-lg">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold truncate">
+                {queueProgress.finished ? "Envio concluído" : "Enviando abordagens..."}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{queueProgress.name}</p>
+            </div>
+            {queueProgress.finished ? (
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setQueueProgress(null)}
+                aria-label="Fechar"
+              >
+                <XCircle size={14} />
+              </button>
+            ) : (
+              <Loader2 className="animate-spin text-primary shrink-0" size={14} />
+            )}
+          </div>
+          <Progress
+            value={queueProgress.total ? (queueProgress.done / queueProgress.total) * 100 : 0}
+            className="h-2 mt-3"
+          />
+          <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{queueProgress.done}/{queueProgress.total} processados</span>
+            <span>
+              {queueProgress.sent} enviados
+              {queueProgress.failed > 0 ? ` · ${queueProgress.failed} falhas` : ""}
+            </span>
+          </div>
+          {!queueProgress.finished && (
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Pode continuar usando a página — o envio segue em segundo plano.
+            </p>
+          )}
+        </div>
+      )}
     </div>
+
     </TooltipProvider>
   );
 }

@@ -46,13 +46,15 @@ const esc = (s: string) =>
 function htmlToText(html: string) {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
+    // parágrafos viram linha em branco de verdade (preserva o espaçamento do preview)
+    .replace(/<\/(p|div|li|h[1-6])>/gi, "\n\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
 
 const unsubscribeUrlFor = (token: string) => `${APP_URL}/descadastro?token=${token}`;
 const cleanReplyTo = `${REPLY_LOCAL}@${REPLY_DOMAIN}`;
@@ -68,20 +70,20 @@ function removeDuplicatedSignature(text: string) {
     .trim();
 }
 
+// Sem negrito automático: o corpo sai exatamente como está no preview,
+// com uma linha em branco entre parágrafos e quebras simples preservadas.
 function formatEmailBody(text: string) {
   return String(text || "")
     .split(/\n{2,}/)
-    .map((paragraph, index) => {
-      let content = esc(paragraph).replace(/\n/g, "<br>");
-      content = content
-        .replace(/(prospecção com IA|SDR inteligente|IA de análise de engajamento|gestão comercial completa)/gi, "<strong>$1</strong>")
-        .replace(/(50% de comissão|10% de comissão recorrente|15%)/gi, "<strong>$1</strong>")
+    .map((paragraph) => {
+      const content = esc(paragraph)
+        .replace(/\n/g, "<br>")
         .replace(/(https:\/\/www\.wiize\.com\.br\/?)/gi, '<a href="$1" style="color:#0E7C3A;text-decoration:underline;">$1</a>');
-      const isGreeting = index === 0 && /^olá[,!]/i.test(paragraph.trim());
-      return `<p style="margin:0 0 ${index === 0 ? "20" : "18"}px;${isGreeting ? "font-weight:600;" : ""}">${content}</p>`;
+      return `<p style="margin:0 0 16px;">${content}</p>`;
     })
     .join("");
 }
+
 
 /**
  * Layout com identidade visual da Wiize: HTML em tabela, logo oficial hospedada
@@ -92,7 +94,7 @@ function formatEmailBody(text: string) {
 // v2: mesma logo da landing page (ícone + wordmark), 261x80px, ~4KB otimizada.
 const LOGO_URL = "https://wgokhkawjdxsmvfuhazb.supabase.co/storage/v1/object/public/agent-media/email%2Fwiize-logo-v2.png";
 
-function layout(bodyHtml: string, unsubscribeUrl: string) {
+function layout(bodyHtml: string, _unsubscribeUrl?: string) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"></head>
 <body style="margin:0;padding:0;background:#eef1ef;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2328;">
@@ -103,12 +105,10 @@ function layout(bodyHtml: string, unsubscribeUrl: string) {
 <tr><td align="center" style="padding:26px 32px 18px;border-bottom:1px solid #f0f2f1;text-align:center;">
 <img src="${LOGO_URL}" width="131" height="40" alt="Wiize" style="display:block;margin:0 auto;width:131px;max-width:131px;height:40px;border:0;outline:none;text-decoration:none;">
 </td></tr>
-<tr><td style="padding:30px 32px 14px;font-size:15.5px;line-height:1.75;color:#1f2328;">
+<tr><td style="padding:30px 32px 26px;font-size:15.5px;line-height:1.75;color:#1f2328;">
 ${bodyHtml}
 </td></tr>
-<tr><td style="padding:4px 32px 24px;font-size:11px;line-height:1.5;color:#9aa2a8;text-align:center;">
-Não deseja receber novos contatos? <a href="${unsubscribeUrl}" style="color:#7a8580;text-decoration:underline;">Descadastre-se</a>.
-</td></tr>
+
 </table>
 </td></tr></table>
 </body></html>`;
@@ -435,7 +435,7 @@ serve(async (req) => {
         const unsubscribeUrl = unsubscribeUrlFor(optoutToken);
          const cleanText = removeDuplicatedSignature(htmlToText(r.body_html));
          const cleanHtml = formatEmailBody(cleanText);
-         const text = `${cleanText}\n\nPara não receber novos contatos: ${unsubscribeUrl}`;
+         const text = cleanText;
          const html = layout(cleanHtml, unsubscribeUrl);
 
         try {
