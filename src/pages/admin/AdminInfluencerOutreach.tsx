@@ -91,7 +91,12 @@ export default function AdminInfluencerOutreach() {
   const [openCampaign, setOpenCampaign] = useState<any | null>(null);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [processing, setProcessing] = useState<string | null>(null);
+  // Progresso do envio em segundo plano (continua rodando ao trocar de aba/dialog)
+  const [queueProgress, setQueueProgress] = useState<
+    null | { campaignId: string; name: string; total: number; done: number; sent: number; failed: number; finished: boolean }
+  >(null);
   const runningRef = useRef<string | null>(null);
+
 
   // ── Modelos ───────────────────────────────────────────────────────────────
   const [templates, setTemplates] = useState<any[]>([]);
