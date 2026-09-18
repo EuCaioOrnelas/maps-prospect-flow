@@ -15,14 +15,17 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 import {
+  ArrowRight,
+  Bot,
+  CheckCircle2,
   RefreshCw,
   WifiOff,
-  ExternalLink,
+  History,
+  Link2,
   MessageSquare,
   Bell,
-  Sparkles,
   Shield,
-  Clock3,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -251,8 +254,8 @@ const Chat = () => {
             )}
 
             {!isLoading && shouldShowDialog ? (
-              <div className="relative flex-1 overflow-auto bg-gradient-to-b from-background via-background to-muted/20">
-                <header className="h-[58px] min-h-[58px] border-b border-border/60 bg-background/80 backdrop-blur-sm sticky top-0 z-10 flex items-center">
+              <div className="relative flex-1 overflow-auto bg-background">
+                <header className="h-[58px] min-h-[58px] border-b border-border/60 bg-background sticky top-0 z-10 flex items-center">
                   <div className="px-6 sm:px-10 lg:px-14 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <MessageSquare size={16} className="text-primary" />
@@ -264,106 +267,62 @@ const Chat = () => {
                   </div>
                 </header>
 
-                <div className="px-6 sm:px-10 lg:px-14 py-12 lg:py-20 max-w-6xl mx-auto">
-                  {/* Hero card */}
-                  <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm p-8 sm:p-12 lg:p-14 mb-10">
-                    <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-                    <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
-
-                    <div className="relative">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-wider mb-6">
-                        <Sparkles size={11} /> Chat liberado
+                <div className="px-6 sm:px-10 lg:px-14 py-10 lg:py-14 max-w-6xl mx-auto">
+                  <div className="grid lg:grid-cols-[minmax(0,1fr)_420px] gap-10 lg:gap-16 items-center">
+                    <div>
+                      <div className="inline-flex items-center gap-2 text-primary text-xs font-semibold mb-5">
+                        <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10"><CheckCircle2 size={15} /></span>
+                        Chat disponível na sua conta
                       </div>
-
-                      <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.05] mb-6 max-w-3xl">
-                        Conecte um número para <span className="text-primary">começar a atender</span>
+                      <h2 className="text-3xl sm:text-4xl font-bold text-foreground leading-tight mb-4 max-w-2xl">
+                        Atenda seus contatos pelo WhatsApp dentro da Wiize
                       </h2>
-
-                      <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-10 max-w-2xl">
-                        O chat da Wiize está disponível na sua conta. Conecte um número de WhatsApp para responder seus leads sem sair da plataforma, com histórico unificado e contexto comercial.
+                      <p className="text-base text-muted-foreground leading-relaxed max-w-xl mb-7">
+                        Para abrir sua caixa de entrada, conecte um número. As conversas ficam organizadas por contato e integradas ao contexto comercial do CRM.
                       </p>
+
+                      <div className="space-y-4 mb-8">
+                        <ConnectionStep icon={<Link2 size={17} />} number="01" title="Conecte seu WhatsApp" description="Escolha o tipo de número e conclua a conexão com segurança." />
+                        <ConnectionStep icon={<History size={17} />} number="02" title="Centralize as conversas" description="Acompanhe mensagens e histórico em uma única caixa de entrada." />
+                        <ConnectionStep icon={<Users size={17} />} number="03" title="Atenda com seu time" description="Distribua responsáveis e trabalhe com as informações do CRM ao lado." />
+                      </div>
 
                       <div className="flex flex-col sm:flex-row gap-3">
-                        <Button size="lg" className="gap-2 h-12 px-6 text-sm shadow-md" onClick={() => navigate("/numeros")}>
-                          Conectar número
+                        <Button size="lg" className="gap-2 h-12 px-6 text-sm" onClick={() => navigate("/numeros")}>
+                          Conectar meu número <ArrowRight size={16} />
                         </Button>
-                        <Button variant="outline" size="lg" className="h-12 px-6 text-sm" onClick={() => navigate("/dashboard")}>
-                          Voltar ao dashboard
+                        <Button variant="ghost" size="lg" className="h-12 px-5 text-sm text-muted-foreground" onClick={() => navigate("/dashboard")}>
+                          Voltar ao painel
                         </Button>
                       </div>
                     </div>
-                  </div>
 
-
-
-                  {/* Feature cards */}
-                  <div className="mb-10">
-                    <div className="flex items-center gap-3 mb-6">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        O que vem por aí
-                      </p>
-                      <div className="h-px flex-1 bg-border/60" />
-                    </div>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <FeatureCard
-                        icon={<Clock3 size={18} className="text-primary" />}
-                        title="Respostas em tempo real"
-                        description="Acompanhe e responda mensagens com atualização contínua dentro da plataforma."
-                      />
-                      <FeatureCard
-                        icon={<MessageSquare size={18} className="text-primary" />}
-                        title="Histórico por contato"
-                        description="Visualize toda a linha do tempo da conversa em um só lugar."
-                      />
-                      <FeatureCard
-                        icon={<Shield size={18} className="text-primary" />}
-                        title="Operação mais segura"
-                        description="Uso via infraestrutura oficial, com mais controle e rastreabilidade."
-                      />
-                      <FeatureCard
-                        icon={<Bell size={18} className="text-primary" />}
-                        title="Integração com CRM"
-                        description="Contexto do lead, tags e acompanhamento comercial na mesma rotina."
-                      />
-                    </div>
-                  </div>
-
-                  {/* Info cards */}
-                  <div className="grid lg:grid-cols-2 gap-5">
-                    <div className="rounded-2xl border border-border/60 bg-card p-7 hover:border-border transition-colors">
-                      <div className="flex items-center gap-2.5 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Clock3 size={15} className="text-primary" />
+                    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm" aria-label="Exemplo da caixa de entrada Wiize">
+                      <div className="flex items-center gap-3 border-b border-border bg-muted/40 px-4 py-3">
+                        <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary"><Bot size={18} /></div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground">Atendimento Wiize</p>
+                          <p className="text-[11px] text-muted-foreground">Conversa integrada ao CRM</p>
                         </div>
-                        <p className="text-sm font-semibold text-foreground">
-                          Como usar enquanto liberamos
-                        </p>
+                        <span className="ml-auto size-2 rounded-full bg-primary" />
                       </div>
-                      <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
-                        <p>
-                          Por enquanto, o atendimento deve ser feito no sistema oficial da Meta. Assim você continua respondendo seus leads normalmente sem interromper a operação.
-                        </p>
-                        <p>
-                          Quando o módulo estiver concluído, o objetivo é centralizar atendimento, contexto do CRM e histórico de mensagens em uma experiência única dentro da Wiize.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-border/60 bg-card p-7 hover:border-border transition-colors">
-                      <div className="flex items-center gap-2.5 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Sparkles size={15} className="text-primary" />
+                      <div className="wa-chat-bg min-h-[300px] p-5 flex flex-col justify-end gap-3">
+                        <div className="wa-chat-glow" />
+                        <div className="wa-date-badge self-center rounded-lg px-2.5 py-1 text-[10px]">HOJE</div>
+                        <div className="wa-bubble-in self-start max-w-[82%] rounded-[7.5px] rounded-tl-none px-3 py-2 shadow-sm">
+                          <p className="wa-text-primary text-sm">Olá! Gostaria de entender melhor como funciona.</p>
+                          <p className="wa-text-timestamp mt-1 text-right text-[10px]">10:42</p>
                         </div>
-                        <p className="text-sm font-semibold text-foreground">
-                          O que vai entrar nesta versão
-                        </p>
+                        <div className="wa-bubble-out self-end max-w-[82%] rounded-[7.5px] rounded-tr-none px-3 py-2 shadow-sm">
+                          <p className="wa-text-primary text-sm">Claro! Vou te ajudar por aqui.</p>
+                          <p className="wa-text-timestamp mt-1 text-right text-[10px]">10:43</p>
+                        </div>
                       </div>
-                      <ul className="space-y-2.5 text-sm text-foreground/90">
-                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Caixa de entrada unificada</li>
-                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Visualização completa da conversa</li>
-                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Ações comerciais conectadas ao CRM</li>
-                        <li className="flex items-start gap-3"><span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />Fluxo operacional mais rápido para o time</li>
-                      </ul>
+                      <div className="grid grid-cols-3 divide-x divide-border border-t border-border bg-card">
+                        <Capability icon={<MessageSquare size={15} />} label="Mensagens" />
+                        <Capability icon={<Shield size={15} />} label="Seguro" />
+                        <Capability icon={<Bell size={15} />} label="Tempo real" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -485,21 +444,32 @@ const Chat = () => {
   );
 };
 
-const FeatureCard = ({
+const ConnectionStep = ({
   icon,
+  number,
   title,
   description,
 }: {
   icon: ReactNode;
+  number: string;
   title: string;
   description: string;
 }) => (
-  <div className="group rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all duration-200">
-    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 mb-3 group-hover:bg-primary/15 transition-colors">
-      {icon}
+  <div className="flex items-start gap-4">
+    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">{icon}</div>
+    <div className="min-w-0">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-semibold text-muted-foreground">{number}</span>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      </div>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
     </div>
-    <h4 className="text-sm font-semibold text-foreground mb-1.5">{title}</h4>
-    <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+  </div>
+);
+
+const Capability = ({ icon, label }: { icon: ReactNode; label: string }) => (
+  <div className="flex items-center justify-center gap-1.5 py-3 text-[11px] font-medium text-muted-foreground">
+    <span className="text-primary">{icon}</span>{label}
   </div>
 );
 
