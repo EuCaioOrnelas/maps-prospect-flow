@@ -35,7 +35,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
+import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { hasSDRAccess } from "@/lib/planAccess";
 import { clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
@@ -115,8 +115,8 @@ const ProspeccaoWeb = () => {
       .maybeSingle()
       .then(({ data }) => {
         setCompanyProfile(data);
-        // Sem perfil da empresa: obriga a criação antes de usar a página
-        if (!data) setShowCompanyOnboarding(true);
+        // Sem perfil da empresa (ou sem o tipo de atuação): obriga a completar antes de usar a página
+        if (!data || isBusinessModelMissing(data)) setShowCompanyOnboarding(true);
       });
   }, [user, accountOwnerId]);
 

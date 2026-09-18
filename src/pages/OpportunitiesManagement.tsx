@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CompanyProfileOnboarding } from "@/components/opportunities/CompanyProfileOnboarding";
+import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -236,6 +236,8 @@ export default function OpportunitiesManagement() {
 
       if (data) {
         setCompanyProfile(data);
+        // Perfil antigo sem o tipo de atuação: obriga a completar
+        if (isBusinessModelMissing(data)) setShowOnboarding(true);
         // Check last_message_sent_at for cooldown
         if ((data as any).last_message_sent_at) {
           const lastSent = new Date((data as any).last_message_sent_at).getTime();

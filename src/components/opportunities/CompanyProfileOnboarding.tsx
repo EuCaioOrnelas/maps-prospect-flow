@@ -81,12 +81,19 @@ export const BUSINESS_MODEL_OPTIONS = [
 const TOTAL_STEPS = PROFILE_STEPS.length + 1;
 const SERVICES_STEP_INDEX = PROFILE_STEPS.length;
 
+export const isBusinessModelMissing = (profile?: any) =>
+  !!profile && !String((profile as any)?.company_business_model || "").trim();
+
+const BUSINESS_MODEL_STEP_INDEX = PROFILE_STEPS.findIndex((s) => s.key === "company_business_model");
+
 export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete, onClose, initialData }: Props) {
   const { toast } = useToast();
   const effectiveOwnerId = ownerUserId || userId;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const isEditing = !!initialData;
+  const mustFillBusinessModel = isBusinessModelMissing(initialData);
+  const canDismiss = isEditing && !mustFillBusinessModel;
 
   const [form, setForm] = useState<CompanyProfile>(() => normalizeCompanyProfile(initialData));
   const [services, setServices] = useState<ServiceItem[]>([{ name: "", average_ticket: 0, description: "" }]);
@@ -95,7 +102,7 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
   useEffect(() => {
     if (!open) return;
     setForm(initialData ? normalizeCompanyProfile(initialData) : createEmptyCompanyProfile());
-    setStep(0);
+    setStep(isBusinessModelMissing(initialData) ? Math.max(0, BUSINESS_MODEL_STEP_INDEX) : 0);
 
     // Load existing services
     const loadServices = async () => {
@@ -243,6 +250,7 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
 
   const handleClose = () => {
     if (saving) return;
+    if (!canDismiss) return;
     if (onClose) onClose();
   };
 
@@ -254,12 +262,12 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent
         className="sm:max-w-lg max-h-[90vh] overflow-y-auto"
-        hideCloseButton={!isEditing}
+        hideCloseButton={!canDismiss}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        {isEditing && (
+        {canDismiss && (
           <button
             onClick={handleClose}
             className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -274,10 +282,14 @@ export function CompanyProfileOnboarding({ open, userId, ownerUserId, onComplete
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Sparkles size={18} className="text-primary" />
             </div>
-            {isEditing ? "Editar Perfil de Prospecção" : "Configure seu Perfil de Prospecção"}
+            {mustFillBusinessModel
+              ? "Confirme como sua empresa atua"
+              : isEditing ? "Editar Perfil de Prospecção" : "Configure seu Perfil de Prospecção"}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
+            {mustFillBusinessModel
+              ? "Falta essa informação no seu perfil. Sem ela a IA pode escrever abordagens fora do seu tipo de negócio."
+              : isEditing
               ? "Atualize as informações da sua empresa para manter as mensagens de IA sempre relevantes."
               : "Para gerar mensagens personalizadas com IA, precisamos entender melhor sua empresa."}
           </DialogDescription>
