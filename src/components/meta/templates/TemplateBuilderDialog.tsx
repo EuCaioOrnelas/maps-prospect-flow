@@ -27,7 +27,25 @@ interface TemplateBuilderDialogProps {
   initialDraft?: DraftTemplate | null;
   editing?: boolean;
   onSubmit: (draft: DraftTemplate) => Promise<boolean>;
+  onUploadMedia: (file: File) => Promise<{ handle?: string; error?: string }>;
 }
+
+type MediaFormat = "IMAGE" | "VIDEO" | "DOCUMENT";
+
+const ACCEPT: Record<MediaFormat, string> = {
+  IMAGE: "image/jpeg,image/png",
+  VIDEO: "video/mp4,video/3gpp",
+  DOCUMENT: "application/pdf",
+};
+
+// Limits published by the WhatsApp Cloud API for template header samples.
+const MEDIA_LIMITS: Record<string, number> = {
+  "image/jpeg": 5 * 1024 * 1024,
+  "image/png": 5 * 1024 * 1024,
+  "video/mp4": 16 * 1024 * 1024,
+  "video/3gpp": 16 * 1024 * 1024,
+  "application/pdf": 16 * 1024 * 1024,
+};
 
 const HEADER_OPTIONS = [
   { value: "NONE", label: "Nenhum" },
