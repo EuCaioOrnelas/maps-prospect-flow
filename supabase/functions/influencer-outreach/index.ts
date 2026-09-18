@@ -70,20 +70,20 @@ function removeDuplicatedSignature(text: string) {
     .trim();
 }
 
+// Sem negrito automático: o corpo sai exatamente como está no preview,
+// com uma linha em branco entre parágrafos e quebras simples preservadas.
 function formatEmailBody(text: string) {
   return String(text || "")
     .split(/\n{2,}/)
-    .map((paragraph, index) => {
-      let content = esc(paragraph).replace(/\n/g, "<br>");
-      content = content
-        .replace(/(prospecção com IA|SDR inteligente|IA de análise de engajamento|gestão comercial completa)/gi, "<strong>$1</strong>")
-        .replace(/(50% de comissão|10% de comissão recorrente|15%)/gi, "<strong>$1</strong>")
+    .map((paragraph) => {
+      const content = esc(paragraph)
+        .replace(/\n/g, "<br>")
         .replace(/(https:\/\/www\.wiize\.com\.br\/?)/gi, '<a href="$1" style="color:#0E7C3A;text-decoration:underline;">$1</a>');
-      const isGreeting = index === 0 && /^olá[,!]/i.test(paragraph.trim());
-      return `<p style="margin:0 0 ${index === 0 ? "20" : "18"}px;${isGreeting ? "font-weight:600;" : ""}">${content}</p>`;
+      return `<p style="margin:0 0 16px;">${content}</p>`;
     })
     .join("");
 }
+
 
 /**
  * Layout com identidade visual da Wiize: HTML em tabela, logo oficial hospedada
