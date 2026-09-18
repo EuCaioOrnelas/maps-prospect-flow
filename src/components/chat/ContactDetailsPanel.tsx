@@ -26,6 +26,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
+import { LeadNotesChat } from "@/components/crm/LeadNotesChat";
+
 import { SDRStatusBanner } from "@/components/sdr/SDRStatusBanner";
 
 import type { ChatConversation, ChatMessage } from "@/hooks/useChat";
@@ -124,8 +126,8 @@ export function ContactDetailsPanel({
   const [photoOpen, setPhotoOpen] = useState(false);
   const [photoRefreshing, setPhotoRefreshing] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [noteDraft, setNoteDraft] = useState("");
-  const [savingNote, setSavingNote] = useState(false);
+  const [detailsTab, setDetailsTab] = useState("geral");
+
 
   const initials = useMemo(
     () => getChatInitials(conversation?.contact_name, conversation?.contact_phone || ""),
@@ -271,36 +273,6 @@ export function ContactDetailsPanel({
     } catch { toast.error("Erro ao apagar"); }
   };
 
-  const handleAddNote = async () => {
-    const content = noteDraft.trim();
-    if (!content) return;
-    if (!lead?.id) {
-      toast.error("Salve o contato no CRM antes de adicionar notas");
-      return;
-    }
-    if (!user || !accountOwnerId) return;
-    setSavingNote(true);
-    try {
-      const { data, error } = await supabase
-        .from("lead_notes")
-        .insert({
-          lead_id: lead.id,
-          user_id: user.id,
-          owner_user_id: accountOwnerId,
-          content,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      setNotes((prev) => [data, ...prev]);
-      setNoteDraft("");
-      toast.success("Nota adicionada");
-    } catch (e: any) {
-      toast.error("Erro ao salvar nota: " + (e?.message || ""));
-    } finally {
-      setSavingNote(false);
-    }
-  };
 
   const handleRequireLead = () => {
     toast.error("Salve o contato no CRM primeiro");
@@ -404,7 +376,7 @@ export function ContactDetailsPanel({
 
 
           {/* Tabs */}
-          <Tabs defaultValue="geral" className="px-3 pt-3">
+          <Tabs value={detailsTab} onValueChange={setDetailsTab} className="px-3 pt-3">
             <TabsList className="w-full grid grid-cols-4 h-9">
               <TabsTrigger value="geral" className="text-xs">Geral</TabsTrigger>
               <TabsTrigger value="vendas" className="text-xs">Vendas</TabsTrigger>
@@ -423,6 +395,16 @@ export function ContactDetailsPanel({
                 <span className="flex-1 text-sm text-foreground">Pesquisar na conversa</span>
                 <ChevronRight size={14} className="text-muted-foreground" />
               </button>
+
+              <button
+                onClick={() => setDetailsTab("notas")}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border bg-background/50 hover:bg-muted/60 transition text-left"
+              >
+                <StickyNote size={16} className="text-primary" />
+                <span className="flex-1 text-sm text-foreground">Notas da equipe e histórico</span>
+                <ChevronRight size={14} className="text-muted-foreground" />
+              </button>
+
 
               <section className="rounded-xl border border-border bg-background/50 p-3 space-y-2">
                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
@@ -575,36 +557,14 @@ export function ContactDetailsPanel({
             </TabsContent>
 
             {/* NOTAS */}
-            <TabsContent value="notas" className="space-y-3 py-4">
-              <div className="rounded-xl border border-border bg-background/50 p-2.5 space-y-2">
-                <Textarea
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder={lead?.id ? "Escreva uma nota sobre este contato..." : "Salve o contato no CRM para adicionar notas"}
-                  rows={3}
-                  disabled={!lead?.id || savingNote}
-                  className="text-sm resize-none"
-                />
-                <div className="flex justify-end">
-                  <Button
-                    size="sm"
-                    onClick={handleAddNote}
-                    disabled={!noteDraft.trim() || !lead?.id || savingNote}
-                    className="gap-1.5"
-                  >
-                    {savingNote ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                    Adicionar nota
-                  </Button>
-                </div>
-              </div>
-              {notes.length === 0 && <EmptyState icon={StickyNote} text="Nenhuma nota cadastrada" />}
-              {notes.map((n) => (
-                <div key={n.id} className="rounded-xl border border-border bg-background/50 p-3">
-                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">{n.content}</p>
-                  <p className="text-[11px] text-muted-foreground mt-2">{fmtDate(n.created_at)}</p>
-                </div>
-              ))}
+            <TabsContent value="notas" className="py-4">
+              <LeadNotesChat
+                leadId={lead?.id}
+                heightClass="h-[360px]"
+                emptyHint={lead?.id ? "Nenhuma nota ainda. Converse com sua equipe sobre este contato." : "Salve o contato no CRM para usar as notas da equipe."}
+              />
             </TabsContent>
+
 
             {/* HISTÓRICO */}
             <TabsContent value="historico" className="space-y-2 py-4">

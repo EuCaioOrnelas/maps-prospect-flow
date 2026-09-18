@@ -459,47 +459,38 @@ export const useCRM = () => {
     }]);
   };
 
-  // Add note
+  // Add note (conteúdo é criptografado no backend)
   const addNote = async (leadId: string, content: string) => {
     if (!user) return null;
 
-    const { data, error } = await supabase
-      .from('lead_notes')
-      .insert({
-        lead_id: leadId,
-        user_id: user.id,
-        owner_user_id: effectiveOwnerId || user.id,
-        content,
-      })
-      .select()
-      .single();
+    const { data, error } = await supabase.functions.invoke('lead-notes', {
+      body: { action: 'create', lead_id: leadId, content },
+    });
 
-    if (error) {
-      console.error('Error adding note:', error);
-      throw error;
+    if (error || data?.error) {
+      console.error('Error adding note:', error || data?.error);
+      throw new Error(data?.error || 'Erro ao salvar nota');
     }
 
-    return data;
+    return data?.note || null;
   };
 
-  // Fetch notes for a lead
+  // Fetch notes for a lead (texto decifrado pelo backend)
   const fetchNotes = async (leadId: string) => {
     if (!user) return [];
 
-    const { data, error } = await supabase
-      .from('lead_notes')
-      .select('*')
-      .eq('lead_id', leadId)
-      .eq('owner_user_id', accountOwnerId)
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.functions.invoke('lead-notes', {
+      body: { action: 'list', lead_id: leadId },
+    });
 
     if (error) {
       console.error('Error fetching notes:', error);
       return [];
     }
 
-    return data || [];
+    return (data?.notes || []) as Array<{ id: string; lead_id: string; user_id: string; content: string; created_at: string; reply_to_id: string | null }>;
   };
+
 
   // Fetch activities for a lead
   const fetchActivities = async (leadId: string) => {
