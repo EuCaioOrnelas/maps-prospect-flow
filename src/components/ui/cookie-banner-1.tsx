@@ -15,7 +15,6 @@ interface CookiePanelProps {
   title?: string;
   message?: string;
   acceptText?: string;
-  customizeText?: string;
   rejectText?: string;
   icon?: "cookie" | "shield" | "info";
   className?: string;
