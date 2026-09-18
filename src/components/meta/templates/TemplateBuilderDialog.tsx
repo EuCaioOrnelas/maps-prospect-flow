@@ -485,7 +485,8 @@ export function TemplateBuilderDialog({
             </div>
           </div>
 
-          <DialogFooter className="pt-3 border-t border-border/50">
+          <DialogFooter className="pt-3 border-t border-border/50 sm:justify-between">
+            <p className="text-xs text-muted-foreground self-center">{submitStage || uploadStage || ""}</p>
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancelar</Button>
             <Button
               onClick={() => { setTouched(true); if (!list.length) setConfirmOpen(true); }}
