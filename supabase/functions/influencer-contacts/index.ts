@@ -394,8 +394,13 @@ serve(async (req) => {
     }
 
     const results: any[] = [];
+    // orçamento de tempo: a plataforma corta a requisição em 150s
+    const deadline = Date.now() + 110_000;
+    const outOfTime = () => Date.now() > deadline;
+    const pending: string[] = [];
 
     for (const p of prospects) {
+      if (outOfTime()) { pending.push(p.id); continue; }
       const found: Found[] = [];
       const yt = ytById.get(p.youtube_channel_id);
 
