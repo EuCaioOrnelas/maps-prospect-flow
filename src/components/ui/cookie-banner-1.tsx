@@ -121,45 +121,47 @@ const CookiePanel = (props: CookiePanelProps) => {
     >
       <div className="mx-auto max-h-[70vh] w-full max-w-[1400px] overflow-y-auto px-4 py-4 sm:px-8 sm:py-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <IconEl className="size-4" />
+          <div className="flex items-center gap-3">
+            <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <IconEl className="size-6" />
             </span>
             <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
               {message} Para mais informações, consulte nosso{" "}
-              <a href={privacyHref} className="font-semibold text-foreground hover:underline">
+              <a href={privacyHref} className="font-semibold text-foreground underline underline-offset-2 hover:opacity-80">
                 Aviso de Privacidade
               </a>{" "}
               e os{" "}
-              <a href={termsHref} className="font-semibold text-foreground hover:underline">
+              <a href={termsHref} className="font-semibold text-foreground underline underline-offset-2 hover:opacity-80">
                 Termos de Uso
               </a>
               .
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:shrink-0">
+          <div className="flex flex-col items-center gap-2 sm:items-end lg:shrink-0">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={() => setShowPrefs((p) => !p)}
+                aria-expanded={showPrefs}
+                className="rounded-lg border border-border px-4 py-2 text-xs font-medium transition-colors hover:bg-muted sm:text-sm"
+              >
+                {customizeText}
+              </button>
+              <button
+                type="button"
+                onClick={() => decide(ALL_GRANTED)}
+                className="rounded-lg bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary/90 sm:text-sm"
+              >
+                {acceptText}
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => decide(MARKETING_DENIED)}
-              className="rounded-lg border border-border/70 px-3 py-2 text-[11px] font-normal text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+              className="text-[11px] text-muted-foreground/70 transition-colors hover:text-foreground"
             >
               {rejectText}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPrefs((p) => !p)}
-              aria-expanded={showPrefs}
-              className="rounded-lg border border-border px-4 py-2 text-xs font-medium transition-colors hover:bg-muted sm:text-sm"
-            >
-              {customizeText}
-            </button>
-            <button
-              type="button"
-              onClick={() => decide(ALL_GRANTED)}
-              className="rounded-lg bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-md shadow-primary/20 transition-colors hover:bg-primary/90 sm:text-sm"
-            >
-              {acceptText}
             </button>
           </div>
         </div>
