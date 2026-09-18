@@ -46,13 +46,15 @@ const esc = (s: string) =>
 function htmlToText(html: string) {
   return html
     .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
+    // parágrafos viram linha em branco de verdade (preserva o espaçamento do preview)
+    .replace(/<\/(p|div|li|h[1-6])>/gi, "\n\n")
     .replace(/<[^>]+>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
 
 const unsubscribeUrlFor = (token: string) => `${APP_URL}/descadastro?token=${token}`;
 const cleanReplyTo = `${REPLY_LOCAL}@${REPLY_DOMAIN}`;
