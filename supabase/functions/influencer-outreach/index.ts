@@ -435,7 +435,7 @@ serve(async (req) => {
         const unsubscribeUrl = unsubscribeUrlFor(optoutToken);
          const cleanText = removeDuplicatedSignature(htmlToText(r.body_html));
          const cleanHtml = formatEmailBody(cleanText);
-         const text = `${cleanText}\n\nPara não receber novos contatos: ${unsubscribeUrl}`;
+         const text = cleanText;
          const html = layout(cleanHtml, unsubscribeUrl);
 
         try {
