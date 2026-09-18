@@ -28,6 +28,7 @@ import {
   Workflow,
   LayoutDashboard as LayoutDashboardIcon,
   Megaphone as MegaphoneIcon,
+  MessageSquare as MessageSquareIcon,
   FileText,
   Phone,
   RotateCcw,
