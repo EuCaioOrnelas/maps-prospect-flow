@@ -551,6 +551,7 @@ export function useChat() {
           media_mime_type: file.type,
           client_token: tempId,
           waba_connection_id: connection.id,
+          reply_to_message_id: replyToId || null,
         },
       }).then(({ error: fnError }) => {
         if (fnError) {
