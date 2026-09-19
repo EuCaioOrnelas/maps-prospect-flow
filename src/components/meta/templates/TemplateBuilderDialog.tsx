@@ -14,7 +14,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Trash2, AlertCircle, CheckCircle2, Info, Upload, FileText } from "lucide-react";
+import {
+  Loader2, Plus, Trash2, AlertCircle, CheckCircle2, Info, Upload, FileText,
+  LayoutGrid, Image as ImageIcon, MessageSquare, Type, MousePointerClick, Save, Send, Braces,
+} from "lucide-react";
 import { TemplatePreview } from "./TemplatePreview";
 import {
   DraftTemplate, TEMPLATE_CATEGORIES, TEMPLATE_LANGUAGES, emptyDraft,
@@ -27,8 +30,19 @@ interface TemplateBuilderDialogProps {
   initialDraft?: DraftTemplate | null;
   editing?: boolean;
   onSubmit: (draft: DraftTemplate) => Promise<boolean>;
+  onSaveDraft?: (draft: DraftTemplate) => Promise<boolean>;
   onUploadMedia: (file: File) => Promise<{ handle?: string; error?: string }>;
 }
+
+const SectionTitle = ({ icon: Icon, children }: { icon: any; children: React.ReactNode }) => (
+  <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <Icon className="h-4 w-4" aria-hidden />
+    </span>
+    {children}
+  </h3>
+);
+
 
 type MediaFormat = "IMAGE" | "VIDEO" | "DOCUMENT";
 
@@ -64,19 +78,22 @@ const FieldError = ({ message }: { message?: string }) =>
   ) : null;
 
 export function TemplateBuilderDialog({
-  open, onOpenChange, initialDraft, editing = false, onSubmit, onUploadMedia,
+  open, onOpenChange, initialDraft, editing = false, onSubmit, onSaveDraft, onUploadMedia,
 }: TemplateBuilderDialogProps) {
   const [draft, setDraft] = useState<DraftTemplate>(initialDraft ?? emptyDraft());
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [submitStage, setSubmitStage] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [touched, setTouched] = useState(false);
 
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
   const [uploadStage, setUploadStage] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (open) {
@@ -127,10 +144,37 @@ export function TemplateBuilderDialog({
   const varCount = useMemo(() => new Set(bodyPlaceholders(draft.body)).size, [draft.body]);
   const showErrors = touched;
 
+  /** Renumbers {{n}} sequentially and keeps the examples aligned with them. */
+  const applyBody = (rawBody: string, prevExamples: string[]) => {
+    const seen: number[] = [];
+    bodyPlaceholders(rawBody).forEach((n) => { if (!seen.includes(n)) seen.push(n); });
+
+    const body = rawBody.replace(/\{\{(\d+)\}\}/g, (_m, n) => `{{${seen.indexOf(Number(n)) + 1}}}`);
+    const examples = seen.map((oldIndex) => prevExamples[oldIndex - 1] ?? "");
+    return { body, examples };
+  };
+
+
+  const setBody = (value: string) => {
+    setDraft((d) => {
+      const { body, examples } = applyBody(value, d.bodyExamples);
+      return { ...d, body, bodyExamples: examples };
+    });
+  };
+
+  /** Inserts the next variable exactly where the cursor is. */
   const addVariable = () => {
-    const next = varCount + 1;
-    set("body", `${draft.body}{{${next}}}`);
-    set("bodyExamples", [...draft.bodyExamples, ""]);
+    const el = bodyRef.current;
+    const token = `{{${varCount + 1}}}`;
+    const start = el?.selectionStart ?? draft.body.length;
+    const end = el?.selectionEnd ?? draft.body.length;
+    const next = `${draft.body.slice(0, start)}${token}${draft.body.slice(end)}`;
+    setBody(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      const pos = start + token.length;
+      el?.setSelectionRange(pos, pos);
+    });
   };
 
   const setExample = (index: number, value: string) => {
@@ -142,6 +186,18 @@ export function TemplateBuilderDialog({
   const updateButton = (index: number, patch: Partial<TemplateButton>) => {
     const next = draft.buttons.map((b, i) => (i === index ? { ...b, ...patch } : b));
     set("buttons", next);
+  };
+
+  const handleSaveDraft = async () => {
+    if (!onSaveDraft) return;
+    setTouched(true);
+    if (!draft.name.trim() || errors.name) return;
+    setSavingDraft(true);
+    setSubmitStage("Salvando rascunho…");
+    const ok = await onSaveDraft(draft);
+    setSubmitStage(null);
+    setSavingDraft(false);
+    if (ok) onOpenChange(false);
   };
 
   const handleSubmit = async () => {
@@ -159,22 +215,29 @@ export function TemplateBuilderDialog({
     if (ok) onOpenChange(false);
   };
 
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[92vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{editing ? "Editar template" : "Criar template"}</DialogTitle>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-5xl max-h-[88vh] overflow-hidden flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/60">
+            <DialogTitle className="flex items-center gap-2.5 text-lg">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <MessageSquare className="h-[18px] w-[18px]" aria-hidden />
+              </span>
+              {editing ? "Editar template" : "Criar template"}
+            </DialogTitle>
             <DialogDescription>
               O conteúdo é enviado para análise da Meta. Nome e idioma não podem ser alterados depois da criação.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto grid lg:grid-cols-[1.4fr_1fr] gap-6 pr-1">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden grid lg:grid-cols-[1.4fr_1fr] gap-6 p-6">
             {/* ----------------------------------------------------------- form */}
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0">
               <section className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Informações básicas</h3>
+                <SectionTitle icon={LayoutGrid}>Informações básicas</SectionTitle>
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
                     <Label className="text-xs text-muted-foreground">Nome do template</Label>
@@ -198,11 +261,14 @@ export function TemplateBuilderDialog({
                       <SelectContent>
                         {TEMPLATE_CATEGORIES.map((c) => (
                           <SelectItem key={c.value} value={c.value}>
-                            <span className="font-medium">{c.label}</span>
-                            <span className="text-muted-foreground"> — {c.hint}</span>
+                            <span className="flex flex-col text-left">
+                              <span className="font-medium">{c.label}</span>
+                              <span className="text-[11px] text-muted-foreground">{c.hint}</span>
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
+
                     </Select>
                     <FieldError message={showErrors ? errors.category : undefined} />
                   </div>
@@ -225,7 +291,7 @@ export function TemplateBuilderDialog({
               <Separator />
 
               <section className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Cabeçalho</h3>
+                <SectionTitle icon={ImageIcon}>Cabeçalho</SectionTitle>
                 <Select
                   value={draft.headerFormat}
                   onValueChange={(v) => set("headerFormat", v as DraftTemplate["headerFormat"])}
@@ -334,15 +400,16 @@ export function TemplateBuilderDialog({
               <Separator />
 
               <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Corpo da mensagem</h3>
-                  <Button type="button" variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={addVariable}>
-                    <Plus className="h-3.5 w-3.5" /> Adicionar variável
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <SectionTitle icon={MessageSquare}>Corpo da mensagem</SectionTitle>
+                  <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={addVariable}>
+                    <Braces className="h-3.5 w-3.5" /> Adicionar variável
                   </Button>
                 </div>
                 <Textarea
+                  ref={bodyRef}
                   value={draft.body}
-                  onChange={(e) => set("body", e.target.value)}
+                  onChange={(e) => setBody(e.target.value)}
                   rows={6}
                   maxLength={1024}
                   placeholder={"Olá, {{1}}!\nSeu pedido {{2}} foi confirmado."}
@@ -354,7 +421,7 @@ export function TemplateBuilderDialog({
                 <FieldError message={showErrors ? errors.body : undefined} />
 
                 {varCount > 0 && (
-                  <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+                  <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
                     <p className="flex items-start gap-2 text-xs text-muted-foreground">
                       <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
                       Os exemplos ajudam a Meta a entender o uso das variáveis durante a análise.
@@ -368,6 +435,14 @@ export function TemplateBuilderDialog({
                           placeholder={i === 0 ? "Caio" : "#12345"}
                           className="h-8"
                         />
+                        <Button
+                          type="button" variant="ghost" size="sm"
+                          className="h-8 w-8 p-0 text-muted-foreground shrink-0"
+                          aria-label={`Remover variável ${i + 1}`}
+                          onClick={() => setBody(draft.body.split(`{{${i + 1}}}`).join(""))}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     ))}
                     <FieldError message={showErrors ? errors.bodyExamples : undefined} />
@@ -378,7 +453,7 @@ export function TemplateBuilderDialog({
               <Separator />
 
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">Rodapé (opcional)</h3>
+                <SectionTitle icon={Type}>Rodapé (opcional)</SectionTitle>
                 <Input
                   value={draft.footer}
                   maxLength={60}
@@ -391,10 +466,10 @@ export function TemplateBuilderDialog({
               <Separator />
 
               <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Botões (opcional)</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <SectionTitle icon={MousePointerClick}>Botões (opcional)</SectionTitle>
                   <Button
-                    type="button" variant="outline" size="sm" className="h-7 gap-1.5 text-xs"
+                    type="button" variant="outline" size="sm" className="h-8 gap-1.5 text-xs"
                     disabled={draft.buttons.length >= 10}
                     onClick={() => set("buttons", [...draft.buttons, { type: "QUICK_REPLY", text: "" }])}
                   >
@@ -485,17 +560,31 @@ export function TemplateBuilderDialog({
             </div>
           </div>
 
-          <DialogFooter className="pt-3 border-t border-border/50 sm:justify-between">
-            <p className="text-xs text-muted-foreground self-center">{submitStage || uploadStage || ""}</p>
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Cancelar</Button>
-            <Button
-              onClick={() => { setTouched(true); if (!list.length) setConfirmOpen(true); }}
-              disabled={submitting}
-            >
-              {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Enviar para análise
-            </Button>
+          <DialogFooter className="px-6 py-4 border-t border-border/60 bg-muted/20 flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting || savingDraft}>
+                Cancelar
+              </Button>
+              <p className="hidden sm:block text-xs text-muted-foreground">{submitStage || uploadStage || ""}</p>
+            </div>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+              {onSaveDraft && (
+                <Button variant="secondary" onClick={handleSaveDraft} disabled={submitting || savingDraft} className="gap-2">
+                  {savingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Salvar rascunho
+                </Button>
+              )}
+              <Button
+                onClick={() => { setTouched(true); if (!list.length) setConfirmOpen(true); }}
+                disabled={submitting || savingDraft}
+                className="gap-2"
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Enviar para análise
+              </Button>
+            </div>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 

@@ -388,6 +388,89 @@ Deno.serve(async (req) => {
       return json({ success: true, handle: uploadPayload.h });
     }
 
+    /* ------------------------------------------------------------ SAVE DRAFT */
+    // Drafts live only in our database (never sent to Meta) until the user submits.
+    if (action === "save_draft") {
+      const payloadIn = body?.template || {};
+      const name = String(payloadIn.name || "").trim();
+      if (!/^[a-z0-9_]{1,512}$/.test(name)) {
+        return json({ error: "validation_error", errors: ["Informe um nome válido para salvar o rascunho."] }, 400);
+      }
+      const now = new Date().toISOString();
+      const rowId = String(body?.id || "");
+
+      if (rowId) {
+        const { data: row } = await admin
+          .from("meta_whatsapp_templates")
+          .select("id, status, meta_template_id")
+          .eq("id", rowId)
+          .eq("owner_user_id", ownerId)
+          .maybeSingle();
+        if (!row) return json({ error: "not_found", message: "Rascunho não encontrado nesta conta." }, 404);
+        if ((row as any).meta_template_id || String((row as any).status) !== "DRAFT") {
+          return json({ error: "not_editable", message: "Este template já foi enviado à Meta." }, 400);
+        }
+        await admin.from("meta_whatsapp_templates").update({
+          name,
+          category: payloadIn.category ?? null,
+          language: payloadIn.language,
+          components: payloadIn.components ?? [],
+          updated_at: now,
+        }).eq("id", rowId).eq("owner_user_id", ownerId);
+        await audit(true, 200, { draft: true, name }, rowId);
+        return json({ success: true, id: rowId, status: "DRAFT" });
+      }
+
+      const { data: dup } = await admin
+        .from("meta_whatsapp_templates")
+        .select("id, status")
+        .eq("owner_user_id", ownerId)
+        .eq("waba_id", wabaId)
+        .eq("name", name)
+        .eq("language", payloadIn.language)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (dup) {
+        if (String((dup as any).status) !== "DRAFT") {
+          return json({
+            error: "already_exists",
+            message: "Já existe um template com esse nome e idioma nesta conta.",
+          }, 409);
+        }
+        await admin.from("meta_whatsapp_templates").update({
+          category: payloadIn.category ?? null,
+          components: payloadIn.components ?? [],
+          updated_at: now,
+        }).eq("id", (dup as any).id).eq("owner_user_id", ownerId);
+        await audit(true, 200, { draft: true, name }, (dup as any).id);
+        return json({ success: true, id: (dup as any).id, status: "DRAFT" });
+      }
+
+      const { data: saved, error: draftError } = await admin
+        .from("meta_whatsapp_templates")
+        .insert({
+          owner_user_id: ownerId,
+          connection_id: conn.id,
+          waba_id: wabaId,
+          meta_template_id: null,
+          name,
+          category: payloadIn.category ?? null,
+          language: payloadIn.language,
+          status: "DRAFT",
+          components: payloadIn.components ?? [],
+          raw: {},
+          updated_at: now,
+        })
+        .select("id")
+        .maybeSingle();
+      if (draftError) {
+        console.error("[meta-templates] draft persist failed", draftError);
+        return json({ error: "db_error", message: "Não foi possível salvar o rascunho." }, 500);
+      }
+      await audit(true, 200, { draft: true, name }, (saved as any)?.id);
+      return json({ success: true, id: (saved as any)?.id, status: "DRAFT" });
+    }
+
     /* ---------------------------------------------------------------- CREATE */
     if (action === "create") {
       const payloadIn = body?.template || {};
@@ -404,7 +487,11 @@ Deno.serve(async (req) => {
         .eq("language", payloadIn.language)
         .is("deleted_at", null)
         .maybeSingle();
-      if (existing) {
+      if (existing && String((existing as any).status) === "DRAFT" && !(existing as any).meta_template_id) {
+        // A local draft is replaced by the real template once submitted.
+        await admin.from("meta_whatsapp_templates")
+          .delete().eq("id", (existing as any).id).eq("owner_user_id", ownerId);
+      } else if (existing) {
         return json({
           error: "already_exists",
           message: "Já existe um template com esse nome e idioma nesta conta. Use Sincronizar para atualizar os dados.",
@@ -412,6 +499,7 @@ Deno.serve(async (req) => {
           status: (existing as any).status,
         }, 409);
       }
+
 
 
       const metaBody = {
@@ -531,8 +619,17 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!row) return json({ error: "not_found", message: "Template não encontrado nesta conta." }, 404);
 
+      // Local drafts never reached Meta: remove them straight from our database.
+      if (!(row as any).meta_template_id) {
+        await admin.from("meta_whatsapp_templates")
+          .delete().eq("id", rowId).eq("owner_user_id", ownerId);
+        await audit(true, 200, { deleted_draft: true }, rowId);
+        return json({ success: true });
+      }
+
       const qs = new URLSearchParams({ name: String((row as any).name) });
       if ((row as any).meta_template_id) qs.set("hsm_id", String((row as any).meta_template_id));
+
 
       const { res, payload } = await graph(`${wabaId}/message_templates?${qs.toString()}`, { method: "DELETE" });
       if (!res.ok) {

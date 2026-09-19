@@ -184,6 +184,31 @@ export function useMetaWhatsAppTemplates() {
     return true;
   }, [invoke, load, toast]);
 
+  /** Saves the template locally (status DRAFT) without sending it to Meta. */
+  const saveDraft = useCallback(async (draft: DraftTemplate, id?: string) => {
+    const res = await invoke({
+      action: "save_draft",
+      ...(id ? { id } : {}),
+      template: {
+        name: draft.name,
+        category: draft.category,
+        language: draft.language,
+        components: buildComponents(draft),
+      },
+    });
+    if (!res.ok) {
+      toast({
+        title: "Não foi possível salvar o rascunho",
+        description: res.errors?.length ? res.errors.join(" ") : res.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+    toast({ title: "Rascunho salvo", description: "Você pode enviá-lo para análise quando quiser." });
+    await load();
+    return true;
+  }, [invoke, load, toast]);
+
   const remove = useCallback(async (id: string) => {
     const res = await invoke({ action: "delete", id });
     if (!res.ok) {
@@ -198,6 +223,7 @@ export function useMetaWhatsAppTemplates() {
   return {
     templates, loading, syncing, loadError,
     connection, connections, selectedConnectionId: connection?.id ?? null, setSelectedConnectionId,
-    load, sync, create, update, remove, uploadMedia,
+    load, sync, create, update, remove, uploadMedia, saveDraft,
   };
 }
+

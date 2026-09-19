@@ -92,8 +92,11 @@ export interface StatusMeta {
 /** Mapeia o status real da Meta para rótulos amigáveis. Nada é inferido. */
 export function statusMeta(status: string): StatusMeta {
   switch (status) {
+    case "DRAFT":
+      return { label: "Rascunho", tone: "neutral", description: "Salvo apenas na Wiize. Ainda não foi enviado à Meta." };
     case "APPROVED":
       return { label: "Aprovado", tone: "success", description: "Template aprovado pela Meta e pronto para uso." };
+
     case "PENDING":
       return { label: "Em análise", tone: "warning", description: "Este template está sendo analisado pela Meta." };
     case "IN_APPEAL":
