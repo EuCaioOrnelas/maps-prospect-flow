@@ -1228,13 +1228,13 @@ export function ChatMessageArea({
                                   <div className="p-[3px]">
                                     <ImageAlbumGrid msgs={album} onOpenImage={openImage} onQuickForward={quickForward} />
                                   </div>
-                                ) : (msg.message_type !== "text" && msg.message_type !== "audio") && (
-                                  <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
-                                )}
-                                {msg.content && msg.message_type === "text" && (
-                                  <div className="px-[9px] pt-[5px] pb-[2px] pr-[36px]">
-                                    <ExpandableText
-                                      text={msg.content}
+                                 ) : (!TEXT_LIKE_TYPES.includes(msg.message_type) && msg.message_type !== "audio") && (
+                                   <div className="p-[3px]"><MediaPreview msg={msg} onOpenImage={openImage} onQuickForward={quickForward} /></div>
+                                 )}
+                                 {(msg.content || msg.media_caption) && TEXT_LIKE_TYPES.includes(msg.message_type) && (
+                                   <div className="px-[9px] pt-[5px] pb-[2px] pr-[36px]">
+                                     <ExpandableText
+                                       text={msg.content || msg.media_caption || ""}
                                       collapseKey={conversation.id}
                                       className="text-[14.2px] wa-text-primary leading-[18px]"
                                     />
