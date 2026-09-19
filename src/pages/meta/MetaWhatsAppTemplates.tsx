@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, RefreshCw, Search, MessageSquare, AlertCircle, ArrowUpDown, Link2, Loader2,
-  LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle,
+  LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle, Smartphone,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMetaWhatsAppTemplates } from "@/hooks/useMetaWhatsAppTemplates";
@@ -54,14 +54,29 @@ const SUMMARY = [
 
 const problemStatuses = ["PAUSED", "DISABLED", "LIMIT_EXCEEDED"];
 
+/** Short preview of the message body, as it will reach the contact. */
+function bodyPreview(t: MetaTemplateRow): string {
+  const body = (t.components || []).find((c: any) => c?.type === "BODY");
+  return String((body as any)?.text || "").replace(/\s+/g, " ").trim();
+}
+
 export default function MetaWhatsAppTemplates() {
   const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
   const {
-    templates, loading, syncing, loadError, connection, sync, create, update, remove, uploadMedia,
+    templates, loading, syncing, loadError, connection, connections,
+    selectedConnectionId, setSelectedConnectionId,
+    sync, create, update, remove, uploadMedia,
   } = useMetaWhatsAppTemplates();
 
+  const numberLabel = useMemo(() => {
+    const map = new Map<string, string>();
+    connections.forEach((c) => map.set(c.waba_id, c.label));
+    return (wabaId: string) => map.get(wabaId) ?? "Número não vinculado";
+  }, [connections]);
+
   const [search, setSearch] = useState("");
+  const [numberFilter, setNumberFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
@@ -96,6 +111,7 @@ export default function MetaWhatsAppTemplates() {
     }
     if (categoryFilter !== "all") list = list.filter((t) => t.category === categoryFilter);
     if (languageFilter !== "all") list = list.filter((t) => t.language === languageFilter);
+    if (numberFilter !== "all") list = list.filter((t) => t.waba_id === numberFilter);
 
     list.sort((a, b) => {
       if (sortKey === "name") return a.name.localeCompare(b.name);
@@ -103,7 +119,7 @@ export default function MetaWhatsAppTemplates() {
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
     return list;
-  }, [templates, search, statusFilter, categoryFilter, languageFilter, sortKey]);
+  }, [templates, search, statusFilter, categoryFilter, languageFilter, numberFilter, sortKey]);
 
   const openCreate = () => {
     setEditingRow(null);
@@ -177,11 +193,12 @@ export default function MetaWhatsAppTemplates() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-4 py-2.5 font-medium">Nome</th>
+              <th className="px-4 py-2.5 font-medium">Template</th>
+              <th className="px-4 py-2.5 font-medium">Número</th>
               <th className="px-4 py-2.5 font-medium">Categoria</th>
               <th className="px-4 py-2.5 font-medium">Idioma</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Última atualização</th>
+              <th className="px-4 py-2.5 font-medium">Situação</th>
+              <th className="px-4 py-2.5 font-medium">Atualizado</th>
               <th className="px-4 py-2.5 font-medium text-right">Ações</th>
             </tr>
           </thead>
@@ -189,10 +206,21 @@ export default function MetaWhatsAppTemplates() {
             {filtered.map((t) => (
               <tr
                 key={t.id}
-                className="border-b border-border/60 last:border-0 hover:bg-muted/40 transition-colors cursor-pointer"
+                className="border-b border-border/60 last:border-0 hover:bg-muted/40 transition-colors cursor-pointer align-top"
                 onClick={() => { setSelected(t); setDetailsOpen(true); }}
               >
-                <td className="px-4 py-3 font-mono text-[13px] text-foreground max-w-[260px] truncate">{t.name}</td>
+                <td className="px-4 py-3 max-w-[320px]">
+                  <p className="font-mono text-[13px] text-foreground truncate">{t.name}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                    {bodyPreview(t) || "Sem corpo de mensagem"}
+                  </p>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
+                    <Smartphone className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                    {numberLabel(t.waba_id)}
+                  </span>
+                </td>
                 <td className="px-4 py-3 text-muted-foreground">{categoryLabel(t.category)}</td>
                 <td className="px-4 py-3 text-muted-foreground">{languageLabel(t.language)}</td>
                 <td className="px-4 py-3"><TemplateStatusBadge status={t.status} /></td>
@@ -222,6 +250,22 @@ export default function MetaWhatsAppTemplates() {
         description="Crie e gerencie modelos de mensagens aprovados pela Meta para suas conversas comerciais."
         actions={
           <>
+            {connections.length > 1 && (
+              <Select
+                value={selectedConnectionId ?? undefined}
+                onValueChange={(v) => setSelectedConnectionId(v)}
+              >
+                <SelectTrigger className="w-[220px]" aria-label="Número usado nas ações">
+                  <Smartphone className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" aria-hidden />
+                  <SelectValue placeholder="Número" />
+                </SelectTrigger>
+                <SelectContent>
+                  {connections.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Button variant="outline" onClick={() => sync()} disabled={syncing || !connection} className="gap-1.5">
               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {syncing ? "Sincronizando…" : "Sincronizar"}
@@ -296,6 +340,17 @@ export default function MetaWhatsAppTemplates() {
             aria-label="Buscar template"
           />
         </div>
+        {connections.length > 1 && (
+          <Select value={numberFilter} onValueChange={setNumberFilter}>
+            <SelectTrigger className="lg:w-52"><SelectValue placeholder="Número" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os números</SelectItem>
+              {connections.map((c) => (
+                <SelectItem key={c.id} value={c.waba_id}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="lg:w-44"><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent>

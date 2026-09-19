@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,14 @@ interface InvokeResult {
   data?: any;
 }
 
+export interface WabaOption {
+  id: string;
+  waba_id: string;
+  label: string;
+  phone: string | null;
+  status: string | null;
+}
+
 export function useMetaWhatsAppTemplates() {
   const { user, accountOwnerId } = useAuth();
   const { toast } = useToast();
@@ -20,28 +28,28 @@ export function useMetaWhatsAppTemplates() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [connection, setConnection] = useState<{ id: string; waba_id: string; label: string } | null>(null);
+  const [connections, setConnections] = useState<WabaOption[]>([]);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
 
-  const loadConnection = useCallback(async () => {
+  const loadConnections = useCallback(async () => {
     if (!accountOwnerId) return;
     const { data } = await supabase
       .from("user_waba_connections")
-      .select("id, waba_id, nickname, display_phone_number, business_name")
+      .select("id, waba_id, nickname, display_phone_number, business_name, status")
       .or(`owner_user_id.eq.${accountOwnerId},user_id.eq.${accountOwnerId}`)
       .eq("provider", "meta")
       .not("waba_id", "is", null)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (data?.waba_id) {
-      setConnection({
-        id: (data as any).id,
-        waba_id: (data as any).waba_id,
-        label: (data as any).nickname || (data as any).display_phone_number || (data as any).business_name || "Número conectado",
-      });
-    } else {
-      setConnection(null);
-    }
+      .order("created_at", { ascending: true });
+
+    const list: WabaOption[] = ((data as any[]) || []).map((c) => ({
+      id: c.id,
+      waba_id: c.waba_id,
+      phone: c.display_phone_number ?? null,
+      status: c.status ?? null,
+      label: c.nickname || c.display_phone_number || c.business_name || "Número conectado",
+    }));
+    setConnections(list);
+    setSelectedConnectionId((prev) => (prev && list.some((c) => c.id === prev) ? prev : list[0]?.id ?? null));
   }, [accountOwnerId]);
 
   const load = useCallback(async () => {
@@ -60,12 +68,18 @@ export function useMetaWhatsAppTemplates() {
   }, [user?.id, accountOwnerId]);
 
   useEffect(() => {
-    loadConnection();
+    loadConnections();
     load();
-  }, [loadConnection, load]);
+  }, [loadConnections, load]);
+
+  const connection = useMemo(
+    () => connections.find((c) => c.id === selectedConnectionId) ?? connections[0] ?? null,
+    [connections, selectedConnectionId],
+  );
 
   const invoke = useCallback(async (body: Record<string, unknown>): Promise<InvokeResult> => {
-    const { data, error } = await supabase.functions.invoke("meta-templates", { body });
+    const payloadBody = connection ? { connection_id: connection.id, ...body } : body;
+    const { data, error } = await supabase.functions.invoke("meta-templates", { body: payloadBody });
     let payload: any = data ?? {};
     // Supabase only exposes the response body of non-2xx replies through the error context.
     if (error && !payload?.error) {
@@ -85,7 +99,7 @@ export function useMetaWhatsAppTemplates() {
       };
     }
     return { ok: true, data: payload };
-  }, []);
+  }, [connection?.id]);
 
   const sync = useCallback(async (silent = false) => {
     setSyncing(true);
@@ -181,5 +195,9 @@ export function useMetaWhatsAppTemplates() {
     return true;
   }, [invoke, load, toast]);
 
-  return { templates, loading, syncing, loadError, connection, load, sync, create, update, remove, uploadMedia };
+  return {
+    templates, loading, syncing, loadError,
+    connection, connections, selectedConnectionId: connection?.id ?? null, setSelectedConnectionId,
+    load, sync, create, update, remove, uploadMedia,
+  };
 }

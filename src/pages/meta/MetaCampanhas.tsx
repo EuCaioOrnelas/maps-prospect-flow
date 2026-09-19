@@ -17,8 +17,6 @@ import {
   AlertCircle, Percent, Smartphone, FileText, TrendingUp, Calendar as CalendarIcon, X,
   ChevronLeft, ChevronRight, Copy, Check, Megaphone,
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MetaTemplates from "./MetaTemplates";
 
 const ITEMS_PER_PAGE = 10;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -233,20 +231,11 @@ export default function MetaCampanhas() {
         description="Crie campanhas a partir dos seus templates Wiize e acompanhe envios, respostas, custo e ROI em tempo real."
       />
 
-      <Tabs defaultValue="campanhas" className="space-y-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <TabsList className="bg-muted/40 border border-border/60 p-1 h-9">
-            <TabsTrigger value="campanhas" className="text-xs gap-1.5 data-[state=active]:bg-background">
-              <Megaphone size={13} /> Campanhas
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="text-xs gap-1.5 data-[state=active]:bg-background">
-              <FileText size={13} /> Templates
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="campanhas" className="space-y-4 mt-0">
-          <div className="flex justify-end">
+      <div className="space-y-4">
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigate("/meta/templates")}>
+              <FileText size={14} /> Gerenciar templates
+            </Button>
             <Button size="sm" onClick={startNewCampaign} disabled={isCreating}>
               {isCreating ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Plus size={14} className="mr-1.5" />}
               Nova campanha
@@ -581,12 +570,7 @@ export default function MetaCampanhas() {
           ))}
         </div>
       </Card>
-        </TabsContent>
-
-        <TabsContent value="templates" className="space-y-4 mt-0">
-          <MetaTemplates embedded />
-        </TabsContent>
-      </Tabs>
+      </div>
 
       <CampaignDetailsDialog
         campaign={detailsCampaign}
