@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Clock, MessageSquare, Send, Loader2 } from "lucide-react";
 
 interface MetaTemplate {
@@ -14,7 +15,7 @@ interface MetaTemplate {
 interface ExpiredWindowBannerProps {
   contactName: string | null;
   contactPhone: string;
-  onReopenConversation: (templateName: string) => void;
+  onReopenConversation: (templateName: string, language?: string, components?: any[]) => void | Promise<void>;
   fetchTemplates?: () => Promise<MetaTemplate[]>;
 }
 
@@ -41,6 +42,12 @@ function getCategoryLabel(cat: string) {
   }
 }
 
+function getTemplateVariables(template: MetaTemplate): number[] {
+  const body = template.components?.find((c: any) => c.type === "BODY")?.text || "";
+  const found = Array.from(String(body).matchAll(/\{\{(\d+)\}\}/g)).map(m => Number(m[1]));
+  return Array.from(new Set(found)).sort((a, b) => a - b);
+}
+
 function getTemplatePreview(template: MetaTemplate): string {
   const bodyComp = template.components?.find((c: any) => c.type === "BODY");
   return bodyComp?.text || template.name;
@@ -48,7 +55,9 @@ function getTemplatePreview(template: MetaTemplate): string {
 
 export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConversation, fetchTemplates }: ExpiredWindowBannerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<MetaTemplate | null>(null);
+  const [variables, setVariables] = useState<Record<number, string>>({});
+  const [sending, setSending] = useState(false);
   const [templates, setTemplates] = useState<MetaTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -68,11 +77,26 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
     }
   };
 
-  const handleReopen = () => {
-    if (!selectedTemplate) return;
-    onReopenConversation(selectedTemplate);
-    setDialogOpen(false);
-    setSelectedTemplate(null);
+  const requiredVars = selectedTemplate ? getTemplateVariables(selectedTemplate) : [];
+  const missingVars = requiredVars.some(n => !(variables[n] || "").trim());
+
+  const handleReopen = async () => {
+    if (!selectedTemplate || missingVars || sending) return;
+    const components = requiredVars.length
+      ? [{
+          type: "body",
+          parameters: requiredVars.map(n => ({ type: "text", text: variables[n].trim() })),
+        }]
+      : undefined;
+    setSending(true);
+    try {
+      await onReopenConversation(selectedTemplate.name, selectedTemplate.language, components);
+      setDialogOpen(false);
+      setSelectedTemplate(null);
+      setVariables({});
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -132,9 +156,9 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
               templates.map(template => (
                 <button
                   key={template.id}
-                  onClick={() => setSelectedTemplate(template.name)}
+                  onClick={() => { setSelectedTemplate(template); setVariables({}); }}
                   className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                    selectedTemplate === template.name
+                    selectedTemplate?.id === template.id
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                   }`}
@@ -155,6 +179,23 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
           </div>
 
 
+          {requiredVars.length > 0 && (
+            <div className="px-5 pb-3 space-y-2">
+              <p className="text-[12px] font-medium text-foreground">Preencha as variáveis do template</p>
+              {requiredVars.map(n => (
+                <div key={n} className="space-y-1">
+                  <label className="text-[11px] text-muted-foreground">Variável {`{{${n}}}`}</label>
+                  <Input
+                    value={variables[n] || ""}
+                    onChange={e => setVariables(prev => ({ ...prev, [n]: e.target.value }))}
+                    placeholder={`Valor para {{${n}}}`}
+                    className="h-9 text-[13px]"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="px-5 py-4 border-t border-border flex items-center justify-between gap-3">
             <Button
               variant="ghost"
@@ -165,11 +206,11 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
             </Button>
             <Button
               onClick={handleReopen}
-              disabled={!selectedTemplate}
+              disabled={!selectedTemplate || missingVars || sending}
               className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-5"
             >
-              <Send size={14} className="mr-1.5" />
-              Enviar template
+              {sending ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Send size={14} className="mr-1.5" />}
+              {sending ? "Enviando..." : "Enviar template"}
             </Button>
           </div>
         </DialogContent>

@@ -895,7 +895,7 @@ export function useChat() {
   }, [user, accountOwnerId, activeConnectionId, conversations, connections]);
 
   // Reopen an expired conversation by sending an approved Meta template
-  const reopenConversation = useCallback(async (templateName: string) => {
+  const reopenConversation = useCallback(async (templateName: string, templateLanguage?: string, templateComponents?: any[]) => {
     if (!user || !activeConversation) {
       toast.error("Selecione uma conversa");
       return;
@@ -918,11 +918,21 @@ export function useChat() {
           to,
           type: "template",
           template_name: templateName,
+          template_language: templateLanguage || "pt_BR",
+          ...(templateComponents && templateComponents.length ? { template_components: templateComponents } : {}),
           metadata: { template_name: templateName, reopen: true },
           waba_connection_id: connection.id,
         },
       });
-      if (error) throw error;
+      if (error) {
+        let detail = "";
+        try {
+          const ctx: any = (error as any)?.context;
+          const parsed = ctx && typeof ctx.json === "function" ? await ctx.json() : null;
+          detail = parsed?.error || parsed?.message || "";
+        } catch { /* ignore */ }
+        throw new Error(detail || error.message || "Falha ao enviar o template");
+      }
       toast.success("Template enviado. Janela reaberta após resposta do contato.");
     } catch (e: any) {
       toast.error(e?.message || "Falha ao reabrir conversa");
