@@ -58,10 +58,19 @@ export default function MetaWhatsAppTemplates() {
   const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
   const {
-    templates, loading, syncing, loadError, connection, sync, create, update, remove, uploadMedia,
+    templates, loading, syncing, loadError, connection, connections,
+    selectedConnectionId, setSelectedConnectionId,
+    sync, create, update, remove, uploadMedia,
   } = useMetaWhatsAppTemplates();
 
+  const numberLabel = useMemo(() => {
+    const map = new Map<string, string>();
+    connections.forEach((c) => map.set(c.waba_id, c.label));
+    return (wabaId: string) => map.get(wabaId) ?? "Número não vinculado";
+  }, [connections]);
+
   const [search, setSearch] = useState("");
+  const [numberFilter, setNumberFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
