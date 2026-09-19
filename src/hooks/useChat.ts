@@ -895,7 +895,12 @@ export function useChat() {
   }, [user, accountOwnerId, activeConnectionId, conversations, connections]);
 
   // Reopen an expired conversation by sending an approved Meta template
-  const reopenConversation = useCallback(async (templateName: string, templateLanguage?: string, templateComponents?: any[]) => {
+  const reopenConversation = useCallback(async (
+    templateName: string,
+    templateLanguage?: string,
+    templateComponents?: any[],
+    templateDisplayText?: string,
+  ) => {
     if (!user || !activeConversation) {
       toast.error("Selecione uma conversa");
       return;
@@ -920,6 +925,7 @@ export function useChat() {
           template_name: templateName,
           template_language: templateLanguage || "pt_BR",
           ...(templateComponents && templateComponents.length ? { template_components: templateComponents } : {}),
+          ...(templateDisplayText ? { template_display_text: templateDisplayText } : {}),
           metadata: { template_name: templateName, reopen: true },
           waba_connection_id: connection.id,
         },

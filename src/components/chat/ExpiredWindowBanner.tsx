@@ -15,7 +15,7 @@ interface MetaTemplate {
 interface ExpiredWindowBannerProps {
   contactName: string | null;
   contactPhone: string;
-  onReopenConversation: (templateName: string, language?: string, components?: any[]) => void | Promise<void>;
+  onReopenConversation: (templateName: string, language?: string, components?: any[], displayText?: string) => void | Promise<void>;
   fetchTemplates?: () => Promise<MetaTemplate[]>;
 }
 
@@ -51,6 +51,12 @@ function getTemplateVariables(template: MetaTemplate): number[] {
 function getTemplatePreview(template: MetaTemplate): string {
   const bodyComp = template.components?.find((c: any) => c.type === "BODY");
   return bodyComp?.text || template.name;
+}
+
+function getRenderedTemplateText(template: MetaTemplate, variables: Record<number, string>): string {
+  return getTemplatePreview(template).replace(/\{\{(\d+)\}\}/g, (placeholder, index) => {
+    return variables[Number(index)]?.trim() || placeholder;
+  });
 }
 
 export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConversation, fetchTemplates }: ExpiredWindowBannerProps) {
@@ -90,7 +96,12 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
       : undefined;
     setSending(true);
     try {
-      await onReopenConversation(selectedTemplate.name, selectedTemplate.language, components);
+      await onReopenConversation(
+        selectedTemplate.name,
+        selectedTemplate.language,
+        components,
+        getRenderedTemplateText(selectedTemplate, variables),
+      );
       setDialogOpen(false);
       setSelectedTemplate(null);
       setVariables({});

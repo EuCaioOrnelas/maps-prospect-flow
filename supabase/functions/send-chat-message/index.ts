@@ -101,6 +101,37 @@ Deno.serve(async (req) => {
       if (!existingMessage) return new Response(JSON.stringify({ error: 'Message not found' }), { status: 404, headers: corsHeaders });
     }
 
+    let persistedText = text;
+    if (type === 'template') {
+      persistedText = typeof body.template_display_text === 'string'
+        ? body.template_display_text.trim()
+        : '';
+
+      if (!persistedText) {
+        const { data: templateRow } = await supabase
+          .from('meta_whatsapp_templates')
+          .select('components')
+          .eq('owner_user_id', connOwner)
+          .eq('connection_id', waba_connection_id)
+          .eq('name', body.template_name || '')
+          .eq('language', body.template_language || 'pt_BR')
+          .maybeSingle();
+        const templateComponents = Array.isArray(templateRow?.components) ? templateRow.components : [];
+        const bodyComponent = templateComponents.find((component: any) => String(component?.type || '').toUpperCase() === 'BODY');
+        persistedText = typeof bodyComponent?.text === 'string' ? bodyComponent.text : '';
+        const sentBody = Array.isArray(body.template_components)
+          ? body.template_components.find((component: any) => String(component?.type || '').toLowerCase() === 'body')
+          : null;
+        const parameters = Array.isArray(sentBody?.parameters) ? sentBody.parameters : [];
+        persistedText = persistedText.replace(/\{\{(\d+)\}\}/g, (placeholder: string, index: string) => {
+          const value = parameters[Number(index) - 1]?.text;
+          return typeof value === 'string' && value.trim() ? value.trim() : placeholder;
+        });
+      }
+
+      if (!persistedText) persistedText = `[Template] ${body.template_name || ''}`;
+    }
+
     if (!message_id) {
       const { data: conversation } = await supabase.from('chat_conversations').select('id')
         .eq('id', conversation_id).eq('owner_user_id', connOwner).eq('waba_connection_id', waba_connection_id).maybeSingle();
@@ -108,7 +139,7 @@ Deno.serve(async (req) => {
       const encrypted = await encryptMessageFields({
         conversation_id, user_id: userId, owner_user_id: connOwner, direction: 'outbound',
         message_type: type === 'template' ? 'text' : type,
-        content: text || (type === 'template' ? `[Template] ${body.template_name || ''}` : caption) || null,
+        content: persistedText || caption || null,
         media_url: media_url || null, media_mime_type: body.media_mime_type || null, media_filename: filename || null,
         media_caption: caption || null, status: 'pending', reply_to_message_id: body.reply_to_message_id || null,
         metadata: { ...(body.metadata || {}), client_token: body.client_token || null },
@@ -116,7 +147,7 @@ Deno.serve(async (req) => {
       const { data: inserted, error: insertError } = await supabase.from('chat_messages').insert(encrypted).select('id').single();
       if (insertError || !inserted) throw new Error('Unable to persist encrypted message');
       message_id = inserted.id;
-      const previewText = type === 'text' ? text : type === 'image' ? '📷 Imagem' : type === 'video' ? '🎥 Vídeo' : type === 'audio' ? '🎤 Áudio' : type === 'document' ? `📄 ${filename || 'Documento'}` : `[Template] ${body.template_name || ''}`;
+      const previewText = type === 'text' ? text : type === 'image' ? '📷 Imagem' : type === 'video' ? '🎥 Vídeo' : type === 'audio' ? '🎤 Áudio' : type === 'document' ? `📄 ${filename || 'Documento'}` : persistedText;
       await supabase.from('chat_conversations').update(await encryptConversationPreview({
         last_message_text: previewText, last_message_at: new Date().toISOString(), last_message_type: type,
         last_message_direction: 'outbound',
