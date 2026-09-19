@@ -255,9 +255,12 @@ export default function MetaWhatsAppTemplates() {
                 <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
                 {categoryLabel(t.category)}
               </span>
-              <span className="inline-flex items-center gap-1.5 border-l border-border pl-3">
-                <Languages className="h-3.5 w-3.5" aria-hidden />
-                {languageLabel(t.language)}
+              <span
+                className="inline-flex items-center gap-1.5 whitespace-nowrap border-l border-border pl-3"
+                title={languageLabel(t.language)}
+              >
+                <Languages className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                {languageShortLabel(t.language)}
               </span>
             </div>
 
