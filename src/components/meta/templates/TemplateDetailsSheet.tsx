@@ -81,6 +81,7 @@ export function TemplateDetailsSheet({
             <h4 className="text-sm font-semibold mb-1">Informações</h4>
             <Separator className="mb-2" />
             <Row label="ID na Meta" value={template.meta_template_id || "—"} />
+            <Row label="Número" value={numberLabel ? numberLabel(template.waba_id) : template.waba_id} />
             <Row label="WABA" value={template.waba_id} />
             <Row label="Categoria" value={categoryLabel(template.category)} />
             <Row label="Idioma" value={`${languageLabel(template.language)} (${template.language})`} />

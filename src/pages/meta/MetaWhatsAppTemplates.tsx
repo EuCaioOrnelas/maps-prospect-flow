@@ -385,6 +385,7 @@ export default function MetaWhatsAppTemplates() {
         onEdit={openEdit}
         onDelete={(t) => setPendingDelete(t)}
         onSync={() => sync()}
+        numberLabel={numberLabel}
       />
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
