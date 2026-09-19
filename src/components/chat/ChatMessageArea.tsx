@@ -126,6 +126,9 @@ function DateDivider({ date }: { date: Date }) {
   );
 }
 
+// Tipos cujo conteúdo é apenas texto (inclui respostas de botão/lista e templates)
+const TEXT_LIKE_TYPES: string[] = ["text", "button", "interactive", "template", "reaction"];
+
 function MediaPreview({ msg, onOpenImage, onQuickForward }: { msg: ChatMessage; onOpenImage?: (m: ChatMessage) => void; onQuickForward?: (m: ChatMessage) => void }) {
   if (msg.message_type === "image") {
     return (
