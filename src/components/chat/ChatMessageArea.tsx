@@ -1324,6 +1324,13 @@ export function ChatMessageArea({
                 : lastInbound
                   ? differenceInHours(new Date(), parseISO(lastInbound.created_at)) >= 24
                   : true;
+              const lastReopenTemplate = [...messages].reverse().find(
+                m => m.direction === "outbound" && m.metadata?.reopen === true && m.status !== "failed"
+              );
+              const awaitingTemplateReply = Boolean(
+                lastReopenTemplate &&
+                (!lastInbound || new Date(lastReopenTemplate.created_at).getTime() > new Date(lastInbound.created_at).getTime())
+              );
 
               if (isWindowExpired && onReopenConversation) {
                   return (
@@ -1332,6 +1339,7 @@ export function ChatMessageArea({
                       contactPhone={conversation.contact_phone}
                       onReopenConversation={onReopenConversation}
                       fetchTemplates={fetchTemplates}
+                      awaitingReply={awaitingTemplateReply}
                     />
                   );
               }
