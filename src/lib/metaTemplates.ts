@@ -26,6 +26,7 @@ export interface MetaTemplateRow {
   meta_template_id: string | null;
   name: string;
   category: string | null;
+  requested_category?: string | null;
   language: string;
   status: MetaTemplateStatus;
   rejected_reason: string | null;

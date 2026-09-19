@@ -573,6 +573,7 @@ Deno.serve(async (req) => {
           meta_template_id: String(payload.id),
           name: payloadIn.name,
           category: payload.category ?? payloadIn.category,
+          requested_category: payloadIn.category ?? null,
           language: payloadIn.language,
           status: payload.status ?? "PENDING",
           components: payloadIn.components,
