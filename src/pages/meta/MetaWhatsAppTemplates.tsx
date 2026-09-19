@@ -25,7 +25,7 @@ import { TemplateStatusBadge } from "@/components/meta/templates/TemplateStatusB
 import { TemplateBuilderDialog } from "@/components/meta/templates/TemplateBuilderDialog";
 import { TemplateDetailsSheet } from "@/components/meta/templates/TemplateDetailsSheet";
 import {
-  categoryLabel, languageLabel, rowToDraft, TEMPLATE_CATEGORIES, TEMPLATE_LANGUAGES,
+  categoryLabel, languageLabel, languageShortLabel, rowToDraft, TEMPLATE_CATEGORIES, TEMPLATE_LANGUAGES,
   type DraftTemplate, type MetaTemplateRow,
 } from "@/lib/metaTemplates";
 
