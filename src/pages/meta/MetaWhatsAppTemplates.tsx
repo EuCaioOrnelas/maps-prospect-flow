@@ -176,15 +176,15 @@ export default function MetaWhatsAppTemplates() {
               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Sincronizar
             </Button>
           </div>
-        </div>
+        </Card>
       );
     }
     if (!filtered.length) {
       return (
-        <div className="p-12 text-center">
+        <Card className="p-12 text-center">
           <Search className="h-8 w-8 text-muted-foreground mx-auto mb-3" aria-hidden />
           <p className="text-sm text-foreground">Nenhum template encontrado com esses filtros.</p>
-        </div>
+        </Card>
       );
     }
 
