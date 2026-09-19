@@ -630,9 +630,15 @@ Deno.serve(async (req) => {
               if (msgType === 'text') {
                 textContent = msg.text?.body || '';
               } else if (msgType === 'button') {
-                textContent = msg.button?.text || '';
+                textContent = msg.button?.text || msg.button?.payload || '';
               } else if (msgType === 'interactive') {
-                textContent = msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || '';
+                textContent = msg.interactive?.button_reply?.title
+                  || msg.interactive?.list_reply?.title
+                  || msg.interactive?.button_reply?.id
+                  || msg.interactive?.list_reply?.id
+                  || '';
+              } else if (msgType === 'reaction') {
+                textContent = msg.reaction?.emoji || '';
               } else if (['image', 'video', 'audio', 'document', 'sticker'].includes(msgType)) {
                 const media = msg[msgType];
                 if (media) {
