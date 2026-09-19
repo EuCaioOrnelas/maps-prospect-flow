@@ -6536,6 +6536,7 @@ export type Database = {
           quality_score: string | null
           raw: Json
           rejected_reason: string | null
+          requested_category: string | null
           status: string
           submitted_at: string | null
           updated_at: string
@@ -6556,6 +6557,7 @@ export type Database = {
           quality_score?: string | null
           raw?: Json
           rejected_reason?: string | null
+          requested_category?: string | null
           status?: string
           submitted_at?: string | null
           updated_at?: string
@@ -6576,6 +6578,7 @@ export type Database = {
           quality_score?: string | null
           raw?: Json
           rejected_reason?: string | null
+          requested_category?: string | null
           status?: string
           submitted_at?: string | null
           updated_at?: string
