@@ -194,10 +194,13 @@ export function TemplateBuilderDialog({
     if (!draft.name.trim() || errors.name) return;
     setSavingDraft(true);
     setSubmitStage("Salvando rascunho…");
-    const ok = await onSaveDraft(draft);
-    setSubmitStage(null);
-    setSavingDraft(false);
-    if (ok) onOpenChange(false);
+    try {
+      const ok = await onSaveDraft(draft);
+      if (ok) onOpenChange(false);
+    } finally {
+      setSubmitStage(null);
+      setSavingDraft(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -208,11 +211,14 @@ export function TemplateBuilderDialog({
     }
     setSubmitting(true);
     setSubmitStage("Enviando template para análise da Meta…");
-    const ok = await onSubmit(draft);
-    setSubmitStage(ok ? "Template criado." : null);
-    setSubmitting(false);
-    setConfirmOpen(false);
-    if (ok) onOpenChange(false);
+    try {
+      const ok = await onSubmit(draft);
+      setSubmitStage(ok ? "Template criado." : null);
+      if (ok) onOpenChange(false);
+    } finally {
+      setSubmitting(false);
+      setConfirmOpen(false);
+    }
   };
 
 
@@ -257,26 +263,27 @@ export function TemplateBuilderDialog({
                   <div>
                     <Label className="text-xs text-muted-foreground">Categoria</Label>
                     <Select value={draft.category} onValueChange={(v) => set("category", v)}>
-                      <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="mt-1.5 text-foreground hover:bg-muted/40 hover:text-foreground">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         {TEMPLATE_CATEGORIES.map((c) => (
-                          <SelectItem key={c.value} value={c.value}>
-                            <span className="flex flex-col text-left">
-                              <span className="font-medium">{c.label}</span>
-                              <span className="text-[11px] text-muted-foreground">{c.hint}</span>
-                            </span>
+                          <SelectItem key={c.value} value={c.value} className="data-[highlighted]:bg-muted data-[highlighted]:text-foreground">
+                            {c.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
-
                     </Select>
+                    <p className="mt-1.5 min-h-8 text-[11px] leading-4 text-muted-foreground">
+                      {TEMPLATE_CATEGORIES.find((category) => category.value === draft.category)?.hint}
+                    </p>
                     <FieldError message={showErrors ? errors.category : undefined} />
                   </div>
 
                   <div>
                     <Label className="text-xs text-muted-foreground">Idioma</Label>
                     <Select value={draft.language} onValueChange={(v) => set("language", v)} disabled={editing}>
-                      <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="mt-1.5 text-foreground hover:bg-muted/40 hover:text-foreground"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {TEMPLATE_LANGUAGES.map((l) => (
                           <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
@@ -296,7 +303,7 @@ export function TemplateBuilderDialog({
                   value={draft.headerFormat}
                   onValueChange={(v) => set("headerFormat", v as DraftTemplate["headerFormat"])}
                 >
-                  <SelectTrigger className="sm:w-56"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="sm:w-56 text-foreground hover:bg-muted/40 hover:text-foreground"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {HEADER_OPTIONS.map((o) => (
                       <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -589,7 +596,7 @@ export function TemplateBuilderDialog({
       </Dialog>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[101] w-[calc(100vw-2rem)] rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Enviar template para análise da Meta?</AlertDialogTitle>
             <AlertDialogDescription>

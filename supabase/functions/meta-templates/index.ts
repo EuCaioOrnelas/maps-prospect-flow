@@ -474,8 +474,27 @@ Deno.serve(async (req) => {
     /* ---------------------------------------------------------------- CREATE */
     if (action === "create") {
       const payloadIn = body?.template || {};
+      const requestedDraftId = typeof body?.draft_id === "string" ? body.draft_id : null;
       const errors = validateTemplate(payloadIn);
       if (errors.length) return json({ error: "validation_error", errors }, 400);
+
+      let draftToPromote: any = null;
+      if (requestedDraftId) {
+        const { data: requestedDraft } = await admin
+          .from("meta_whatsapp_templates")
+          .select("id, owner_user_id, waba_id, name, language, status, meta_template_id")
+          .eq("id", requestedDraftId)
+          .eq("owner_user_id", ownerId)
+          .eq("waba_id", wabaId)
+          .eq("status", "DRAFT")
+          .is("meta_template_id", null)
+          .is("deleted_at", null)
+          .maybeSingle();
+        if (!requestedDraft || (requestedDraft as any).name !== payloadIn.name || (requestedDraft as any).language !== payloadIn.language) {
+          return json({ error: "invalid_draft", message: "Este rascunho não está mais disponível para envio." }, 409);
+        }
+        draftToPromote = requestedDraft;
+      }
 
       // Never create a duplicate: Meta rejects same name+language anyway.
       const { data: existing } = await admin
@@ -488,9 +507,8 @@ Deno.serve(async (req) => {
         .is("deleted_at", null)
         .maybeSingle();
       if (existing && String((existing as any).status) === "DRAFT" && !(existing as any).meta_template_id) {
-        // A local draft is replaced by the real template once submitted.
-        await admin.from("meta_whatsapp_templates")
-          .delete().eq("id", (existing as any).id).eq("owner_user_id", ownerId);
+        // Keep the local draft intact until Meta confirms the creation.
+        draftToPromote = existing;
       } else if (existing) {
         return json({
           error: "already_exists",
@@ -523,9 +541,7 @@ Deno.serve(async (req) => {
       }
 
       const now = new Date().toISOString();
-      const { data: saved, error } = await admin
-        .from("meta_whatsapp_templates")
-        .upsert({
+      const persistedTemplate = {
           owner_user_id: ownerId,
           connection_id: conn.id,
           waba_id: wabaId,
@@ -541,7 +557,11 @@ Deno.serve(async (req) => {
           submitted_at: now,
           last_synced_at: now,
           updated_at: now,
-        }, { onConflict: "waba_id,meta_template_id" })
+        };
+      const persistQuery = draftToPromote
+        ? admin.from("meta_whatsapp_templates").update(persistedTemplate).eq("id", (draftToPromote as any).id).eq("owner_user_id", ownerId)
+        : admin.from("meta_whatsapp_templates").upsert(persistedTemplate, { onConflict: "waba_id,meta_template_id" });
+      const { data: saved, error } = await persistQuery
         .select("id")
         .maybeSingle();
       if (error) console.error("[meta-templates] create persist failed", error);

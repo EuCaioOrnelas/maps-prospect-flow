@@ -27,3 +27,9 @@
 
 - [x] Corrigir referência de conteúdo e assinatura na geração de campanhas de influenciadores.
 - [x] Centralizar a logo, melhorar a formatação e simplificar o rodapé dos e-mails de influenciadores.
+
+## Templates Meta
+- [x] Corrigir o seletor de categoria e o contraste dos campos
+- [x] Paginar os templates em grupos de 6 no padrão Gestão de Oportunidades
+- [x] Impedir travamento e perda de rascunho ao enviar para análise
+- [ ] Validar a tela e publicar a função atualizada
