@@ -27,7 +27,7 @@ export function useMetaWhatsAppTemplates() {
     const { data } = await supabase
       .from("user_waba_connections")
       .select("id, waba_id, nickname, display_phone_number, business_name")
-      .eq("owner_user_id", accountOwnerId)
+      .or(`owner_user_id.eq.${accountOwnerId},user_id.eq.${accountOwnerId}`)
       .eq("provider", "meta")
       .not("waba_id", "is", null)
       .order("created_at", { ascending: true })
@@ -66,7 +66,14 @@ export function useMetaWhatsAppTemplates() {
 
   const invoke = useCallback(async (body: Record<string, unknown>): Promise<InvokeResult> => {
     const { data, error } = await supabase.functions.invoke("meta-templates", { body });
-    const payload: any = data ?? {};
+    let payload: any = data ?? {};
+    // Supabase only exposes the response body of non-2xx replies through the error context.
+    if (error && !payload?.error) {
+      try {
+        const parsed = await (error as any)?.context?.json?.();
+        if (parsed && typeof parsed === "object") payload = parsed;
+      } catch (_) { /* keeps the generic message below */ }
+    }
     if (error && !payload?.error) {
       return { ok: false, message: "Não foi possível falar com a Meta agora. Tente novamente." };
     }

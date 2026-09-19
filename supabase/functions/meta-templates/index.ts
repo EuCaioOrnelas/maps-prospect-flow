@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
     let connQuery = admin
       .from("user_waba_connections")
       .select("id, waba_id, access_token, business_name, display_phone_number, status")
-      .eq("owner_user_id", ownerId)
+      .or(`owner_user_id.eq.${ownerId},user_id.eq.${ownerId}`)
       .eq("provider", "meta")
       .not("waba_id", "is", null)
       .not("access_token", "is", null);
