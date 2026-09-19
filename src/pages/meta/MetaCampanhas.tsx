@@ -572,12 +572,7 @@ export default function MetaCampanhas() {
           ))}
         </div>
       </Card>
-        </TabsContent>
-
-        <TabsContent value="templates" className="space-y-4 mt-0">
-          <MetaTemplates embedded />
-        </TabsContent>
-      </Tabs>
+      </div>
 
       <CampaignDetailsDialog
         campaign={detailsCampaign}
