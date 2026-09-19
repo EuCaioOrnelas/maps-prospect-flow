@@ -187,11 +187,12 @@ export default function MetaWhatsAppTemplates() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-4 py-2.5 font-medium">Nome</th>
+              <th className="px-4 py-2.5 font-medium">Template</th>
+              <th className="px-4 py-2.5 font-medium">Número</th>
               <th className="px-4 py-2.5 font-medium">Categoria</th>
               <th className="px-4 py-2.5 font-medium">Idioma</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Última atualização</th>
+              <th className="px-4 py-2.5 font-medium">Situação</th>
+              <th className="px-4 py-2.5 font-medium">Atualizado</th>
               <th className="px-4 py-2.5 font-medium text-right">Ações</th>
             </tr>
           </thead>
@@ -199,10 +200,21 @@ export default function MetaWhatsAppTemplates() {
             {filtered.map((t) => (
               <tr
                 key={t.id}
-                className="border-b border-border/60 last:border-0 hover:bg-muted/40 transition-colors cursor-pointer"
+                className="border-b border-border/60 last:border-0 hover:bg-muted/40 transition-colors cursor-pointer align-top"
                 onClick={() => { setSelected(t); setDetailsOpen(true); }}
               >
-                <td className="px-4 py-3 font-mono text-[13px] text-foreground max-w-[260px] truncate">{t.name}</td>
+                <td className="px-4 py-3 max-w-[320px]">
+                  <p className="font-mono text-[13px] text-foreground truncate">{t.name}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                    {bodyPreview(t) || "Sem corpo de mensagem"}
+                  </p>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
+                    <Smartphone className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                    {numberLabel(t.waba_id)}
+                  </span>
+                </td>
                 <td className="px-4 py-3 text-muted-foreground">{categoryLabel(t.category)}</td>
                 <td className="px-4 py-3 text-muted-foreground">{languageLabel(t.language)}</td>
                 <td className="px-4 py-3"><TemplateStatusBadge status={t.status} /></td>
