@@ -250,6 +250,22 @@ export default function MetaWhatsAppTemplates() {
         description="Crie e gerencie modelos de mensagens aprovados pela Meta para suas conversas comerciais."
         actions={
           <>
+            {connections.length > 1 && (
+              <Select
+                value={selectedConnectionId ?? undefined}
+                onValueChange={(v) => setSelectedConnectionId(v)}
+              >
+                <SelectTrigger className="w-[220px]" aria-label="Número usado nas ações">
+                  <Smartphone className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" aria-hidden />
+                  <SelectValue placeholder="Número" />
+                </SelectTrigger>
+                <SelectContent>
+                  {connections.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <Button variant="outline" onClick={() => sync()} disabled={syncing || !connection} className="gap-1.5">
               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {syncing ? "Sincronizando…" : "Sincronizar"}
