@@ -105,6 +105,7 @@ export default function MetaWhatsAppTemplates() {
     }
     if (categoryFilter !== "all") list = list.filter((t) => t.category === categoryFilter);
     if (languageFilter !== "all") list = list.filter((t) => t.language === languageFilter);
+    if (numberFilter !== "all") list = list.filter((t) => t.waba_id === numberFilter);
 
     list.sort((a, b) => {
       if (sortKey === "name") return a.name.localeCompare(b.name);
