@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MetaLayout } from "@/components/meta/MetaLayout";
 import { MetaPageHeader } from "@/components/meta/MetaPageHeader";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
 import {
   Plus, RefreshCw, Search, MessageSquare, AlertCircle, ArrowUpDown, Link2, Loader2,
   LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle, Smartphone, Languages,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/metaTemplates";
 
 type SortKey = "updated" | "name" | "status";
+const PAGE_SIZE = 6;
 
 const SUMMARY = [
   {
@@ -89,6 +91,7 @@ export default function MetaWhatsAppTemplates() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [languageFilter, setLanguageFilter] = useState<string>("all");
   const [sortKey, setSortKey] = useState<SortKey>("updated");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [builderOpen, setBuilderOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<MetaTemplateRow | null>(null);
@@ -129,6 +132,20 @@ export default function MetaWhatsAppTemplates() {
     return list;
   }, [templates, search, statusFilter, categoryFilter, languageFilter, numberFilter, sortKey]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, categoryFilter, languageFilter, numberFilter, sortKey]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
   const openCreate = () => {
     setEditingRow(null);
     setInitialDraft(null);
@@ -145,10 +162,10 @@ export default function MetaWhatsAppTemplates() {
   const isDraftRow = editingRow?.status === "DRAFT";
 
   const handleSubmit = async (draft: DraftTemplate) =>
-    editingRow && !isDraftRow ? update(editingRow.id, draft) : create(draft);
+    editingRow && !isDraftRow ? update(editingRow.id, draft) : create(draft, isDraftRow ? editingRow?.id : undefined);
 
   const handleSaveDraft = async (draft: DraftTemplate) =>
-    saveDraft(draft, isDraftRow ? editingRow!.id : undefined);
+    saveDraft(draft, isDraftRow ? editingRow?.id : undefined);
 
 
   const confirmDelete = async () => {
@@ -203,8 +220,9 @@ export default function MetaWhatsAppTemplates() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((t) => (
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {paginated.map((t) => (
           <div
             key={t.id}
             className="rounded-2xl border border-border bg-card p-5 flex flex-col gap-4"
@@ -244,9 +262,6 @@ export default function MetaWhatsAppTemplates() {
             </div>
 
             <div className="mt-auto pt-1">
-              <p className="text-[11px] text-muted-foreground mb-2.5">
-                Atualizado em {new Date(t.updated_at).toLocaleDateString("pt-BR")}
-              </p>
               <Button
                 variant="outline"
                 size="sm"
@@ -255,9 +270,38 @@ export default function MetaWhatsAppTemplates() {
               >
                 Ver detalhes
               </Button>
+              <p className="mt-2.5 text-center text-[11px] text-muted-foreground">
+                Atualizado em {new Date(t.updated_at).toLocaleDateString("pt-BR")}
+              </p>
             </div>
           </div>
         ))}
+        </div>
+
+        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <span className="text-sm text-muted-foreground">
+            {filtered.length.toLocaleString("pt-BR")} template(s) — Página {currentPage.toLocaleString("pt-BR")} de {totalPages.toLocaleString("pt-BR")}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="h-8 px-2" aria-label="Primeira página">
+              <ChevronLeft size={14} /><ChevronLeft size={14} className="-ml-2" />
+            </Button>
+            <Button size="sm" variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage((page) => page - 1)} className="h-8 px-2" aria-label="Página anterior">
+              <ChevronLeft size={16} />
+            </Button>
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+              <Button key={page} size="sm" variant={page === currentPage ? "default" : "outline"} onClick={() => setCurrentPage(page)} className="h-8 min-w-8 px-2 text-xs">
+                {page.toLocaleString("pt-BR")}
+              </Button>
+            ))}
+            <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage((page) => page + 1)} className="h-8 px-2" aria-label="Próxima página">
+              <ChevronRight size={16} />
+            </Button>
+            <Button size="sm" variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="h-8 px-2" aria-label="Última página">
+              <ChevronRight size={14} /><ChevronRight size={14} className="-ml-2" />
+            </Button>
+          </div>
+        </div>
       </div>
     );
 

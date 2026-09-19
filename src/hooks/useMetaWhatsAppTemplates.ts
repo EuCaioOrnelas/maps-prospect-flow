@@ -139,9 +139,10 @@ export function useMetaWhatsAppTemplates() {
     return { handle: res.data?.handle };
   }, [invoke]);
 
-  const create = useCallback(async (draft: DraftTemplate) => {
+  const create = useCallback(async (draft: DraftTemplate, draftId?: string) => {
     const res = await invoke({
       action: "create",
+      ...(draftId ? { draft_id: draftId } : {}),
       template: {
         name: draft.name,
         category: draft.category,
