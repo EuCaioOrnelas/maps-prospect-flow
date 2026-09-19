@@ -11,8 +11,15 @@ import {
 import { TemplateStatusBadge } from "./TemplateStatusBadge";
 import { TemplatePreview } from "./TemplatePreview";
 import {
-  categoryLabel, languageLabel, rowToDraft, statusMeta, type MetaTemplateRow,
+  categoryLabel, languageLabel, qualityMeta, rowToDraft, statusMeta, type MetaTemplateRow,
 } from "@/lib/metaTemplates";
+
+const toneClass: Record<string, string> = {
+  success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  warning: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  danger: "border-destructive/30 bg-destructive/10 text-destructive",
+  neutral: "border-border bg-muted/50 text-muted-foreground",
+};
 
 interface Props {
   template: MetaTemplateRow | null;
