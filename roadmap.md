@@ -32,4 +32,4 @@
 - [x] Corrigir o seletor de categoria e o contraste dos campos
 - [x] Paginar os templates em grupos de 6 no padrão Gestão de Oportunidades
 - [x] Impedir travamento e perda de rascunho ao enviar para análise
-- [ ] Validar a tela e publicar a função atualizada
+- [x] Validar a tela e publicar a função atualizada
