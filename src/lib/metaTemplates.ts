@@ -26,6 +26,7 @@ export interface MetaTemplateRow {
   meta_template_id: string | null;
   name: string;
   category: string | null;
+  requested_category?: string | null;
   language: string;
   status: MetaTemplateStatus;
   rejected_reason: string | null;
@@ -81,6 +82,33 @@ export function languageLabel(code: string): string {
 export function categoryLabel(value?: string | null): string {
   if (!value) return "—";
   return TEMPLATE_CATEGORIES.find((c) => c.value === value)?.label ?? value;
+}
+
+/**
+ * Qualidade informada pela Meta (quality_score.score). A Meta só calcula a nota
+ * depois de volume suficiente de envios; até lá devolve UNKNOWN.
+ */
+export function qualityMeta(value?: string | null): {
+  label: string;
+  tone: "success" | "warning" | "danger" | "neutral";
+  description: string;
+} {
+  switch (String(value || "").toUpperCase()) {
+    case "GREEN":
+    case "HIGH":
+      return { label: "Alta", tone: "success", description: "Boa recepção dos contatos. Nenhum risco no momento." };
+    case "YELLOW":
+    case "MEDIUM":
+      return { label: "Média", tone: "warning", description: "Há bloqueios ou denúncias. Revise a mensagem e a lista de envio." };
+    case "RED":
+    case "LOW":
+      return { label: "Baixa", tone: "danger", description: "Risco de pausa pela Meta. Reduza envios e melhore a mensagem." };
+    case "UNKNOWN":
+    case "":
+      return { label: "Sem dados ainda", tone: "neutral", description: "A Meta divulga a qualidade após volume suficiente de envios." };
+    default:
+      return { label: String(value), tone: "neutral", description: "Qualidade informada pela Meta." };
+  }
 }
 
 export interface StatusMeta {

@@ -11,8 +11,15 @@ import {
 import { TemplateStatusBadge } from "./TemplateStatusBadge";
 import { TemplatePreview } from "./TemplatePreview";
 import {
-  categoryLabel, languageLabel, rowToDraft, statusMeta, type MetaTemplateRow,
+  categoryLabel, languageLabel, qualityMeta, rowToDraft, statusMeta, type MetaTemplateRow,
 } from "@/lib/metaTemplates";
+
+const toneClass: Record<string, string> = {
+  success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  warning: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  danger: "border-destructive/30 bg-destructive/10 text-destructive",
+  neutral: "border-border bg-muted/50 text-muted-foreground",
+};
 
 interface Props {
   template: MetaTemplateRow | null;
@@ -47,6 +54,10 @@ export function TemplateDetailsSheet({
   const draft = rowToDraft(template);
   const meta = statusMeta(template.status);
   const editable = ["APPROVED", "REJECTED", "PAUSED", "DRAFT"].includes(template.status);
+  const quality = qualityMeta(template.quality_score);
+  const reclassified = Boolean(
+    template.requested_category && template.category && template.requested_category !== template.category,
+  );
 
 
   return (
@@ -91,9 +102,38 @@ export function TemplateDetailsSheet({
             <Row icon={Hash} label="ID na Meta" value={template.meta_template_id || "—"} />
             <Row icon={Phone} label="Número" value={numberLabel ? numberLabel(template.waba_id) : template.waba_id} />
             <Row icon={Building2} label="WABA" value={template.waba_id} />
-            <Row icon={Tag} label="Categoria" value={categoryLabel(template.category)} />
+            <Row
+              icon={Tag}
+              label="Categoria"
+              value={
+                <span className="inline-flex flex-col items-end gap-0.5">
+                  <span>{categoryLabel(template.category)}</span>
+                  {reclassified && (
+                    <span className="text-[11px] font-normal text-amber-600 dark:text-amber-400">
+                      Reclassificado pela Meta (você pediu {categoryLabel(template.requested_category)})
+                    </span>
+                  )}
+                </span>
+              }
+            />
             <Row icon={Languages} label="Idioma" value={`${languageLabel(template.language)} (${template.language})`} />
-            <Row icon={Gauge} label="Qualidade" value={template.quality_score || "—"} />
+            <Row
+              icon={Gauge}
+              label="Qualidade"
+              value={
+                <span className="inline-flex flex-col items-end gap-1">
+                  <span className={`rounded-full border px-2 py-0.5 text-[11px] ${toneClass[quality.tone]}`}>
+                    {quality.label}
+                  </span>
+                  <span className="max-w-[16rem] text-[11px] font-normal text-muted-foreground">
+                    {quality.description}
+                  </span>
+                </span>
+              }
+            />
+            {template.requested_category && !reclassified && (
+              <Row icon={Tag} label="Categoria solicitada" value={categoryLabel(template.requested_category)} />
+            )}
             <Row icon={CalendarPlus} label="Criado em" value={fmt(template.created_at)} />
             <Row icon={Clock} label="Última atualização" value={fmt(template.updated_at)} />
             <Row icon={RefreshCw} label="Última sincronização" value={fmt(template.last_synced_at)} />

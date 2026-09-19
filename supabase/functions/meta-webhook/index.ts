@@ -1053,6 +1053,28 @@ Deno.serve(async (req) => {
               }
             }
 
+            // === Template quality updates from Meta ===
+            if (field === 'message_template_quality_update') {
+              try {
+                const newQuality = String(value.new_quality_score || value.new_quality || '').toUpperCase();
+                const metaTemplateId = value.message_template_id ? String(value.message_template_id) : null;
+                if (newQuality) {
+                  let qq = supabase
+                    .from('meta_whatsapp_templates')
+                    .update({ quality_score: newQuality, updated_at: new Date().toISOString() })
+                    .eq('waba_id', wabaId);
+                  qq = metaTemplateId
+                    ? qq.eq('meta_template_id', metaTemplateId)
+                    : qq.eq('name', String(value.message_template_name || ''))
+                        .eq('language', String(value.message_template_language || ''));
+                  const { error: qErr } = await qq;
+                  if (qErr) console.error('[meta-webhook] template quality update error:', qErr);
+                }
+              } catch (e) {
+                console.error('[meta-webhook] template quality handler error:', e);
+              }
+            }
+
             // === Quality drop notification (yellow / red) ===
             if (field === 'phone_number_quality_update') {
               const newQuality = String(value.new_quality_score || value.new_quality || '').toUpperCase();

@@ -127,6 +127,13 @@
       "when": 1789815364108,
       "tag": "0017_meta_templates_unique_constraint",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789818840811,
+      "tag": "0018_meta_templates_requested_category",
+      "breakpoints": true
     }
   ]
 }
