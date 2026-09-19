@@ -54,6 +54,10 @@ export function TemplateDetailsSheet({
   const draft = rowToDraft(template);
   const meta = statusMeta(template.status);
   const editable = ["APPROVED", "REJECTED", "PAUSED", "DRAFT"].includes(template.status);
+  const quality = qualityMeta(template.quality_score);
+  const reclassified = Boolean(
+    template.requested_category && template.category && template.requested_category !== template.category,
+  );
 
 
   return (
