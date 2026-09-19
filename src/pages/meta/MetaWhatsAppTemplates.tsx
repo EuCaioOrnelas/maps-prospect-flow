@@ -366,7 +366,7 @@ export default function MetaWhatsAppTemplates() {
         </Select>
       </Card>
 
-      <Card className="overflow-hidden">{renderBody()}</Card>
+      {renderBody()}
 
       <TemplateBuilderDialog
         open={builderOpen}
