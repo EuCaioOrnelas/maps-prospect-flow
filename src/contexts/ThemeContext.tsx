@@ -48,6 +48,8 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
     }
   });
 
+  const [transitionTarget, setTransitionTarget] = useState<Theme | null>(null);
+  const themeApplyTimeoutRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -73,41 +75,58 @@ export const DashboardThemeProvider = ({ children }: { children: ReactNode }) =>
       if (transitionTimeoutRef.current) {
         window.clearTimeout(transitionTimeoutRef.current);
       }
+      if (themeApplyTimeoutRef.current) {
+        window.clearTimeout(themeApplyTimeoutRef.current);
+      }
       if (typeof document !== "undefined") {
         document.documentElement.classList.remove("theme-transition");
       }
     };
   }, []);
 
-  const startThemeTransition = () => {
+  const changeTheme = (nextTheme: Theme) => {
     if (typeof document === "undefined") return;
 
+    if (themeApplyTimeoutRef.current) window.clearTimeout(themeApplyTimeoutRef.current);
+    if (transitionTimeoutRef.current) window.clearTimeout(transitionTimeoutRef.current);
+
+    setTransitionTarget(nextTheme);
     document.documentElement.classList.add("theme-transition");
 
-    if (transitionTimeoutRef.current) {
-      window.clearTimeout(transitionTimeoutRef.current);
-    }
+    themeApplyTimeoutRef.current = window.setTimeout(() => {
+      setThemeState(nextTheme);
+      themeApplyTimeoutRef.current = null;
+    }, 140);
 
     transitionTimeoutRef.current = window.setTimeout(() => {
       document.documentElement.classList.remove("theme-transition");
+      setTransitionTarget(null);
       transitionTimeoutRef.current = null;
-    }, 220);
+    }, 520);
   };
 
   const setTheme = (nextTheme: Theme) => {
     if (nextTheme === theme) return;
-    startThemeTransition();
-    setThemeState(nextTheme);
+    changeTheme(nextTheme);
   };
 
   const toggleTheme = () => {
-    startThemeTransition();
-    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+    changeTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme: theme, setTheme, toggleTheme }}>
       {children}
+      {transitionTarget && (
+        <div
+          className="theme-change-screen"
+          data-target-theme={transitionTarget}
+          role="status"
+          aria-label={`Aplicando tema ${transitionTarget === "light" ? "claro" : "escuro"}`}
+        >
+          <span className="theme-change-spinner" aria-hidden="true" />
+        </div>
+      )}
     </ThemeContext.Provider>
   );
 };
