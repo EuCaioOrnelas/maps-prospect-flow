@@ -113,7 +113,7 @@ export default function MetaWhatsAppTemplates() {
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
     return list;
-  }, [templates, search, statusFilter, categoryFilter, languageFilter, sortKey]);
+  }, [templates, search, statusFilter, categoryFilter, languageFilter, numberFilter, sortKey]);
 
   const openCreate = () => {
     setEditingRow(null);
