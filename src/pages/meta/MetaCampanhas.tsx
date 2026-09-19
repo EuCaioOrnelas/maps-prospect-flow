@@ -17,8 +17,6 @@ import {
   AlertCircle, Percent, Smartphone, FileText, TrendingUp, Calendar as CalendarIcon, X,
   ChevronLeft, ChevronRight, Copy, Check, Megaphone,
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MetaTemplates from "./MetaTemplates";
 
 const ITEMS_PER_PAGE = 10;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
