@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, RefreshCw, Search, MessageSquare, AlertCircle, ArrowUpDown, Link2, Loader2,
-  LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle,
+  LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle, Smartphone,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMetaWhatsAppTemplates } from "@/hooks/useMetaWhatsAppTemplates";
@@ -53,6 +53,12 @@ const SUMMARY = [
 ] as const;
 
 const problemStatuses = ["PAUSED", "DISABLED", "LIMIT_EXCEEDED"];
+
+/** Short preview of the message body, as it will reach the contact. */
+function bodyPreview(t: MetaTemplateRow): string {
+  const body = (t.components || []).find((c: any) => c?.type === "BODY");
+  return String((body as any)?.text || "").replace(/\s+/g, " ").trim();
+}
 
 export default function MetaWhatsAppTemplates() {
   const navigate = useNavigate();
