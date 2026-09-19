@@ -149,22 +149,22 @@ export default function MetaWhatsAppTemplates() {
   const renderBody = () => {
     if (loading) {
       return (
-        <div className="space-y-2 p-4">
+        <Card className="space-y-2 p-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
-        </div>
+        </Card>
       );
     }
     if (loadError) {
       return (
-        <div className="p-10 text-center">
+        <Card className="p-10 text-center">
           <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-3" aria-hidden />
           <p className="text-sm text-foreground">{loadError}</p>
-        </div>
+        </Card>
       );
     }
     if (!templates.length) {
       return (
-        <div className="p-12 text-center">
+        <Card className="p-12 text-center">
           <MessageSquare className="h-9 w-9 text-muted-foreground mx-auto mb-3" aria-hidden />
           <p className="text-base font-medium text-foreground">Você ainda não possui templates</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
@@ -176,66 +176,61 @@ export default function MetaWhatsAppTemplates() {
               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Sincronizar
             </Button>
           </div>
-        </div>
+        </Card>
       );
     }
     if (!filtered.length) {
       return (
-        <div className="p-12 text-center">
+        <Card className="p-12 text-center">
           <Search className="h-8 w-8 text-muted-foreground mx-auto mb-3" aria-hidden />
           <p className="text-sm text-foreground">Nenhum template encontrado com esses filtros.</p>
-        </div>
+        </Card>
       );
     }
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-4 py-2.5 font-medium">Template</th>
-              <th className="px-4 py-2.5 font-medium">Número</th>
-              <th className="px-4 py-2.5 font-medium">Categoria</th>
-              <th className="px-4 py-2.5 font-medium">Idioma</th>
-              <th className="px-4 py-2.5 font-medium">Situação</th>
-              <th className="px-4 py-2.5 font-medium">Atualizado</th>
-              <th className="px-4 py-2.5 font-medium text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((t) => (
-              <tr
-                key={t.id}
-                className="border-b border-border/60 last:border-0 hover:bg-muted/40 transition-colors cursor-pointer align-top"
-                onClick={() => { setSelected(t); setDetailsOpen(true); }}
-              >
-                <td className="px-4 py-3 max-w-[320px]">
-                  <p className="font-mono text-[13px] text-foreground truncate">{t.name}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                    {bodyPreview(t) || "Sem corpo de mensagem"}
-                  </p>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
-                    <Smartphone className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-                    {numberLabel(t.waba_id)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">{categoryLabel(t.category)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{languageLabel(t.language)}</td>
-                <td className="px-4 py-3"><TemplateStatusBadge status={t.status} /></td>
-                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                  {new Date(t.updated_at).toLocaleDateString("pt-BR")}
-                </td>
-                <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setSelected(t); setDetailsOpen(true); }}>
-                    Ver detalhes
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {filtered.map((t) => (
+          <div
+            key={t.id}
+            className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-mono text-[13px] font-medium text-foreground truncate">{t.name}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Atualizado em {new Date(t.updated_at).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
+              <TemplateStatusBadge status={t.status} />
+            </div>
+
+            <p className="text-sm text-muted-foreground leading-snug line-clamp-3 min-h-[3.75rem]">
+              {bodyPreview(t) || "Sem corpo de mensagem"}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Smartphone className="h-3.5 w-3.5" aria-hidden />
+                {numberLabel(t.waba_id)}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
+                {categoryLabel(t.category)}
+              </span>
+              <span>{languageLabel(t.language)}</span>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-auto"
+              onClick={() => { setSelected(t); setDetailsOpen(true); }}
+            >
+              Ver detalhes
+            </Button>
+          </div>
+        ))}
       </div>
     );
   };
@@ -302,27 +297,20 @@ export default function MetaWhatsAppTemplates() {
               key={s.key}
               onClick={() => setStatusFilter(s.key)}
               aria-pressed={active}
-              className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition-all ${
-                active
-                  ? "border-primary/50 bg-primary/5 shadow-[0_8px_24px_-16px_hsl(var(--primary)/0.6)]"
-                  : "border-border bg-card hover:border-primary/30 hover:bg-muted/30"
-              }`}
+              className="rounded-2xl border border-border bg-card p-4 text-left"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${s.tint}`}>
+              <div className="flex items-center gap-2.5">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${s.tint}`}>
                   <Icon className="h-[18px] w-[18px]" aria-hidden />
                 </div>
-                <p className="text-2xl font-semibold text-foreground tabular-nums leading-none mt-1">
-                  {counts[s.key as keyof typeof counts] ?? 0}
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {s.label}
                 </p>
               </div>
-              <p className="text-xs font-medium text-foreground mt-3">{s.label}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{s.hint}</p>
-              <span
-                className={`absolute inset-x-0 bottom-0 h-0.5 transition-opacity ${s.bar} ${
-                  active ? "opacity-100" : "opacity-0 group-hover:opacity-60"
-                }`}
-              />
+              <p className="text-2xl font-semibold text-foreground tabular-nums mt-3">
+                {counts[s.key as keyof typeof counts] ?? 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 leading-snug">{s.hint}</p>
             </button>
           );
         })}
@@ -378,7 +366,7 @@ export default function MetaWhatsAppTemplates() {
         </Select>
       </Card>
 
-      <Card className="overflow-hidden">{renderBody()}</Card>
+      {renderBody()}
 
       <TemplateBuilderDialog
         open={builderOpen}
@@ -397,6 +385,7 @@ export default function MetaWhatsAppTemplates() {
         onEdit={openEdit}
         onDelete={(t) => setPendingDelete(t)}
         onSync={() => sync()}
+        numberLabel={numberLabel}
       />
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
