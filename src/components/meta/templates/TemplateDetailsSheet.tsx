@@ -3,8 +3,11 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Pencil, Trash2, AlertTriangle, Code2, RefreshCw } from "lucide-react";
+import {
+  Pencil, Trash2, AlertTriangle, Code2, RefreshCw, Info, Hash, Phone, Building2,
+  Tag, Languages, Gauge, CalendarPlus, Clock,
+} from "lucide-react";
+
 import { TemplateStatusBadge } from "./TemplateStatusBadge";
 import { TemplatePreview } from "./TemplatePreview";
 import {
@@ -25,10 +28,13 @@ interface Props {
 const fmt = (value?: string | null) =>
   value ? new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—";
 
-const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="flex items-start justify-between gap-4 py-1.5">
-    <span className="text-xs text-muted-foreground shrink-0">{label}</span>
-    <span className="text-xs text-foreground text-right break-all">{value}</span>
+const Row = ({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) => (
+  <div className="flex items-start justify-between gap-4 border-b border-border/40 py-2 last:border-0">
+    <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+      <Icon className="h-3.5 w-3.5 text-muted-foreground/70" aria-hidden />
+      {label}
+    </span>
+    <span className="text-xs font-medium text-foreground text-right break-all">{value}</span>
   </div>
 );
 
@@ -40,7 +46,8 @@ export function TemplateDetailsSheet({
 
   const draft = rowToDraft(template);
   const meta = statusMeta(template.status);
-  const editable = ["APPROVED", "REJECTED", "PAUSED"].includes(template.status);
+  const editable = ["APPROVED", "REJECTED", "PAUSED", "DRAFT"].includes(template.status);
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -77,18 +84,20 @@ export function TemplateDetailsSheet({
 
           <TemplatePreview draft={draft} />
 
-          <div>
-            <h4 className="text-sm font-semibold mb-1">Informações</h4>
-            <Separator className="mb-2" />
-            <Row label="ID na Meta" value={template.meta_template_id || "—"} />
-            <Row label="Número" value={numberLabel ? numberLabel(template.waba_id) : template.waba_id} />
-            <Row label="WABA" value={template.waba_id} />
-            <Row label="Categoria" value={categoryLabel(template.category)} />
-            <Row label="Idioma" value={`${languageLabel(template.language)} (${template.language})`} />
-            <Row label="Qualidade" value={template.quality_score || "—"} />
-            <Row label="Criado em" value={fmt(template.created_at)} />
-            <Row label="Última atualização" value={fmt(template.updated_at)} />
-            <Row label="Última sincronização" value={fmt(template.last_synced_at)} />
+          <div className="rounded-xl border border-border bg-card p-4">
+            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+              <Info className="h-4 w-4 text-primary" aria-hidden /> Informações
+            </h4>
+            <Row icon={Hash} label="ID na Meta" value={template.meta_template_id || "—"} />
+            <Row icon={Phone} label="Número" value={numberLabel ? numberLabel(template.waba_id) : template.waba_id} />
+            <Row icon={Building2} label="WABA" value={template.waba_id} />
+            <Row icon={Tag} label="Categoria" value={categoryLabel(template.category)} />
+            <Row icon={Languages} label="Idioma" value={`${languageLabel(template.language)} (${template.language})`} />
+            <Row icon={Gauge} label="Qualidade" value={template.quality_score || "—"} />
+            <Row icon={CalendarPlus} label="Criado em" value={fmt(template.created_at)} />
+            <Row icon={Clock} label="Última atualização" value={fmt(template.updated_at)} />
+            <Row icon={RefreshCw} label="Última sincronização" value={fmt(template.last_synced_at)} />
+
           </div>
 
           {isAdmin && (

@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, RefreshCw, Search, MessageSquare, AlertCircle, ArrowUpDown, Link2, Loader2,
-  LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle, Smartphone,
+  LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle, Smartphone, Languages,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 import { useMetaWhatsAppTemplates } from "@/hooks/useMetaWhatsAppTemplates";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -60,13 +61,20 @@ function bodyPreview(t: MetaTemplateRow): string {
   return String((body as any)?.text || "").replace(/\s+/g, " ").trim();
 }
 
+/** Turns the technical template name into a readable title. */
+function prettyName(name: string): string {
+  const clean = name.replace(/[_-]+/g, " ").trim();
+  return clean ? clean.charAt(0).toUpperCase() + clean.slice(1) : name;
+}
+
+
 export default function MetaWhatsAppTemplates() {
   const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
   const {
     templates, loading, syncing, loadError, connection, connections,
     selectedConnectionId, setSelectedConnectionId,
-    sync, create, update, remove, uploadMedia,
+    sync, create, update, remove, uploadMedia, saveDraft,
   } = useMetaWhatsAppTemplates();
 
   const numberLabel = useMemo(() => {
@@ -134,8 +142,14 @@ export default function MetaWhatsAppTemplates() {
     setBuilderOpen(true);
   };
 
+  const isDraftRow = editingRow?.status === "DRAFT";
+
   const handleSubmit = async (draft: DraftTemplate) =>
-    editingRow ? update(editingRow.id, draft) : create(draft);
+    editingRow && !isDraftRow ? update(editingRow.id, draft) : create(draft);
+
+  const handleSaveDraft = async (draft: DraftTemplate) =>
+    saveDraft(draft, isDraftRow ? editingRow!.id : undefined);
+
 
   const confirmDelete = async () => {
     if (!pendingDelete) return;
@@ -189,50 +203,64 @@ export default function MetaWhatsAppTemplates() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map((t) => (
           <div
             key={t.id}
-            className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-3"
+            className="rounded-2xl border border-border bg-card p-5 flex flex-col gap-4"
           >
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-mono text-[13px] font-medium text-foreground truncate">{t.name}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Atualizado em {new Date(t.updated_at).toLocaleDateString("pt-BR")}
+                <p className="text-[15px] font-semibold text-foreground truncate leading-tight">
+                  {prettyName(t.name)}
                 </p>
+                <p className="font-mono text-[11px] text-muted-foreground truncate mt-1">{t.name}</p>
               </div>
               <TemplateStatusBadge status={t.status} />
             </div>
 
-            <p className="text-sm text-muted-foreground leading-snug line-clamp-3 min-h-[3.75rem]">
-              {bodyPreview(t) || "Sem corpo de mensagem"}
-            </p>
+            <div className="rounded-xl border border-border/60 bg-muted/30 p-3.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Mensagem
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 min-h-[3.75rem] mt-1.5">
+                {bodyPreview(t) || "Sem corpo de mensagem"}
+              </p>
+            </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 pr-3">
                 <Smartphone className="h-3.5 w-3.5" aria-hidden />
                 {numberLabel(t.waba_id)}
               </span>
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1.5 border-l border-border px-3">
                 <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
                 {categoryLabel(t.category)}
               </span>
-              <span>{languageLabel(t.language)}</span>
+              <span className="inline-flex items-center gap-1.5 border-l border-border pl-3">
+                <Languages className="h-3.5 w-3.5" aria-hidden />
+                {languageLabel(t.language)}
+              </span>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-auto"
-              onClick={() => { setSelected(t); setDetailsOpen(true); }}
-            >
-              Ver detalhes
-            </Button>
+            <div className="mt-auto pt-1">
+              <p className="text-[11px] text-muted-foreground mb-2.5">
+                Atualizado em {new Date(t.updated_at).toLocaleDateString("pt-BR")}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => { setSelected(t); setDetailsOpen(true); }}
+              >
+                Ver detalhes
+              </Button>
+            </div>
           </div>
         ))}
       </div>
     );
+
   };
 
   return (
@@ -372,10 +400,14 @@ export default function MetaWhatsAppTemplates() {
         open={builderOpen}
         onOpenChange={setBuilderOpen}
         initialDraft={initialDraft}
-        editing={!!editingRow}
+        editing={!!editingRow && !isDraftRow}
         onSubmit={handleSubmit}
+        onSaveDraft={handleSaveDraft}
         onUploadMedia={uploadMedia}
       />
+
+
+
 
       <TemplateDetailsSheet
         template={selected}
