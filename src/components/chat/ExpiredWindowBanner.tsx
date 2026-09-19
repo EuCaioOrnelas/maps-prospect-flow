@@ -17,6 +17,7 @@ interface ExpiredWindowBannerProps {
   contactPhone: string;
   onReopenConversation: (templateName: string, language?: string, components?: any[], displayText?: string) => void | Promise<void>;
   fetchTemplates?: () => Promise<MetaTemplate[]>;
+  awaitingReply?: boolean;
 }
 
 function formatPhoneDisplay(phone: string): string {
@@ -59,7 +60,7 @@ function getRenderedTemplateText(template: MetaTemplate, variables: Record<numbe
   });
 }
 
-export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConversation, fetchTemplates }: ExpiredWindowBannerProps) {
+export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConversation, fetchTemplates, awaitingReply = false }: ExpiredWindowBannerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<MetaTemplate | null>(null);
   const [variables, setVariables] = useState<Record<number, string>>({});
@@ -119,19 +120,23 @@ export function ExpiredWindowBanner({ contactName, contactPhone, onReopenConvers
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium wa-text-primary">
-              Janela de 24h expirada
+              {awaitingReply ? "Aguardando resposta do contato" : "Janela de 24h expirada"}
             </p>
             <p className="text-[12px] wa-text-secondary mt-0.5 leading-[17px]">
-              Não é possível enviar mensagens livres. Para retomar, envie um template aprovado pela Meta.
+              {awaitingReply
+                ? "O template foi enviado. A Meta libera mensagens livres assim que o contato responder."
+                : "Não é possível enviar mensagens livres. Para retomar, envie um template aprovado pela Meta."}
             </p>
-            <Button
-              size="sm"
-              onClick={handleOpenDialog}
-              className="mt-2 h-8 bg-primary hover:bg-primary/90 text-primary-foreground text-[12px] px-4"
-            >
-              <Send size={13} className="mr-1.5" />
-              Reabrir conversa
-            </Button>
+            {!awaitingReply && (
+              <Button
+                size="sm"
+                onClick={handleOpenDialog}
+                className="mt-2 h-8 bg-primary hover:bg-primary/90 text-primary-foreground text-[12px] px-4"
+              >
+                <Send size={13} className="mr-1.5" />
+                Reabrir conversa
+              </Button>
+            )}
           </div>
         </div>
       </div>
