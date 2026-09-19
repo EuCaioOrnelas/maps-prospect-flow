@@ -48,7 +48,7 @@ interface ChatMessageAreaProps {
   onSendMessage: (text: string, replyToId?: string, conversationId?: string) => void;
   onSendMedia: (file: File, caption?: string, conversationId?: string, replyToId?: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
-  onReopenConversation?: (templateName: string) => void;
+  onReopenConversation?: (templateName: string, language?: string, components?: any[]) => void | Promise<void>;
   fetchTemplates?: () => Promise<any[]>;
   members?: { user_id: string; name: string | null; email: string | null; avatar_url?: string | null }[];
   canChangeResponsible?: boolean;

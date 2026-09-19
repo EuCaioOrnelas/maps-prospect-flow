@@ -895,7 +895,7 @@ export function useChat() {
   }, [user, accountOwnerId, activeConnectionId, conversations, connections]);
 
   // Reopen an expired conversation by sending an approved Meta template
-  const reopenConversation = useCallback(async (templateName: string) => {
+  const reopenConversation = useCallback(async (templateName: string, templateLanguage?: string, templateComponents?: any[]) => {
     if (!user || !activeConversation) {
       toast.error("Selecione uma conversa");
       return;
