@@ -79,6 +79,13 @@ export function languageLabel(code: string): string {
   return TEMPLATE_LANGUAGES.find((l) => l.code === code)?.label ?? code;
 }
 
+/** Rótulo curto, para caber em uma linha nos cards (ex.: "PT-BR"). */
+export function languageShortLabel(code: string): string {
+  if (!code) return "—";
+  const [base, region] = code.split("_");
+  return region ? `${base.toUpperCase()}-${region.toUpperCase()}` : base.toUpperCase();
+}
+
 export function categoryLabel(value?: string | null): string {
   if (!value) return "—";
   return TEMPLATE_CATEGORIES.find((c) => c.value === value)?.label ?? value;
