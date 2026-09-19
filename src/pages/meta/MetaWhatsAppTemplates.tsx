@@ -149,22 +149,22 @@ export default function MetaWhatsAppTemplates() {
   const renderBody = () => {
     if (loading) {
       return (
-        <div className="space-y-2 p-4">
+        <Card className="space-y-2 p-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
-        </div>
+        </Card>
       );
     }
     if (loadError) {
       return (
-        <div className="p-10 text-center">
+        <Card className="p-10 text-center">
           <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-3" aria-hidden />
           <p className="text-sm text-foreground">{loadError}</p>
-        </div>
+        </Card>
       );
     }
     if (!templates.length) {
       return (
-        <div className="p-12 text-center">
+        <Card className="p-12 text-center">
           <MessageSquare className="h-9 w-9 text-muted-foreground mx-auto mb-3" aria-hidden />
           <p className="text-base font-medium text-foreground">Você ainda não possui templates</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
