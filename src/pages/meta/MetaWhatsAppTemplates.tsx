@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus, RefreshCw, Search, MessageSquare, AlertCircle, ArrowUpDown, Link2, Loader2,
+  LayoutGrid, CheckCircle2, Clock, XCircle, PauseCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMetaWhatsAppTemplates } from "@/hooks/useMetaWhatsAppTemplates";
@@ -29,11 +30,26 @@ import {
 type SortKey = "updated" | "name" | "status";
 
 const SUMMARY = [
-  { key: "all", label: "Todos" },
-  { key: "APPROVED", label: "Aprovados" },
-  { key: "PENDING", label: "Em análise" },
-  { key: "REJECTED", label: "Rejeitados" },
-  { key: "PAUSED", label: "Pausados / Problemas" },
+  {
+    key: "all", label: "Todos", hint: "Modelos da sua conta",
+    icon: LayoutGrid, tint: "bg-primary/10 text-primary", bar: "bg-primary",
+  },
+  {
+    key: "APPROVED", label: "Aprovados", hint: "Prontos para envio",
+    icon: CheckCircle2, tint: "bg-emerald-500/10 text-emerald-600", bar: "bg-emerald-500",
+  },
+  {
+    key: "PENDING", label: "Em análise", hint: "Aguardando a Meta",
+    icon: Clock, tint: "bg-amber-500/10 text-amber-600", bar: "bg-amber-500",
+  },
+  {
+    key: "REJECTED", label: "Rejeitados", hint: "Precisam de ajuste",
+    icon: XCircle, tint: "bg-destructive/10 text-destructive", bar: "bg-destructive",
+  },
+  {
+    key: "PAUSED", label: "Pausados", hint: "Com restrição de uso",
+    icon: PauseCircle, tint: "bg-orange-500/10 text-orange-600", bar: "bg-orange-500",
+  },
 ] as const;
 
 const problemStatuses = ["PAUSED", "DISABLED", "LIMIT_EXCEEDED"];
@@ -236,19 +252,33 @@ export default function MetaWhatsAppTemplates() {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {SUMMARY.map((s) => {
           const active = statusFilter === s.key;
+          const Icon = s.icon;
           return (
             <button
               key={s.key}
               onClick={() => setStatusFilter(s.key)}
               aria-pressed={active}
-              className={`rounded-xl border p-4 text-left transition-colors ${
-                active ? "border-primary/40 bg-primary/5" : "border-border bg-card hover:bg-muted/40"
+              className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition-all ${
+                active
+                  ? "border-primary/50 bg-primary/5 shadow-[0_8px_24px_-16px_hsl(var(--primary)/0.6)]"
+                  : "border-border bg-card hover:border-primary/30 hover:bg-muted/30"
               }`}
             >
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-2xl font-semibold text-foreground mt-1 tabular-nums">
-                {counts[s.key as keyof typeof counts] ?? 0}
-              </p>
+              <div className="flex items-start justify-between gap-2">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${s.tint}`}>
+                  <Icon className="h-[18px] w-[18px]" aria-hidden />
+                </div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums leading-none mt-1">
+                  {counts[s.key as keyof typeof counts] ?? 0}
+                </p>
+              </div>
+              <p className="text-xs font-medium text-foreground mt-3">{s.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{s.hint}</p>
+              <span
+                className={`absolute inset-x-0 bottom-0 h-0.5 transition-opacity ${s.bar} ${
+                  active ? "opacity-100" : "opacity-0 group-hover:opacity-60"
+                }`}
+              />
             </button>
           );
         })}
