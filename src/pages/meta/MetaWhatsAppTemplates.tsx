@@ -340,6 +340,17 @@ export default function MetaWhatsAppTemplates() {
             aria-label="Buscar template"
           />
         </div>
+        {connections.length > 1 && (
+          <Select value={numberFilter} onValueChange={setNumberFilter}>
+            <SelectTrigger className="lg:w-52"><SelectValue placeholder="Número" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os números</SelectItem>
+              {connections.map((c) => (
+                <SelectItem key={c.id} value={c.waba_id}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="lg:w-44"><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent>
