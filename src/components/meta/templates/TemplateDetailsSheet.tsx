@@ -19,6 +19,7 @@ interface Props {
   onEdit: (t: MetaTemplateRow) => void;
   onDelete: (t: MetaTemplateRow) => void;
   onSync: () => void;
+  numberLabel?: (wabaId: string) => string;
 }
 
 const fmt = (value?: string | null) =>
@@ -32,7 +33,7 @@ const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
 );
 
 export function TemplateDetailsSheet({
-  template, open, onOpenChange, isAdmin, onEdit, onDelete, onSync,
+  template, open, onOpenChange, isAdmin, onEdit, onDelete, onSync, numberLabel,
 }: Props) {
   const [showRaw, setShowRaw] = useState(false);
   if (!template) return null;
