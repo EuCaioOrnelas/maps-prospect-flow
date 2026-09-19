@@ -290,13 +290,38 @@ Deno.serve(async (req) => {
       }));
 
       if (rows.length) {
-        const { error } = await admin
-          .from("meta_whatsapp_templates")
-          .upsert(rows, { onConflict: "waba_id,meta_template_id" });
-        if (error) {
-          console.error("[meta-templates] upsert failed", error);
-          await audit(false, 500, { error: error.message });
-          return json({ error: "db_error", message: "Não foi possível salvar os templates sincronizados." }, 500);
+        // Do not depend on a named/shape-matching UNIQUE constraint here. Some
+        // production copies still have the original partial unique index, which
+        // PostgreSQL cannot use for `ON CONFLICT (waba_id, meta_template_id)`.
+        // Updating first and inserting only missing rows works with both schemas.
+        for (const row of rows) {
+          const { data: existing, error: lookupError } = await admin
+            .from("meta_whatsapp_templates")
+            .select("id")
+            .eq("waba_id", row.waba_id)
+            .eq("meta_template_id", row.meta_template_id)
+            .maybeSingle();
+          if (lookupError) {
+            console.error("[meta-templates] template lookup failed", lookupError);
+            await audit(false, 500, { step: "lookup", error: lookupError.message });
+            return json({
+              error: "db_error",
+              message: "A estrutura de templates não está pronta neste ambiente. Aplique as migrações 0016 e 0017.",
+            }, 500);
+          }
+
+          const write = existing?.id
+            ? admin.from("meta_whatsapp_templates").update(row).eq("id", existing.id)
+            : admin.from("meta_whatsapp_templates").insert(row);
+          const { error: writeError } = await write;
+          if (writeError) {
+            console.error("[meta-templates] template write failed", writeError);
+            await audit(false, 500, { step: existing?.id ? "update" : "insert", error: writeError.message });
+            return json({
+              error: "db_error",
+              message: "Não foi possível salvar os templates. Confirme se as migrações 0016 e 0017 foram aplicadas.",
+            }, 500);
+          }
         }
       }
 

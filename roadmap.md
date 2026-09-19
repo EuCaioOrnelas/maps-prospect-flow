@@ -33,3 +33,5 @@
 - [x] Paginar os templates em grupos de 6 no padrão Gestão de Oportunidades
 - [x] Impedir travamento e perda de rascunho ao enviar para análise
 - [x] Validar a tela e publicar a função atualizada
+- [x] Auditar os arquivos necessários para transportar o recurso entre projetos
+- [ ] Publicar a sincronização compatível com instalações que ainda usam o índice parcial
