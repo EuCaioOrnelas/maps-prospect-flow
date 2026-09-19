@@ -297,27 +297,20 @@ export default function MetaWhatsAppTemplates() {
               key={s.key}
               onClick={() => setStatusFilter(s.key)}
               aria-pressed={active}
-              className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition-all ${
-                active
-                  ? "border-primary/50 bg-primary/5 shadow-[0_8px_24px_-16px_hsl(var(--primary)/0.6)]"
-                  : "border-border bg-card hover:border-primary/30 hover:bg-muted/30"
-              }`}
+              className="rounded-2xl border border-border bg-card p-4 text-left"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${s.tint}`}>
+              <div className="flex items-center gap-2.5">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${s.tint}`}>
                   <Icon className="h-[18px] w-[18px]" aria-hidden />
                 </div>
-                <p className="text-2xl font-semibold text-foreground tabular-nums leading-none mt-1">
-                  {counts[s.key as keyof typeof counts] ?? 0}
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {s.label}
                 </p>
               </div>
-              <p className="text-xs font-medium text-foreground mt-3">{s.label}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{s.hint}</p>
-              <span
-                className={`absolute inset-x-0 bottom-0 h-0.5 transition-opacity ${s.bar} ${
-                  active ? "opacity-100" : "opacity-0 group-hover:opacity-60"
-                }`}
-              />
+              <p className="text-2xl font-semibold text-foreground tabular-nums mt-3">
+                {counts[s.key as keyof typeof counts] ?? 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 leading-snug">{s.hint}</p>
             </button>
           );
         })}
