@@ -102,7 +102,6 @@ function CheckoutCardInner() {
   const [cardHolder, setCardHolder] = useState("");
   const cardFormRef = useRef<StripeCardFormHandle>(null);
   const [cardComplete, setCardComplete] = useState(false);
-  const [cardBrand, setCardBrand] = useState("");
   const [cardNumberState, setCardNumberState] = useState<"empty" | "typing" | "complete">("empty");
   const [cardExpiryState, setCardExpiryState] = useState<"empty" | "typing" | "complete">("empty");
   const [installments] = useState("1");
@@ -423,7 +422,6 @@ function CheckoutCardInner() {
                     cardHolder={cardHolder}
                     expiryDate=""
                     isFlipped={cvvFocused}
-                    cardBrand={cardBrand}
                     numberState={cardNumberState}
                     expiryState={cardExpiryState}
                   />
@@ -437,7 +435,6 @@ function CheckoutCardInner() {
                     onCardHolderChange={setCardHolder}
                     onCardChange={(d) => {
                       setCardComplete(!!d.complete);
-                      setCardBrand(d.brand || "");
                       setCardNumberState(d.empty ? "empty" : d.complete ? "complete" : "typing");
                     }}
                     onExpiryChange={(d) => setCardExpiryState(d.empty ? "empty" : d.complete ? "complete" : "typing")}

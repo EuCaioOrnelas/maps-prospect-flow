@@ -7,7 +7,6 @@ interface AnimatedCreditCardProps {
   cardHolder: string
   expiryDate: string
   isFlipped: boolean
-  cardBrand?: string
   numberState?: "empty" | "typing" | "complete"
   expiryState?: "empty" | "typing" | "complete"
 }
@@ -17,7 +16,6 @@ export default function AnimatedCreditCard({
   cardHolder,
   expiryDate,
   isFlipped,
-  cardBrand = "unknown",
   numberState = "empty",
   expiryState = "empty",
 }: AnimatedCreditCardProps) {
@@ -51,28 +49,11 @@ export default function AnimatedCreditCard({
     return `${padded.slice(0, 4)} ${padded.slice(4, 8)} ${padded.slice(8, 12)} ${padded.slice(12, 16)}`
   }
 
-  const normalizedBrand = cardBrand.toLowerCase()
-  const brandLabel = normalizedBrand === "visa"
-    ? "VISA"
-    : normalizedBrand === "mastercard"
-      ? "MASTERCARD"
-      : normalizedBrand === "elo"
-        ? "ELO"
-        : normalizedBrand === "discover"
-          ? "DISCOVER"
-          : "CARTÃO"
-  const leadingDigit = normalizedBrand === "visa"
-    ? "4"
-    : normalizedBrand === "mastercard"
-      ? "5"
-      : normalizedBrand === "elo" || normalizedBrand === "discover"
-        ? "6"
-        : "•"
   const maskedNumber = numberState === "empty"
     ? "•••• •••• •••• ••••"
     : numberState === "complete"
-      ? `${leadingDigit}●●● ●●●● ●●●● ●●●●`
-      : `${leadingDigit}●●● ●●●● •••• ••••`
+      ? "●●●● ●●●● ●●●● ●●●●"
+      : "●●●● ●●●● •••• ••••"
   const maskedExpiry = expiryState === "empty" ? "MM/AA" : expiryState === "complete" ? "●●/●●" : "●●/••"
 
   return (
@@ -145,16 +126,7 @@ export default function AnimatedCreditCard({
                     {expiryDate || maskedExpiry}
                   </motion.p>
                 </div>
-                <motion.span
-                  key={brandLabel}
-                  initial={{ opacity: 0.45, y: 2 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18 }}
-                  className="max-w-[104px] truncate text-right text-sm font-bold italic text-white sm:text-base"
-                  title={brandLabel}
-                >
-                  {brandLabel}
-                </motion.span>
+                <span className="text-white text-xl font-bold italic tracking-wider">VISA</span>
               </div>
             </div>
           </div>
