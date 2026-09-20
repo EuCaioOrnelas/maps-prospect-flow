@@ -507,7 +507,9 @@ function SignupWithCardInner() {
 
       // 1) Se ainda não há SetupIntent, tokeniza o cartão e cria um.
       if (!pending) {
-        const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
+        const cardForm = cardFormRef.current;
+        if (!cardForm) throw new Error("Os campos do cartão ainda estão carregando. Aguarde um instante.");
+        const paymentMethodId = await cardForm.createPaymentMethod({
           name: cardHolder,
           email,
           phone: phone.replace(/\D/g, ""),
