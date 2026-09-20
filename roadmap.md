@@ -39,4 +39,4 @@
 ## Campos de cartão Stripe
 - [x] Simplificar e ampliar a área clicável dos campos seguros da Stripe
 - [x] Manter o Link e os mecanismos nativos de pagamento disponíveis
-- [ ] Validar checkout, trial e upgrade em computador e celular
+- [x] Validar checkout, trial e upgrade em computador e celular
