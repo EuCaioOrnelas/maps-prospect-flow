@@ -41,10 +41,11 @@ interface Props {
   onCardHolderChange: (v: string) => void;
   /** Notifies parent about card field state for animated card preview */
   onCardChange?: (data: {
-    last4Digits?: string;
     brand?: string;
     complete?: boolean;
+    empty?: boolean;
   }) => void;
+  onExpiryChange?: (data: { complete: boolean; empty: boolean }) => void;
   onCvcFocus?: () => void;
   onCvcBlur?: () => void;
   disabled?: boolean;
@@ -74,7 +75,7 @@ const elementOptions: StripeCardNumberElementOptions = {
 };
 
 export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
-  ({ cardHolder, onCardHolderChange, onCardChange, onCvcFocus, onCvcBlur, disabled, nameCase = "upper" }, ref) => {
+  ({ cardHolder, onCardHolderChange, onCardChange, onExpiryChange, onCvcFocus, onCvcBlur, disabled, nameCase = "title" }, ref) => {
     const stripe = useStripe();
     const elements = useElements();
     const [error, setError] = useState<string | null>(null);
@@ -129,7 +130,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           </Label>
           <Input
             id="card-holder"
-            placeholder={nameCase === "title" ? "Nome Impresso No Cartão" : "NOME IMPRESSO NO CARTÃO"}
+            placeholder={nameCase === "title" ? "Nome impresso no cartão" : "NOME IMPRESSO NO CARTÃO"}
             value={cardHolder}
             onChange={(e) =>
               onCardHolderChange(
@@ -155,7 +156,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               className="w-full py-0.5"
               onChange={(event) => {
                 handleFieldChange(event);
-                onCardChange?.({ brand: event.brand, complete: event.complete });
+                onCardChange?.({ brand: event.brand, complete: event.complete, empty: event.empty });
               }}
               onFocus={() => setFocusedField("number")}
               onBlur={() => setFocusedField(null)}
@@ -177,7 +178,10 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <CardExpiryElement
                 options={sharedOptions}
                 className="w-full py-0.5"
-                onChange={handleFieldChange}
+                onChange={(event) => {
+                  handleFieldChange(event);
+                  onExpiryChange?.({ complete: event.complete, empty: event.empty });
+                }}
                 onFocus={() => setFocusedField("expiry")}
                 onBlur={() => setFocusedField(null)}
               />

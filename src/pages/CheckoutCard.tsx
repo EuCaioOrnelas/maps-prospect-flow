@@ -102,6 +102,8 @@ function CheckoutCardInner() {
   const [cardHolder, setCardHolder] = useState("");
   const cardFormRef = useRef<StripeCardFormHandle>(null);
   const [cardComplete, setCardComplete] = useState(false);
+  const [cardNumberState, setCardNumberState] = useState<"empty" | "typing" | "complete">("empty");
+  const [cardExpiryState, setCardExpiryState] = useState<"empty" | "typing" | "complete">("empty");
   const [installments] = useState("1");
   const [postalCode, setPostalCode] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
@@ -416,10 +418,12 @@ function CheckoutCardInner() {
                 {/* Cartão animado em destaque */}
                 <div className="mb-6 flex justify-center">
                   <AnimatedCreditCard
-                    cardNumber={"•••• •••• •••• ••••"}
-                    cardHolder={cardHolder || "NOME NO CARTÃO"}
-                    expiryDate={"MM/AA"}
+                    cardNumber=""
+                    cardHolder={cardHolder}
+                    expiryDate=""
                     isFlipped={cvvFocused}
+                    numberState={cardNumberState}
+                    expiryState={cardExpiryState}
                   />
                 </div>
 
@@ -429,7 +433,11 @@ function CheckoutCardInner() {
                     ref={cardFormRef}
                     cardHolder={cardHolder}
                     onCardHolderChange={setCardHolder}
-                    onCardChange={(d) => setCardComplete(!!d.complete)}
+                    onCardChange={(d) => {
+                      setCardComplete(!!d.complete);
+                      setCardNumberState(d.empty ? "empty" : d.complete ? "complete" : "typing");
+                    }}
+                    onExpiryChange={(d) => setCardExpiryState(d.empty ? "empty" : d.complete ? "complete" : "typing")}
                     onCvcFocus={() => setCvvFocused(true)}
                     onCvcBlur={() => setCvvFocused(false)}
                     disabled={loading}

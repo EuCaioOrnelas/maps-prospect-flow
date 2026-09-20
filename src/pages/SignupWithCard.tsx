@@ -163,6 +163,8 @@ function SignupWithCardInner() {
   const [cardHolder, setCardHolder] = useState("");
   const [cardFlipped, setCardFlipped] = useState(false);
   const [cardBrand, setCardBrand] = useState("");
+  const [cardNumberState, setCardNumberState] = useState<"empty" | "typing" | "complete">("empty");
+  const [cardExpiryState, setCardExpiryState] = useState<"empty" | "typing" | "complete">("empty");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const cardFormRef = useRef<StripeCardFormHandle>(null);
 
@@ -835,10 +837,12 @@ function SignupWithCardInner() {
                   {/* Cartão animado em destaque (mobile-first) */}
                   <div className="lg:hidden mb-6 flex justify-center">
                     <AnimatedCreditCard
-                      cardNumber={"•••• •••• •••• ••••"}
-                      cardHolder={cardHolder || "NOME NO CARTÃO"}
-                      expiryDate={"MM/AA"}
+                      cardNumber=""
+                      cardHolder={cardHolder}
+                      expiryDate=""
                       isFlipped={cardFlipped}
+                      numberState={cardNumberState}
+                      expiryState={cardExpiryState}
                     />
                   </div>
 
@@ -867,7 +871,11 @@ function SignupWithCardInner() {
                         ref={cardFormRef}
                         cardHolder={cardHolder}
                         onCardHolderChange={setCardHolder}
-                        onCardChange={(d) => setCardBrand(d.brand || "")}
+                        onCardChange={(d) => {
+                          setCardBrand(d.brand || "");
+                          setCardNumberState(d.empty ? "empty" : d.complete ? "complete" : "typing");
+                        }}
+                        onExpiryChange={(d) => setCardExpiryState(d.empty ? "empty" : d.complete ? "complete" : "typing")}
                         onCvcFocus={() => setCardFlipped(true)}
                         onCvcBlur={() => setCardFlipped(false)}
                         disabled={loading || !!pendingSetup}
@@ -931,10 +939,12 @@ function SignupWithCardInner() {
               {step === 2 && (
                 <div className="hidden lg:block">
                   <AnimatedCreditCard
-                    cardNumber={"•••• •••• •••• ••••"}
-                    cardHolder={cardHolder || "NOME NO CARTÃO"}
-                    expiryDate={"MM/AA"}
+                    cardNumber=""
+                    cardHolder={cardHolder}
+                    expiryDate=""
                     isFlipped={cardFlipped}
+                    numberState={cardNumberState}
+                    expiryState={cardExpiryState}
                   />
                 </div>
               )}
