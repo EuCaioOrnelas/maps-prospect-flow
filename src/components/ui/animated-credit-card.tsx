@@ -86,15 +86,9 @@ export default function AnimatedCreditCard({
               </div>
 
               <div className="mb-3">
-                <motion.p
-                  key={`${numberState}-${cardNumber}`}
-                  initial={{ opacity: 0.55, y: 2 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18 }}
-                  className="text-white text-lg sm:text-xl font-mono tracking-[0.2em] drop-shadow"
-                >
+                <p className="text-white text-lg sm:text-xl font-mono tracking-[0.2em] drop-shadow">
                   {cardNumber ? formatDisplay(cardNumber) : maskedNumber}
-                </motion.p>
+                </p>
               </div>
 
               <div className="grid grid-cols-[minmax(0,1fr)_64px_60px] items-end gap-x-5">
