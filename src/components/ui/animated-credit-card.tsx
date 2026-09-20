@@ -113,7 +113,7 @@ export default function AnimatedCreditCard({
                 <div className="w-16 text-right">
                   <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Validade</p>
                   <p className="h-5 whitespace-nowrap text-sm font-semibold text-white">
-                    {expiryDate || maskedExpiry}
+                    {expiryDate || "MM/AA"}
                   </p>
                 </div>
                 <span className="w-[60px] text-right text-xl font-bold italic tracking-wider text-white">VISA</span>
