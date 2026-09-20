@@ -16,8 +16,6 @@ export default function AnimatedCreditCard({
   cardHolder,
   expiryDate,
   isFlipped,
-  numberState = "empty",
-  expiryState = "empty",
 }: AnimatedCreditCardProps) {
   const rotateX = useSpring(0, { stiffness: 40, damping: 30 })
   const rotateY = useSpring(0, { stiffness: 40, damping: 30 })
@@ -49,12 +47,8 @@ export default function AnimatedCreditCard({
     return `${padded.slice(0, 4)} ${padded.slice(4, 8)} ${padded.slice(8, 12)} ${padded.slice(12, 16)}`
   }
 
-  const maskedNumber = numberState === "empty"
-    ? "•••• •••• •••• ••••"
-    : numberState === "complete"
-      ? "●●●● ●●●● ●●●● ●●●●"
-      : "●●●● ●●●● •••• ••••"
-  const maskedExpiry = expiryState === "empty" ? "MM/AA" : expiryState === "complete" ? "●●/●●" : "●●/••"
+  // Máscaras fixas: sempre o mesmo tamanho, sem animação de aumento
+  const maskedNumber = "•••• •••• •••• ••••"
 
   return (
     <div className="w-full flex justify-center" style={{ perspective: 1000 }}>
@@ -90,15 +84,9 @@ export default function AnimatedCreditCard({
               </div>
 
               <div className="mb-3">
-                <motion.p
-                  key={`${numberState}-${cardNumber}`}
-                  initial={{ opacity: 0.55, y: 2 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.18 }}
-                  className="text-white text-lg sm:text-xl font-mono tracking-[0.2em] drop-shadow"
-                >
+                <p className="text-white text-lg sm:text-xl font-mono tracking-[0.2em] drop-shadow">
                   {cardNumber ? formatDisplay(cardNumber) : maskedNumber}
-                </motion.p>
+                </p>
               </div>
 
               <div className="grid grid-cols-[minmax(0,1fr)_64px_60px] items-end gap-x-5">
@@ -117,7 +105,7 @@ export default function AnimatedCreditCard({
                 <div className="w-16 text-right">
                   <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Validade</p>
                   <p className="h-5 whitespace-nowrap text-sm font-semibold text-white">
-                    {expiryDate || maskedExpiry}
+                    {expiryDate || "MM/AA"}
                   </p>
                 </div>
                 <span className="w-[60px] text-right text-xl font-bold italic tracking-wider text-white">VISA</span>
