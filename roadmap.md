@@ -42,3 +42,4 @@
 - [x] Validar checkout, trial e upgrade em computador e celular
 - [x] Capitalizar o nome, recolher a indicação e restaurar a animação mascarada do cartão
 - [x] Auditar a apresentação e o acionamento do 3D Secure
+- [x] Atualizar a prévia durante a digitação e sincronizar a bandeira detectada pela Stripe

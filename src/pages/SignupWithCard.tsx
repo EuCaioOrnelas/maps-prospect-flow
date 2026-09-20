@@ -841,6 +841,7 @@ function SignupWithCardInner() {
                       cardHolder={cardHolder}
                       expiryDate=""
                       isFlipped={cardFlipped}
+                      cardBrand={cardBrand}
                       numberState={cardNumberState}
                       expiryState={cardExpiryState}
                     />
@@ -943,6 +944,7 @@ function SignupWithCardInner() {
                     cardHolder={cardHolder}
                     expiryDate=""
                     isFlipped={cardFlipped}
+                      cardBrand={cardBrand}
                     numberState={cardNumberState}
                     expiryState={cardExpiryState}
                   />
