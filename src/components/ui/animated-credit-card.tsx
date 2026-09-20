@@ -49,12 +49,8 @@ export default function AnimatedCreditCard({
     return `${padded.slice(0, 4)} ${padded.slice(4, 8)} ${padded.slice(8, 12)} ${padded.slice(12, 16)}`
   }
 
-  const maskedNumber = numberState === "empty"
-    ? "•••• •••• •••• ••••"
-    : numberState === "complete"
-      ? "●●●● ●●●● ●●●● ●●●●"
-      : "●●●● ●●●● •••• ••••"
-  const maskedExpiry = expiryState === "empty" ? "MM/AA" : expiryState === "complete" ? "●●/●●" : "●●/••"
+  // Máscaras fixas: sempre o mesmo tamanho, sem animação de aumento
+  const maskedNumber = "•••• •••• •••• ••••"
 
   return (
     <div className="w-full flex justify-center" style={{ perspective: 1000 }}>
