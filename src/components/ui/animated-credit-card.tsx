@@ -101,32 +101,26 @@ export default function AnimatedCreditCard({
                 </motion.p>
               </div>
 
-              <div className="flex items-end justify-between">
-                <div>
+              <div className="grid grid-cols-[minmax(0,1fr)_64px_52px] items-end gap-3">
+                <div className="min-w-0">
                   <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Titular</p>
                   <motion.p
                     key={cardHolder || "placeholder"}
                     initial={{ opacity: 0.55, y: 2 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.18 }}
-                    className="text-white text-sm font-semibold tracking-wide truncate max-w-[200px]"
+                    className="truncate text-sm font-semibold tracking-wide text-white"
                   >
-                    {cardHolder || "Seu nome aqui"}
+                    {cardHolder || "Nome impresso"}
                   </motion.p>
                 </div>
-                <div className="text-right">
+                <div className="w-16 text-right">
                   <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Validade</p>
-                  <motion.p
-                    key={`${expiryState}-${expiryDate}`}
-                    initial={{ opacity: 0.55, y: 2 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="text-white text-sm font-semibold"
-                  >
+                  <p className="h-5 whitespace-nowrap text-sm font-semibold text-white">
                     {expiryDate || maskedExpiry}
-                  </motion.p>
+                  </p>
                 </div>
-                <span className="text-white text-xl font-bold italic tracking-wider">VISA</span>
+                <span className="w-[52px] text-right text-xl font-bold italic tracking-wider text-white">VISA</span>
               </div>
             </div>
           </div>
