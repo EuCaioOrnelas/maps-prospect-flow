@@ -7,6 +7,8 @@ interface AnimatedCreditCardProps {
   cardHolder: string
   expiryDate: string
   isFlipped: boolean
+  numberState?: "empty" | "typing" | "complete"
+  expiryState?: "empty" | "typing" | "complete"
 }
 
 export default function AnimatedCreditCard({
@@ -14,6 +16,8 @@ export default function AnimatedCreditCard({
   cardHolder,
   expiryDate,
   isFlipped,
+  numberState = "empty",
+  expiryState = "empty",
 }: AnimatedCreditCardProps) {
   const rotateX = useSpring(0, { stiffness: 40, damping: 30 })
   const rotateY = useSpring(0, { stiffness: 40, damping: 30 })
@@ -44,6 +48,13 @@ export default function AnimatedCreditCard({
     const padded = clean.padEnd(16, "•")
     return `${padded.slice(0, 4)} ${padded.slice(4, 8)} ${padded.slice(8, 12)} ${padded.slice(12, 16)}`
   }
+
+  const maskedNumber = numberState === "empty"
+    ? "•••• •••• •••• ••••"
+    : numberState === "complete"
+      ? "●●●● ●●●● ●●●● ●●●●"
+      : "●●●● ●●●● •••• ••••"
+  const maskedExpiry = expiryState === "empty" ? "MM/AA" : expiryState === "complete" ? "●●/●●" : "●●/••"
 
   return (
     <div className="w-full flex justify-center" style={{ perspective: 1000 }}>
@@ -79,23 +90,41 @@ export default function AnimatedCreditCard({
               </div>
 
               <div className="mb-3">
-                <p className="text-white text-lg sm:text-xl font-mono tracking-[0.2em] drop-shadow">
-                  {formatDisplay(cardNumber)}
-                </p>
+                <motion.p
+                  key={`${numberState}-${cardNumber}`}
+                  initial={{ opacity: 0.55, y: 2 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="text-white text-lg sm:text-xl font-mono tracking-[0.2em] drop-shadow"
+                >
+                  {cardNumber ? formatDisplay(cardNumber) : maskedNumber}
+                </motion.p>
               </div>
 
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Titular</p>
-                  <p className="text-white text-sm font-semibold tracking-wide truncate max-w-[200px]">
-                    {cardHolder || "SEU NOME AQUI"}
-                  </p>
+                  <motion.p
+                    key={cardHolder || "placeholder"}
+                    initial={{ opacity: 0.55, y: 2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="text-white text-sm font-semibold tracking-wide truncate max-w-[200px]"
+                  >
+                    {cardHolder || "Seu nome aqui"}
+                  </motion.p>
                 </div>
                 <div className="text-right">
                   <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Validade</p>
-                  <p className="text-white text-sm font-semibold">
-                    {expiryDate || "••/••"}
-                  </p>
+                  <motion.p
+                    key={`${expiryState}-${expiryDate}`}
+                    initial={{ opacity: 0.55, y: 2 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.18 }}
+                    className="text-white text-sm font-semibold"
+                  >
+                    {expiryDate || maskedExpiry}
+                  </motion.p>
                 </div>
                 <span className="text-white text-xl font-bold italic tracking-wider">VISA</span>
               </div>
