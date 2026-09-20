@@ -235,7 +235,9 @@ function CheckoutCardInner() {
 
 
     try {
-      const paymentMethodId = await cardFormRef.current!.createPaymentMethod({
+      const cardForm = cardFormRef.current;
+      if (!cardForm) throw new Error("Os campos do cartão ainda estão carregando. Aguarde um instante.");
+      const paymentMethodId = await cardForm.createPaymentMethod({
         name: cardHolder,
         email: customerData.email,
         phone: customerData.phone,

@@ -35,3 +35,8 @@
 - [x] Validar a tela e publicar a função atualizada
 - [x] Auditar os arquivos necessários para transportar o recurso entre projetos
 - [ ] Publicar a sincronização compatível com instalações que ainda usam o índice parcial
+
+## Campos de cartão Stripe
+- [x] Simplificar e ampliar a área clicável dos campos seguros da Stripe
+- [x] Manter o Link e os mecanismos nativos de pagamento disponíveis
+- [ ] Validar checkout, trial e upgrade em computador e celular
