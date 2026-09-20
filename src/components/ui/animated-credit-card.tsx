@@ -101,7 +101,7 @@ export default function AnimatedCreditCard({
                 </motion.p>
               </div>
 
-              <div className="grid grid-cols-[minmax(0,1fr)_64px_52px] items-end gap-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_64px_60px] items-end gap-x-5">
                 <div className="min-w-0">
                   <p className="text-white/50 text-[9px] uppercase tracking-wider mb-0.5">Titular</p>
                   <motion.p
@@ -120,7 +120,7 @@ export default function AnimatedCreditCard({
                     {expiryDate || maskedExpiry}
                   </p>
                 </div>
-                <span className="w-[52px] text-right text-xl font-bold italic tracking-wider text-white">VISA</span>
+                <span className="w-[60px] text-right text-xl font-bold italic tracking-wider text-white">VISA</span>
               </div>
             </div>
           </div>
