@@ -16,8 +16,6 @@ export default function AnimatedCreditCard({
   cardHolder,
   expiryDate,
   isFlipped,
-  numberState = "empty",
-  expiryState = "empty",
 }: AnimatedCreditCardProps) {
   const rotateX = useSpring(0, { stiffness: 40, damping: 30 })
   const rotateY = useSpring(0, { stiffness: 40, damping: 30 })
