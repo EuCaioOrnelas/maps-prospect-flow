@@ -41,4 +41,4 @@
 - [x] Manter o Link e os mecanismos nativos de pagamento disponíveis
 - [x] Validar checkout, trial e upgrade em computador e celular
 - [x] Capitalizar o nome, recolher a indicação e restaurar a animação mascarada do cartão
-- [ ] Auditar a apresentação e o acionamento do 3D Secure
+- [x] Auditar a apresentação e o acionamento do 3D Secure
