@@ -10,10 +10,9 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import type {
-  StripeCardCvcElement,
-  StripeCardElementChangeEvent,
-  StripeCardExpiryElement,
-  StripeCardNumberElement,
+  StripeCardCvcElementChangeEvent,
+  StripeCardExpiryElementChangeEvent,
+  StripeCardNumberElementChangeEvent,
   StripeCardNumberElementOptions,
 } from "@stripe/stripe-js";
 import { Label } from "@/components/ui/label";
@@ -91,14 +90,10 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
       element?.focus();
     };
 
-    const handleElementChange = (
-      event: StripeCardElementChangeEvent,
-      field: "number" | "expiry" | "cvc",
+    const handleFieldChange = (
+      event: StripeCardNumberElementChangeEvent | StripeCardExpiryElementChangeEvent | StripeCardCvcElementChangeEvent,
     ) => {
       setError(event.error?.message || null);
-      if (field === "number") {
-        onCardChange?.({ brand: event.brand, complete: event.complete });
-      }
     };
 
     const sharedOptions = { ...elementOptions, disabled: !!disabled };
@@ -158,7 +153,10 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             <CardNumberElement
               options={sharedOptions}
               className="w-full py-0.5"
-              onChange={(event) => handleElementChange(event, "number")}
+              onChange={(event) => {
+                handleFieldChange(event);
+                onCardChange?.({ brand: event.brand, complete: event.complete });
+              }}
               onFocus={() => setFocusedField("number")}
               onBlur={() => setFocusedField(null)}
             />
@@ -179,7 +177,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <CardExpiryElement
                 options={sharedOptions}
                 className="w-full py-0.5"
-                onChange={(event) => handleElementChange(event, "expiry")}
+                onChange={handleFieldChange}
                 onFocus={() => setFocusedField("expiry")}
                 onBlur={() => setFocusedField(null)}
               />
@@ -198,7 +196,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <CardCvcElement
                 options={sharedOptions}
                 className="w-full py-0.5"
-                onChange={(event) => handleElementChange(event, "cvc")}
+                onChange={handleFieldChange}
                 onFocus={() => {
                   setFocusedField("cvc");
                   onCvcFocus?.();
