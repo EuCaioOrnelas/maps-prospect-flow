@@ -63,4 +63,4 @@
 - [x] Normalize URL logo sizing in form preview and public rendering.
 - [x] Add form embed options and copyable snippets for common stacks.
 - [x] Expose embed from Publish and form cards.
-- [ ] Validate responsive behavior and existing form submission flow.
+- [x] Validate responsive behavior and existing form submission flow.

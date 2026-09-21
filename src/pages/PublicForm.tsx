@@ -306,7 +306,7 @@ export default function PublicForm() {
   const embedded = new URLSearchParams(window.location.search).get("embed") === "1";
 
   return (
-    <div className={`min-h-screen w-full overflow-x-hidden px-3 ${embedded ? "py-3 sm:px-3 sm:py-3" : "py-6 sm:px-4 sm:py-12"}`} style={{ background: bg, color: textColor }}>
+    <div className={`min-h-screen w-full overflow-x-hidden ${embedded ? "p-0" : "px-3 py-6 sm:px-4 sm:py-12"}`} style={{ background: bg, color: textColor }}>
       <div className="mx-auto w-full max-w-lg">
         <div className="overflow-hidden bg-white shadow-sm" style={{ borderRadius: radius + 8 }}>
           {cfg.coverUrl && (
@@ -484,12 +484,12 @@ export default function PublicForm() {
           </div>
         </div>
 
-        <p className={`${embedded ? "mt-3" : "mt-4"} text-center text-xs opacity-60`}>
+        {!embedded && <p className="mt-4 text-center text-xs opacity-60">
           Formulário seguro · Desenvolvido por{" "}
           <a href="https://wiize.com.br" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
             Wiize.com.br
           </a>
-        </p>
+        </p>}
       </div>
     </div>
   );
