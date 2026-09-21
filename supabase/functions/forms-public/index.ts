@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
       if (form.status !== "active") return json({ status: "inactive" }, 200);
       const { data: fields } = await admin
         .from("form_fields")
-        .select("id, field_type, label, name, placeholder, required, position, options")
+        .select("id, field_type, label, name, placeholder, required, position, options, page")
         .eq("form_id", form.id)
         .eq("is_active", true)
         .order("position");
