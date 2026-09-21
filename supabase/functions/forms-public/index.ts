@@ -225,9 +225,27 @@ Deno.serve(async (req) => {
           stageId = stage?.id || null;
         }
 
-        const responsible = Array.isArray(form.crm_responsibles) && form.crm_responsibles.length
-          ? form.crm_responsibles[0]
-          : null;
+        const configuredResponsibles = Array.isArray(form.crm_responsibles)
+          ? form.crm_responsibles.filter((value: unknown) => typeof value === "string").slice(0, 20)
+          : [];
+        let responsible = configuredResponsibles[0] || null;
+        if (form.config?.distributionMode === "round_robin" && configuredResponsibles.length > 1) {
+          const { data: assignedRows } = await admin
+            .from("leads")
+            .select("responsible_user_id")
+            .eq("owner_user_id", form.owner_user_id)
+            .eq("form_id", form.id)
+            .in("responsible_user_id", configuredResponsibles);
+          const totals = new Map(configuredResponsibles.map((memberId: string) => [memberId, 0]));
+          for (const row of assignedRows || []) {
+            if (row.responsible_user_id && totals.has(row.responsible_user_id)) {
+              totals.set(row.responsible_user_id, (totals.get(row.responsible_user_id) || 0) + 1);
+            }
+          }
+          responsible = configuredResponsibles.reduce((selected: string, memberId: string) =>
+            (totals.get(memberId) || 0) < (totals.get(selected) || 0) ? memberId : selected,
+          configuredResponsibles[0]);
+        }
 
         const leadPayload: Record<string, unknown> = {
           owner_user_id: form.owner_user_id,

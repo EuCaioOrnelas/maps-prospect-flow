@@ -50,3 +50,7 @@
 - [x] Validar visualmente o painel em desktop e compilar os analytics
 - [x] Remover faixas superiores e proteger textos longos nos cards
 - [x] Garantir totais completos de visualizações, leads, conversão e atribuição UTM
+- [x] Reestruturar o criador em etapas premium com prévia ao vivo e navegação fixa
+- [x] Adicionar slug personalizado, confirmação EXCLUIR e estados de publicação
+- [x] Integrar responsáveis com foto, cores das colunas e distribuição inteligente
+- [x] Adicionar prévia de e-mail e rastreamento Meta Pixel, GTM e Google Ads
