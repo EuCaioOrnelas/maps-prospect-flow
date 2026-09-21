@@ -227,6 +227,7 @@ Deno.serve(async (req) => {
         (values["sobrenome"] ? ` ${values["sobrenome"]}` : "");
       const company = pick("empresa", "company");
       const message = pick("mensagem", "message");
+      const city = pick("cidade", "city", "municipio");
 
       const utm = body?.utm || {};
       const submissionPayload = {
@@ -246,6 +247,22 @@ Deno.serve(async (req) => {
         tracked_link_id: null as string | null,
       };
 
+      // ── consentimento obrigatório (LGPD) ──
+      const consentInput = (body?.consent && typeof body.consent === "object") ? body.consent : {};
+      if (consentInput?.accepted !== true || !sanitize(consentInput?.text, 600)) {
+        return json({ error: "Confirme o aceite para que possamos entrar em contato." }, 400);
+      }
+      (submissionPayload as Record<string, unknown>).consent = {
+        accepted: true,
+        text: sanitize(consentInput.text, 600),
+        version: sanitize(consentInput.version, 40) || "v1",
+        accepted_at: new Date().toISOString(),
+        ip,
+        user_agent: ua.slice(0, 400),
+        form_id: form.id,
+        form_slug: form.slug,
+      };
+
       const wzLink = sanitize(body?.wz_link, 80);
       if (wzLink) {
         const { data: link } = await admin
@@ -257,16 +274,19 @@ Deno.serve(async (req) => {
         .from("form_submissions").insert(submissionPayload).select("*").single();
       if (subErr) throw subErr;
 
+      // Resposta imediata ao lead; anexos, CRM e avisos seguem em segundo plano.
+      const processAfterResponse = async () => {
       // ───── arquivos enviados ─────
       const storedFiles: { field: string; name: string; mime: string; size: number; path: string }[] = [];
-      for (const [index, upload] of uploads.entries()) {
+      const uploadResults = await Promise.all(uploads.map(async (upload, index) => {
         const path = `${form.owner_user_id}/${form.id}/${submission.id}/${index + 1}-${upload.name}`;
         const { error: uploadError } = await admin.storage
           .from("form-uploads")
           .upload(path, upload.bytes, { contentType: upload.mime, upsert: true });
-        if (uploadError) { console.error("[forms-public] upload", uploadError); continue; }
-        storedFiles.push({ field: upload.field, name: upload.name, mime: upload.mime, size: upload.bytes.length, path });
-      }
+        if (uploadError) { console.error("[forms-public] upload", uploadError); return null; }
+        return { field: upload.field, name: upload.name, mime: upload.mime, size: upload.bytes.length, path };
+      }));
+      for (const stored of uploadResults) if (stored) storedFiles.push(stored);
       if (storedFiles.length) {
         await admin.from("form_submissions").update({ files: storedFiles }).eq("id", submission.id);
       }
@@ -328,12 +348,13 @@ Deno.serve(async (req) => {
           contact_name: name || null,
           email: email || null,
           phone: phone || null,
-          origin: "formulario",
+          origin: "CRM",
           source: "form",
           form_id: form.id,
           form_submission_id: submission.id,
           updated_at: new Date().toISOString(),
         };
+        if (city) leadPayload.city = city;
         if (responsible) leadPayload.responsible_user_id = responsible;
 
         if (existing) {
@@ -353,8 +374,25 @@ Deno.serve(async (req) => {
           try {
             const answerLines = (fields || [])
               .filter((f: any) => values[f.name])
-              .map((f: any) => `${f.label}: ${values[f.name]}`);
-            const noteText = [`Formulário "${form.name}" respondido`, ...answerLines].join("\n").slice(0, 3900);
+              .map((f: any) => `• *${f.label}*\n  ${values[f.name]}`);
+            const originLine = submissionPayload.utm_source
+              ? `${submissionPayload.utm_source}${submissionPayload.utm_campaign ? ` · ${submissionPayload.utm_campaign}` : ""}`
+              : (submissionPayload.referrer || "Acesso direto");
+            const noteText = [
+              "👋 *Wian · Assistente comercial*",
+              "",
+              `📝 Novo preenchimento do formulário *${form.name}*`,
+              `🕒 ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`,
+              `🌐 Origem: ${originLine}`,
+              "",
+              "*Respostas do lead*",
+              ...answerLines,
+              ...(storedFiles.length
+                ? ["", "📎 *Arquivos enviados*", ...storedFiles.map((file) => `• ${file.name}`)]
+                : []),
+              "",
+              "✅ Consentimento de contato aceito no envio do formulário.",
+            ].join("\n").slice(0, 3900);
             const encrypted = await encryptNote(noteText);
             if (encrypted) {
               await admin.from("lead_notes").insert({
@@ -427,7 +465,17 @@ Deno.serve(async (req) => {
         }
       }
 
-      return json({ ok: true, message: form.success_message, lead_id: leadId });
+      };
+
+      try {
+        const runner = (globalThis as any).EdgeRuntime?.waitUntil;
+        if (typeof runner === "function") runner(processAfterResponse());
+        else await processAfterResponse();
+      } catch (bgErr) {
+        console.error("[forms-public] background", bgErr);
+      }
+
+      return json({ ok: true, message: form.success_message });
     }
 
     return json({ error: "Ação inválida." }, 400);

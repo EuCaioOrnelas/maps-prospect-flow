@@ -9,6 +9,11 @@ const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_c
 const ACCEPTED_UPLOADS = "image/jpeg,image/png,image/webp,application/pdf";
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
+export const CONSENT_VERSION = "2026-09-v1";
+export const CONSENT_TEXT =
+  "Ao enviar este formulário, você concorda com o tratamento dos seus dados para que possamos entrar em contato e atender à sua solicitação.";
+const REDIRECT_SECONDS = 3;
+
 export interface PublicFormField {
   id: string;
   field_type: string;
@@ -110,6 +115,7 @@ export default function PublicForm() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [redirectSeconds, setRedirectSeconds] = useState(3);
+  const [consent, setConsent] = useState(false);
   const honeypot = useRef("");
 
   // Carregamento do formulário — uma única chamada, sem dependências pesadas.
@@ -168,9 +174,9 @@ export default function PublicForm() {
     const rawRedirect = (form?.config?.redirectUrl || "").trim();
     const redirectUrl = rawRedirect && !/^https?:\/\//i.test(rawRedirect) ? `https://${rawRedirect.replace(/^\/+/, "")}` : rawRedirect;
     if (!done || !form?.config?.redirectEnabled || !redirectUrl) return;
-    setRedirectSeconds(3);
+    setRedirectSeconds(REDIRECT_SECONDS);
     const interval = window.setInterval(() => setRedirectSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
-    const timeout = window.setTimeout(() => window.location.assign(redirectUrl), 3000);
+    const timeout = window.setTimeout(() => window.location.assign(redirectUrl), REDIRECT_SECONDS * 1000);
     return () => { window.clearInterval(interval); window.clearTimeout(timeout); };
   }, [done, form]);
 
@@ -235,6 +241,7 @@ export default function PublicForm() {
     setError(null);
     if (!isLastPage) { goNext(); return; }
     if (!pageIsValid()) return;
+    if (!consent) { setError("Confirme o aceite para que possamos entrar em contato."); return; }
     setSubmitting(true);
     try {
       const data = await callPublic<any>({
@@ -243,6 +250,7 @@ export default function PublicForm() {
         data: values,
         files: Object.values(files).flat(),
         hp: honeypot.current,
+        consent: { accepted: true, text: CONSENT_TEXT, version: CONSENT_VERSION, accepted_at: new Date().toISOString() },
         utm: tracking.utm,
         wz_link: tracking.wz_link,
         referrer: tracking.referrer,
@@ -311,8 +319,23 @@ export default function PublicForm() {
                 <h2 className="text-xl font-semibold" style={{ color: textColor }}>Obrigado!</h2>
                 <p className="mx-auto mt-2 max-w-sm text-sm opacity-75" style={{ color: textColor }}>{done}</p>
                 {cfg.redirectEnabled && Boolean((cfg.redirectUrl || "").trim()) && (
-                  <div className="mx-auto mt-5 max-w-sm rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
-                    Você será redirecionado em <strong>{redirectSeconds}</strong> segundo{redirectSeconds === 1 ? "" : "s"}.
+                  <div className="mx-auto mt-6 flex max-w-sm items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-left">
+                    <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                      <svg viewBox="0 0 36 36" className="h-9 w-9 -rotate-90">
+                        <circle cx="18" cy="18" r="16" fill="none" stroke="#e4e4e7" strokeWidth="3" />
+                        <circle
+                          cx="18" cy="18" r="16" fill="none" stroke={primary} strokeWidth="3" strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 16}
+                          strokeDashoffset={2 * Math.PI * 16 * (1 - redirectSeconds / REDIRECT_SECONDS)}
+                          style={{ transition: "stroke-dashoffset 1s linear" }}
+                        />
+                      </svg>
+                      <span className="absolute text-xs font-semibold text-zinc-700">{redirectSeconds}</span>
+                    </span>
+                    <span className="text-sm text-zinc-700">
+                      <strong className="block font-medium text-zinc-900">Redirecionando você</strong>
+                      Aguarde {redirectSeconds} segundo{redirectSeconds === 1 ? "" : "s"}, estamos abrindo a próxima página.
+                    </span>
                   </div>
                 )}
               </div>
@@ -405,6 +428,19 @@ export default function PublicForm() {
                       </div>
                     );
                   })}
+
+                  {isLastPage && (
+                    <label className="flex cursor-pointer items-start gap-3 border border-zinc-200 bg-zinc-50/70 px-3 py-3 text-[13px] leading-relaxed text-zinc-700" style={inputStyle}>
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        onChange={(event) => { setConsent(event.target.checked); if (event.target.checked) setError(null); }}
+                        className="mt-0.5 h-4 w-4 shrink-0"
+                        style={{ accentColor: primary }}
+                      />
+                      <span>{CONSENT_TEXT}</span>
+                    </label>
+                  )}
 
                   {error && <p className="text-sm text-red-600">{error}</p>}
 

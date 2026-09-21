@@ -56,6 +56,8 @@ const DEFAULT_FIELDS = [
   { field_type: "text", label: "Nome completo", name: "nome_completo", placeholder: "Ex.: Marina Oliveira", required: true, is_active: true, options: [] },
   { field_type: "email", label: "E-mail", name: "email", placeholder: "Ex.: marina@empresa.com.br", required: true, is_active: true, options: [] },
   { field_type: "phone", label: "Telefone / WhatsApp", name: "whatsapp", placeholder: "Ex.: (11) 99999-9999", required: true, is_active: true, options: [] },
+  { field_type: "text", label: "Nome da empresa", name: "empresa", placeholder: "Ex.: Oliveira Distribuidora", required: false, is_active: true, options: [] },
+  { field_type: "text", label: "Cidade", name: "cidade", placeholder: "Ex.: São Paulo - SP", required: false, is_active: true, options: [] },
   { field_type: "textarea", label: "Observações", name: "mensagem", placeholder: "Ex.: Conte brevemente como podemos ajudar", required: false, is_active: true, options: [] },
 ];
 const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48);
@@ -68,13 +70,17 @@ export const normalizeLink = (value: string) => {
   if (/^https?:\/\//i.test(clean)) return clean;
   return `https://${clean.replace(/^\/+/, "")}`;
 };
-const isValidLink = (value: string) => /^[^\s.]+\.[a-z]{2,}(\/.*)?$/i.test((value || "").trim().replace(/^https?:\/\//i, ""));
+const isValidLink = (value: string) => {
+  const host = (value || "").trim().replace(/^https?:\/\//i, "").split(/[/?#]/)[0];
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(host) && /\.[a-z]{2,}$/i.test(host);
+};
 const automaticFieldName = (label: string, type: string) => {
   const normalized = fieldName(label);
   if (type === "email") return "email";
   if (type === "phone") return "whatsapp";
   if (/nome/.test(normalized)) return "nome_completo";
   if (/empresa|companhia/.test(normalized)) return "empresa";
+  if (/cidade|municipio/.test(normalized)) return "cidade";
   if (/observa|mensagem|coment/.test(normalized)) return "mensagem";
   return normalized || `campo_${randomSuffix()}`;
 };
@@ -178,7 +184,7 @@ export default function FormBuilder() {
       if (!(form.crm_responsibles || []).length) issues.push({ step: 3, message: "Selecione ao menos um responsável pelo lead." });
     }
     if (form.notify_enabled && !cfg.notifyAssigned && !(form.notify_user_ids || []).length) issues.push({ step: 4, message: "Escolha quem deve receber os avisos." });
-    if (cfg.redirectEnabled && !isValidLink(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um endereço válido para o redirecionamento (ex.: www.seusite.com.br/obrigado)." });
+    if (cfg.redirectEnabled && !isValidLink(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um endereço válido para o redirecionamento (ex.: www.seusite.com.br)." });
     return issues;
   }, [cfg.notifyAssigned, cfg.redirectEnabled, cfg.redirectUrl, fields, form.crm_enabled, form.crm_responsibles, form.name, form.notify_enabled, form.notify_user_ids]);
 
@@ -270,7 +276,7 @@ export default function FormBuilder() {
                   <div className="space-y-2"><Label>Descrição breve</Label><Textarea value={form.description || ""} onChange={(event) => set("description", event.target.value)} placeholder="Ex.: Conte o que você precisa e retornaremos em breve." className="min-h-[96px] resize-y" /></div>
                    <div className="space-y-2"><Label>Texto do botão</Label><IconInput icon={MousePointerClick} value={form.button_text} onChange={(event) => set("button_text", event.target.value)} placeholder="Ex.: Solicitar contato" /></div>
                   <div className="space-y-2"><Label>Mensagem após o envio</Label><Textarea value={form.success_message} onChange={(event) => set("success_message", event.target.value)} placeholder="Ex.: Obrigado! Recebemos seus dados." className="min-h-[84px] resize-y" /></div>
-                   <div className="rounded-lg border border-border/60 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Redirecionar após o envio</p><p className="mt-1 text-xs text-muted-foreground">Após a confirmação, mostra uma contagem de 3 segundos antes de abrir o seu link. Pode informar só o www.</p></div><Switch checked={Boolean(cfg.redirectEnabled)} onCheckedChange={(checked) => setCfg("redirectEnabled", checked)} /></div>{cfg.redirectEnabled && <div className="mt-4 space-y-2"><Label>Link de destino</Label><IconInput icon={Link2} value={cfg.redirectUrl || ""} onChange={(event) => setCfg("redirectUrl", event.target.value)} placeholder="www.seusite.com.br/obrigado" /></div>}</div>
+                   <div className="rounded-lg border border-border/60 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Redirecionar após o envio</p><p className="mt-1 text-xs text-muted-foreground">Após a confirmação, mostra uma contagem de 3 segundos antes de abrir o seu link. Pode informar só o www.</p></div><Switch checked={Boolean(cfg.redirectEnabled)} onCheckedChange={(checked) => setCfg("redirectEnabled", checked)} /></div>{cfg.redirectEnabled && <div className="mt-4 space-y-2"><Label>Link de destino</Label><IconInput icon={Link2} value={cfg.redirectUrl || ""} onChange={(event) => setCfg("redirectUrl", event.target.value)} placeholder="www.seusite.com.br" /></div>}</div>
                   <div className="space-y-2"><Label>Nome do link</Label><div className="flex min-w-0 items-center rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring"><span className="shrink-0 border-r border-border px-3 text-sm text-muted-foreground">/form/</span><Input value={slug} onChange={(event) => setSlug(slugify(event.target.value))} placeholder={generatedSlug} className="border-0 shadow-none focus-visible:ring-0" /></div><p className="break-all text-xs text-muted-foreground">Prévia: {publicUrl}</p></div>
                 </div>}
 
