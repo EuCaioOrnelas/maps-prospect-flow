@@ -3749,6 +3749,7 @@ export type Database = {
           name: string
           options: Json
           owner_user_id: string
+          page: number
           placeholder: string | null
           position: number
           required: boolean
@@ -3763,6 +3764,7 @@ export type Database = {
           name: string
           options?: Json
           owner_user_id: string
+          page?: number
           placeholder?: string | null
           position?: number
           required?: boolean
@@ -3777,6 +3779,7 @@ export type Database = {
           name?: string
           options?: Json
           owner_user_id?: string
+          page?: number
           placeholder?: string | null
           position?: number
           required?: boolean
@@ -3796,6 +3799,7 @@ export type Database = {
           created_at: string
           data: Json
           device: string | null
+          files: Json
           form_id: string
           id: string
           ip_hash: string | null
@@ -3815,6 +3819,7 @@ export type Database = {
           created_at?: string
           data?: Json
           device?: string | null
+          files?: Json
           form_id: string
           id?: string
           ip_hash?: string | null
@@ -3834,6 +3839,7 @@ export type Database = {
           created_at?: string
           data?: Json
           device?: string | null
+          files?: Json
           form_id?: string
           id?: string
           ip_hash?: string | null

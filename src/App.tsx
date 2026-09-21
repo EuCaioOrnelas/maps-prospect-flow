@@ -113,6 +113,7 @@ const MetaWhatsAppTemplates = lazyWithRetry(() => import("./pages/meta/MetaWhats
 const Forms = lazyWithRetry(() => import("./pages/forms/Forms"), "Forms");
 const FormBuilder = lazyWithRetry(() => import("./pages/forms/FormBuilder"), "FormBuilder");
 const FormAnalytics = lazyWithRetry(() => import("./pages/forms/FormAnalytics"), "FormAnalytics");
+const FormResponses = lazyWithRetry(() => import("./pages/forms/FormResponses"), "FormResponses");
 const PublicForm = lazyWithRetry(() => import("./pages/PublicForm"), "PublicForm");
 const TrackedLinkRedirect = lazyWithRetry(() => import("./pages/TrackedLinkRedirect"), "TrackedLinkRedirect");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
@@ -403,6 +404,7 @@ const App = () => (
                 <Route path="/forms/novo" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><FormBuilder /></Suspense></ProtectedRoute>} />
                 <Route path="/forms/:id/editar" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><FormBuilder /></Suspense></ProtectedRoute>} />
                 <Route path="/forms/:id/analytics" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><FormAnalytics /></Suspense></ProtectedRoute>} />
+                <Route path="/forms/:id/respostas" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><FormResponses /></Suspense></ProtectedRoute>} />
                 <Route path="/meta" element={<ProtectedRoute><MetaDashboard /></ProtectedRoute>} />
                 <Route path="/meta/campanhas" element={<ProtectedRoute><MetaCampanhas /></ProtectedRoute>} />
                 <Route path="/meta/templates" element={<ProtectedRoute><MetaWhatsAppTemplates /></ProtectedRoute>} />

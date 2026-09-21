@@ -42,6 +42,42 @@ function clientIp(req: Request): string {
 
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 
+const ALLOWED_UPLOAD_MIMES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const MAX_UPLOADS = 10;
+
+function safeFileName(value: string): string {
+  const clean = (value || "arquivo")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+  return clean || "arquivo";
+}
+
+function decodeBase64(value: string): Uint8Array {
+  const clean = value.includes(",") ? value.slice(value.indexOf(",") + 1) : value;
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+const MESSAGE_PREFIX = "enc:v1:";
+function bufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+async function encryptNote(value: string): Promise<string | null> {
+  const secret = Deno.env.get("WIIZE_MESSAGE_ENCRYPTION_KEY");
+  if (!secret || secret.length < 32) return null;
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
+  const key = await crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt"]);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(value));
+  return `${MESSAGE_PREFIX}${bufferToBase64(iv.buffer)}:${bufferToBase64(ciphertext)}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -63,7 +99,7 @@ Deno.serve(async (req) => {
       if (form.status !== "active") return json({ status: "inactive" }, 200);
       const { data: fields } = await admin
         .from("form_fields")
-        .select("id, field_type, label, name, placeholder, required, position, options")
+        .select("id, field_type, label, name, placeholder, required, position, options, page")
         .eq("form_id", form.id)
         .eq("is_active", true)
         .order("position");
@@ -143,7 +179,30 @@ Deno.serve(async (req) => {
 
       const raw = (body?.data && typeof body.data === "object") ? body.data : {};
       const values: Record<string, string> = {};
+
+      // ── anexos enviados pelo lead (imagens comprimidas e PDFs) ──
+      const incomingFiles = Array.isArray(body?.files) ? body.files.slice(0, MAX_UPLOADS) : [];
+      const uploads: { field: string; name: string; mime: string; bytes: Uint8Array }[] = [];
+      for (const item of incomingFiles) {
+        const mime = sanitize(item?.mime, 80);
+        const name = safeFileName(sanitize(item?.filename, 120));
+        if (!ALLOWED_UPLOAD_MIMES.includes(mime)) {
+          return json({ error: `Formato não permitido em "${name}". Envie imagens (JPG, PNG, WEBP) ou PDF.` }, 400);
+        }
+        let bytes: Uint8Array;
+        try { bytes = decodeBase64(String(item?.data || "")); } catch { return json({ error: `Não foi possível ler o arquivo "${name}".` }, 400); }
+        if (!bytes.length) return json({ error: `O arquivo "${name}" está vazio.` }, 400);
+        if (bytes.length > MAX_UPLOAD_BYTES) return json({ error: `O arquivo "${name}" excede 8 MB.` }, 400);
+        uploads.push({ field: sanitize(item?.field, 60), name, mime, bytes });
+      }
+
       for (const f of fields || []) {
+        if (f.field_type === "file") {
+          const attached = uploads.filter((upload) => upload.field === f.name);
+          if (f.required && !attached.length) return json({ error: `Envie um arquivo em "${f.label}".` }, 400);
+          if (attached.length) values[f.name] = attached.map((upload) => upload.name).join(", ");
+          continue;
+        }
         const value = sanitize(raw[f.name], f.field_type === "textarea" ? 4000 : 400);
         if (f.required && !value) return json({ error: `O campo "${f.label}" é obrigatório.` }, 400);
         if (value && f.field_type === "email" && !isEmail(value)) {
@@ -197,6 +256,20 @@ Deno.serve(async (req) => {
       const { data: submission, error: subErr } = await admin
         .from("form_submissions").insert(submissionPayload).select("*").single();
       if (subErr) throw subErr;
+
+      // ───── arquivos enviados ─────
+      const storedFiles: { field: string; name: string; mime: string; size: number; path: string }[] = [];
+      for (const [index, upload] of uploads.entries()) {
+        const path = `${form.owner_user_id}/${form.id}/${submission.id}/${index + 1}-${upload.name}`;
+        const { error: uploadError } = await admin.storage
+          .from("form-uploads")
+          .upload(path, upload.bytes, { contentType: upload.mime, upsert: true });
+        if (uploadError) { console.error("[forms-public] upload", uploadError); continue; }
+        storedFiles.push({ field: upload.field, name: upload.name, mime: upload.mime, size: upload.bytes.length, path });
+      }
+      if (storedFiles.length) {
+        await admin.from("form_submissions").update({ files: storedFiles }).eq("id", submission.id);
+      }
 
       // ───── CRM ─────
       let leadId: string | null = null;
@@ -274,6 +347,39 @@ Deno.serve(async (req) => {
           leadId = lead?.id || null;
         }
         if (leadId) await admin.from("form_submissions").update({ lead_id: leadId }).eq("id", submission.id);
+
+        // Registra as respostas como nota interna e anexa os arquivos ao contato
+        if (leadId) {
+          try {
+            const answerLines = (fields || [])
+              .filter((f: any) => values[f.name])
+              .map((f: any) => `${f.label}: ${values[f.name]}`);
+            const noteText = [`Formulário "${form.name}" respondido`, ...answerLines].join("\n").slice(0, 3900);
+            const encrypted = await encryptNote(noteText);
+            if (encrypted) {
+              await admin.from("lead_notes").insert({
+                lead_id: leadId,
+                user_id: form.owner_user_id,
+                owner_user_id: form.owner_user_id,
+                content: encrypted,
+              });
+            }
+            if (storedFiles.length) {
+              await admin.from("lead_files").insert(storedFiles.map((file) => ({
+                lead_id: leadId,
+                user_id: form.owner_user_id,
+                owner_user_id: form.owner_user_id,
+                file_name: file.name,
+                file_type: file.mime,
+                file_url: file.path,
+                file_size: file.size,
+                source: "form",
+              })));
+            }
+          } catch (crmErr) {
+            console.error("[forms-public] crm attachments", crmErr);
+          }
+        }
       }
 
       // ───── notificação por e-mail ─────

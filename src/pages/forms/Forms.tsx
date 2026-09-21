@@ -247,6 +247,9 @@ export default function Forms() {
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigate(`/forms/${f.id}/analytics`)}>
                           <BarChart3 className="h-3.5 w-3.5" /> Analytics
                         </Button>
+                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigate(`/forms/${f.id}/respostas`)}>
+                          <FileText className="h-3.5 w-3.5" /> Respostas
+                        </Button>
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copy(url)}>
                           <Copy className="h-3.5 w-3.5" /> Link
                         </Button>
