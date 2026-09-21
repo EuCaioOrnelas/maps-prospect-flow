@@ -55,6 +55,19 @@ function str(value: unknown, max = 500): string | null {
   return trimmed.length ? trimmed : null;
 }
 
+function normalizeUrl(value: string): string {
+  const clean = (value || "").trim();
+  if (!clean) return "";
+  const candidate = /^https?:\/\//i.test(clean) ? clean : `https://${clean.replace(/^\/+/, "")}`;
+  try {
+    const url = new URL(candidate);
+    if (!/^https?:$/.test(url.protocol) || !url.hostname.includes(".")) return "";
+    return url.toString().slice(0, 900);
+  } catch {
+    return "";
+  }
+}
+
 function safeFormConfig(value: unknown): Record<string, unknown> {
   const input = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const color = (key: string, fallback: string) => {
