@@ -138,9 +138,16 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
                 </div>
 
                 <div className="flex flex-1 flex-col p-5">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-                    {p.stage}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      {p.stage}
+                    </span>
+                    {p.slug === currentSlug && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-primary">
+                        Página atual
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-2 flex items-start justify-between gap-3">
                     <h3 className="text-base font-semibold text-foreground">{p.name}</h3>
                     <HiArrowUpRight
