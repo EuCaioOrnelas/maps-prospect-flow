@@ -271,6 +271,7 @@ Deno.serve(async (req) => {
           required: !!f.required,
           position: i,
           is_active: f.is_active !== false,
+          page: Math.min(10, Math.max(1, Number(f.page) || 1)),
           options: Array.isArray(f.options) ? f.options.slice(0, 30) : [],
         }));
         if (rows.length) {
