@@ -690,6 +690,26 @@ export default function AdminInfluencerProspecting() {
                 </div>
               </div>
 
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/30 px-4 py-3">
+                <Switch checked={onlyActiveChannels} onCheckedChange={setOnlyActiveChannels} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium">Somente canais ativos</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Descarta canais que não publicaram vídeos dentro do período escolhido.
+                  </p>
+                </div>
+                <Select value={activeWindowDays} onValueChange={setActiveWindowDays} disabled={!onlyActiveChannels}>
+                  <SelectTrigger className="h-9 w-[170px] text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">Últimos 7 dias</SelectItem>
+                    <SelectItem value="15">Últimos 15 dias</SelectItem>
+                    <SelectItem value="30">Últimos 30 dias</SelectItem>
+                    <SelectItem value="60">Últimos 60 dias</SelectItem>
+                    <SelectItem value="90">Últimos 90 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="h-px bg-border" />
 
               <div className="space-y-2">
