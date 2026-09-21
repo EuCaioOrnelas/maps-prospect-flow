@@ -207,16 +207,15 @@ export default function Forms() {
                   const conv = s.views ? ((s.submissions / s.views) * 100).toFixed(1) : "0.0";
                   return (
                     <Card key={f.id} className="flex min-h-[330px] flex-col overflow-hidden border-border/60 bg-card shadow-sm">
-                      <div className="h-1 bg-primary" />
                       <div className="flex flex-1 flex-col p-5">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
                           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                             <FileText className="h-4 w-4" />
                           </span>
                           <div className="min-w-0">
-                            <p className="truncate font-semibold">{f.name}</p>
-                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{f.title}</p>
+                            <p className="truncate font-semibold" title={f.name}>{f.name}</p>
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground" title={f.title}>{f.title}</p>
                           </div>
                         </div>
                         <Badge
@@ -235,9 +234,9 @@ export default function Forms() {
                         <div><p className="text-lg font-semibold tabular-nums">{conv}%</p><p className="mt-0.5 text-[11px] text-muted-foreground">Conversão</p></div>
                       </div>
 
-                      <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+                      <div className="my-5 space-y-3 text-xs text-muted-foreground">
                         <p className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /><span className="truncate">/form/{f.slug}</span></p>
-                        <p className="flex items-center gap-2"><CalendarClock className="h-3.5 w-3.5" />Último lead {fmtDate(s.lastSubmission)} · criado em {fmtDate(f.created_at)}</p>
+                        <p className="flex items-center gap-2"><CalendarClock className="h-3.5 w-3.5 shrink-0" /><span className="truncate">Último lead {fmtDate(s.lastSubmission)} · criado em {fmtDate(f.created_at)}</span></p>
                       </div>
 
                       <div className="mt-auto flex flex-wrap gap-2 border-t border-border/60 pt-4">
@@ -296,16 +295,15 @@ export default function Forms() {
                 const url = `${PUBLIC_BASE}/r/${l.slug}`;
                 return (
                   <Card key={l.id} className="flex min-h-[330px] flex-col overflow-hidden border-border/60 bg-card shadow-sm">
-                    <div className="h-1 bg-info" />
                     <div className="flex flex-1 flex-col p-5">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
                           <Link2 className="h-4 w-4" />
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate font-semibold">{l.name}</p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">/r/{l.slug}</p>
+                          <p className="truncate font-semibold" title={l.name}>{l.name}</p>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground" title={`/r/${l.slug}`}>/r/{l.slug}</p>
                         </div>
                       </div>
                       <Badge
@@ -320,7 +318,7 @@ export default function Forms() {
 
                     <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
                       <Globe2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      <span className="line-clamp-2 break-all">{l.destination_url}</span>
+                      <span className="line-clamp-2 break-all" title={l.destination_url}>{l.destination_url}</span>
                     </div>
 
                     <div className="mt-5 grid grid-cols-3 divide-x divide-border/70 border-y border-border/60 py-4 text-center">
@@ -331,8 +329,8 @@ export default function Forms() {
 
                     {(l.utm_source || l.utm_campaign) && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        {[l.utm_source, l.utm_medium, l.utm_campaign].filter(Boolean).map((u) => (
-                          <Badge key={u as string} variant="secondary" className="text-[11px]">{u}</Badge>
+                        {[l.utm_source, l.utm_medium, l.utm_campaign].filter(Boolean).map((u, index) => (
+                          <Badge key={`${index}-${u}`} variant="secondary" className="max-w-full truncate text-[11px]" title={u as string}>{u}</Badge>
                         ))}
                       </div>
                     )}

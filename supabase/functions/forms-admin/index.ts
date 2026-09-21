@@ -107,6 +107,61 @@ Deno.serve(async (req) => {
       return json({ limits, counts: c });
     }
 
+    // Totais completos, sem o limite padrão de 1.000 linhas da API de dados.
+    if (action === "analytics_summary") {
+      const pageSize = 1000;
+      const readAll = async (table: "form_views" | "form_submissions" | "tracked_link_clicks", columns: string) => {
+        const rows: any[] = [];
+        for (let from = 0; ; from += pageSize) {
+          const { data, error } = await admin
+            .from(table)
+            .select(columns)
+            .eq("owner_user_id", ownerId)
+            .range(from, from + pageSize - 1);
+          if (error) throw error;
+          rows.push(...(data || []));
+          if (!data || data.length < pageSize) break;
+        }
+        return rows;
+      };
+
+      const [views, submissions, clicks] = await Promise.all([
+        readAll("form_views", "form_id"),
+        readAll("form_submissions", "form_id, tracked_link_id, created_at"),
+        readAll("tracked_link_clicks", "tracked_link_id, visitor_hash, created_at"),
+      ]);
+      const forms: Record<string, { views: number; submissions: number; lastSubmission: string | null }> = {};
+      const links: Record<string, { clicks: number; unique: number; leads: number; last: string | null }> = {};
+      const visitors: Record<string, Set<string>> = {};
+
+      for (const row of views) {
+        forms[row.form_id] ||= { views: 0, submissions: 0, lastSubmission: null };
+        forms[row.form_id].views += 1;
+      }
+      for (const row of submissions) {
+        forms[row.form_id] ||= { views: 0, submissions: 0, lastSubmission: null };
+        forms[row.form_id].submissions += 1;
+        if (!forms[row.form_id].lastSubmission || row.created_at > forms[row.form_id].lastSubmission) {
+          forms[row.form_id].lastSubmission = row.created_at;
+        }
+        if (row.tracked_link_id) {
+          links[row.tracked_link_id] ||= { clicks: 0, unique: 0, leads: 0, last: null };
+          links[row.tracked_link_id].leads += 1;
+        }
+      }
+      for (const row of clicks) {
+        links[row.tracked_link_id] ||= { clicks: 0, unique: 0, leads: 0, last: null };
+        visitors[row.tracked_link_id] ||= new Set<string>();
+        links[row.tracked_link_id].clicks += 1;
+        if (row.visitor_hash) visitors[row.tracked_link_id].add(row.visitor_hash);
+        if (!links[row.tracked_link_id].last || row.created_at > links[row.tracked_link_id].last) {
+          links[row.tracked_link_id].last = row.created_at;
+        }
+      }
+      for (const [linkId, hashes] of Object.entries(visitors)) links[linkId].unique = hashes.size;
+      return json({ forms, links });
+    }
+
     // ─────────── FORMULÁRIOS ───────────
     if (action === "create_form" || action === "duplicate_form") {
       const c = await counts();
