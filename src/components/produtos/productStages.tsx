@@ -16,6 +16,8 @@ import {
   BellRing,
   Zap,
   ArrowUpRight,
+  ClipboardList,
+  Link2,
 } from "lucide-react";
 import {
   HiArrowTrendingUp,
@@ -787,6 +789,24 @@ export interface ProductStage extends Stage {
   render: (props: { progress: number }) => JSX.Element;
 }
 
+const StageFormCapture = ({ progress }: { progress: number }) => {
+  const received = progress > 0.58;
+  return <div className="flex h-full flex-col gap-2 overflow-hidden">
+    <div className="rounded-lg border border-border/50 bg-background/80 p-3">
+      <div className="mb-2 flex items-center justify-between"><span className="text-[11px] font-semibold text-foreground">Solicite uma demonstração</span><span className="text-[9px] font-semibold text-primary">{received ? "99%" : "50%"}</span></div>
+      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: received ? "99%" : "50%" }} /></div>
+      {["Nome completo", "E-mail profissional", "Empresa"].map((label, index) => <div key={label} className="mb-1.5 flex h-8 items-center rounded-md border border-border/50 bg-card px-2 text-[10px] text-muted-foreground" style={{ opacity: progress > index * 0.12 ? 1 : 0.35 }}>{label}</div>)}
+    </div>
+    <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-primary/10 p-2"><p className="text-[9px] text-muted-foreground">Origem</p><p className="text-[11px] font-semibold text-primary">Google Ads</p></div><div className="rounded-lg bg-success/10 p-2"><p className="text-[9px] text-muted-foreground">Destino</p><p className="text-[11px] font-semibold text-success">CRM Wiize</p></div></div>
+  </div>;
+};
+
+const StageTrackedLink = ({ progress }: { progress: number }) => <div className="flex h-full flex-col gap-2 overflow-hidden">
+  <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-background/80 p-3"><Link2 className="h-4 w-4 text-primary" /><div className="min-w-0"><p className="text-[10px] text-muted-foreground">Link rastreado</p><p className="truncate text-[11px] font-semibold text-foreground">wiize.link/demo-b2b</p></div></div>
+  {[{ label: "Cliques identificados", value: "184" }, { label: "Respostas recebidas", value: "47" }, { label: "Conversão", value: "25,5%" }].map((metric, index) => <div key={metric.label} className="flex items-center justify-between rounded-lg border border-border/40 bg-card/80 px-3 py-2 transition-all duration-300" style={{ opacity: progress > index * 0.16 ? 1 : 0.35, transform: `translateX(${progress > index * 0.16 ? 0 : 8}px)` }}><span className="text-[10px] text-muted-foreground">{metric.label}</span><span className="text-[12px] font-bold text-foreground">{metric.value}</span></div>)}
+  <div className="mt-auto flex items-center gap-2 rounded-lg bg-success/10 p-2 text-[10px] font-medium text-success"><ClipboardList className="h-3.5 w-3.5" />Lead criado com origem e respostas</div>
+</div>;
+
 export const PRODUCT_STAGES: Record<ProductVisualKey, ProductStage[]> = {
   prospeccao: [
     { color: "text-success", label: "Captando leads qualificados", icon: Users, render: StageCapture },
@@ -833,5 +853,9 @@ export const PRODUCT_STAGES: Record<ProductVisualKey, ProductStage[]> = {
       icon: Mail,
       render: StageRenewalEmail,
     },
+  ],
+  formularios: [
+    { color: "text-primary", label: "Capturando uma nova oportunidade", icon: ClipboardList, render: StageFormCapture },
+    { color: "text-success", label: "Origem rastreada até o CRM", icon: Link2, render: StageTrackedLink },
   ],
 };
