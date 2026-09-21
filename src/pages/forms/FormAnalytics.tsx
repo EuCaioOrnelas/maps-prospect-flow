@@ -9,7 +9,7 @@ import { SEO } from "@/components/SEO";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Eye, Loader2, MousePointerClick, Users } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, Eye, Loader2, MousePointerClick, Users } from "lucide-react";
 
 const fmtDateTime = (s: string) =>
   new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -81,9 +81,9 @@ export default function FormAnalytics() {
 
       <main className="lg:pl-[72px] pt-[42px] lg:pt-0 min-h-screen">
         <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-          <button onClick={() => navigate("/forms")} className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/forms")} className="mb-4 -ml-3 gap-2 text-muted-foreground">
             <ArrowLeft className="h-4 w-4" /> Voltar para Forms
-          </button>
+          </Button>
 
           {loading ? (
             <Card className="flex items-center justify-center border-border/60 p-12">
@@ -103,18 +103,24 @@ export default function FormAnalytics() {
                 </Button>
               </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { label: "Visualizações", value: views.length, icon: Eye },
                   { label: "Leads", value: subs.length, icon: Users },
                   { label: "Conversão", value: `${conversion}%`, icon: MousePointerClick },
                   { label: "Último lead", value: subs[0] ? fmtDateTime(subs[0].created_at) : "—", icon: Users },
                 ].map((k) => (
-                  <Card key={k.label} className="border-border/60 p-4">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      <k.icon className="h-3.5 w-3.5" /> {k.label}
+                  <Card key={k.label} className="min-h-[138px] border-border/60 bg-card p-5 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <k.icon className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-semibold uppercase text-muted-foreground">{k.label}</span>
                     </div>
-                    <p className="mt-2 text-xl font-semibold">{k.value}</p>
+                    <p className="mt-4 text-xl font-semibold tabular-nums">{k.value}</p>
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Atualizado automaticamente
+                    </p>
                   </Card>
                 ))}
               </div>
