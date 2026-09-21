@@ -677,6 +677,11 @@ serve(async (req) => {
 
         // Filtro duro de visualizações: média por vídeo recente precisa atingir o mínimo
         if (minViews && (avgViews ?? 0) < minViews) return;
+        // Filtro duro de atividade: exige publicação dentro da janela escolhida
+        if (recentVideoCutoff !== null) {
+          const last = latestVideoAt ? new Date(latestVideoAt).getTime() : NaN;
+          if (!Number.isFinite(last) || last < recentVideoCutoff) return;
+        }
         // Já atingimos o número de resultados pedidos
         if (results.length >= resultsRequested) return;
 
