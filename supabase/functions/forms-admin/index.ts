@@ -412,9 +412,17 @@ Deno.serve(async (req) => {
     if (action === "create_link" || action === "update_link") {
       const input = body?.link || {};
       const name = str(input.name, 120) || "Link sem nome";
-      const destination = str(input.destination_url, 900);
-      if (!destination || !/^https?:\/\//i.test(destination)) {
-        return json({ error: "Informe uma URL de destino válida (http ou https)." }, 400);
+      const rawDestination = (str(input.destination_url, 900) || "").trim();
+      const destination = rawDestination && !/^[a-z][a-z0-9+.-]*:\/\//i.test(rawDestination)
+        ? `https://${rawDestination.replace(/^\/+/, "")}`
+        : rawDestination;
+      let validDestination = false;
+      try {
+        const parsed = new URL(destination);
+        validDestination = /^https?:$/i.test(parsed.protocol) && parsed.hostname.includes(".");
+      } catch { validDestination = false; }
+      if (!validDestination) {
+        return json({ error: "Informe uma URL de destino válida (ex.: www.seusite.com.br)." }, 400);
       }
       const payload: Record<string, unknown> = {
         owner_user_id: ownerId,
