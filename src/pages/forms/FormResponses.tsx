@@ -338,7 +338,9 @@ export default function FormResponses() {
                   ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Origem</Label>
                   <Select value={source} onValueChange={setSource}>
