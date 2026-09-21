@@ -872,39 +872,49 @@
   animation-play-state: paused;
 }
 
-/* Custom scrollbar - dark theme default */
+/* Custom scrollbar - thin, clean, app-wide (dark theme default) */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(220 20% 8%);
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(220 14% 18%);
-  border-radius: 4px;
+  background: hsl(var(--border) / 0.5);
+  border-radius: 3px;
+  background-clip: padding-box;
   transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(158 72% 38%);
+  background: hsl(var(--foreground) / 0.25);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border) / 0.5) transparent;
 }
 
 /* Light scrollbar */
 .landing-light ::-webkit-scrollbar-track {
-  background: hsl(0 0% 100%) !important;
+  background: transparent !important;
 }
 
 .landing-light ::-webkit-scrollbar-thumb {
-  background: hsl(158 50% 85%) !important;
-  border-radius: 4px;
+  background: hsl(220 13% 82%) !important;
+  border-radius: 3px;
 }
 
 .landing-light ::-webkit-scrollbar-thumb:hover {
-  background: hsl(158 72% 38%) !important;
+  background: hsl(220 12% 68%) !important;
 }
 
 /* Kanban horizontal scroll - matches vertical column scrollbar (clean & minimal) */
