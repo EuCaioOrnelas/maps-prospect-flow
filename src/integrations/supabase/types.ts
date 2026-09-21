@@ -3738,6 +3738,234 @@ export type Database = {
           },
         ]
       }
+      form_fields: {
+        Row: {
+          created_at: string
+          field_type: string
+          form_id: string
+          id: string
+          is_active: boolean
+          label: string
+          name: string
+          options: Json
+          owner_user_id: string
+          placeholder: string | null
+          position: number
+          required: boolean
+        }
+        Insert: {
+          created_at?: string
+          field_type: string
+          form_id: string
+          id?: string
+          is_active?: boolean
+          label: string
+          name: string
+          options?: Json
+          owner_user_id: string
+          placeholder?: string | null
+          position?: number
+          required?: boolean
+        }
+        Update: {
+          created_at?: string
+          field_type?: string
+          form_id?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          name?: string
+          options?: Json
+          owner_user_id?: string
+          placeholder?: string | null
+          position?: number
+          required?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          created_at: string
+          data: Json
+          device: string | null
+          form_id: string
+          id: string
+          ip_hash: string | null
+          landing_url: string | null
+          lead_id: string | null
+          owner_user_id: string
+          referrer: string | null
+          tracked_link_id: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          device?: string | null
+          form_id: string
+          id?: string
+          ip_hash?: string | null
+          landing_url?: string | null
+          lead_id?: string | null
+          owner_user_id: string
+          referrer?: string | null
+          tracked_link_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          device?: string | null
+          form_id?: string
+          id?: string
+          ip_hash?: string | null
+          landing_url?: string | null
+          lead_id?: string | null
+          owner_user_id?: string
+          referrer?: string | null
+          tracked_link_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_views: {
+        Row: {
+          created_at: string
+          device: string | null
+          form_id: string
+          id: string
+          owner_user_id: string
+          referrer: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          form_id: string
+          id?: string
+          owner_user_id: string
+          referrer?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          form_id?: string
+          id?: string
+          owner_user_id?: string
+          referrer?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_views_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forms: {
+        Row: {
+          button_text: string
+          config: Json
+          created_at: string
+          created_by: string | null
+          crm_enabled: boolean
+          crm_responsibles: string[]
+          crm_stage_id: string | null
+          description: string | null
+          id: string
+          name: string
+          notify_enabled: boolean
+          notify_user_ids: string[]
+          owner_user_id: string
+          slug: string
+          status: string
+          success_message: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          button_text?: string
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          crm_enabled?: boolean
+          crm_responsibles?: string[]
+          crm_stage_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          notify_enabled?: boolean
+          notify_user_ids?: string[]
+          owner_user_id: string
+          slug: string
+          status?: string
+          success_message?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          button_text?: string
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          crm_enabled?: boolean
+          crm_responsibles?: string[]
+          crm_stage_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          notify_enabled?: boolean
+          notify_user_ids?: string[]
+          owner_user_id?: string
+          slug?: string
+          status?: string
+          success_message?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       frontend_errors: {
         Row: {
           app_version: string | null
@@ -5725,6 +5953,8 @@ export type Database = {
           follow_up_scheduled_at: string | null
           follow_up_sent_at: string | null
           follow_up_status: string | null
+          form_id: string | null
+          form_submission_id: string | null
           google_maps_link: string | null
           has_responded: boolean | null
           id: string
@@ -5787,6 +6017,8 @@ export type Database = {
           follow_up_scheduled_at?: string | null
           follow_up_sent_at?: string | null
           follow_up_status?: string | null
+          form_id?: string | null
+          form_submission_id?: string | null
           google_maps_link?: string | null
           has_responded?: boolean | null
           id?: string
@@ -5849,6 +6081,8 @@ export type Database = {
           follow_up_scheduled_at?: string | null
           follow_up_sent_at?: string | null
           follow_up_status?: string | null
+          form_id?: string | null
+          form_submission_id?: string | null
           google_maps_link?: string | null
           has_responded?: boolean | null
           id?: string
@@ -9778,6 +10012,113 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      tracked_link_clicks: {
+        Row: {
+          created_at: string
+          device: string | null
+          id: string
+          owner_user_id: string
+          referrer: string | null
+          tracked_link_id: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          visitor_hash: string | null
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          owner_user_id: string
+          referrer?: string | null
+          tracked_link_id: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_hash?: string | null
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          owner_user_id?: string
+          referrer?: string | null
+          tracked_link_id?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracked_link_clicks_tracked_link_id_fkey"
+            columns: ["tracked_link_id"]
+            isOneToOne: false
+            referencedRelation: "tracked_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracked_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          destination_url: string
+          id: string
+          name: string
+          owner_user_id: string
+          slug: string
+          status: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          destination_url: string
+          id?: string
+          name: string
+          owner_user_id: string
+          slug: string
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          destination_url?: string
+          id?: string
+          name?: string
+          owner_user_id?: string
+          slug?: string
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: []
       }
