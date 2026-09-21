@@ -37,6 +37,8 @@ import {
   ChevronDown,
   MousePointer2,
   BrainCircuit,
+  ClipboardList,
+  Link2,
 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
@@ -1241,6 +1243,15 @@ const modules: ModuleItem[] = [
     mock: FlowMock,
   },
   {
+    icon: ClipboardList,
+    eyebrow: "Forms & Links",
+    title: "Transforme cada clique em uma oportunidade rastreável",
+    description:
+      "Crie formulários com a sua marca, descubra exatamente de onde cada lead veio e envie respostas, arquivos e contexto direto para o CRM.",
+    benefits: ["Formulários em várias etapas", "Links e UTMs rastreados", "Respostas e arquivos no CRM", "Distribuição automática de leads"],
+    mock: () => <MockShell title="Forms & Links" badge="Nova resposta"><div className="space-y-2"><div className="rounded-card border border-border/60 bg-background/80 p-3"><div className="flex items-center justify-between"><p className="text-xs font-semibold">Peça uma demonstração</p><span className="text-[10px] font-bold text-primary">67%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary"><motion.div initial={{ width: 0 }} whileInView={{ width: "67%" }} viewport={VIEW} transition={{ duration: 0.8 }} className="h-full rounded-full bg-primary" /></div>{["Nome completo", "E-mail profissional", "Empresa"].map((field) => <div key={field} className="mt-2 flex h-9 items-center rounded-hover border border-border/60 bg-card px-3 text-[10px] text-muted-foreground">{field}</div>)}</div><div className="grid grid-cols-2 gap-2"><Row><div className="flex items-center gap-2"><Link2 className="h-4 w-4 text-primary"/><div><p className="text-[9px] text-muted-foreground">Origem rastreada</p><p className="text-[11px] font-semibold">Google Ads</p></div></div></Row><Row><div className="flex items-center gap-2"><LayoutDashboard className="h-4 w-4 text-primary"/><div><p className="text-[9px] text-muted-foreground">Destino</p><p className="text-[11px] font-semibold">CRM Wiize</p></div></div></Row></div><motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={VIEW} transition={{ delay: 0.5 }} className="flex items-center gap-2 rounded-card bg-primary/10 p-3 text-[11px] font-semibold text-primary"><CheckCheck className="h-4 w-4"/>Lead recebido com respostas e origem</motion.div></div></MockShell>,
+  },
+  {
     icon: BrainCircuit,
     eyebrow: "Wian AI",
     title: "A inteligência por trás da sua operação",
@@ -1378,7 +1389,7 @@ export const platformModulesJsonLd = {
   "@id": "https://wiize.com.br/#recursos",
   name: "Recursos da plataforma Wiize",
   description:
-    "Recursos da máquina de vendas B2B da Wiize: prospecção de empresas, SDR com IA, agendamento de reuniões, WhatsApp oficial da Meta, CRM, central de conversas e automações.",
+    "Recursos da máquina de vendas B2B da Wiize: prospecção, formulários, links rastreados, SDR com IA, agenda, WhatsApp oficial, CRM, conversas e automações.",
   itemListElement: modules.map((m, i) => ({
     "@type": "ListItem",
     position: i + 1,
@@ -1412,7 +1423,7 @@ export const PlatformModulesSection = () => {
           highlight="reunida em um só lugar"
           highlightFit="tight"
 
-          description="Agora que você viu a visão geral, veja o que existe dentro da plataforma: prospecção, SDR IA, agenda, campanhas, CRM, atendimento, automação e Wian AI."
+          description="Agora que você viu a visão geral, veja o que existe dentro da plataforma: prospecção, formulários, links rastreados, SDR IA, agenda, campanhas, CRM, atendimento, automação e Wian AI."
           isVisible={isVisible}
         />
 
