@@ -5,8 +5,22 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { Link2, Loader2 } from "lucide-react";
+import { FileText, Globe, Hash, Link2, Loader2, Megaphone, Share2, Tag, Target } from "lucide-react";
 import { toast } from "sonner";
+import type { LucideIcon } from "lucide-react";
+
+const slugify = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+
+function IconField({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
+  return (
+    <div className="relative flex items-center rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
+      <Icon className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" />
+      {children}
+    </div>
+  );
+}
 
 interface Props {
   open: boolean;
