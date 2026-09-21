@@ -154,19 +154,30 @@ Deno.serve(async (req) => {
         .from("tracked_links").select("*").eq("slug", slug).maybeSingle();
       if (!link || link.status !== "active") return json({ error: "not_found" }, 404);
 
-      await admin.from("tracked_link_clicks").insert({
-        tracked_link_id: link.id,
-        owner_user_id: link.owner_user_id,
-        referrer: sanitize(body?.referrer, 500) || null,
-        user_agent: ua.slice(0, 400),
-        device: deviceFrom(ua),
-        visitor_hash: await hash(`${ip}|${ua}`),
-        utm_source: link.utm_source,
-        utm_medium: link.utm_medium,
-        utm_campaign: link.utm_campaign,
-        utm_term: link.utm_term,
-        utm_content: link.utm_content,
-      });
+      const registerClick = (async () => {
+        await admin.from("tracked_link_clicks").insert({
+          tracked_link_id: link.id,
+          owner_user_id: link.owner_user_id,
+          referrer: sanitize(body?.referrer, 500) || null,
+          user_agent: ua.slice(0, 400),
+          device: deviceFrom(ua),
+          visitor_hash: await hash(`${ip}|${ua}`),
+          utm_source: link.utm_source,
+          utm_medium: link.utm_medium,
+          utm_campaign: link.utm_campaign,
+          utm_term: link.utm_term,
+          utm_content: link.utm_content,
+        });
+      })();
+
+      // não bloqueia a resposta: o redirecionamento sai imediatamente
+      try {
+        // @ts-ignore EdgeRuntime existe em produção
+        if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(registerClick);
+        else await registerClick;
+      } catch {
+        // clique não registrado não impede o redirecionamento
+      }
 
       const url = new URL(link.destination_url);
       for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"]) {
@@ -175,6 +186,7 @@ Deno.serve(async (req) => {
       }
       url.searchParams.set("wz_link", link.slug);
       return json({ redirect: url.toString() });
+
     }
 
     // ───── envio do formulário ─────
