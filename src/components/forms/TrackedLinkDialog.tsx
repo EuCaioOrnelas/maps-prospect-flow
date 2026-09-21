@@ -75,24 +75,49 @@ export function TrackedLinkDialog({ open, link, onOpenChange, onSaved }: Props) 
         <div className="space-y-4 py-1">
           <div className="space-y-1.5">
             <Label>Nome interno</Label>
-            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Campanha Instagram - Bio" />
+            <IconField icon={Tag}>
+              <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Campanha Instagram - Bio" className="border-0 pl-9 shadow-none focus-visible:ring-0" />
+            </IconField>
           </div>
           <div className="space-y-1.5">
             <Label>URL de destino</Label>
-            <Input value={form.destination_url} onChange={(e) => set("destination_url", e.target.value)} placeholder="https://seusite.com.br/pagina" />
+            <IconField icon={Globe}>
+              <Input value={form.destination_url} onChange={(e) => set("destination_url", e.target.value)} placeholder="https://seusite.com.br/pagina" className="border-0 pl-9 shadow-none focus-visible:ring-0" />
+            </IconField>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Endereço do link</Label>
+            <div className="flex min-w-0 items-center rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
+              <span className="shrink-0 border-r border-border px-3 text-sm text-muted-foreground">/r/</span>
+              <Input
+                value={form.slug || ""}
+                onChange={(e) => { setSlugTaken(false); set("slug", slugify(e.target.value)); }}
+                onBlur={checkSlug}
+                placeholder="promo-instagram"
+                className="border-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <p className={`text-xs ${slugTaken ? "text-destructive" : "text-muted-foreground"}`}>
+              {slugTaken
+                ? `O endereço "/r/${form.slug}" já está em uso. Escolha outro.`
+                : "Deixe em branco para gerarmos um endereço curto automaticamente."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
-              ["utm_source", "utm_source", "instagram"],
-              ["utm_medium", "utm_medium", "bio"],
-              ["utm_campaign", "utm_campaign", "lancamento"],
-              ["utm_term", "utm_term", "opcional"],
-              ["utm_content", "utm_content", "opcional"],
-            ].map(([key, label, ph]) => (
+              ["utm_source", "Origem (utm_source)", "instagram", Megaphone],
+              ["utm_medium", "Mídia (utm_medium)", "bio", Share2],
+              ["utm_campaign", "Campanha (utm_campaign)", "lancamento", Target],
+              ["utm_term", "Termo (utm_term)", "opcional", Hash],
+              ["utm_content", "Conteúdo (utm_content)", "opcional", FileText],
+            ].map(([key, label, ph, icon]: any) => (
               <div key={key} className="space-y-1.5">
                 <Label className="text-xs">{label}</Label>
-                <Input value={form[key] || ""} onChange={(e) => set(key, e.target.value)} placeholder={ph} />
+                <IconField icon={icon}>
+                  <Input value={form[key] || ""} onChange={(e) => set(key, e.target.value)} placeholder={ph} className="border-0 pl-9 shadow-none focus-visible:ring-0" />
+                </IconField>
               </div>
             ))}
           </div>
