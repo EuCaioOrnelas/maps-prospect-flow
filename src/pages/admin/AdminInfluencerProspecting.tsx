@@ -180,6 +180,8 @@ export default function AdminInfluencerProspecting() {
           max_subscribers: Number(maxSubs) || 10000000,
           min_views: minViews ? Number(minViews) : null,
           recency_days: Number(recency),
+          require_recent_videos: onlyActiveChannels,
+          recent_video_days: Number(activeWindowDays) || 30,
           results_requested: Number(resultsRequested),
         },
       });
