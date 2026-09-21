@@ -297,8 +297,10 @@ export default function PublicForm() {
   const inputStyle = { borderRadius: radius } as const;
   const inputClass = "w-full border border-zinc-200 bg-white px-3 py-2.5 text-[15px] text-zinc-900 outline-none transition focus:border-zinc-400";
 
+  const embedded = new URLSearchParams(window.location.search).get("embed") === "1";
+
   return (
-    <div className="min-h-screen w-full overflow-x-hidden px-3 py-6 sm:px-4 sm:py-12" style={{ background: bg, color: textColor }}>
+    <div className={`min-h-screen w-full overflow-x-hidden px-3 ${embedded ? "py-3 sm:px-3 sm:py-3" : "py-6 sm:px-4 sm:py-12"}`} style={{ background: bg, color: textColor }}>
       <div className="mx-auto w-full max-w-lg">
         <div className="overflow-hidden bg-white shadow-sm" style={{ borderRadius: radius + 8 }}>
           {cfg.coverUrl && (
@@ -348,8 +350,8 @@ export default function PublicForm() {
             ) : (
               <>
                 {cfg.logoUrl && (
-                  <div className="mb-4 flex h-12 items-center sm:h-14" style={{ justifyContent: align === "center" ? "center" : "flex-start" }}>
-                    <img src={cfg.logoUrl} alt="" className="max-h-12 max-w-[180px] object-contain sm:max-h-14 sm:max-w-[220px]" />
+                  <div className="mb-5 flex h-14 w-[220px] max-w-full items-center" style={{ justifyContent: align === "center" ? "center" : "flex-start", marginInline: align === "center" ? "auto" : undefined }}>
+                    <img src={cfg.logoUrl} alt="" className="h-full w-full object-contain" style={{ objectPosition: align === "center" ? "center" : "left center" }} />
                   </div>
                 )}
                 <div style={{ textAlign: align as any }}>
@@ -476,7 +478,7 @@ export default function PublicForm() {
           </div>
         </div>
 
-        <p className="mt-4 text-center text-xs opacity-60">
+        <p className={`${embedded ? "mt-3" : "mt-4"} text-center text-xs opacity-60`}>
           Formulário seguro · Desenvolvido por{" "}
           <a href="https://wiize.com.br" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
             Wiize.com.br
