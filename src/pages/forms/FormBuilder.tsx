@@ -138,6 +138,7 @@ export default function FormBuilder() {
   const publicUrl = `${window.location.origin}/form/${effectiveSlug}`;
   const cfg = form.config || {};
 
+  const pageCount = Math.min(10, Math.max(1, ...fields.map((field) => Number(field.page) || 1)) + 1);
   const updateField = (index: number, patch: any) => setFields((prev) => prev.map((field, position) => position === index ? { ...field, ...patch } : field));
   const updateFieldLabel = (index: number, label: string) => setFields((prev) => prev.map((field, position) => position === index ? { ...field, label, name: automaticFieldName(label, field.field_type) } : field));
   const updateFieldType = (index: number, fieldType: string) => setFields((prev) => prev.map((field, position) => position === index ? { ...field, field_type: fieldType, name: automaticFieldName(field.label, fieldType), options: ["select", "radio"].includes(fieldType) && !field.options?.length ? ["Opção 1", "Opção 2"] : field.options } : field));
