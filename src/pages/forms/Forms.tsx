@@ -326,10 +326,15 @@ export default function Forms() {
                       <span className="line-clamp-2 break-all" title={l.destination_url}>{l.destination_url}</span>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-3 divide-x divide-border/70 border-y border-border/60 py-4 text-center">
-                      <div><p className="text-lg font-semibold tabular-nums">{stats.clicks}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Cliques</p></div>
-                      <div><p className="text-lg font-semibold tabular-nums">{stats.unique}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Únicos</p></div>
-                      <div><p className="text-lg font-semibold tabular-nums">{leads}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Leads</p></div>
+                    <div className="mt-5 grid grid-cols-2 divide-x divide-border/70 border-y border-border/60 py-4 text-center">
+                      <div>
+                        <p className="text-lg font-semibold tabular-nums">{stats.clicks}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">Cliques</p>
+                      </div>
+                      <div title="Pessoas diferentes que abriram o link (sem contar repetições)">
+                        <p className="text-lg font-semibold tabular-nums">{stats.unique}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">Pessoas únicas</p>
+                      </div>
                     </div>
 
                     {(l.utm_source || l.utm_campaign) && (
