@@ -27,6 +27,7 @@ import {
   contactTypeLabel, emailHtmlToText, sendStatusMeta,
   textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
 } from "@/lib/influencerOutreach";
+import { InfluencerKanbanBoard } from "@/components/admin/partners/InfluencerKanbanBoard";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { InfluencerContactsDialog } from "@/components/admin/partners/InfluencerContactsDialog";
 import { InfluencerThreadDialog } from "@/components/admin/partners/InfluencerThreadDialog";
