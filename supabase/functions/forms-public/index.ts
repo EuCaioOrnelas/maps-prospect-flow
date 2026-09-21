@@ -260,30 +260,18 @@ Deno.serve(async (req) => {
       // ───── notificação por e-mail ─────
       if (form.notify_enabled && Array.isArray(form.notify_user_ids) && form.notify_user_ids.length) {
         try {
-          const { data: recipients } = await admin
-            .from("profiles").select("email, full_name").in("id", form.notify_user_ids);
-          const emails = (recipients || []).map((r: any) => r.email).filter(Boolean);
-          if (emails.length) {
-            const rows = [
-              ["Nome", name],
-              ["Empresa", company],
-              ["E-mail", email],
-              ["Telefone", phoneRaw],
-              ["Mensagem", message],
-              ["Origem", submissionPayload.utm_source || submissionPayload.referrer || "Direto"],
-              ["Campanha", submissionPayload.utm_campaign || "—"],
-              ["Data/hora", new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })],
-            ].filter(([, v]) => v);
+          const rows = [
+            ["Nome", name],
+            ["Empresa", company],
+            ["E-mail", email],
+            ["Telefone", phoneRaw],
+            ["Mensagem", message],
+            ["Origem", submissionPayload.utm_source || submissionPayload.referrer || "Direto"],
+            ["Campanha", submissionPayload.utm_campaign || "—"],
+            ["Data/hora", new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })],
+          ].filter(([, v]) => v);
 
-            const html = `
-              <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Novo lead recebido</h1>
-              <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">Um novo lead foi recebido através do formulário <strong>${form.name}</strong>.</p>
-              <table style="width:100%;border-collapse:collapse;font-size:14px;color:#3f3f46;">
-                ${rows.map(([k, v]) => `<tr><td style="padding:6px 0;color:#71717a;width:120px;">${k}</td><td style="padding:6px 0;"><strong>${v}</strong></td></tr>`).join("")}
-              </table>
-              <a href="${APP_URL}/crm${leadId ? `?lead=${leadId}` : ""}" style="display:inline-block;margin-top:20px;padding:12px 24px;background:#3daa57;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Ver no CRM</a>
-            `;
-
+          for (const recipientId of form.notify_user_ids.slice(0, 10)) {
             await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
               method: "POST",
               headers: {
@@ -291,10 +279,14 @@ Deno.serve(async (req) => {
                 Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
               },
               body: JSON.stringify({
-                type: "custom",
-                to: emails,
-                subject: `Novo lead recebido pelo formulário ${form.name}`,
-                html,
+                user_id: recipientId,
+                email_type: "FORM_NEW_LEAD",
+                idempotency_key: `form-lead-${submission.id}-${recipientId}`,
+                payload: {
+                  form_name: form.name,
+                  rows,
+                  crm_url: `${APP_URL}/crm${leadId ? `?lead=${leadId}` : ""}`,
+                },
               }),
             });
           }
