@@ -241,6 +241,7 @@ export default function PublicForm() {
     setError(null);
     if (!isLastPage) { goNext(); return; }
     if (!pageIsValid()) return;
+    if (!consent) { setError("Confirme o aceite para que possamos entrar em contato."); return; }
     setSubmitting(true);
     try {
       const data = await callPublic<any>({
@@ -249,6 +250,7 @@ export default function PublicForm() {
         data: values,
         files: Object.values(files).flat(),
         hp: honeypot.current,
+        consent: { accepted: true, text: CONSENT_TEXT, version: CONSENT_VERSION, accepted_at: new Date().toISOString() },
         utm: tracking.utm,
         wz_link: tracking.wz_link,
         referrer: tracking.referrer,
