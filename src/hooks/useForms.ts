@@ -96,7 +96,7 @@ export function useForms() {
         supabase.from("forms").select("*").eq("owner_user_id", ownerId).order("created_at", { ascending: false }),
         supabase.from("tracked_links").select("*").eq("owner_user_id", ownerId).order("created_at", { ascending: false }),
         callAdmin({ action: "limits" }).catch(() => null),
-        callAdmin({ action: "analytics_summary" }).catch(() => null),
+        callAdmin({ action: "analytics_summary", from: range.from, to: range.to }).catch(() => null),
       ]);
       setForms((formRows as any) || []);
       setLinks((linkRows as any) || []);
