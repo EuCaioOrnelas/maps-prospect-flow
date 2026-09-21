@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { hostFromUrl, inferUtmFromParams, isInternalHost } from "@/lib/leadOrigin";
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/forms-public`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
@@ -88,10 +89,15 @@ function useTrackingParams(slug: string) {
       if (value) { utm[key] = value; found = true; }
     }
     const wzLink = params.get("wz_link") || stored.wz_link || "";
+    // Referência do próprio site não diz nada útil: descartamos.
+    const rawReferrer = stored.referrer || document.referrer || "";
+    const referrer = isInternalHost(hostFromUrl(rawReferrer)) ? "" : rawReferrer;
+    // Sem UTM na URL, deduzimos a origem real (gclid, fbclid, site de origem...).
+    if (!utm.utm_source) Object.assign(utm, inferUtmFromParams(params, referrer));
     const payload = {
       utm,
       wz_link: wzLink,
-      referrer: stored.referrer || document.referrer || "",
+      referrer,
       landing_url: stored.landing_url || window.location.href,
     };
     if (found || !stored.landing_url) {
