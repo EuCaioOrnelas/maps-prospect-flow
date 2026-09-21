@@ -277,8 +277,8 @@ export default function FormBuilder() {
                       </div>
                     </div>;
                   })}</div>
-                  <Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD }])}><Plus /> Adicionar campo</Button>
-                   <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm"><Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p className="min-w-0 leading-6 text-muted-foreground">A ligação com o CRM é automática. Para publicar com o CRM ativo, mantenha Nome completo e pelo menos E-mail ou Telefone no formulário.</p></div>
+                   <div className="grid gap-3 sm:grid-cols-2"><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: Math.max(1, ...previous.map((field) => Number(field.page) || 1)) }])}><Plus /> Adicionar campo</Button><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: Math.min(10, Math.max(1, ...previous.map((field) => Number(field.page) || 1)) + 1) }])}><Layers /> Adicionar página</Button></div>
+                   <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm"><Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p className="min-w-0 leading-6 text-muted-foreground">Para publicar com o CRM ativo, mantenha Nome completo e pelo menos E-mail ou Telefone no formulário.</p></div>
                 </div>}
 
                 {step === 2 && <div className="space-y-5">
