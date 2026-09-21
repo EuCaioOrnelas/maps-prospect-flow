@@ -172,6 +172,8 @@ const GROUPS: Array<{ title: string; icon: LucideIcon; rows: Row[] }> = [
     icon: Headphones,
     rows: [
       { label: "Números WhatsApp conectados", start: "Até 1", growth: "Até 2", scale: "Ilimitados" },
+      { label: "Formulários de captação", start: "3", growth: "6", scale: "Ilimitados" },
+      { label: "Links rastreados", start: "6", growth: "12", scale: "Ilimitados" },
       { label: "Proxy dedicado e rotação automática", start: true, growth: true, scale: true },
       { label: "Backup de conversas e dados", start: true, growth: true, scale: true },
       { label: "Suporte", start: "Email", growth: "Prioritário", scale: "Gerente dedicado" },
