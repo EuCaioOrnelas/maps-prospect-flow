@@ -355,7 +355,6 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
         };
         if (city) leadPayload.city = city;
-        if (message) leadPayload.notes = message.slice(0, 1000);
         if (responsible) leadPayload.responsible_user_id = responsible;
 
         if (existing) {
