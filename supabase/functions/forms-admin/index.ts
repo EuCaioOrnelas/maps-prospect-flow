@@ -354,13 +354,19 @@ Deno.serve(async (req) => {
 
       const { data: fields } = await admin
         .from("form_fields").select("label, name, field_type, position, page").eq("form_id", formId).order("position");
-      const { data: rows } = await admin
-        .from("form_submissions")
-        .select("id, data, files, lead_id, created_at, device, referrer, utm_source, utm_medium, utm_campaign")
-        .eq("form_id", formId)
-        .eq("owner_user_id", ownerId)
-        .order("created_at", { ascending: false })
-        .limit(500);
+      const rows: any[] = [];
+      for (let page = 0; page < 20; page++) {
+        const { data: batch } = await admin
+          .from("form_submissions")
+          .select("id, data, files, lead_id, created_at, device, referrer, utm_source, utm_medium, utm_campaign")
+          .eq("form_id", formId)
+          .eq("owner_user_id", ownerId)
+          .order("created_at", { ascending: false })
+          .range(page * 1000, page * 1000 + 999);
+        if (!batch?.length) break;
+        rows.push(...batch);
+        if (batch.length < 1000) break;
+      }
 
       const leadIds = [...new Set((rows || []).map((row: any) => row.lead_id).filter(Boolean))];
       let leads: Record<string, { id: string; company_name: string | null; contact_name: string | null }> = {};
