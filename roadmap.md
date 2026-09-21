@@ -47,4 +47,4 @@
 - [x] Alinhar os indicadores de formulários e links ao padrão visual Wiize
 - [x] Refinar os cards sem blocos internos pesados e padronizar o seletor de área
 - [x] Exibir limite atingido e bloquear duplicação quando o plano não permitir
-- [ ] Validar visualmente o painel e os analytics em desktop
+- [x] Validar visualmente o painel em desktop e compilar os analytics
