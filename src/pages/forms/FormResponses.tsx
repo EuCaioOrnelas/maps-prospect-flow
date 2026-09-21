@@ -320,8 +320,8 @@ export default function FormResponses() {
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
               <span>{filtered.length} resultado(s) no filtro atual · exibindo {pageRows.length} nesta página</span>
-              {(search || startDate || endDate || source !== "all" || device !== "all") && (
-                <Button variant="ghost" size="sm" className="h-7 shadow-none" onClick={() => { setSearch(""); setStartDate(""); setEndDate(""); setSource("all"); setDevice("all"); }}>Limpar filtros</Button>
+              {(search || quickDays !== 30 || source !== "all" || device !== "all") && (
+                <Button variant="ghost" size="sm" className="h-7 shadow-none" onClick={() => { setSearch(""); applyQuick(30); setSource("all"); setDevice("all"); }}>Limpar filtros</Button>
               )}
             </div>
           </Card>
