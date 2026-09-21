@@ -67,7 +67,8 @@ export default function FormResponses() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [leads, setLeads] = useState<Record<string, any>>({});
   const [selected, setSelected] = useState<any>(null);
-  const [viewer, setViewer] = useState<{ url: string; mime: string; filename: string } | null>(null);
+  const [viewer, setViewer] = useState<{ url: string; downloadUrl: string; mime: string; filename: string } | null>(null);
+  const viewerRef = useRef<string | null>(null);
   const [openingFile, setOpeningFile] = useState<string | null>(null);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
 
