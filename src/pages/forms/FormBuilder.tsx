@@ -25,7 +25,7 @@ import {
   CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Code2, Copy, ExternalLink, FileText,
   FormInput, Hash, Image, Info, ListChecks, Loader2, Mail, MessageSquareText,
   Link2, MousePointerClick, Palette, Phone, Plus, Radio, RefreshCw, Save, Settings2,
-  ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap, Paperclip, Layers,
+  ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap, Paperclip, Layers, UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,13 @@ const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036
 const fieldName = (value: string) => slugify(value).replace(/-/g, "_");
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const initials = (value: string) => value.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?";
+export const normalizeLink = (value: string) => {
+  const clean = (value || "").trim();
+  if (!clean) return "";
+  if (/^https?:\/\//i.test(clean)) return clean;
+  return `https://${clean.replace(/^\/+/, "")}`;
+};
+const isValidLink = (value: string) => /^[^\s.]+\.[a-z]{2,}(\/.*)?$/i.test((value || "").trim().replace(/^https?:\/\//i, ""));
 const automaticFieldName = (label: string, type: string) => {
   const normalized = fieldName(label);
   if (type === "email") return "email";
