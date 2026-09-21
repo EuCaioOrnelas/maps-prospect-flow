@@ -17,7 +17,8 @@ const CARD_THEMES: Record<string, string> = {
 };
 
 export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
-  const others = getRelatedProducts(currentSlug);
+  // Mostra todos os produtos, inclusive o atual (marcado como página atual).
+  const others = PRODUCTS;
   const trackRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
