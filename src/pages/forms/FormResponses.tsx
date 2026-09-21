@@ -71,11 +71,54 @@ export default function FormResponses() {
   const [openingFile, setOpeningFile] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(() => toDateInput(new Date(Date.now() - 30 * dayMs)));
+  const [endDate, setEndDate] = useState(() => toDateInput(new Date()));
+  const [quickDays, setQuickDays] = useState<number | null>(30);
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState<Date>(() => new Date(Date.now() - 30 * dayMs));
+  const [draftTo, setDraftTo] = useState<Date>(() => new Date());
   const [source, setSource] = useState("all");
   const [device, setDevice] = useState("all");
   const [page, setPage] = useState(1);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const applyQuick = (days: number) => {
+    setQuickDays(days);
+    setStartDate(toDateInput(new Date(Date.now() - days * dayMs)));
+    setEndDate(toDateInput(new Date()));
+  };
+
+  const openRange = (next: boolean) => {
+    setRangeOpen(next);
+    if (next) {
+      setDraftFrom(startDate ? new Date(`${startDate}T12:00:00`) : new Date());
+      setDraftTo(endDate ? new Date(`${endDate}T12:00:00`) : new Date());
+    }
+  };
+
+  const applyRangeDraft = () => {
+    const start = draftFrom <= draftTo ? draftFrom : draftTo;
+    const end = draftFrom <= draftTo ? draftTo : draftFrom;
+    setQuickDays(null);
+    setStartDate(toDateInput(start));
+    setEndDate(toDateInput(end));
+    setRangeOpen(false);
+  };
+
+  const periodLabel = startDate && endDate
+    ? `${format(new Date(`${startDate}T12:00:00`), "dd MMM yyyy", { locale: ptBR })} — ${format(new Date(`${endDate}T12:00:00`), "dd MMM yyyy", { locale: ptBR })}`
+    : "Período";
+
+  const copyValue = async (key: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(key);
+      setTimeout(() => setCopied((current) => (current === key ? null : current)), 1500);
+      toast.success("Copiado para a área de transferência.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
 
   useEffect(() => {
     (async () => {
