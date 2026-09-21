@@ -153,7 +153,7 @@ export default function Forms() {
             {metricCards[tab].map((kpi, index) => (
               <Card key={kpi.label} className="min-h-[138px] border-border/60 bg-card p-5 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
                     <kpi.icon className="h-4 w-4" />
                   </span>
                   <span className="text-xs font-semibold uppercase text-muted-foreground">{kpi.label}</span>
@@ -212,7 +212,7 @@ export default function Forms() {
                       <div className="flex flex-1 flex-col p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
                             <FileText className="h-4 w-4" />
                           </span>
                           <div className="min-w-0">
