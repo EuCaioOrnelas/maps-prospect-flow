@@ -1,0 +1,2 @@
+ALTER TABLE public.form_fields ADD COLUMN IF NOT EXISTS page INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE public.form_submissions ADD COLUMN IF NOT EXISTS files JSONB NOT NULL DEFAULT '[]'::jsonb;
