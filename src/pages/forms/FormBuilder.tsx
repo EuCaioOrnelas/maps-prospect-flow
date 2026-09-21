@@ -22,7 +22,7 @@ import { useAccountMembers } from "@/hooks/useAccountMembers";
 import {
   ArrowDown, ArrowLeft, ArrowRight, ArrowUp, AtSign, Bell, Building2, Check,
   CheckCircle2, ChevronRight, CircleHelp, Code2, Copy, ExternalLink, FileText,
-  FormInput, Globe2, Hash, Image, Link2, ListChecks, Loader2, Mail, MessageSquareText,
+  FormInput, Hash, Image, Info, ListChecks, Loader2, Mail, MessageSquareText,
   MousePointerClick, Palette, Phone, Plus, Radio, RefreshCw, Save, Settings2,
   ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap,
 } from "lucide-react";
@@ -152,7 +152,7 @@ export default function FormBuilder() {
       const saved = (data as any).form;
       setSlug(saved.slug);
       setForm((prev: any) => ({ ...prev, ...saved, config: { ...prev.config, ...(saved.config || {}) } }));
-      toast.success(options?.publish ? "Formulário publicado e ativo." : "Formulário salvo como rascunho.");
+      toast.success(options?.publish ? "Formulário publicado e ativo." : isEdit ? "Alterações salvas." : "Formulário salvo como rascunho.");
       if (!isEdit) navigate(`/forms/${saved.id}/editar`, { replace: true });
       if (options?.publish) setStep(5);
     } catch (error) {

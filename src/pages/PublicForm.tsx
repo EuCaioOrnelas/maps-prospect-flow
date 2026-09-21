@@ -141,6 +141,13 @@ export default function PublicForm() {
       }
       if ((data as any)?.error) throw new Error((data as any).error);
       setDone((data as any)?.message || "Obrigado! Recebemos seus dados.");
+      const config = form?.config || {};
+      if (/^\d{6,20}$/.test(config.metaPixelId || "") && typeof (window as any).fbq === "function") {
+        (window as any).fbq("track", "Lead");
+      }
+      if ((window as any).dataLayer) {
+        (window as any).dataLayer.push({ event: "form_submit", form_slug: slug });
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {

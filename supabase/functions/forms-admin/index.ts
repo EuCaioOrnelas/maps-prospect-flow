@@ -55,6 +55,31 @@ function str(value: unknown, max = 500): string | null {
   return trimmed.length ? trimmed : null;
 }
 
+function safeFormConfig(value: unknown): Record<string, unknown> {
+  const input = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const color = (key: string, fallback: string) => {
+    const candidate = str(input[key], 20);
+    return candidate && /^#[0-9a-f]{6}$/i.test(candidate) ? candidate : fallback;
+  };
+  const metaPixelId = str(input.metaPixelId, 20) || "";
+  const googleTagManagerId = (str(input.googleTagManagerId, 20) || "").toUpperCase();
+  const googleAdsId = (str(input.googleAdsId, 24) || "").toUpperCase();
+  return {
+    primaryColor: color("primaryColor", "#3daa57"),
+    buttonColor: color("buttonColor", "#3daa57"),
+    backgroundColor: color("backgroundColor", "#f6f7f9"),
+    textColor: color("textColor", "#18181b"),
+    radius: Math.min(24, Math.max(0, Number(input.radius) || 10)),
+    align: input.align === "center" ? "center" : "left",
+    logoUrl: /^https:\/\//i.test(str(input.logoUrl, 900) || "") ? str(input.logoUrl, 900) : "",
+    coverUrl: /^https:\/\//i.test(str(input.coverUrl, 900) || "") ? str(input.coverUrl, 900) : "",
+    distributionMode: input.distributionMode === "round_robin" ? "round_robin" : "fixed",
+    metaPixelId: /^\d{6,20}$/.test(metaPixelId) ? metaPixelId : "",
+    googleTagManagerId: /^GTM-[A-Z0-9]+$/.test(googleTagManagerId) ? googleTagManagerId : "",
+    googleAdsId: /^AW-\d+$/.test(googleAdsId) ? googleAdsId : "",
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -198,7 +223,7 @@ Deno.serve(async (req) => {
           str(input.success_message, 400) ||
           "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
         status: ["active", "inactive", "draft"].includes(input.status) ? input.status : "draft",
-        config: typeof input.config === "object" && input.config ? input.config : {},
+        config: safeFormConfig(input.config),
         crm_enabled: input.crm_enabled !== false,
         crm_stage_id: stageId,
         crm_responsibles: responsibles,
