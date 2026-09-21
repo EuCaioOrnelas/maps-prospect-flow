@@ -404,7 +404,7 @@ export default function FormResponses() {
                           <td className="px-4 py-3">
                             <div className="flex justify-end gap-2">
                               {submission.lead_id && (
-                                <Button variant="outline" size="sm" className="gap-2 shadow-none" onClick={() => navigate(`/crm?lead=${submission.lead_id}`)}>
+                                <Button variant="outline" size="sm" className="gap-2 shadow-none" onClick={() => openLeadInCrm(submission.lead_id)}>
                                   <UserRound className="h-4 w-4" /> CRM
                                 </Button>
                               )}
