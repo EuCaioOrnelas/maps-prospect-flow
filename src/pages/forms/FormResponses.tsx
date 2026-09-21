@@ -567,7 +567,7 @@ export default function FormResponses() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(viewer)} onOpenChange={(open) => !open && setViewer(null)}>
+      <Dialog open={Boolean(viewer)} onOpenChange={(open) => !open && closeViewer()}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-hidden p-4 sm:w-full">
           <DialogHeader className="pr-10">
             <DialogTitle className="truncate text-base">{viewer?.filename}</DialogTitle>
@@ -578,10 +578,10 @@ export default function FormResponses() {
                 ? <img src={viewer.url} alt={viewer.filename} className="max-h-[68vh] w-full rounded-lg object-contain" />
                 : <iframe title={viewer.filename} src={viewer.url} className="h-[68vh] w-full rounded-lg border border-border" />}
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" className="gap-2 shadow-none" onClick={() => window.open(viewer.url, "_blank", "noopener")}>
+                <Button variant="outline" className="gap-2 shadow-none" onClick={() => window.open(viewer.downloadUrl, "_blank", "noopener")}>
                   <ExternalLink className="h-4 w-4" /> Abrir em nova aba
                 </Button>
-                <Button className="gap-2 shadow-none" onClick={() => saveBlob(viewer.url, viewer.filename)}>
+                <Button className="gap-2 shadow-none" onClick={() => saveBlob(viewer.downloadUrl, viewer.filename)}>
                   <Download className="h-4 w-4" /> Baixar arquivo
                 </Button>
               </div>
