@@ -296,7 +296,6 @@ export default function Forms() {
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {filteredLinks.map((l) => {
                 const stats = clicksByLink[l.id] || { clicks: 0, unique: 0, last: null };
-                const leads = leadsByLink[l.id] || 0;
                 const url = `${PUBLIC_BASE}/r/${l.slug}`;
                 return (
                   <Card key={l.id} className="flex min-h-[330px] flex-col overflow-hidden border-border/60 bg-card shadow-sm">
