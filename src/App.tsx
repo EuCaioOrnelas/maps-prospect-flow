@@ -399,6 +399,10 @@ const App = () => (
                 <Route path="/fluxos/:id" element={<ProtectedRoute><WhatsAppFlowEditor /></ProtectedRoute>} />
                 <Route path="/consultoria" element={<ProtectedRoute><Consultoria /></ProtectedRoute>} />
                 {/* Meta Platforms */}
+                <Route path="/forms" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Forms /></Suspense></ProtectedRoute>} />
+                <Route path="/forms/novo" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><FormBuilder /></Suspense></ProtectedRoute>} />
+                <Route path="/forms/:id/editar" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><FormBuilder /></Suspense></ProtectedRoute>} />
+                <Route path="/forms/:id/analytics" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><FormAnalytics /></Suspense></ProtectedRoute>} />
                 <Route path="/meta" element={<ProtectedRoute><MetaDashboard /></ProtectedRoute>} />
                 <Route path="/meta/campanhas" element={<ProtectedRoute><MetaCampanhas /></ProtectedRoute>} />
                 <Route path="/meta/templates" element={<ProtectedRoute><MetaWhatsAppTemplates /></ProtectedRoute>} />
