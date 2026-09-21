@@ -31,6 +31,7 @@ import AdminTrialEmailFlow from "./pages/admin/AdminTrialEmailFlow";
 
 // Eager load critical pages
 import Index from "./pages/Index";
+import PublicForm from "./pages/PublicForm";
 const Login = lazyWithRetry(() => import("./pages/Login"), "Login");
 const Signup = lazyWithRetry(() => import("./pages/Signup"), "Signup");
 const SignupChoosePlan = lazyWithRetry(() => import("./pages/SignupChoosePlan"), "SignupChoosePlan");
@@ -114,7 +115,6 @@ const Forms = lazyWithRetry(() => import("./pages/forms/Forms"), "Forms");
 const FormBuilder = lazyWithRetry(() => import("./pages/forms/FormBuilder"), "FormBuilder");
 const FormAnalytics = lazyWithRetry(() => import("./pages/forms/FormAnalytics"), "FormAnalytics");
 const FormResponses = lazyWithRetry(() => import("./pages/forms/FormResponses"), "FormResponses");
-const PublicForm = lazyWithRetry(() => import("./pages/PublicForm"), "PublicForm");
 const TrackedLinkRedirect = lazyWithRetry(() => import("./pages/TrackedLinkRedirect"), "TrackedLinkRedirect");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
 const NumerosComparativo = lazyWithRetry(() => import("./pages/NumerosComparativo"), "NumerosComparativo");
@@ -339,7 +339,7 @@ const App = () => (
                 <Route path="/inteligencia" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><InteligenciaWiize /></Suspense></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
-                <Route path="/form/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><PublicForm /></Suspense></LightThemeWrapper>} />
+                <Route path="/form/:slug" element={<LightThemeWrapper><PublicForm /></LightThemeWrapper>} />
                 <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
