@@ -15,7 +15,7 @@ import { toast } from "sonner";
 const fmtDateTime = (value: string) =>
   new Date(value).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
 
-interface SubmissionFile { path: string; filename: string; mime: string; size: number }
+interface SubmissionFile { path: string; name?: string; filename?: string; mime: string; size: number }
 
 export default function FormResponses() {
   const { id = "" } = useParams();
@@ -59,7 +59,7 @@ export default function FormResponses() {
     });
     setOpeningFile(null);
     if (error || !(data as any)?.url) { toast.error("Não foi possível abrir o arquivo."); return; }
-    setViewer({ url: (data as any).url, mime: file.mime, filename: file.filename });
+    setViewer({ url: (data as any).url, mime: file.mime, filename: file.name || file.filename || "arquivo" });
   };
 
   return (
@@ -146,7 +146,7 @@ export default function FormResponses() {
                     >
                       <span className="flex min-w-0 items-center gap-2">
                         {file.mime?.startsWith("image/") ? <ImageIcon className="h-4 w-4 text-primary" /> : <FileText className="h-4 w-4 text-primary" />}
-                        <span className="truncate">{file.filename}</span>
+                        <span className="truncate">{file.name || file.filename}</span>
                       </span>
                       {openingFile === file.path ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4 text-muted-foreground" />}
                     </button>
