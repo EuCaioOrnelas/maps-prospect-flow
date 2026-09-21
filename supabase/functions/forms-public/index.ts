@@ -84,7 +84,23 @@ const KNOWN_HOSTS: Record<string, string> = {
   "google.": "Google", "bing.": "Bing", "instagram.": "Instagram", "facebook.": "Facebook",
   "whatsapp": "WhatsApp", "wa.me": "WhatsApp", "linkedin.": "LinkedIn", "lnkd.in": "LinkedIn",
   "youtube.": "YouTube", "youtu.be": "YouTube", "tiktok.": "TikTok", "t.me": "Telegram",
+  "x.com": "X (Twitter)", "twitter.": "X (Twitter)", "t.co": "X (Twitter)",
+  "duckduckgo.": "DuckDuckGo", "mail.google": "E-mail", "outlook.": "E-mail",
 };
+const NOT_IDENTIFIED = "Não identificado";
+
+/** Normaliza o HTTP Referer em uma origem legível. Sem evidência → "Não identificado". */
+function getReferralSource(referrer?: string | null): { source: string; referrer: string | null } {
+  const raw = (referrer || "").trim();
+  let host = "";
+  try { host = new URL(raw).hostname.replace(/^www\./, "").toLowerCase(); } catch { /* sem referência */ }
+  if (!host || INTERNAL_HOSTS.some((self) => host === self || host.endsWith(`.${self}`) || host.includes(self))) {
+    return { source: NOT_IDENTIFIED, referrer: raw || null };
+  }
+  const known = Object.entries(KNOWN_HOSTS).find(([key]) => host.includes(key))?.[1];
+  return { source: known || host, referrer: raw };
+}
+
 function resolveOrigin(payload: { utm_source?: string | null; utm_medium?: string | null; utm_campaign?: string | null; referrer?: string | null }) {
   const source = (payload.utm_source || "").trim();
   const medium = (payload.utm_medium || "").trim().toLowerCase();
@@ -97,7 +113,7 @@ function resolveOrigin(payload: { utm_source?: string | null; utm_medium?: strin
   }
   let host = "";
   try { host = new URL(payload.referrer || "").hostname.replace(/^www\./, "").toLowerCase(); } catch { /* sem referência */ }
-  if (!host || INTERNAL_HOSTS.some((self) => host === self || host.endsWith(`.${self}`) || host.includes(self))) return "Acesso direto";
+  if (!host || INTERNAL_HOSTS.some((self) => host === self || host.endsWith(`.${self}`) || host.includes(self))) return NOT_IDENTIFIED;
   return Object.entries(KNOWN_HOSTS).find(([key]) => host.includes(key))?.[1] || host;
 }
 
@@ -142,6 +158,7 @@ Deno.serve(async (req) => {
         utm_medium: sanitize(body?.utm?.utm_medium, 120) || null,
         utm_campaign: sanitize(body?.utm?.utm_campaign, 120) || null,
         referrer: sanitize(body?.referrer, 500) || null,
+        detected_source: getReferralSource(sanitize(body?.referrer, 500)).source,
         device: deviceFrom(ua),
       });
       return json({ ok: true });
@@ -159,6 +176,7 @@ Deno.serve(async (req) => {
           tracked_link_id: link.id,
           owner_user_id: link.owner_user_id,
           referrer: sanitize(body?.referrer, 500) || null,
+          detected_source: getReferralSource(sanitize(body?.referrer, 500)).source,
           user_agent: ua.slice(0, 400),
           device: deviceFrom(ua),
           visitor_hash: await hash(`${ip}|${ua}`),
@@ -275,6 +293,7 @@ Deno.serve(async (req) => {
         utm_term: sanitize(utm.utm_term, 120) || null,
         utm_content: sanitize(utm.utm_content, 120) || null,
         referrer: sanitize(body?.referrer, 500) || null,
+        detected_source: getReferralSource(sanitize(body?.referrer, 500)).source,
         landing_url: sanitize(body?.landing_url, 500) || null,
         user_agent: ua.slice(0, 400),
         device: deviceFrom(ua),
@@ -390,10 +409,23 @@ Deno.serve(async (req) => {
           updated_at: new Date().toISOString(),
         };
         if (city) leadPayload.city = city;
+        // Origem de tráfego (Referer/UTM) — complementar, nunca sobrescreve dado já existente.
+        const detected = getReferralSource(submissionPayload.referrer);
+        const trafficSource = resolveOrigin(submissionPayload);
+        if (trafficSource && trafficSource !== NOT_IDENTIFIED) leadPayload.traffic_source = trafficSource;
+        else leadPayload.traffic_source = NOT_IDENTIFIED;
+        if (detected.referrer) leadPayload.traffic_referrer = detected.referrer;
         if (responsible) leadPayload.responsible_user_id = responsible;
 
         if (existing) {
-          await admin.from("leads").update(leadPayload).eq("id", existing.id);
+          const { data: currentLead } = await admin
+            .from("leads").select("traffic_source, traffic_referrer").eq("id", existing.id).maybeSingle();
+          const updatePayload = { ...leadPayload };
+          if (currentLead?.traffic_source && currentLead.traffic_source !== NOT_IDENTIFIED) {
+            delete (updatePayload as Record<string, unknown>).traffic_source;
+            delete (updatePayload as Record<string, unknown>).traffic_referrer;
+          }
+          await admin.from("leads").update(updatePayload).eq("id", existing.id);
           leadId = existing.id;
         } else {
           if (stageId) leadPayload.pipeline_stage_id = stageId;

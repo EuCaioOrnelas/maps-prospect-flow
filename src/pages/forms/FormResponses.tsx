@@ -16,7 +16,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Download, ExternalLink, FileText, Image as ImageIcon, Loader2, Paperclip, Search, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import { formatLeadOrigin, resolveLeadOrigin } from "@/lib/leadOrigin";
+import { formatLeadOrigin, resolveLeadOrigin, getReferralSource, NOT_IDENTIFIED } from "@/lib/leadOrigin";
+
+/** Origem exibida: UTM/Referer normalizados; sem evidência → "Não identificado". */
+const originOf = (submission: any) => submission?.detected_source && submission.detected_source !== NOT_IDENTIFIED
+  ? formatLeadOrigin(submission)
+  : (formatLeadOrigin(submission) || NOT_IDENTIFIED);
 
 const PAGE_SIZE = 60;
 
@@ -247,7 +252,9 @@ export default function FormResponses() {
                             {files.length > 0 && <Badge variant="outline" className="ml-2 gap-1 align-middle"><Paperclip className="h-3 w-3" />{files.length}</Badge>}
                           </td>
                           <td className="max-w-[220px] truncate px-4 py-3 text-muted-foreground">{displayEmail(submission)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{formatLeadOrigin(submission)}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant="outline" className="max-w-[180px] truncate font-medium">{originOf(submission)}</Badge>
+                          </td>
                           <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{fmtDateTime(submission.created_at)}</td>
                           <td className="px-4 py-3">
                             <div className="flex justify-end gap-2">
@@ -285,6 +292,31 @@ export default function FormResponses() {
           {selected && (
             <div className="space-y-4">
               <p className="text-xs text-muted-foreground">{fmtDateTime(selected.created_at)} · {selected.device || "—"}</p>
+
+              <div className="grid grid-cols-2 gap-2 rounded-lg border border-border/60 p-3 text-xs sm:grid-cols-4">
+                <div>
+                  <p className="text-muted-foreground">Origem</p>
+                  <p className="mt-0.5 font-medium">{originOf(selected)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">UTM Source</p>
+                  <p className="mt-0.5 font-medium">{selected.utm_source || "Não informado"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">UTM Medium</p>
+                  <p className="mt-0.5 font-medium">{selected.utm_medium || "Não informado"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">UTM Campaign</p>
+                  <p className="mt-0.5 font-medium">{selected.utm_campaign || "Não informado"}</p>
+                </div>
+                {selected.referrer && (
+                  <div className="col-span-2 sm:col-span-4">
+                    <p className="text-muted-foreground">Site de origem</p>
+                    <p className="mt-0.5 break-all font-medium">{getReferralSource(selected.referrer).referrer}</p>
+                  </div>
+                )}
+              </div>
               <div className="space-y-3">
                 {Object.entries(selected.data || {}).map(([key, value]) => (
                   <div key={key} className="rounded-lg border border-border/60 p-3">

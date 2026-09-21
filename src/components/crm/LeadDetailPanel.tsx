@@ -657,6 +657,17 @@ export const LeadDetailPanel = ({
                 <Activity className="w-3 h-3" />
                 <span>Origem: {lead.origin || 'manual'}</span>
               </div>
+              {(lead as any).traffic_source && (
+                <div className="flex items-center gap-2">
+                  <Activity className="w-3 h-3" />
+                  <span className="flex items-center gap-1.5">
+                    Origem do acesso:
+                    <Badge variant="outline" className="h-5 px-2 text-[11px] font-medium">
+                      {(lead as any).traffic_source}
+                    </Badge>
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Tags */}

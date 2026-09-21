@@ -27,6 +27,7 @@ import {
 import { useForms } from "@/hooks/useForms";
 import { TrackedLinkDialog } from "@/components/forms/TrackedLinkDialog";
 import { toast } from "sonner";
+import { rangeCalendarClassNames } from "@/lib/calendarRange";
 
 const PUBLIC_BASE = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -234,27 +235,16 @@ export default function Forms() {
                   <Calendar
                     mode="range"
                     numberOfMonths={2}
+                    locale={ptBR}
                     defaultMonth={draftFrom}
-                    selected={{ from: draftFrom, to: draftTo }}
+                    selected={{ from: draftFrom, to: draftTo } as any}
                     onSelect={(r: any) => {
-                      if (r?.from) setDraftFrom(r.from);
-                      if (r?.to) setDraftTo(r.to);
+                      setDraftFrom(r?.from || r?.to || new Date());
+                      setDraftTo(r?.to || r?.from || new Date());
                     }}
                     initialFocus
                     className={cn("pointer-events-auto p-0")}
-                    classNames={{
-                      months: "flex flex-col sm:flex-row gap-4 sm:gap-5",
-                      month: "space-y-4 w-[260px]",
-                      caption_label: "text-sm font-semibold text-popover-foreground",
-                      head_cell: "text-muted-foreground rounded-md w-9 font-medium text-[0.78rem]",
-                      day: cn(buttonVariants({ variant: "ghost" }), "h-9 w-9 p-0 text-sm font-medium aria-selected:opacity-100"),
-                      day_selected: "!bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                      day_range_start: "day-range-start !bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                      day_range_end: "day-range-end !bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                      day_range_middle: "aria-selected:!bg-primary/90 aria-selected:!text-primary-foreground",
-                      day_outside: "day-outside text-muted-foreground/55 aria-selected:bg-primary/45 aria-selected:text-primary-foreground aria-selected:opacity-100",
-                      day_today: "font-semibold aria-selected:!bg-primary aria-selected:!text-primary-foreground",
-                    }}
+                    classNames={rangeCalendarClassNames}
                   />
                 </div>
                 <div className="border-t border-border/70 bg-secondary/35 p-3">

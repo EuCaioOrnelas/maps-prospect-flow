@@ -68,6 +68,20 @@ const prettifySource = (source: string): string => {
   return source.trim().replace(/^\w/, (c) => c.toUpperCase());
 };
 
+export const NOT_IDENTIFIED = "Não identificado";
+
+/**
+ * Normalização central do HTTP Referer.
+ * Entrada: "https://www.youtube.com/watch?v=123" → { source: "YouTube", referrer: "..." }
+ * Entrada vazia/bloqueada/interna → { source: "Não identificado", referrer: null }
+ */
+export function getReferralSource(referrer?: string | null): { source: string; referrer: string | null } {
+  const raw = (referrer || "").trim();
+  const host = hostFromUrl(raw);
+  if (!host || isInternalHost(host)) return { source: NOT_IDENTIFIED, referrer: raw || null };
+  return { source: prettifyHost(host), referrer: raw };
+}
+
 export interface OriginInput {
   utm_source?: string | null;
   utm_medium?: string | null;
@@ -98,7 +112,7 @@ export function resolveLeadOrigin(input: OriginInput): ResolvedOrigin {
     return { label: prettifyHost(host), detail: host };
   }
 
-  return { label: "Acesso direto", detail: null };
+  return { label: NOT_IDENTIFIED, detail: null };
 }
 
 export const formatLeadOrigin = (input: OriginInput): string => {

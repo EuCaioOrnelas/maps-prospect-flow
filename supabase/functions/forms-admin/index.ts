@@ -362,7 +362,7 @@ Deno.serve(async (req) => {
       for (let page = 0; page < 20; page++) {
         const { data: batch } = await admin
           .from("form_submissions")
-          .select("id, data, files, lead_id, created_at, device, referrer, utm_source, utm_medium, utm_campaign")
+          .select("id, data, files, lead_id, created_at, device, referrer, detected_source, utm_source, utm_medium, utm_campaign, utm_term, utm_content")
           .eq("form_id", formId)
           .eq("owner_user_id", ownerId)
           .order("created_at", { ascending: false })

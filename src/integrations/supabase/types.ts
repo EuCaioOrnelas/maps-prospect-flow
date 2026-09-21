@@ -3799,6 +3799,7 @@ export type Database = {
           consent: Json | null
           created_at: string
           data: Json
+          detected_source: string | null
           device: string | null
           files: Json
           form_id: string
@@ -3820,6 +3821,7 @@ export type Database = {
           consent?: Json | null
           created_at?: string
           data?: Json
+          detected_source?: string | null
           device?: string | null
           files?: Json
           form_id: string
@@ -3841,6 +3843,7 @@ export type Database = {
           consent?: Json | null
           created_at?: string
           data?: Json
+          detected_source?: string | null
           device?: string | null
           files?: Json
           form_id?: string
@@ -3871,6 +3874,7 @@ export type Database = {
       form_views: {
         Row: {
           created_at: string
+          detected_source: string | null
           device: string | null
           form_id: string
           id: string
@@ -3882,6 +3886,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          detected_source?: string | null
           device?: string | null
           form_id: string
           id?: string
@@ -3893,6 +3898,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          detected_source?: string | null
           device?: string | null
           form_id?: string
           id?: string
@@ -5989,6 +5995,8 @@ export type Database = {
           social_media: Json | null
           source: string
           tags: string[] | null
+          traffic_referrer: string | null
+          traffic_source: string | null
           updated_at: string
           user_id: string
           web_snippet: string | null
@@ -6053,6 +6061,8 @@ export type Database = {
           social_media?: Json | null
           source?: string
           tags?: string[] | null
+          traffic_referrer?: string | null
+          traffic_source?: string | null
           updated_at?: string
           user_id: string
           web_snippet?: string | null
@@ -6117,6 +6127,8 @@ export type Database = {
           social_media?: Json | null
           source?: string
           tags?: string[] | null
+          traffic_referrer?: string | null
+          traffic_source?: string | null
           updated_at?: string
           user_id?: string
           web_snippet?: string | null
@@ -10027,6 +10039,7 @@ export type Database = {
       tracked_link_clicks: {
         Row: {
           created_at: string
+          detected_source: string | null
           device: string | null
           id: string
           owner_user_id: string
@@ -10042,6 +10055,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          detected_source?: string | null
           device?: string | null
           id?: string
           owner_user_id: string
@@ -10057,6 +10071,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          detected_source?: string | null
           device?: string | null
           id?: string
           owner_user_id?: string
