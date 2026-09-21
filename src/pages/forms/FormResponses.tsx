@@ -388,61 +388,93 @@ export default function FormResponses() {
       </main>
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
+        <DialogContent className="max-h-[88vh] w-[calc(100vw-2rem)] max-w-3xl overflow-y-auto sm:w-full">
           <DialogHeader><DialogTitle>Resposta recebida</DialogTitle></DialogHeader>
           {selected && (
             <div className="space-y-4">
-              <p className="text-xs text-muted-foreground">{fmtDateTime(selected.created_at)} · {selected.device || "—"}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">{fmtDateTime(selected.created_at)} · {selected.device || "—"}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-2 shadow-none"
+                  onClick={() => copyValue("all", Object.entries(selected.data || {}).map(([key, value]) => `${labelByName[key] || key}: ${String(value)}`).join("\n"))}
+                >
+                  {copied === "all" ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                  Copiar todas
+                </Button>
+              </div>
 
-              <div className="grid grid-cols-2 gap-2 rounded-lg border border-border/60 p-3 text-xs sm:grid-cols-4">
-                <div>
+              <div className="grid grid-cols-2 gap-3 rounded-lg border border-border/60 p-3 text-xs sm:grid-cols-4">
+                <div className="min-w-0">
                   <p className="text-muted-foreground">Origem</p>
-                  <p className="mt-0.5 font-medium">{originOf(selected)}</p>
+                  <p className="mt-0.5 break-words font-medium">{originOf(selected)}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted-foreground">UTM Source</p>
-                  <p className="mt-0.5 font-medium">{selected.utm_source || "Não informado"}</p>
+                  <p className="mt-0.5 break-words font-medium">{selected.utm_source || "Não informado"}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted-foreground">UTM Medium</p>
-                  <p className="mt-0.5 font-medium">{selected.utm_medium || "Não informado"}</p>
+                  <p className="mt-0.5 break-words font-medium">{selected.utm_medium || "Não informado"}</p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted-foreground">UTM Campaign</p>
-                  <p className="mt-0.5 font-medium">{selected.utm_campaign || "Não informado"}</p>
+                  <p className="mt-0.5 break-words font-medium">{selected.utm_campaign || "Não informado"}</p>
                 </div>
                 {selected.referrer && (
-                  <div className="col-span-2 sm:col-span-4">
+                  <div className="col-span-2 min-w-0 sm:col-span-4">
                     <p className="text-muted-foreground">Site de origem</p>
                     <p className="mt-0.5 break-all font-medium">{getReferralSource(selected.referrer).referrer}</p>
                   </div>
                 )}
               </div>
               <div className="space-y-3">
-                {Object.entries(selected.data || {}).map(([key, value]) => (
-                  <div key={key} className="rounded-lg border border-border/60 p-3">
-                    <p className="text-xs font-medium text-muted-foreground">{labelByName[key] || key}</p>
-                    <p className="mt-1 break-words text-sm">{String(value)}</p>
-                  </div>
-                ))}
+                {Object.entries(selected.data || {}).map(([key, value]) => {
+                  const FieldIcon = FIELD_ICONS[fieldTypeByName[key] || "text"] || Type;
+                  const text = String(value);
+                  return (
+                    <div key={key} className="flex items-start gap-3 rounded-lg border border-border/60 p-3">
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <FieldIcon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-muted-foreground">{labelByName[key] || key}</p>
+                        <p className="mt-1 break-words text-sm">{text}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 shadow-none"
+                        title="Copiar resposta"
+                        onClick={() => copyValue(key, text)}
+                      >
+                        {copied === key ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
 
               {Array.isArray(selected.files) && selected.files.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-semibold">Arquivos enviados</p>
                   {(selected.files as SubmissionFile[]).map((file) => (
-                    <button
-                      key={file.path}
-                      type="button"
-                      onClick={() => openFile(selected.id, file)}
-                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2 text-left text-sm"
-                    >
+                    <div key={file.path} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
-                        {file.mime?.startsWith("image/") ? <ImageIcon className="h-4 w-4 text-primary" /> : <FileText className="h-4 w-4 text-primary" />}
+                        {file.mime?.startsWith("image/") ? <ImageIcon className="h-4 w-4 shrink-0 text-primary" /> : <FileText className="h-4 w-4 shrink-0 text-primary" />}
                         <span className="truncate">{file.name || file.filename}</span>
                       </span>
-                      {openingFile === file.path ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4 text-muted-foreground" />}
-                    </button>
+                      <span className="flex shrink-0 items-center gap-1">
+                        <Button variant="outline" size="sm" className="h-8 gap-1.5 shadow-none" onClick={() => openFile(selected.id, file)} disabled={openingFile === file.path}>
+                          {openingFile === file.path ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                          Abrir
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shadow-none" title="Baixar arquivo" onClick={() => downloadFile(selected.id, file)} disabled={downloadingFile === file.path}>
+                          {downloadingFile === file.path ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                        </Button>
+                      </span>
+                    </div>
                   ))}
                 </div>
               )}
@@ -458,11 +490,25 @@ export default function FormResponses() {
       </Dialog>
 
       <Dialog open={Boolean(viewer)} onOpenChange={(open) => !open && setViewer(null)}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-hidden p-4">
-          <DialogHeader><DialogTitle className="truncate text-base">{viewer?.filename}</DialogTitle></DialogHeader>
-          {viewer && (viewer.mime?.startsWith("image/")
-            ? <img src={viewer.url} alt={viewer.filename} className="max-h-[70vh] w-full rounded-lg object-contain" />
-            : <iframe title={viewer.filename} src={viewer.url} className="h-[70vh] w-full rounded-lg border border-border" />)}
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-hidden p-4 sm:w-full">
+          <DialogHeader className="pr-10">
+            <DialogTitle className="truncate text-base">{viewer?.filename}</DialogTitle>
+          </DialogHeader>
+          {viewer && (
+            <div className="space-y-3">
+              {viewer.mime?.startsWith("image/")
+                ? <img src={viewer.url} alt={viewer.filename} className="max-h-[68vh] w-full rounded-lg object-contain" />
+                : <iframe title={viewer.filename} src={viewer.url} className="h-[68vh] w-full rounded-lg border border-border" />}
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button variant="outline" className="gap-2 shadow-none" onClick={() => window.open(viewer.url, "_blank", "noopener")}>
+                  <ExternalLink className="h-4 w-4" /> Abrir em nova aba
+                </Button>
+                <Button className="gap-2 shadow-none" onClick={() => saveBlob(viewer.url, viewer.filename)}>
+                  <Download className="h-4 w-4" /> Baixar arquivo
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
