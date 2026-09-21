@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: rateLimitResult } = await supabase.rpc("check_rate_limit", {
       p_identifier: clientIP,
       p_endpoint: "enterprise-contact",
-      p_max_requests: 3,
+      p_max_requests: 2,
       p_window_seconds: 86400,
     });
 
@@ -43,26 +43,52 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body = await req.json();
-    const {
-      partnerName,
-      companyName,
-      cnpj,
-      niche,
-      email,
-      phone,
-      teamSize,
-      objective,
-      currentTools,
-      monthlyRevenue,
-    } = body;
-
-    if (!partnerName || !companyName || !cnpj || !niche || !email || !phone || !teamSize || !objective) {
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
       return new Response(
-        JSON.stringify({ error: "Campos obrigatórios não preenchidos" }),
+        JSON.stringify({ error: "Dados inválidos" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Sanitização server-side: remove tags, escapa HTML e limita tamanho
+    const clean = (value: unknown, max: number): string =>
+      String(value ?? "")
+        .replace(/<[^>]*>/g, "")
+        .replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" }[c] as string))
+        .trim()
+        .slice(0, max);
+
+    const partnerName = clean(body.partnerName, 120);
+    const companyName = clean(body.companyName, 160);
+    const cnpj = clean(body.cnpj, 20);
+    const niche = clean(body.niche, 120);
+    const email = clean(body.email, 255).toLowerCase();
+    const phone = clean(body.phone, 25);
+    const teamSize = clean(body.teamSize, 20);
+    const objective = clean(body.objective, 2000);
+    const currentTools = clean(body.currentTools, 300);
+    const monthlyRevenue = clean(body.monthlyRevenue, 60);
+
+    const fail = (message: string) =>
+      new Response(
+        JSON.stringify({ error: message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+
+    if (!partnerName || !companyName || !cnpj || !niche || !email || !phone || !teamSize || !objective) {
+      return fail("Campos obrigatórios não preenchidos");
+    }
+    if (partnerName.length < 2) return fail("Informe o nome do responsável");
+    if (companyName.length < 2) return fail("Informe o nome da empresa");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return fail("Informe um e-mail válido");
+    if (/[\r\n]/.test(email)) return fail("Informe um e-mail válido");
+    const cnpjDigits = cnpj.replace(/\D/g, "");
+    if (cnpjDigits.length !== 14) return fail("Informe um CNPJ válido");
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 13) return fail("Informe um telefone válido");
+    if (objective.length < 10) return fail("Descreva melhor o seu objetivo");
 
     const now = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 

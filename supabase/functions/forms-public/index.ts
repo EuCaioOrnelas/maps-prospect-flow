@@ -216,8 +216,8 @@ Deno.serve(async (req) => {
       if (!form) return json({ error: "not_found" }, 404);
       if (form.status !== "active") return json({ error: "Este formulário não está disponível no momento." }, 403);
 
-      // rate limit simples por IP + formulário (5 envios / 10 min)
-      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      // rate limit por IP + formulário: no máximo 2 envios a cada 24 horas
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const ipHash = await hash(ip);
       const { count: recent } = await admin
         .from("form_submissions")
@@ -225,7 +225,9 @@ Deno.serve(async (req) => {
         .eq("form_id", form.id)
         .eq("ip_hash", ipHash)
         .gte("created_at", since);
-      if ((recent || 0) >= 5) return json({ error: "Muitos envios seguidos. Tente novamente em alguns minutos." }, 429);
+      if ((recent || 0) >= 2) {
+        return json({ error: "Você já enviou este formulário 2 vezes hoje. Tente novamente em 24 horas." }, 429);
+      }
 
       const { data: fields } = await admin
         .from("form_fields").select("*").eq("form_id", form.id).eq("is_active", true).order("position");
