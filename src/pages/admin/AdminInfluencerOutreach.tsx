@@ -253,6 +253,8 @@ export default function AdminInfluencerOutreach() {
       }
       const final = await fetchQueueStats(campaignId);
       setQueueProgress({ campaignId, name, finished: true, ...final });
+      // Reflete na hora o status "E-mail enviado" gravado pelo backend.
+      await loadProspects();
       toast({ title: "Envio concluído", description: `${final.sent} e-mail(s) enviado(s).` });
       setTimeout(() => setQueueProgress((p) => (p?.campaignId === campaignId && p.finished ? null : p)), 12000);
     } catch (e: any) {
