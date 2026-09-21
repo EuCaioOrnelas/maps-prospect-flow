@@ -42,3 +42,9 @@
 - [x] Validar checkout, trial e upgrade em computador e celular
 - [x] Capitalizar o nome, recolher a indicação e restaurar a animação mascarada do cartão
 - [x] Auditar a apresentação e o acionamento do 3D Secure
+
+## Acabamento visual de Forms
+- [x] Alinhar os indicadores de formulários e links ao padrão visual Wiize
+- [x] Refinar os cards sem blocos internos pesados e padronizar o seletor de área
+- [x] Exibir limite atingido e bloquear duplicação quando o plano não permitir
+- [x] Validar visualmente o painel em desktop e compilar os analytics

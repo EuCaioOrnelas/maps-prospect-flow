@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -16,6 +17,7 @@ import {
 import {
   FileText, Link2, Plus, Copy, Power, Trash2, BarChart3, Pencil,
   Eye, MousePointerClick, Users, Search, ExternalLink, Loader2, Lock,
+  Activity, CalendarClock, CheckCircle2, Globe2, TrendingUp,
 } from "lucide-react";
 import { useForms } from "@/hooks/useForms";
 import { TrackedLinkDialog } from "@/components/forms/TrackedLinkDialog";
@@ -25,6 +27,21 @@ const PUBLIC_BASE = typeof window !== "undefined" ? window.location.origin : "";
 
 const fmtDate = (s: string | null) =>
   s ? new Date(s).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
+
+const metricCards = {
+  forms: [
+    { key: "forms", label: "Formulários", icon: FileText },
+    { key: "views", label: "Visualizações", icon: Eye },
+    { key: "submissions", label: "Leads captados", icon: Users },
+    { key: "conversion", label: "Conversão", icon: TrendingUp },
+  ],
+  links: [
+    { key: "links", label: "Links rastreados", icon: Link2 },
+    { key: "clicks", label: "Cliques totais", icon: MousePointerClick },
+    { key: "unique", label: "Visitantes únicos", icon: Users },
+    { key: "leads", label: "Leads atribuídos", icon: TrendingUp },
+  ],
+} as const;
 
 export default function Forms() {
   const { profile } = useAuth();
@@ -50,6 +67,8 @@ export default function Forms() {
   );
 
   const totalClicks = Object.values(clicksByLink).reduce((a, c) => a + c.clicks, 0);
+  const totalUniqueClicks = Object.values(clicksByLink).reduce((a, c) => a + c.unique, 0);
+  const totalLinkLeads = Object.values(leadsByLink).reduce((a, value) => a + value, 0);
   const conversion = totals.views ? (totals.submissions / totals.views) * 100 : 0;
 
   const run = async (key: string, fn: () => Promise<void>) => {
@@ -71,6 +90,16 @@ export default function Forms() {
 
   const formsAtLimit = forms.length >= limits.forms;
   const linksAtLimit = links.length >= limits.links;
+  const metricValues: Record<string, string | number> = {
+    forms: `${forms.length}/${limits.forms}`,
+    views: totals.views,
+    submissions: totals.submissions,
+    conversion: `${conversion.toFixed(1)}%`,
+    links: `${links.length}/${limits.links}`,
+    clicks: totalClicks,
+    unique: totalUniqueClicks,
+    leads: totalLinkLeads,
+  };
 
   const setTab = (next: string) => {
     params.set("tab", next);
@@ -97,66 +126,61 @@ export default function Forms() {
             <div className="flex gap-2">
               {tab === "forms" ? (
                 <Button
-                  onClick={() => (formsAtLimit ? toast.error("Limite de formulários do seu plano atingido.") : navigate("/forms/novo"))}
-                  className="gap-2"
+                  onClick={() => navigate("/forms/novo")}
+                  disabled={formsAtLimit}
+                  className="gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
                 >
                   {formsAtLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                  Novo formulário
+                  {formsAtLimit ? "Limite atingido" : "Novo formulário"}
                 </Button>
               ) : (
                 <Button
-                  onClick={() => (linksAtLimit ? toast.error("Limite de links do seu plano atingido.") : setLinkDialog({ open: true, link: null }))}
-                  className="gap-2"
+                  onClick={() => setLinkDialog({ open: true, link: null })}
+                  disabled={linksAtLimit}
+                  className="gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
                 >
                   {linksAtLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                  Novo link
+                  {linksAtLimit ? "Limite atingido" : "Novo link"}
                 </Button>
               )}
             </div>
           </div>
 
           {/* KPIs */}
-          <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {[
-              { label: "Formulários", value: `${forms.length}/${limits.forms}`, icon: FileText },
-              { label: "Visualizações", value: totals.views, icon: Eye },
-              { label: "Leads captados", value: totals.submissions, icon: Users },
-              { label: "Cliques em links", value: totalClicks, icon: MousePointerClick },
-            ].map((kpi) => (
-              <Card key={kpi.label} className="border-border/60 p-4">
-                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  <kpi.icon className="h-3.5 w-3.5" />
-                  {kpi.label}
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {metricCards[tab].map((kpi, index) => (
+              <Card key={kpi.label} className="min-h-[138px] border-border/60 bg-card p-5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <kpi.icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-xs font-semibold uppercase text-muted-foreground">{kpi.label}</span>
                 </div>
-                <p className="mt-2 text-2xl font-semibold">{kpi.value}</p>
+                <p className="mt-4 text-2xl font-semibold tabular-nums">{metricValues[kpi.key]}</p>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  {index === 0
+                    ? `${tab === "forms" ? forms.length : links.length} de ${tab === "forms" ? limits.forms : limits.links} utilizados`
+                    : tab === "forms"
+                      ? "Dados atualizados automaticamente"
+                      : "Rastreamento atualizado automaticamente"}
+                </div>
               </Card>
             ))}
           </div>
 
-          <Card className="mt-3 border-border/60 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Taxa de conversão dos formulários</p>
-            <p className="mt-1 text-lg font-semibold">{conversion.toFixed(1)}%</p>
-          </Card>
-
           {/* Tabs */}
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-xl border border-border/60 bg-card p-1">
-              {[
-                { id: "forms", label: "Formulários", icon: FileText },
-                { id: "links", label: "Links rastreados", icon: Link2 },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  <t.icon className="h-4 w-4" />
-                  {t.label}
-                </button>
-              ))}
-            </div>
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="h-10 border border-border/60 bg-muted/40 p-1">
+                <TabsTrigger value="forms" className="gap-2 px-4">
+                  <FileText className="h-4 w-4" /> Formulários
+                </TabsTrigger>
+                <TabsTrigger value="links" className="gap-2 px-4">
+                  <Link2 className="h-4 w-4" /> Links rastreados
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             <div className="relative ml-auto w-full sm:w-64">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="pl-9" />
@@ -182,11 +206,18 @@ export default function Forms() {
                   const url = `${PUBLIC_BASE}/form/${f.slug}`;
                   const conv = s.views ? ((s.submissions / s.views) * 100).toFixed(1) : "0.0";
                   return (
-                    <Card key={f.id} className="flex flex-col border-border/60 p-5">
+                    <Card key={f.id} className="flex min-h-[330px] flex-col overflow-hidden border-border/60 bg-card shadow-sm">
+                      <div className="h-1 bg-primary" />
+                      <div className="flex flex-1 flex-col p-5">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold">{f.name}</p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">/form/{f.slug}</p>
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <FileText className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">{f.name}</p>
+                            <p className="mt-0.5 truncate text-xs text-muted-foreground">{f.title}</p>
+                          </div>
                         </div>
                         <Badge
                           variant="outline"
@@ -198,19 +229,18 @@ export default function Forms() {
                         </Badge>
                       </div>
 
-                      <div className="mt-4 rounded-xl border border-border/60 bg-muted/30 p-3">
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                          <div><p className="text-lg font-semibold">{s.views}</p><p className="text-[11px] text-muted-foreground">Views</p></div>
-                          <div><p className="text-lg font-semibold">{s.submissions}</p><p className="text-[11px] text-muted-foreground">Leads</p></div>
-                          <div><p className="text-lg font-semibold">{conv}%</p><p className="text-[11px] text-muted-foreground">Conversão</p></div>
-                        </div>
+                      <div className="mt-5 grid grid-cols-3 divide-x divide-border/70 border-y border-border/60 py-4 text-center">
+                        <div><p className="text-lg font-semibold tabular-nums">{s.views}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Visualizações</p></div>
+                        <div><p className="text-lg font-semibold tabular-nums">{s.submissions}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Leads</p></div>
+                        <div><p className="text-lg font-semibold tabular-nums">{conv}%</p><p className="mt-0.5 text-[11px] text-muted-foreground">Conversão</p></div>
                       </div>
 
-                      <p className="mt-3 text-xs text-muted-foreground">
-                        Último lead: {fmtDate(s.lastSubmission)} · Criado em {fmtDate(f.created_at)}
-                      </p>
+                      <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+                        <p className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5" /><span className="truncate">/form/{f.slug}</span></p>
+                        <p className="flex items-center gap-2"><CalendarClock className="h-3.5 w-3.5" />Último lead {fmtDate(s.lastSubmission)} · criado em {fmtDate(f.created_at)}</p>
+                      </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-auto flex flex-wrap gap-2 border-t border-border/60 pt-4">
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigate(`/forms/${f.id}/editar`)}>
                           <Pencil className="h-3.5 w-3.5" /> Editar
                         </Button>
@@ -232,7 +262,8 @@ export default function Forms() {
                         </Button>
                         <Button
                           size="sm" variant="outline" className="gap-1.5"
-                          disabled={busy === `dup-${f.id}`}
+                          disabled={formsAtLimit || busy === `dup-${f.id}`}
+                          title={formsAtLimit ? "Limite de formulários atingido" : "Duplicar formulário"}
                           onClick={() => run(`dup-${f.id}`, () => callAdmin({ action: "duplicate_form", id: f.id }).then(() => { toast.success("Formulário duplicado."); }))}
                         >
                           <Copy className="h-3.5 w-3.5" /> Duplicar
@@ -244,6 +275,7 @@ export default function Forms() {
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
+                      </div>
                       </div>
                     </Card>
                   );
@@ -263,11 +295,18 @@ export default function Forms() {
                 const leads = leadsByLink[l.id] || 0;
                 const url = `${PUBLIC_BASE}/r/${l.slug}`;
                 return (
-                  <Card key={l.id} className="flex flex-col border-border/60 p-5">
+                  <Card key={l.id} className="flex min-h-[330px] flex-col overflow-hidden border-border/60 bg-card shadow-sm">
+                    <div className="h-1 bg-info" />
+                    <div className="flex flex-1 flex-col p-5">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold">{l.name}</p>
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">/r/{l.slug}</p>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
+                          <Link2 className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">{l.name}</p>
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">/r/{l.slug}</p>
+                        </div>
                       </div>
                       <Badge
                         variant="outline"
@@ -279,14 +318,15 @@ export default function Forms() {
                       </Badge>
                     </div>
 
-                    <p className="mt-2 truncate text-xs text-muted-foreground">{l.destination_url}</p>
+                    <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+                      <Globe2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span className="line-clamp-2 break-all">{l.destination_url}</span>
+                    </div>
 
-                    <div className="mt-4 rounded-xl border border-border/60 bg-muted/30 p-3">
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div><p className="text-lg font-semibold">{stats.clicks}</p><p className="text-[11px] text-muted-foreground">Cliques</p></div>
-                        <div><p className="text-lg font-semibold">{stats.unique}</p><p className="text-[11px] text-muted-foreground">Únicos</p></div>
-                        <div><p className="text-lg font-semibold">{leads}</p><p className="text-[11px] text-muted-foreground">Leads</p></div>
-                      </div>
+                    <div className="mt-5 grid grid-cols-3 divide-x divide-border/70 border-y border-border/60 py-4 text-center">
+                      <div><p className="text-lg font-semibold tabular-nums">{stats.clicks}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Cliques</p></div>
+                      <div><p className="text-lg font-semibold tabular-nums">{stats.unique}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Únicos</p></div>
+                      <div><p className="text-lg font-semibold tabular-nums">{leads}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Leads</p></div>
                     </div>
 
                     {(l.utm_source || l.utm_campaign) && (
@@ -297,9 +337,9 @@ export default function Forms() {
                       </div>
                     )}
 
-                    <p className="mt-3 text-xs text-muted-foreground">Último clique: {fmtDate(stats.last)}</p>
+                    <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><Activity className="h-3.5 w-3.5" />Último clique: {fmtDate(stats.last)}</p>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-auto flex flex-wrap gap-2 border-t border-border/60 pt-4">
                       <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copy(url)}>
                         <Copy className="h-3.5 w-3.5" /> Copiar
                       </Button>
@@ -309,6 +349,7 @@ export default function Forms() {
                       <Button size="sm" variant="outline" className="gap-1.5 text-destructive" onClick={() => setConfirm({ kind: "link", id: l.id, name: l.name })}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
+                    </div>
                     </div>
                   </Card>
                 );
