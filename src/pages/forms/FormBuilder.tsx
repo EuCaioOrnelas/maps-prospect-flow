@@ -199,7 +199,7 @@ export default function FormBuilder() {
       if (!(form.crm_responsibles || []).length) issues.push({ step: 3, message: "Selecione ao menos um responsável pelo lead." });
     }
     if (form.notify_enabled && !cfg.notifyAssigned && !(form.notify_user_ids || []).length) issues.push({ step: 4, message: "Escolha quem deve receber os avisos." });
-    if (cfg.redirectEnabled && !/^https:\/\//i.test(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um link HTTPS válido para o redirecionamento." });
+    if (cfg.redirectEnabled && !isValidLink(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um endereço válido para o redirecionamento (ex.: www.seusite.com.br/obrigado)." });
     return issues;
   }, [cfg.notifyAssigned, cfg.redirectEnabled, cfg.redirectUrl, fields, form.crm_enabled, form.crm_responsibles, form.name, form.notify_enabled, form.notify_user_ids]);
 
