@@ -59,3 +59,8 @@
 - [x] Restaurar logo e banner por URL e aprimorar o campo público de arquivos
 - [x] Corrigir o progresso percentual dos formulários em várias páginas
 - [x] Apresentar Forms e Links Rastreados na página pública de produtos
+## Current request
+- [ ] Normalize URL logo sizing in form preview and public rendering.
+- [ ] Add form embed options and copyable snippets for common stacks.
+- [ ] Expose embed from Publish and form cards.
+- [ ] Validate responsive behavior and existing form submission flow.
