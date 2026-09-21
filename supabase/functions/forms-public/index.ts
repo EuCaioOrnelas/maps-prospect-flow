@@ -42,6 +42,42 @@ function clientIp(req: Request): string {
 
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 
+const ALLOWED_UPLOAD_MIMES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+const MAX_UPLOADS = 10;
+
+function safeFileName(value: string): string {
+  const clean = (value || "arquivo")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+  return clean || "arquivo";
+}
+
+function decodeBase64(value: string): Uint8Array {
+  const clean = value.includes(",") ? value.slice(value.indexOf(",") + 1) : value;
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+const MESSAGE_PREFIX = "enc:v1:";
+function bufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+async function encryptNote(value: string): Promise<string | null> {
+  const secret = Deno.env.get("WIIZE_MESSAGE_ENCRYPTION_KEY");
+  if (!secret || secret.length < 32) return null;
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret));
+  const key = await crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt"]);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(value));
+  return `${MESSAGE_PREFIX}${bufferToBase64(iv.buffer)}:${bufferToBase64(ciphertext)}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
