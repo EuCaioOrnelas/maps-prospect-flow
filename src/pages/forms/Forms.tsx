@@ -68,6 +68,9 @@ export default function Forms() {
   const [quickDays, setQuickDays] = useState<number | null>(30);
   const [fromDate, setFromDate] = useState(() => toDateInput(new Date(Date.now() - 30 * dayMs)));
   const [toDate, setToDate] = useState(() => toDateInput(new Date()));
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState<Date>(() => new Date());
+  const [draftTo, setDraftTo] = useState<Date>(() => new Date());
 
   const applyPeriod = (from: string, to: string, days: number | null) => {
     setQuickDays(days);
@@ -85,6 +88,25 @@ export default function Forms() {
     const from = toDateInput(new Date(Date.now() - days * dayMs));
     applyPeriod(from, to, days);
   };
+
+  const openRange = (next: boolean) => {
+    setRangeOpen(next);
+    if (next) {
+      setDraftFrom(fromDate ? new Date(`${fromDate}T12:00:00`) : new Date());
+      setDraftTo(toDate ? new Date(`${toDate}T12:00:00`) : new Date());
+    }
+  };
+
+  const applyRangeDraft = () => {
+    const start = draftFrom <= draftTo ? draftFrom : draftTo;
+    const end = draftFrom <= draftTo ? draftTo : draftFrom;
+    applyPeriod(toDateInput(start), toDateInput(end), null);
+    setRangeOpen(false);
+  };
+
+  const periodLabel = fromDate && toDate
+    ? `${format(new Date(`${fromDate}T12:00:00`), "dd MMM yyyy", { locale: ptBR })} — ${format(new Date(`${toDate}T12:00:00`), "dd MMM yyyy", { locale: ptBR })}`
+    : "Período";
 
   // Período padrão: últimos 30 dias.
   useEffect(() => { applyQuick(30); }, []); // eslint-disable-line react-hooks/exhaustive-deps
