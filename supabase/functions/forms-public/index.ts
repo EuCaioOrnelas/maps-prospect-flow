@@ -257,6 +257,20 @@ Deno.serve(async (req) => {
         .from("form_submissions").insert(submissionPayload).select("*").single();
       if (subErr) throw subErr;
 
+      // ───── arquivos enviados ─────
+      const storedFiles: { field: string; name: string; mime: string; size: number; path: string }[] = [];
+      for (const [index, upload] of uploads.entries()) {
+        const path = `${form.owner_user_id}/${form.id}/${submission.id}/${index + 1}-${upload.name}`;
+        const { error: uploadError } = await admin.storage
+          .from("form-uploads")
+          .upload(path, upload.bytes, { contentType: upload.mime, upsert: true });
+        if (uploadError) { console.error("[forms-public] upload", uploadError); continue; }
+        storedFiles.push({ field: upload.field, name: upload.name, mime: upload.mime, size: upload.bytes.length, path });
+      }
+      if (storedFiles.length) {
+        await admin.from("form_submissions").update({ files: storedFiles }).eq("id", submission.id);
+      }
+
       // ───── CRM ─────
       let leadId: string | null = null;
       let responsible: string | null = null;
