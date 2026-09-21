@@ -20,8 +20,11 @@ const admin = createClient(
 
 const PLAN_LIMITS: Record<string, { forms: number; links: number }> = {
   start: { forms: 3, links: 6 },
+  atendimento: { forms: 3, links: 6 },
   growth: { forms: 6, links: 12 },
   scale: { forms: 999, links: 999 },
+  enterprise: { forms: 999, links: 999 },
+  admin: { forms: 999, links: 999 },
   free: { forms: 1, links: 1 },
 };
 
