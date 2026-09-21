@@ -70,9 +70,15 @@ async function callAdmin(payload: Record<string, unknown>) {
   return data as any;
 }
 
+export interface PeriodRange {
+  from: string | null;
+  to: string | null;
+}
+
 export function useForms() {
   const { user, accountOwnerId } = useAuth();
   const ownerId = accountOwnerId || user?.id || null;
+  const [range, setRange] = useState<PeriodRange>({ from: null, to: null });
 
   const [forms, setForms] = useState<FormRecord[]>([]);
   const [links, setLinks] = useState<TrackedLink[]>([]);
