@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
         success_message:
           str(input.success_message, 400) ||
           "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
-        status: input.status === "inactive" ? "inactive" : "active",
+        status: ["active", "inactive", "draft"].includes(input.status) ? input.status : "draft",
         config: typeof input.config === "object" && input.config ? input.config : {},
         crm_enabled: input.crm_enabled !== false,
         crm_stage_id: stageId,
@@ -216,8 +216,15 @@ Deno.serve(async (req) => {
       } else {
         if (!formId) return json({ error: "Formulário não informado." }, 400);
         const { data: existing } = await admin
-          .from("forms").select("id").eq("id", formId).eq("owner_user_id", ownerId).maybeSingle();
+          .from("forms").select("id, slug").eq("id", formId).eq("owner_user_id", ownerId).maybeSingle();
         if (!existing) return json({ error: "Formulário não encontrado." }, 404);
+        const requestedSlug = slugify(str(input.slug, 80) || existing.slug);
+        if (requestedSlug !== existing.slug) {
+          const { data: slugOwner } = await admin.from("forms").select("id").eq("slug", requestedSlug).maybeSingle();
+          payload.slug = slugOwner && slugOwner.id !== formId
+            ? await uniqueSlug("forms", requestedSlug)
+            : requestedSlug;
+        }
         payload.updated_at = new Date().toISOString();
         const { error } = await admin.from("forms").update(payload).eq("id", formId);
         if (error) throw error;

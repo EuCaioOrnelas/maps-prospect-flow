@@ -61,6 +61,33 @@ export default function PublicForm() {
   const honeypot = useRef("");
 
   useEffect(() => {
+    const config = form?.config || {};
+    const cleanMetaId = /^\d{6,20}$/.test(config.metaPixelId || "") ? config.metaPixelId : "";
+    const cleanGtmId = /^GTM-[A-Z0-9]+$/.test(config.googleTagManagerId || "") ? config.googleTagManagerId : "";
+    const cleanAdsId = /^AW-\d+$/.test(config.googleAdsId || "") ? config.googleAdsId : "";
+    const scripts: HTMLScriptElement[] = [];
+    if (cleanMetaId) {
+      const script = document.createElement("script");
+      script.text = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${cleanMetaId}');fbq('track','PageView');`;
+      document.head.appendChild(script); scripts.push(script);
+    }
+    if (cleanGtmId) {
+      const script = document.createElement("script");
+      script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(cleanGtmId)}`;
+      script.async = true; document.head.appendChild(script); scripts.push(script);
+      const dataLayer = ((window as any).dataLayer ||= []); dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+    }
+    if (cleanAdsId) {
+      const script = document.createElement("script");
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(cleanAdsId)}`;
+      script.async = true; document.head.appendChild(script); scripts.push(script);
+      const dataLayer = ((window as any).dataLayer ||= []); const gtag = (...args: unknown[]) => dataLayer.push(args);
+      gtag("js", new Date()); gtag("config", cleanAdsId);
+    }
+    return () => { scripts.forEach((script) => script.remove()); };
+  }, [form]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
       const { data } = await supabase.functions.invoke("forms-public", { body: { action: "get_form", slug } });
