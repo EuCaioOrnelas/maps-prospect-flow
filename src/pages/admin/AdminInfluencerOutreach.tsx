@@ -27,6 +27,7 @@ import {
   contactTypeLabel, emailHtmlToText, sendStatusMeta,
   textToEmailHtml, PROSPECT_OUTREACH_STATUSES, prospectOutreachLabel,
 } from "@/lib/influencerOutreach";
+import { InfluencerKanbanBoard } from "@/components/admin/partners/InfluencerKanbanBoard";
 import { ChannelAvatar } from "@/components/admin/partners/ChannelAvatar";
 import { InfluencerContactsDialog } from "@/components/admin/partners/InfluencerContactsDialog";
 import { InfluencerThreadDialog } from "@/components/admin/partners/InfluencerThreadDialog";
@@ -34,6 +35,7 @@ import { InfluencerApproachDialog } from "@/components/admin/partners/Influencer
 import {
   Loader2, Mail, Search, Send, RefreshCw, Plus, Trash2, FileText, Users,
   CheckCircle2, XCircle, MessageSquareReply, Ban, PlayCircle, Filter, Info, Inbox, MessageSquare, SendHorizonal, Sparkles,
+  LayoutGrid, List,
 } from "lucide-react";
 
 
@@ -68,6 +70,7 @@ const QUALIFIED_STATUSES = [
 export default function AdminInfluencerOutreach() {
   const { toast } = useToast();
   const [tab, setTab] = useState("abordagens");
+  const [view, setView] = useState<"kanban" | "lista">("kanban");
 
   // ── Abordagens ────────────────────────────────────────────────────────────
   const [prospects, setProspects] = useState<any[]>([]);
@@ -250,6 +253,8 @@ export default function AdminInfluencerOutreach() {
       }
       const final = await fetchQueueStats(campaignId);
       setQueueProgress({ campaignId, name, finished: true, ...final });
+      // Reflete na hora o status "E-mail enviado" gravado pelo backend.
+      await loadProspects();
       toast({ title: "Envio concluído", description: `${final.sent} e-mail(s) enviado(s).` });
       setTimeout(() => setQueueProgress((p) => (p?.campaignId === campaignId && p.finished ? null : p)), 12000);
     } catch (e: any) {
@@ -482,6 +487,33 @@ export default function AdminInfluencerOutreach() {
                 </div>
               )}
 
+              <div className="flex items-center gap-1 rounded-xl border border-border p-1 w-fit">
+                <Button size="sm" variant={view === "kanban" ? "default" : "ghost"} className="h-8"
+                  onClick={() => setView("kanban")}>
+                  <LayoutGrid size={14} className="mr-2" /> Kanban
+                </Button>
+                <Button size="sm" variant={view === "lista" ? "default" : "ghost"} className="h-8"
+                  onClick={() => setView("lista")}>
+                  <List size={14} className="mr-2" /> Lista
+                </Button>
+              </div>
+
+              {view === "kanban" ? (
+                loading ? (
+                  <div className="py-12 text-center">
+                    <Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} />
+                  </div>
+                ) : (
+                  <InfluencerKanbanBoard
+                    prospects={filtered}
+                    emailOf={emailOf}
+                    onStatusChange={(id, status) => updateStatus([id], status)}
+                    onOpen={(p) => setDetail(p)}
+                    onThread={(p) => setThread(p)}
+                    onApproach={(p, email) => setApproach({ prospect: p, email })}
+                  />
+                )
+              ) : (
               <div className="rounded-xl border border-border overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -548,6 +580,14 @@ export default function AdminInfluencerOutreach() {
                             {p.notes && (
                               <p className="text-[10px] text-muted-foreground mt-1 truncate">📝 {p.notes}</p>
                             )}
+                            {p.status === "email_enviado" && (
+                              <p className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1">
+                                <Mail size={11} className="text-primary" /> E-mail enviado
+                                {p.last_contacted_at
+                                  ? ` · ${new Date(p.last_contacted_at).toLocaleDateString("pt-BR")}`
+                                  : ""}
+                              </p>
+                            )}
                           </TableCell>
                           <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
                           <TableCell className="py-3 text-right text-sm">{p.fit_score ?? 0}</TableCell>
@@ -590,6 +630,7 @@ export default function AdminInfluencerOutreach() {
                   </TableBody>
                 </Table>
               </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

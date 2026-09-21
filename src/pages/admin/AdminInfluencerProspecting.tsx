@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/partners/PageHeader";
@@ -66,6 +67,8 @@ export default function AdminInfluencerProspecting() {
   const [maxSubs, setMaxSubs] = useState("100000");
   const [minViews, setMinViews] = useState("");
   const [recency, setRecency] = useState("90");
+  const [onlyActiveChannels, setOnlyActiveChannels] = useState(false);
+  const [activeWindowDays, setActiveWindowDays] = useState("30");
   const [keywords, setKeywords] = useState<string[]>(DEFAULT_KEYWORDS);
   const [kwInput, setKwInput] = useState("");
 
@@ -178,6 +181,8 @@ export default function AdminInfluencerProspecting() {
           max_subscribers: Number(maxSubs) || 10000000,
           min_views: minViews ? Number(minViews) : null,
           recency_days: Number(recency),
+          require_recent_videos: onlyActiveChannels,
+          recent_video_days: Number(activeWindowDays) || 30,
           results_requested: Number(resultsRequested),
         },
       });
@@ -684,6 +689,26 @@ export default function AdminInfluencerProspecting() {
                   <FieldLabel icon={Eye}>Média mínima de views por vídeo</FieldLabel>
                   <Input type="number" value={minViews} onChange={(e) => setMinViews(e.target.value)} placeholder="Opcional" />
                 </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/30 px-4 py-3">
+                <Switch checked={onlyActiveChannels} onCheckedChange={setOnlyActiveChannels} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium">Somente canais ativos</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Descarta canais que não publicaram vídeos dentro do período escolhido.
+                  </p>
+                </div>
+                <Select value={activeWindowDays} onValueChange={setActiveWindowDays} disabled={!onlyActiveChannels}>
+                  <SelectTrigger className="h-9 w-[170px] text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">Últimos 7 dias</SelectItem>
+                    <SelectItem value="15">Últimos 15 dias</SelectItem>
+                    <SelectItem value="30">Últimos 30 dias</SelectItem>
+                    <SelectItem value="60">Últimos 60 dias</SelectItem>
+                    <SelectItem value="90">Últimos 90 dias</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="h-px bg-border" />

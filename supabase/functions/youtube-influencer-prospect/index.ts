@@ -344,6 +344,12 @@ serve(async (req) => {
     const maxSubs = Number(body.max_subscribers ?? 100000);
     const minViews = body.min_views ? Number(body.min_views) : null;
     const recencyDays = Number(body.recency_days ?? 90);
+    // Filtro opcional: só aceita canais que publicaram dentro da janela escolhida.
+    const requireRecentVideos = body.require_recent_videos === true;
+    const recentVideoDays = Math.max(Number(body.recent_video_days ?? 30) || 30, 1);
+    const recentVideoCutoff = requireRecentVideos
+      ? Date.now() - recentVideoDays * 86400000
+      : null;
     const resultsRequested = Math.min(
       Math.max(Number(body.results_requested ?? 20) || 20, 5),
       LIMITS.MAX_RESULTS_PER_SEARCH,
@@ -671,6 +677,11 @@ serve(async (req) => {
 
         // Filtro duro de visualizações: média por vídeo recente precisa atingir o mínimo
         if (minViews && (avgViews ?? 0) < minViews) return;
+        // Filtro duro de atividade: exige publicação dentro da janela escolhida
+        if (recentVideoCutoff !== null) {
+          const last = latestVideoAt ? new Date(latestVideoAt).getTime() : NaN;
+          if (!Number.isFinite(last) || last < recentVideoCutoff) return;
+        }
         // Já atingimos o número de resultados pedidos
         if (results.length >= resultsRequested) return;
 
