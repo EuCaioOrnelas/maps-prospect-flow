@@ -62,6 +62,18 @@ export const PROSPECT_OUTREACH_STATUSES = [
   { value: "descartado", label: "Descartado" },
 ];
 
+/** Colunas do quadro Kanban de abordagens, na ordem do funil. */
+export const INFLUENCER_KANBAN_COLUMNS = [
+  { value: "qualificado", label: "Qualificado" },
+  { value: "contatos_identificados", label: "Contatos identificados" },
+  { value: "pronto_abordagem", label: "Pronto para abordagem" },
+  { value: "sem_contato", label: "Sem contato" },
+  { value: "email_enviado", label: "E-mail enviado" },
+  { value: "respondeu", label: "Respondeu" },
+  { value: "negociacao", label: "Negociação" },
+  { value: "parceria_ativa", label: "Parceria ativa" },
+];
+
 export const prospectOutreachLabel = (v?: string | null) =>
   PROSPECT_OUTREACH_STATUSES.find((s) => s.value === v)?.label ?? (v || "Novo");
 
