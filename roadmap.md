@@ -64,3 +64,8 @@
 - [x] Add form embed options and copyable snippets for common stacks.
 - [x] Expose embed from Publish and form cards.
 - [x] Validate responsive behavior and existing form submission flow.
+
+## Public form opening and field icons
+- [x] Remove the extra route-loading screen before the public form loads.
+- [x] Reuse loaded form data briefly and prevent duplicate requests/view registration.
+- [x] Render the same field-type icons from the builder preview in the published form.
