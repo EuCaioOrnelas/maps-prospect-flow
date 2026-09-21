@@ -56,3 +56,6 @@
 - [x] Adicionar prévia de e-mail e rastreamento Meta Pixel, GTM e Google Ads
 - [x] Estruturar campos CRM automáticos, opções individuais e validação antes de publicar
 - [x] Notificar o vendedor atribuído e redirecionar após a confirmação de envio
+- [x] Restaurar logo e banner por URL e aprimorar o campo público de arquivos
+- [x] Corrigir o progresso percentual dos formulários em várias páginas
+- [x] Apresentar Forms e Links Rastreados na página pública de produtos
