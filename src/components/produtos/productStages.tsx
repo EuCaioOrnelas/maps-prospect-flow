@@ -1,3 +1,4 @@
+import { FormsMockup } from "@/components/shared/FormsMockup";
 import {
   CalendarCheck,
   CalendarClock,
@@ -789,17 +790,11 @@ export interface ProductStage extends Stage {
   render: (props: { progress: number }) => JSX.Element;
 }
 
-const StageFormCapture = ({ progress }: { progress: number }) => {
-  const received = progress > 0.58;
-  return <div className="flex h-full flex-col gap-2 overflow-hidden">
-    <div className="rounded-lg border border-border/50 bg-background/80 p-3">
-      <div className="mb-2 flex items-center justify-between"><span className="text-[11px] font-semibold text-foreground">Solicite uma demonstração</span><span className="text-[9px] font-semibold text-primary">{received ? "99%" : "50%"}</span></div>
-      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: received ? "99%" : "50%" }} /></div>
-      {["Nome completo", "E-mail profissional", "Empresa"].map((label, index) => <div key={label} className="mb-1.5 flex h-8 items-center rounded-md border border-border/50 bg-card px-2 text-[10px] text-muted-foreground" style={{ opacity: progress > index * 0.12 ? 1 : 0.35 }}>{label}</div>)}
-    </div>
-    <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-primary/10 p-2"><p className="text-[9px] text-muted-foreground">Origem</p><p className="text-[11px] font-semibold text-primary">Google Ads</p></div><div className="rounded-lg bg-success/10 p-2"><p className="text-[9px] text-muted-foreground">Destino</p><p className="text-[11px] font-semibold text-success">CRM Wiize</p></div></div>
-  </div>;
-};
+const StageFormCapture = (_props: { progress: number }) => (
+  <div className="flex h-full flex-col overflow-hidden">
+    <FormsMockup />
+  </div>
+);
 
 const StageTrackedLink = ({ progress }: { progress: number }) => <div className="flex h-full flex-col gap-2 overflow-hidden">
   <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-background/80 p-3"><Link2 className="h-4 w-4 text-primary" /><div className="min-w-0"><p className="text-[10px] text-muted-foreground">Link rastreado</p><p className="truncate text-[11px] font-semibold text-foreground">wiize.link/demo-b2b</p></div></div>

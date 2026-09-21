@@ -1,3 +1,4 @@
+import { FormsMockup } from "@/components/shared/FormsMockup";
 import { useEffect, useRef, useState } from "react";
 import {
   Search,
@@ -284,18 +285,7 @@ const Contratos = () => (
   </div>
 );
 
-const Formularios = () => (
-  <div className="flex flex-col gap-2">
-    <div className="rounded-lg border border-border/40 bg-background/70 p-3">
-      <div className="mb-2 flex items-center justify-between"><p className="text-[12px] font-semibold">Solicite uma demonstração</p><span className="text-[10px] font-semibold text-primary">67%</span></div>
-      <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full w-2/3 rounded-full bg-primary" /></div>
-      {["Nome completo", "E-mail profissional", "Empresa"].map((label, index) => <Row key={label} delay={index * 120}><span className="text-[11px] text-muted-foreground">{label}</span></Row>)}
-    </div>
-    <div className="grid grid-cols-3 gap-1.5">
-      {[{ l: "Origem", v: "Google" }, { l: "Conversão", v: "25,5%" }, { l: "Destino", v: "CRM" }].map((metric) => <div key={metric.l} className="rounded-lg bg-primary/8 p-2 text-center"><p className="text-[9px] text-muted-foreground">{metric.l}</p><p className="text-[11px] font-semibold text-primary">{metric.v}</p></div>)}
-    </div>
-  </div>
-);
+const Formularios = () => <FormsMockup />;
 
 const VISUALS: Record<ProductVisualKey, { title: string; render: () => JSX.Element }> = {
   prospeccao: { title: "Oportunidades", render: Prospeccao },
