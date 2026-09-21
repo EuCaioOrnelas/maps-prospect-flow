@@ -592,6 +592,7 @@ export default function AdminInfluencerOutreach() {
                   </TableBody>
                 </Table>
               </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
