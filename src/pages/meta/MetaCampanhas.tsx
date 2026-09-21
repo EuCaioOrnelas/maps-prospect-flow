@@ -323,23 +323,9 @@ export default function MetaCampanhas() {
                     initialFocus
                     className="p-3 pointer-events-auto"
                     classNames={{
-                      caption_label: "text-sm font-medium text-foreground",
+                      ...rangeCalendarClassNames,
                       nav_button:
                         "h-7 w-7 rounded-[4px] border border-border bg-background p-0 text-foreground opacity-100 hover:bg-muted hover:text-foreground inline-flex items-center justify-center [&_svg]:m-0",
-                      head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-                      cell: "h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-primary/10 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md",
-                      day: "h-9 w-9 p-0 font-normal text-foreground rounded-md hover:bg-muted hover:text-foreground aria-selected:opacity-100 transition-colors",
-                      day_selected:
-                        "bg-transparent text-foreground hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground",
-                      day_range_start:
-                        "day-range-start !bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                      day_range_end:
-                        "day-range-end !bg-primary !text-primary-foreground rounded-md hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                      day_range_middle:
-                        "!bg-transparent !text-foreground hover:!bg-primary/20 rounded-none",
-                      day_today: "border border-primary/50 text-foreground",
-                      day_outside: "text-muted-foreground/30 opacity-0 pointer-events-none",
-                      day_disabled: "!text-muted-foreground/30",
                     }}
                   />
                   <div className="flex items-center justify-end gap-1.5 px-3 py-2 border-t border-border/60 bg-muted/20">
