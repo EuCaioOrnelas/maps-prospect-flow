@@ -220,7 +220,7 @@ export default function Forms() {
                         <Badge
                           variant="outline"
                           className={f.status === "active"
-                            ? "border-emerald-500/30 bg-primary/10 text-primary"
+                            ? "bg-primary/20 bg-primary/10 text-primary"
                             : "border-border bg-muted text-muted-foreground"}
                         >
                           {f.status === "active" ? "Ativo" : "Inativo"}
@@ -310,7 +310,7 @@ export default function Forms() {
                       <Badge
                         variant="outline"
                         className={l.status === "active"
-                          ? "border-emerald-500/30 bg-primary/10 text-primary"
+                          ? "bg-primary/20 bg-primary/10 text-primary"
                           : "border-border bg-muted text-muted-foreground"}
                       >
                         {l.status === "active" ? "Ativo" : "Inativo"}
