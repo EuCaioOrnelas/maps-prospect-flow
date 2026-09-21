@@ -331,7 +331,58 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    // ─────────── RESPOSTAS ───────────
+    if (action === "submissions") {
+      const formId = str(body?.form_id, 64);
+      if (!formId) return json({ error: "Formulário não informado." }, 400);
+      const { data: form } = await admin
+        .from("forms").select("id, name, title").eq("id", formId).eq("owner_user_id", ownerId).maybeSingle();
+      if (!form) return json({ error: "Formulário não encontrado." }, 404);
+
+      const { data: fields } = await admin
+        .from("form_fields").select("label, name, field_type, position, page").eq("form_id", formId).order("position");
+      const { data: rows } = await admin
+        .from("form_submissions")
+        .select("id, data, files, lead_id, created_at, device, referrer, utm_source, utm_medium, utm_campaign")
+        .eq("form_id", formId)
+        .eq("owner_user_id", ownerId)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      const leadIds = [...new Set((rows || []).map((row: any) => row.lead_id).filter(Boolean))];
+      let leads: Record<string, { id: string; company_name: string | null; contact_name: string | null }> = {};
+      if (leadIds.length) {
+        const { data: leadRows } = await admin
+          .from("leads").select("id, company_name, contact_name").in("id", leadIds);
+        leads = Object.fromEntries((leadRows || []).map((lead: any) => [lead.id, lead]));
+      }
+      return json({ form, fields: fields || [], submissions: rows || [], leads });
+    }
+
+    if (action === "submission_file_url") {
+      const submissionId = str(body?.submission_id, 64);
+      const path = str(body?.path, 500);
+      if (!submissionId || !path) return json({ error: "Arquivo não informado." }, 400);
+      const { data: submission } = await admin
+        .from("form_submissions").select("id, files").eq("id", submissionId).eq("owner_user_id", ownerId).maybeSingle();
+      if (!submission) return json({ error: "Envio não encontrado." }, 404);
+      const allowed = Array.isArray((submission as any).files)
+        && (submission as any).files.some((file: any) => file?.path === path);
+      if (!allowed) return json({ error: "Arquivo não encontrado." }, 404);
+      const { data: signed, error } = await admin.storage.from("form-uploads").createSignedUrl(path, 60 * 30);
+      if (error || !signed?.signedUrl) return json({ error: "Não foi possível abrir o arquivo." }, 500);
+      return json({ url: signed.signedUrl });
+    }
+
     // ─────────── LINKS RASTREADOS ───────────
+    if (action === "check_link_slug") {
+      const desired = slugify(str(body?.slug, 80) || "");
+      const id = str(body?.id, 64);
+      if (!desired) return json({ available: false, slug: "" });
+      const { data: existing } = await admin.from("tracked_links").select("id").eq("slug", desired).maybeSingle();
+      return json({ available: !existing || existing.id === id, slug: desired });
+    }
+
     if (action === "create_link") {
       const c = await counts();
       if (c.links >= limits.links) {
