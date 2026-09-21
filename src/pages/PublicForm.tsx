@@ -165,8 +165,9 @@ export default function PublicForm() {
   }, [form]);
 
   useEffect(() => {
-    const redirectUrl = form?.config?.redirectUrl;
-    if (!done || !form?.config?.redirectEnabled || !/^https:\/\//i.test(redirectUrl || "")) return;
+    const rawRedirect = (form?.config?.redirectUrl || "").trim();
+    const redirectUrl = rawRedirect && !/^https?:\/\//i.test(rawRedirect) ? `https://${rawRedirect.replace(/^\/+/, "")}` : rawRedirect;
+    if (!done || !form?.config?.redirectEnabled || !redirectUrl) return;
     setRedirectSeconds(3);
     const interval = window.setInterval(() => setRedirectSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
     const timeout = window.setTimeout(() => window.location.assign(redirectUrl), 3000);
@@ -312,7 +313,7 @@ export default function PublicForm() {
                 </span>
                 <h2 className="text-xl font-semibold" style={{ color: textColor }}>Obrigado!</h2>
                 <p className="mx-auto mt-2 max-w-sm text-sm opacity-75" style={{ color: textColor }}>{done}</p>
-                {cfg.redirectEnabled && /^https:\/\//i.test(cfg.redirectUrl || "") && (
+                {cfg.redirectEnabled && Boolean((cfg.redirectUrl || "").trim()) && (
                   <div className="mx-auto mt-5 max-w-sm rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
                     Você será redirecionado em <strong>{redirectSeconds}</strong> segundo{redirectSeconds === 1 ? "" : "s"}.
                   </div>

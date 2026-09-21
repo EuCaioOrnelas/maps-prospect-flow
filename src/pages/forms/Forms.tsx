@@ -129,7 +129,7 @@ export default function Forms() {
                 <Button
                   onClick={() => navigate("/forms/novo")}
                   disabled={formsAtLimit}
-                  className="gap-2 shadow-none disabled:border-primary/15 disabled:bg-primary/15 disabled:text-primary/55 disabled:opacity-100 disabled:shadow-none"
+                  className="gap-2 shadow-none disabled:border-transparent disabled:bg-primary/10 disabled:text-primary/70 disabled:opacity-100 disabled:shadow-none disabled:before:hidden"
                 >
                   {formsAtLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   {formsAtLimit ? "Limite atingido" : "Novo formulário"}
@@ -138,7 +138,7 @@ export default function Forms() {
                 <Button
                   onClick={() => setLinkDialog({ open: true, link: null })}
                   disabled={linksAtLimit}
-                  className="gap-2 shadow-none disabled:border-primary/15 disabled:bg-primary/15 disabled:text-primary/55 disabled:opacity-100 disabled:shadow-none"
+                  className="gap-2 shadow-none disabled:border-transparent disabled:bg-primary/10 disabled:text-primary/70 disabled:opacity-100 disabled:shadow-none disabled:before:hidden"
                 >
                   {linksAtLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   {linksAtLimit ? "Limite atingido" : "Novo link"}

@@ -25,7 +25,7 @@ import {
   CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Code2, Copy, ExternalLink, FileText,
   FormInput, Hash, Image, Info, ListChecks, Loader2, Mail, MessageSquareText,
   Link2, MousePointerClick, Palette, Phone, Plus, Radio, RefreshCw, Save, Settings2,
-  ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap, Paperclip, Layers,
+  ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap, Paperclip, Layers, UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,13 @@ const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036
 const fieldName = (value: string) => slugify(value).replace(/-/g, "_");
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
 const initials = (value: string) => value.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?";
+export const normalizeLink = (value: string) => {
+  const clean = (value || "").trim();
+  if (!clean) return "";
+  if (/^https?:\/\//i.test(clean)) return clean;
+  return `https://${clean.replace(/^\/+/, "")}`;
+};
+const isValidLink = (value: string) => /^[^\s.]+\.[a-z]{2,}(\/.*)?$/i.test((value || "").trim().replace(/^https?:\/\//i, ""));
 const automaticFieldName = (label: string, type: string) => {
   const normalized = fieldName(label);
   if (type === "email") return "email";
@@ -111,6 +118,29 @@ export default function FormBuilder() {
   });
   const [fields, setFields] = useState<any[]>(DEFAULT_FIELDS.map((field) => ({ ...field })));
   const [trackingOpen, setTrackingOpen] = useState(false);
+  const [activePage, setActivePage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
+  const [uploadingAsset, setUploadingAsset] = useState<string | null>(null);
+
+  const uploadAsset = async (key: "logoUrl" | "coverUrl", file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("Envie uma imagem PNG, JPG, SVG ou WEBP."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("A imagem precisa ter no máximo 5 MB."); return; }
+    if (!user?.id) return;
+    setUploadingAsset(key);
+    try {
+      const extension = (file.name.split(".").pop() || "png").toLowerCase().slice(0, 5);
+      const path = `${user.id}/forms/${key}-${Date.now()}-${randomSuffix()}.${extension}`;
+      const { error } = await supabase.storage.from("agent-media").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("agent-media").getPublicUrl(path);
+      setCfg(key, data.publicUrl);
+      toast.success("Imagem enviada com sucesso.");
+    } catch {
+      toast.error("Não foi possível enviar a imagem. Tente novamente.");
+    } finally {
+      setUploadingAsset(null);
+    }
+  };
 
   useEffect(() => {
     if (!ownerId) return;
@@ -127,6 +157,7 @@ export default function FormBuilder() {
         setSlug((data as any).slug || "");
         const { data: fieldRows } = await supabase.from("form_fields").select("*").eq("form_id", id).order("position");
         setFields(fieldRows?.length ? fieldRows as any : [{ ...EMPTY_FIELD }]);
+        setPageCount(Math.min(10, Math.max(1, ...(fieldRows || []).map((row: any) => Number(row.page) || 1))));
       }
       setLoading(false);
     })();
@@ -138,7 +169,9 @@ export default function FormBuilder() {
   const publicUrl = `${window.location.origin}/form/${effectiveSlug}`;
   const cfg = form.config || {};
 
-  const pageCount = Math.min(10, Math.max(1, ...fields.map((field) => Number(field.page) || 1)) + 1);
+  const pageOf = (field: any) => Math.min(10, Math.max(1, Number(field.page) || 1));
+  const totalPages = Math.max(pageCount, ...fields.map(pageOf));
+  const currentPage = Math.min(activePage, totalPages);
   const updateField = (index: number, patch: any) => setFields((prev) => prev.map((field, position) => position === index ? { ...field, ...patch } : field));
   const updateFieldLabel = (index: number, label: string) => setFields((prev) => prev.map((field, position) => position === index ? { ...field, label, name: automaticFieldName(label, field.field_type) } : field));
   const updateFieldType = (index: number, fieldType: string) => setFields((prev) => prev.map((field, position) => position === index ? { ...field, field_type: fieldType, name: automaticFieldName(field.label, fieldType), options: ["select", "radio"].includes(fieldType) && !field.options?.length ? ["Opção 1", "Opção 2"] : field.options } : field));
@@ -166,7 +199,7 @@ export default function FormBuilder() {
       if (!(form.crm_responsibles || []).length) issues.push({ step: 3, message: "Selecione ao menos um responsável pelo lead." });
     }
     if (form.notify_enabled && !cfg.notifyAssigned && !(form.notify_user_ids || []).length) issues.push({ step: 4, message: "Escolha quem deve receber os avisos." });
-    if (cfg.redirectEnabled && !/^https:\/\//i.test(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um link HTTPS válido para o redirecionamento." });
+    if (cfg.redirectEnabled && !isValidLink(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um endereço válido para o redirecionamento (ex.: www.seusite.com.br/obrigado)." });
     return issues;
   }, [cfg.notifyAssigned, cfg.redirectEnabled, cfg.redirectUrl, fields, form.crm_enabled, form.crm_responsibles, form.name, form.notify_enabled, form.notify_user_ids]);
 
@@ -188,6 +221,7 @@ export default function FormBuilder() {
           description: form.description.trim() || null,
           button_text: form.button_text.trim() || "Enviar",
           success_message: form.success_message.trim() || "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
+          config: { ...(form.config || {}), redirectUrl: normalizeLink(form.config?.redirectUrl || "") },
         },
         fields: fields.filter((field) => field.label.trim()).map((field, index) => ({ ...field, name: field.name || fieldName(field.label), position: index, page: Math.min(10, Math.max(1, Number(field.page) || 1)) })),
       };
@@ -257,13 +291,21 @@ export default function FormBuilder() {
                   <div className="space-y-2"><Label>Descrição breve</Label><Textarea value={form.description || ""} onChange={(event) => set("description", event.target.value)} placeholder="Ex.: Conte o que você precisa e retornaremos em breve." className="min-h-[96px] resize-y" /></div>
                    <div className="space-y-2"><Label>Texto do botão</Label><IconInput icon={MousePointerClick} value={form.button_text} onChange={(event) => set("button_text", event.target.value)} placeholder="Ex.: Solicitar contato" /></div>
                   <div className="space-y-2"><Label>Mensagem após o envio</Label><Textarea value={form.success_message} onChange={(event) => set("success_message", event.target.value)} placeholder="Ex.: Obrigado! Recebemos seus dados." className="min-h-[84px] resize-y" /></div>
-                   <div className="rounded-lg border border-border/60 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Redirecionar após o envio</p><p className="mt-1 text-xs text-muted-foreground">Após a confirmação, mostra uma contagem de 3 segundos antes de abrir o seu link.</p></div><Switch checked={Boolean(cfg.redirectEnabled)} onCheckedChange={(checked) => setCfg("redirectEnabled", checked)} /></div>{cfg.redirectEnabled && <div className="mt-4 space-y-2"><Label>Link de destino</Label><IconInput icon={Link2} value={cfg.redirectUrl || ""} onChange={(event) => setCfg("redirectUrl", event.target.value)} placeholder="https://seusite.com.br/obrigado" /></div>}</div>
+                   <div className="rounded-lg border border-border/60 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Redirecionar após o envio</p><p className="mt-1 text-xs text-muted-foreground">Após a confirmação, mostra uma contagem de 3 segundos antes de abrir o seu link. Pode informar só o www.</p></div><Switch checked={Boolean(cfg.redirectEnabled)} onCheckedChange={(checked) => setCfg("redirectEnabled", checked)} /></div>{cfg.redirectEnabled && <div className="mt-4 space-y-2"><Label>Link de destino</Label><IconInput icon={Link2} value={cfg.redirectUrl || ""} onChange={(event) => setCfg("redirectUrl", event.target.value)} placeholder="www.seusite.com.br/obrigado" /></div>}</div>
                   <div className="space-y-2"><Label>Nome do link</Label><div className="flex min-w-0 items-center rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring"><span className="shrink-0 border-r border-border px-3 text-sm text-muted-foreground">/form/</span><Input value={slug} onChange={(event) => setSlug(slugify(event.target.value))} placeholder={generatedSlug} className="border-0 shadow-none focus-visible:ring-0" /></div><p className="break-all text-xs text-muted-foreground">Prévia: {publicUrl}</p></div>
                 </div>}
 
                 {step === 1 && <div className="space-y-5">
                   <SectionHeading icon={FormInput} title="Campos do formulário" description="Organize os dados em uma sequência simples para quem vai responder." />
-                  <div className="space-y-4">{fields.map((field, index) => {
+                  {totalPages > 1 && <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-background p-2">
+                    {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1).map((pageNumber) => {
+                      const count = fields.filter((field) => pageOf(field) === pageNumber).length;
+                      return <Button key={pageNumber} variant="ghost" onClick={() => setActivePage(pageNumber)} className={cn("h-9 gap-2 rounded-md px-3 shadow-none hover:translate-y-0 hover:bg-primary/10 hover:text-foreground", currentPage === pageNumber && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary")}>
+                        <Layers className="h-4 w-4" />Página {pageNumber}<span className="text-xs opacity-70">({count})</span>
+                      </Button>;
+                    })}
+                  </div>}
+                  <div className="space-y-4">{fields.map((field, index) => ({ field, index })).filter(({ field }) => pageOf(field) === currentPage).map(({ field, index }) => {
                     const type = FIELD_TYPES.find((item) => item.value === field.field_type) || FIELD_TYPES[0];
                     const FieldIcon = type.icon;
                     return <div key={field.id || index} className="rounded-lg border border-border/60 bg-background p-4">
@@ -271,13 +313,13 @@ export default function FormBuilder() {
                       <div className="mt-4 space-y-4">
                          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]"><div className="space-y-2"><Label>Título do campo</Label><IconInput icon={FieldIcon} value={field.label} onChange={(event) => updateFieldLabel(index, event.target.value)} placeholder="Ex.: Nome completo" /></div><div className="space-y-2"><Label>Tipo de resposta</Label><Select value={field.field_type} onValueChange={(value) => updateFieldType(index, value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{FIELD_TYPES.map((item) => <SelectItem key={item.value} value={item.value} className="focus:bg-primary focus:text-primary-foreground dark:focus:text-background"><span className="flex items-center gap-2"><item.icon className="h-4 w-4" />{item.label}</span></SelectItem>)}</SelectContent></Select></div></div>
                          <div className="space-y-2"><Label>Exemplo dentro do campo</Label><IconInput icon={Info} value={field.placeholder || ""} onChange={(event) => updateField(index, { placeholder: event.target.value })} placeholder="Ex.: Digite sua resposta" /></div>
-                         <div className="space-y-2"><Label>Página do formulário</Label><Select value={String(field.page || 1)} onValueChange={(value) => updateField(index, { page: Number(value) })}><SelectTrigger><span className="flex items-center gap-2"><Layers className="h-4 w-4 text-muted-foreground" />Página {field.page || 1}</span></SelectTrigger><SelectContent>{Array.from({ length: pageCount }, (_, pageIdx) => pageIdx + 1).map((pageNumber) => <SelectItem key={pageNumber} value={String(pageNumber)} className="focus:bg-primary focus:text-primary-foreground dark:focus:text-background">Página {pageNumber}</SelectItem>)}</SelectContent></Select></div>
                          {["select", "radio"].includes(field.field_type) && <div className="space-y-3"><div><Label>Opções para escolher</Label><p className="mt-1 text-xs text-muted-foreground">Crie uma opção por campo e organize na ordem desejada.</p></div>{(Array.isArray(field.options) ? field.options : []).map((option: string, optionIndex: number) => <div key={optionIndex} className="flex items-center gap-2"><IconInput icon={field.field_type === "radio" ? Radio : ListChecks} value={option} onChange={(event) => updateOption(index, optionIndex, event.target.value)} placeholder={`Opção ${optionIndex + 1}`} className="flex-1" /><Button type="button" variant="ghost" size="icon" className="shrink-0 text-destructive" onClick={() => updateField(index, { options: field.options.filter((_: string, position: number) => position !== optionIndex) })}><Trash2 /></Button></div>)}<Button type="button" variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => updateField(index, { options: [...(field.options || []), `Opção ${(field.options || []).length + 1}`] })}><Plus /> Adicionar opção</Button></div>}
                         <div className="flex flex-wrap items-center gap-5 pt-1"><label className="flex items-center gap-2 text-sm"><Checkbox checked={Boolean(field.required)} onCheckedChange={(checked) => updateField(index, { required: Boolean(checked) })} />Obrigatório</label><label className="flex items-center gap-2 text-sm"><Checkbox checked={field.is_active !== false} onCheckedChange={(checked) => updateField(index, { is_active: Boolean(checked) })} />Exibir no formulário</label></div>
                       </div>
                     </div>;
                   })}</div>
-                   <div className="grid gap-3 sm:grid-cols-2"><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: Math.max(1, ...previous.map((field) => Number(field.page) || 1)) }])}><Plus /> Adicionar campo</Button><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: Math.min(10, Math.max(1, ...previous.map((field) => Number(field.page) || 1)) + 1) }])}><Layers /> Adicionar página</Button></div>
+                   <div className="grid gap-3 sm:grid-cols-2"><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: currentPage }])}><Plus /> Adicionar campo na página {currentPage}</Button><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" disabled={totalPages >= 10} onClick={() => { const next = Math.min(10, totalPages + 1); setPageCount(next); setActivePage(next); }}><Layers /> Criar nova página</Button></div>
+                   {fields.filter((field) => pageOf(field) === currentPage).length === 0 && <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Página {currentPage} ainda está vazia. Adicione os campos que você quer coletar nesta etapa.</div>}
                    <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm"><Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p className="min-w-0 leading-6 text-muted-foreground">Para publicar com o CRM ativo, mantenha Nome completo e pelo menos E-mail ou Telefone no formulário.</p></div>
                 </div>}
 
@@ -286,8 +328,32 @@ export default function FormBuilder() {
                    <div className="grid gap-4 sm:grid-cols-2">{[["primaryColor", "Cor principal"], ["buttonColor", "Cor do botão"], ["backgroundColor", "Fundo da página"], ["textColor", "Cor do texto"]].map(([key, label]) => <div key={key} className="space-y-2"><Label>{label}</Label><div className="grid grid-cols-[48px_minmax(0,1fr)] gap-2"><label className="relative h-11 cursor-pointer overflow-hidden rounded-lg border border-border shadow-sm" style={{ backgroundColor: cfg[key] || "#3daa57" }}><input aria-label={label} type="color" value={cfg[key] || "#3daa57"} onChange={(event) => setCfg(key, event.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" /></label><Input value={cfg[key] || "#3daa57"} onChange={(event) => setCfg(key, event.target.value.toUpperCase())} maxLength={7} className="font-mono uppercase" /></div></div>)}</div>
                    <div className="space-y-2"><Label>Arredondamento dos campos</Label><div className="flex items-center gap-3"><input aria-label="Arredondamento dos campos" type="range" min={0} max={24} value={cfg.radius ?? 10} onChange={(event) => setCfg("radius", Number(event.target.value))} className="h-2 flex-1 accent-primary hover:bg-transparent hover:opacity-100 focus:outline-none" /><Badge variant="outline" className="w-14 justify-center">{cfg.radius ?? 10}px</Badge></div></div>
                    <div className="space-y-2"><Label>Alinhamento do título</Label><Select value={cfg.align || "left"} onValueChange={(value) => setCfg("align", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="left" className="focus:bg-primary focus:text-primary-foreground dark:focus:text-background">À esquerda</SelectItem><SelectItem value="center" className="focus:bg-primary focus:text-primary-foreground dark:focus:text-background">Centralizado</SelectItem></SelectContent></Select></div>
-                  <div className="space-y-2"><div className="flex items-center gap-2"><Label>URL da logo</Label><TooltipProvider><Tooltip><TooltipTrigger asChild><Button type="button" variant="ghost" size="icon" className="h-6 w-6 rounded-full"><CircleHelp className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent className="max-w-xs">Use o endereço público direto da imagem. Recomendamos PNG com fundo transparente e largura mínima de 240 px.</TooltipContent></Tooltip></TooltipProvider></div><div className="relative"><Image className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={cfg.logoUrl || ""} onChange={(event) => setCfg("logoUrl", event.target.value)} placeholder="https://seusite.com.br/logo.png" className="pl-9" /></div></div>
-                   <div className="space-y-2"><div className="flex items-center gap-2"><Label>URL da imagem de capa (opcional)</Label><TooltipProvider><Tooltip><TooltipTrigger asChild><Button type="button" variant="ghost" size="icon" className="h-6 w-6 rounded-full"><CircleHelp className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent className="max-w-xs">Use uma imagem pública em JPG ou PNG, preferencialmente horizontal e com boa resolução.</TooltipContent></Tooltip></TooltipProvider></div><IconInput icon={Image} value={cfg.coverUrl || ""} onChange={(event) => setCfg("coverUrl", event.target.value)} placeholder="https://seusite.com.br/capa.jpg" /></div>
+                  {([
+                    { key: "logoUrl" as const, label: "Logo da empresa", hint: "Recomendamos PNG com fundo transparente, largura mínima de 240 px e até 5 MB.", placeholder: "www.seusite.com.br/logo.png" },
+                    { key: "coverUrl" as const, label: "Imagem de capa (opcional)", hint: "Use uma imagem horizontal em JPG ou PNG com boa resolução e até 5 MB.", placeholder: "www.seusite.com.br/capa.jpg" },
+                  ]).map((asset) => (
+                    <div key={asset.key} className="space-y-2">
+                      <div className="flex items-center gap-2"><Label>{asset.label}</Label><TooltipProvider><Tooltip><TooltipTrigger asChild><Button type="button" variant="ghost" size="icon" className="h-6 w-6 rounded-full"><CircleHelp className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent className="max-w-xs">{asset.hint}</TooltipContent></Tooltip></TooltipProvider></div>
+                      <label
+                        onDragOver={(event) => event.preventDefault()}
+                        onDrop={(event) => { event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) uploadAsset(asset.key, file); }}
+                        className="flex cursor-pointer items-center gap-4 rounded-lg border border-dashed border-border bg-background p-4 transition-colors hover:border-primary/40"
+                      >
+                        <input type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) uploadAsset(asset.key, file); event.target.value = ""; }} />
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+                          {cfg[asset.key] ? <img src={cfg[asset.key]} alt={asset.label} className="h-full w-full object-contain" /> : uploadingAsset === asset.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold">{uploadingAsset === asset.key ? "Enviando imagem..." : "Arraste a imagem aqui ou clique para enviar"}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">PNG, JPG, SVG ou WEBP com até 5 MB. A imagem fica hospedada com segurança pela Wiize.</span>
+                        </span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <IconInput icon={Image} value={cfg[asset.key] || ""} onChange={(event) => setCfg(asset.key, event.target.value)} placeholder={asset.placeholder} className="flex-1" />
+                        {cfg[asset.key] && <Button type="button" variant="ghost" size="icon" className="shrink-0 text-destructive" onClick={() => setCfg(asset.key, "")} title="Remover imagem"><Trash2 /></Button>}
+                      </div>
+                    </div>
+                  ))}
                    <div className="rounded-lg border border-border/60"><button type="button" onClick={() => setTrackingOpen((open) => !open)} className="flex w-full items-center justify-between gap-3 p-4 text-left"><span className="flex items-center gap-3"><Code2 className="h-4 w-4 text-primary" /><span><span className="block text-sm font-semibold">Rastreamento opcional</span><span className="block text-xs text-muted-foreground">Meta Pixel, Google Tag Manager e Google Ads.</span></span></span><ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", trackingOpen && "rotate-180")} /></button>{trackingOpen && <div className="space-y-4 border-t border-border/60 p-4"><div className="space-y-2"><Label>Meta Pixel</Label><IconInput icon={Code2} value={cfg.metaPixelId || ""} onChange={(event) => setCfg("metaPixelId", event.target.value.replace(/\D/g, ""))} placeholder="Ex.: 123456789012345" /></div><div className="space-y-2"><Label>Google Tag Manager</Label><IconInput icon={Code2} value={cfg.googleTagManagerId || ""} onChange={(event) => setCfg("googleTagManagerId", event.target.value.toUpperCase().trim())} placeholder="Ex.: GTM-XXXXXXX" /></div><div className="space-y-2"><Label>Google Ads</Label><IconInput icon={Code2} value={cfg.googleAdsId || ""} onChange={(event) => setCfg("googleAdsId", event.target.value.toUpperCase().trim())} placeholder="Ex.: AW-123456789" /></div></div>}</div>
                 </div>}
 
@@ -325,7 +391,23 @@ export default function FormBuilder() {
 
             <Card className="sticky top-4 h-fit border-border/60 bg-card p-4 shadow-sm">
               <div className="mb-3 flex items-center justify-between"><div><p className="text-sm font-semibold">Prévia ao vivo</p><p className="text-xs text-muted-foreground">{`/form/${effectiveSlug}`}</p></div><Badge variant="outline">{form.status === "active" ? "Ativo" : isEdit ? "Inativo" : "Rascunho"}</Badge></div>
-               <div className="overflow-hidden rounded-lg p-4" style={{ background: cfg.backgroundColor || "#f6f7f9" }}><div className="bg-card p-4 shadow-sm" style={{ borderRadius: (cfg.radius ?? 10) + 6 }}>{cfg.coverUrl && <img src={cfg.coverUrl} alt="Capa" className="mb-4 h-24 w-full object-cover" style={{ borderRadius: cfg.radius ?? 10 }} />}{cfg.logoUrl && <div className="mb-4 flex h-12 w-40 items-center justify-start" style={{ marginInline: cfg.align === "center" ? "auto" : undefined }}><img src={cfg.logoUrl} alt="Logo" className="max-h-12 max-w-40 object-contain" /></div>}<div style={{ textAlign: cfg.align || "left" }}><p className="text-base font-semibold" style={{ color: cfg.textColor || "#18181b" }}>{previewTitle}</p><p className="mt-1 text-xs opacity-70" style={{ color: cfg.textColor || "#18181b" }}>{previewDescription}</p></div><div className="mt-4 space-y-3">{fields.filter((field) => field.is_active !== false && field.label.trim()).slice(0, 5).map((field, index) => { const item = FIELD_TYPES.find((type) => type.value === field.field_type) || FIELD_TYPES[0]; const options = Array.isArray(field.options) ? field.options.filter(Boolean) : []; return <div key={field.id || index}><p className="mb-1 flex items-center gap-1.5 text-[11px] font-medium" style={{ color: cfg.textColor || "#18181b" }}><item.icon className="h-3 w-3" />{field.label}{field.required && " *"}</p>{field.field_type === "radio" ? <div className="space-y-1.5">{options.slice(0, 3).map((option: string) => <div key={option} className="flex items-center gap-2 text-[10px] text-muted-foreground"><span className="h-3 w-3 rounded-full border border-border" />{option}</div>)}</div> : <div className="flex h-9 items-center border border-border bg-background px-3 text-[10px] text-muted-foreground" style={{ borderRadius: cfg.radius ?? 10 }}>{field.field_type === "select" ? (field.placeholder || "Selecione uma opção") : field.placeholder || "Digite sua resposta"}</div>}</div>; })}</div><div className="mt-4 flex h-10 items-center justify-center text-xs font-semibold text-primary-foreground" style={{ background: cfg.buttonColor || "#3daa57", borderRadius: cfg.radius ?? 10 }}>{previewButton}</div></div></div>
+               <div className="overflow-hidden rounded-lg p-4" style={{ background: cfg.backgroundColor || "#f6f7f9" }}><div className="bg-card p-4 shadow-sm" style={{ borderRadius: (cfg.radius ?? 10) + 6 }}>{cfg.coverUrl && <img src={cfg.coverUrl} alt="Capa" className="mb-4 h-24 w-full object-cover" style={{ borderRadius: cfg.radius ?? 10 }} />}{cfg.logoUrl && <div className="mb-4 flex h-12 w-40 items-center justify-start" style={{ marginInline: cfg.align === "center" ? "auto" : undefined }}><img src={cfg.logoUrl} alt="Logo" className="max-h-12 max-w-40 object-contain" /></div>}<div style={{ textAlign: cfg.align || "left" }}><p className="text-base font-semibold" style={{ color: cfg.textColor || "#18181b" }}>{previewTitle}</p><p className="mt-1 text-xs opacity-70" style={{ color: cfg.textColor || "#18181b" }}>{previewDescription}</p></div>
+                 {totalPages > 1 && <div className="mt-3 flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full" style={{ width: `${(currentPage / totalPages) * 100}%`, background: cfg.primaryColor || "#3daa57" }} /></div><span className="text-[10px] text-muted-foreground">Página {currentPage} de {totalPages}</span></div>}
+                 <div className="mt-4 space-y-3">{fields.filter((field) => field.is_active !== false && field.label.trim() && pageOf(field) === currentPage).slice(0, 6).map((field, index) => {
+                   const item = FIELD_TYPES.find((type) => type.value === field.field_type) || FIELD_TYPES[0];
+                   const options = (Array.isArray(field.options) ? field.options : []).filter(Boolean);
+                   const box = { borderRadius: cfg.radius ?? 10 };
+                   return <div key={field.id || index}>
+                     <p className="mb-1 flex items-center gap-1.5 text-[11px] font-medium" style={{ color: cfg.textColor || "#18181b" }}><item.icon className="h-3 w-3" />{field.label}{field.required && " *"}</p>
+                     {field.field_type === "radio" ? <div className="space-y-1.5">{(options.length ? options : ["Opção 1", "Opção 2"]).slice(0, 4).map((option: string, optionIndex: number) => <div key={`${option}-${optionIndex}`} className="flex items-center gap-2 text-[10px] text-muted-foreground"><span className="h-3 w-3 rounded-full border border-border" />{option}</div>)}</div>
+                       : field.field_type === "select" ? <div className="flex h-9 items-center justify-between border border-border bg-background px-3 text-[10px] text-muted-foreground" style={box}><span>{options[0] || field.placeholder || "Selecione uma opção"}</span><ChevronDown className="h-3 w-3" /></div>
+                       : field.field_type === "checkbox" ? <div className="flex items-center gap-2 text-[10px] text-muted-foreground"><span className="h-3.5 w-3.5 rounded-[4px] border border-border" />{field.placeholder || "Confirmo que li e aceito"}</div>
+                       : field.field_type === "file" ? <div className="flex items-center gap-2 border border-dashed border-border bg-background px-3 py-3 text-[10px] text-muted-foreground" style={box}><Paperclip className="h-3 w-3" />{field.placeholder || "Arraste um arquivo ou clique para enviar (imagem ou PDF)"}</div>
+                       : field.field_type === "textarea" ? <div className="flex h-16 items-start border border-border bg-background px-3 py-2 text-[10px] text-muted-foreground" style={box}>{field.placeholder || "Digite sua resposta"}</div>
+                       : <div className="flex h-9 items-center border border-border bg-background px-3 text-[10px] text-muted-foreground" style={box}>{field.placeholder || "Digite sua resposta"}</div>}
+                   </div>;
+                 })}</div>
+                 <div className="mt-4 flex h-10 items-center justify-center text-xs font-semibold text-primary-foreground" style={{ background: cfg.buttonColor || "#3daa57", borderRadius: cfg.radius ?? 10 }}>{currentPage < totalPages ? "Continuar" : previewButton}</div></div></div>
             </Card>
           </div>
         </div>

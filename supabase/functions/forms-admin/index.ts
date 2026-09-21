@@ -55,6 +55,19 @@ function str(value: unknown, max = 500): string | null {
   return trimmed.length ? trimmed : null;
 }
 
+function normalizeUrl(value: string): string {
+  const clean = (value || "").trim();
+  if (!clean) return "";
+  const candidate = /^https?:\/\//i.test(clean) ? clean : `https://${clean.replace(/^\/+/, "")}`;
+  try {
+    const url = new URL(candidate);
+    if (!/^https?:$/.test(url.protocol) || !url.hostname.includes(".")) return "";
+    return url.toString().slice(0, 900);
+  } catch {
+    return "";
+  }
+}
+
 function safeFormConfig(value: unknown): Record<string, unknown> {
   const input = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const color = (key: string, fallback: string) => {
@@ -71,12 +84,12 @@ function safeFormConfig(value: unknown): Record<string, unknown> {
     textColor: color("textColor", "#18181b"),
     radius: Math.min(24, Math.max(0, Number(input.radius) || 10)),
     align: input.align === "center" ? "center" : "left",
-    logoUrl: /^https:\/\//i.test(str(input.logoUrl, 900) || "") ? str(input.logoUrl, 900) : "",
-    coverUrl: /^https:\/\//i.test(str(input.coverUrl, 900) || "") ? str(input.coverUrl, 900) : "",
+    logoUrl: normalizeUrl(str(input.logoUrl, 900) || ""),
+    coverUrl: normalizeUrl(str(input.coverUrl, 900) || ""),
     distributionMode: input.distributionMode === "round_robin" ? "round_robin" : "fixed",
     notifyAssigned: input.notifyAssigned !== false,
     redirectEnabled: input.redirectEnabled === true,
-    redirectUrl: /^https:\/\//i.test(str(input.redirectUrl, 900) || "") ? str(input.redirectUrl, 900) : "",
+    redirectUrl: normalizeUrl(str(input.redirectUrl, 900) || ""),
     metaPixelId: /^\d{6,20}$/.test(metaPixelId) ? metaPixelId : "",
     googleTagManagerId: /^GTM-[A-Z0-9]+$/.test(googleTagManagerId) ? googleTagManagerId : "",
     googleAdsId: /^AW-\d+$/.test(googleAdsId) ? googleAdsId : "",
@@ -341,13 +354,19 @@ Deno.serve(async (req) => {
 
       const { data: fields } = await admin
         .from("form_fields").select("label, name, field_type, position, page").eq("form_id", formId).order("position");
-      const { data: rows } = await admin
-        .from("form_submissions")
-        .select("id, data, files, lead_id, created_at, device, referrer, utm_source, utm_medium, utm_campaign")
-        .eq("form_id", formId)
-        .eq("owner_user_id", ownerId)
-        .order("created_at", { ascending: false })
-        .limit(500);
+      const rows: any[] = [];
+      for (let page = 0; page < 20; page++) {
+        const { data: batch } = await admin
+          .from("form_submissions")
+          .select("id, data, files, lead_id, created_at, device, referrer, utm_source, utm_medium, utm_campaign")
+          .eq("form_id", formId)
+          .eq("owner_user_id", ownerId)
+          .order("created_at", { ascending: false })
+          .range(page * 1000, page * 1000 + 999);
+        if (!batch?.length) break;
+        rows.push(...batch);
+        if (batch.length < 1000) break;
+      }
 
       const leadIds = [...new Set((rows || []).map((row: any) => row.lead_id).filter(Boolean))];
       let leads: Record<string, { id: string; company_name: string | null; contact_name: string | null }> = {};
