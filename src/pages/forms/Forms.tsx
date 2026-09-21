@@ -97,7 +97,6 @@ export default function Forms() {
     links: `${links.length}/${limits.links}`,
     clicks: totalClicks,
     unique: totalUniqueClicks,
-    leads: totalLinkLeads,
   };
 
   const setTab = (next: string) => {
