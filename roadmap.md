@@ -50,3 +50,7 @@
 - [x] Validar visualmente o painel em desktop e compilar os analytics
 - [x] Remover faixas superiores e proteger textos longos nos cards
 - [x] Garantir totais completos de visualizações, leads, conversão e atribuição UTM
+- [x] Transformar a criação em fluxo amplo e progressivo no padrão Wiize
+- [x] Organizar campos, aparência, CRM, responsáveis e prévia de e-mail
+- [x] Adicionar rascunho, endereço personalizado, distribuição inteligente e tags de acompanhamento
+- [x] Reforçar confirmação de exclusão e estado visual de limite atingido

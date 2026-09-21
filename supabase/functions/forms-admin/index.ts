@@ -55,6 +55,17 @@ function str(value: unknown, max = 500): string | null {
   return trimmed.length ? trimmed : null;
 }
 
+function safeTrackingConfig(config: unknown): Record<string, unknown> {
+  const input = typeof config === "object" && config ? config as Record<string, unknown> : {};
+  const output = { ...input };
+  const pixel = str(input.metaPixelId, 30);
+  const google = str(input.googleTagId, 30)?.toUpperCase() || null;
+  output.metaPixelId = pixel && /^\d{6,30}$/.test(pixel) ? pixel : "";
+  output.googleTagId = google && /^(GTM-[A-Z0-9]+|AW-\d+)$/.test(google) ? google : "";
+  output.distributionMode = input.distributionMode === "balanced" ? "balanced" : "fixed";
+  return output;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -177,6 +188,20 @@ Deno.serve(async (req) => {
       const responsibles: string[] = Array.isArray(input.crm_responsibles) ? input.crm_responsibles.slice(0, 20) : [];
       const notifyIds: string[] = Array.isArray(input.notify_user_ids) ? input.notify_user_ids.slice(0, 20) : [];
 
+      const requestedMemberIds = [...new Set([...responsibles, ...notifyIds])];
+      if (requestedMemberIds.length) {
+        const { data: accountMembers } = await admin
+          .from("account_members")
+          .select("user_id")
+          .eq("owner_user_id", ownerId)
+          .eq("status", "active")
+          .in("user_id", requestedMemberIds);
+        const allowed = new Set([ownerId, ...(accountMembers || []).map((member) => member.user_id)]);
+        if (requestedMemberIds.some((memberId) => !allowed.has(memberId))) {
+          return json({ error: "Há um responsável que não pertence a esta conta." }, 400);
+        }
+      }
+
       // Ownership da coluna do CRM
       if (stageId) {
         const { data: stage } = await admin
@@ -197,8 +222,8 @@ Deno.serve(async (req) => {
         success_message:
           str(input.success_message, 400) ||
           "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
-        status: input.status === "inactive" ? "inactive" : "active",
-        config: typeof input.config === "object" && input.config ? input.config : {},
+        status: input.status === "active" ? "active" : input.status === "inactive" ? "inactive" : "draft",
+        config: safeTrackingConfig(input.config),
         crm_enabled: input.crm_enabled !== false,
         crm_stage_id: stageId,
         crm_responsibles: responsibles,
@@ -218,6 +243,10 @@ Deno.serve(async (req) => {
         const { data: existing } = await admin
           .from("forms").select("id").eq("id", formId).eq("owner_user_id", ownerId).maybeSingle();
         if (!existing) return json({ error: "Formulário não encontrado." }, 404);
+        const requestedSlug = slugify(str(input.slug, 80) || name);
+        const { data: slugOwner } = await admin.from("forms").select("id").eq("slug", requestedSlug).neq("id", formId).maybeSingle();
+        if (slugOwner) return json({ error: "Este endereço já está em uso. Escolha outro nome para o link." }, 409);
+        payload.slug = requestedSlug;
         payload.updated_at = new Date().toISOString();
         const { error } = await admin.from("forms").update(payload).eq("id", formId);
         if (error) throw error;
