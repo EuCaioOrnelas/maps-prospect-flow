@@ -78,7 +78,6 @@ async function encryptNote(value: string): Promise<string | null> {
   return `${MESSAGE_PREFIX}${bufferToBase64(iv.buffer)}:${bufferToBase64(ciphertext)}`;
 }
 
-Deno.
 /** Origem real do lead: UTM > site de origem externo > acesso direto. */
 const INTERNAL_HOSTS = ["wiize.com.br", "lovable.app", "localhost", "127.0.0.1"];
 const KNOWN_HOSTS: Record<string, string> = {
@@ -102,7 +101,7 @@ function resolveOrigin(payload: { utm_source?: string | null; utm_medium?: strin
   return Object.entries(KNOWN_HOSTS).find(([key]) => host.includes(key))?.[1] || host;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
