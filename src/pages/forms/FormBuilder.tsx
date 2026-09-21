@@ -189,7 +189,7 @@ export default function FormBuilder() {
           button_text: form.button_text.trim() || "Enviar",
           success_message: form.success_message.trim() || "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
         },
-        fields: fields.filter((field) => field.label.trim()).map((field, index) => ({ ...field, name: field.name || fieldName(field.label), position: index })),
+        fields: fields.filter((field) => field.label.trim()).map((field, index) => ({ ...field, name: field.name || fieldName(field.label), position: index, page: Math.min(10, Math.max(1, Number(field.page) || 1)) })),
       };
       const { data, error } = await supabase.functions.invoke("forms-admin", { body: payload });
       if (error) {
