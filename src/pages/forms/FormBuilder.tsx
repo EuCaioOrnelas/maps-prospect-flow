@@ -20,10 +20,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ResponsiblesPicker } from "@/components/meta/ResponsiblesPicker";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import {
-  ArrowDown, ArrowLeft, ArrowRight, ArrowUp, AtSign, Bell, Building2, Check,
-  CheckCircle2, ChevronRight, CircleHelp, Code2, Copy, ExternalLink, FileText,
+  AlertCircle, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, AtSign, Bell, Building2, Check,
+  CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Code2, Copy, ExternalLink, FileText,
   FormInput, Hash, Image, Info, ListChecks, Loader2, Mail, MessageSquareText,
-  MousePointerClick, Palette, Phone, Plus, Radio, RefreshCw, Save, Settings2,
+  Link2, MousePointerClick, Palette, Phone, Plus, Radio, RefreshCw, Save, Settings2,
   ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -50,6 +50,12 @@ const FIELD_TYPES = [
 ];
 
 const EMPTY_FIELD = { field_type: "text", label: "", name: "", placeholder: "", required: false, is_active: true, options: [] };
+const DEFAULT_FIELDS = [
+  { field_type: "text", label: "Nome completo", name: "nome_completo", placeholder: "Ex.: Marina Oliveira", required: true, is_active: true, options: [] },
+  { field_type: "email", label: "E-mail", name: "email", placeholder: "Ex.: marina@empresa.com.br", required: true, is_active: true, options: [] },
+  { field_type: "phone", label: "Telefone / WhatsApp", name: "whatsapp", placeholder: "Ex.: (11) 99999-9999", required: true, is_active: true, options: [] },
+  { field_type: "textarea", label: "Observações", name: "mensagem", placeholder: "Ex.: Conte brevemente como podemos ajudar", required: false, is_active: true, options: [] },
+];
 const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48);
 const fieldName = (value: string) => slugify(value).replace(/-/g, "_");
 const randomSuffix = () => Math.random().toString(36).slice(2, 8);
@@ -62,6 +68,10 @@ function SectionHeading({ icon: Icon, title, description }: { icon: typeof FileT
       <div><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>
     </div>
   );
+}
+
+function IconInput({ icon: Icon, className, ...props }: React.ComponentProps<typeof Input> & { icon: typeof FileText }) {
+  return <div className="relative min-w-0"><Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input {...props} className={cn("pl-9", className)} /></div>;
 }
 
 export default function FormBuilder() {
@@ -83,11 +93,13 @@ export default function FormBuilder() {
     config: {
       primaryColor: "#3daa57", buttonColor: "#3daa57", backgroundColor: "#f6f7f9", textColor: "#18181b",
       radius: 10, align: "left", logoUrl: "", coverUrl: "", distributionMode: "fixed",
-      metaPixelId: "", googleTagManagerId: "", googleAdsId: "",
+      metaPixelId: "", googleTagManagerId: "", googleAdsId: "", notifyAssigned: true,
+      redirectEnabled: false, redirectUrl: "",
     },
     crm_enabled: true, crm_stage_id: null, crm_responsibles: [], notify_enabled: false, notify_user_ids: [],
   });
-  const [fields, setFields] = useState<any[]>([{ ...EMPTY_FIELD }]);
+  const [fields, setFields] = useState<any[]>(DEFAULT_FIELDS.map((field) => ({ ...field })));
+  const [trackingOpen, setTrackingOpen] = useState(false);
 
   useEffect(() => {
     if (!ownerId) return;
@@ -124,9 +136,32 @@ export default function FormBuilder() {
     return next;
   });
   const canSave = useMemo(() => form.name.trim().length > 1 && fields.some((field) => field.is_active !== false && field.label.trim()), [form.name, fields]);
+  const publishIssues = useMemo(() => {
+    const active = fields.filter((field) => field.is_active !== false && field.label.trim());
+    const names = new Set(active.map((field) => field.name || fieldName(field.label)));
+    const issues: { step: number; message: string }[] = [];
+    if (form.name.trim().length < 2) issues.push({ step: 0, message: "Informe o nome interno do formulário." });
+    if (!active.length) issues.push({ step: 1, message: "Adicione ao menos um campo ativo." });
+    for (const field of active.filter((item) => ["select", "radio"].includes(item.field_type))) {
+      if (!Array.isArray(field.options) || field.options.filter(Boolean).length < 2) issues.push({ step: 1, message: `Adicione ao menos duas opções em “${field.label}”.` });
+    }
+    if (form.crm_enabled) {
+      if (!names.has("nome_completo") && !names.has("nome")) issues.push({ step: 1, message: "Adicione o campo Nome completo para criar o contato no CRM." });
+      if (!names.has("email") && !names.has("whatsapp") && !names.has("telefone") && !names.has("phone")) issues.push({ step: 1, message: "Adicione E-mail ou Telefone para identificar o contato no CRM." });
+      if (!(form.crm_responsibles || []).length) issues.push({ step: 3, message: "Selecione ao menos um responsável pelo lead." });
+    }
+    if (form.notify_enabled && !cfg.notifyAssigned && !(form.notify_user_ids || []).length) issues.push({ step: 4, message: "Escolha quem deve receber os avisos." });
+    if (cfg.redirectEnabled && !/^https:\/\//i.test(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um link HTTPS válido para o redirecionamento." });
+    return issues;
+  }, [cfg.notifyAssigned, cfg.redirectEnabled, cfg.redirectUrl, fields, form.crm_enabled, form.crm_responsibles, form.name, form.notify_enabled, form.notify_user_ids]);
 
   const save = async (options?: { publish?: boolean; status?: string }) => {
     if (!canSave) { toast.error("Informe um nome e mantenha ao menos um campo ativo com título."); return; }
+    if ((options?.publish || options?.status === "active") && publishIssues.length) {
+      setStep(publishIssues[0].step);
+      toast.error(publishIssues[0].message);
+      return;
+    }
     setSaving(true);
     try {
       const desiredStatus = options?.status || (options?.publish ? "active" : isEdit ? form.status : "draft");
@@ -188,8 +223,8 @@ export default function FormBuilder() {
             <div className="flex min-w-max items-center rounded-lg border border-border/60 bg-card p-1 shadow-sm">
               {STEPS.map((item, index) => (
                 <div key={item.id} className="flex items-center">
-                  <Button variant="ghost" onClick={() => setStep(item.id)} className={cn("h-10 gap-2 rounded-md px-3 shadow-none hover:translate-y-0 hover:bg-muted", step === item.id && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground", step > item.id && "text-primary")}>
-                    <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-[10px]", step === item.id ? "border-primary-foreground/50" : "border-current/30")}>{step > item.id ? <Check className="h-3 w-3" /> : index + 1}</span><item.icon className="h-4 w-4" />{item.label}
+                  <Button variant="ghost" onClick={() => setStep(item.id)} className={cn("h-10 gap-2 rounded-md px-3 shadow-none hover:translate-y-0 hover:bg-primary/10 hover:text-foreground", step === item.id && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary", step > item.id && "text-primary")}>
+                    <span className={cn("flex h-5 w-5 items-center justify-center rounded-full border text-[10px]", step === item.id ? "border-primary/40 bg-primary/10" : "border-current/30")}>{publishIssues.some((issue) => issue.step === item.id) ? <AlertCircle className="h-3 w-3 text-destructive" /> : step > item.id ? <Check className="h-3 w-3" /> : index + 1}</span><item.icon className="h-4 w-4" />{item.label}
                   </Button>
                   {index < STEPS.length - 1 && <ChevronRight className="mx-1 h-4 w-4 text-muted-foreground/50" />}
                 </div>
@@ -197,16 +232,17 @@ export default function FormBuilder() {
             </div>
           </div>
 
-          <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_390px]">
-            <Card className="overflow-hidden border-border/60 bg-card shadow-sm">
+          <div className="mt-4 grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_390px]">
+            <Card className="min-w-0 overflow-hidden border-border/60 bg-card shadow-sm">
               <div className="p-5 sm:p-6">
                 {step === 0 && <div className="space-y-5">
                   <SectionHeading icon={FileText} title="Informações do formulário" description="Essas informações apresentam sua empresa e o motivo do contato." />
-                  <div className="space-y-2"><Label>Nome interno</Label><Input value={form.name} onChange={(event) => set("name", event.target.value)} placeholder="Ex.: Contato do site institucional" /></div>
-                  <div className="space-y-2"><Label>Título exibido</Label><Input value={form.title} onChange={(event) => set("title", event.target.value)} placeholder="Ex.: Fale com a nossa equipe" /></div>
+                   <div className="space-y-2"><Label>Nome interno</Label><IconInput icon={FileText} value={form.name} onChange={(event) => set("name", event.target.value)} placeholder="Ex.: Contato do site institucional" /></div>
+                   <div className="space-y-2"><Label>Título exibido</Label><IconInput icon={Type} value={form.title} onChange={(event) => set("title", event.target.value)} placeholder="Ex.: Fale com a nossa equipe" /></div>
                   <div className="space-y-2"><Label>Descrição breve</Label><Textarea value={form.description || ""} onChange={(event) => set("description", event.target.value)} placeholder="Ex.: Conte o que você precisa e retornaremos em breve." className="min-h-[96px] resize-y" /></div>
-                  <div className="space-y-2"><Label>Texto do botão</Label><Input value={form.button_text} onChange={(event) => set("button_text", event.target.value)} placeholder="Ex.: Solicitar contato" /></div>
+                   <div className="space-y-2"><Label>Texto do botão</Label><IconInput icon={MousePointerClick} value={form.button_text} onChange={(event) => set("button_text", event.target.value)} placeholder="Ex.: Solicitar contato" /></div>
                   <div className="space-y-2"><Label>Mensagem após o envio</Label><Textarea value={form.success_message} onChange={(event) => set("success_message", event.target.value)} placeholder="Ex.: Obrigado! Recebemos seus dados." className="min-h-[84px] resize-y" /></div>
+                   <div className="rounded-lg border border-border/60 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Redirecionar após o envio</p><p className="mt-1 text-xs text-muted-foreground">Após a confirmação, mostra uma contagem de 3 segundos antes de abrir o seu link.</p></div><Switch checked={Boolean(cfg.redirectEnabled)} onCheckedChange={(checked) => setCfg("redirectEnabled", checked)} /></div>{cfg.redirectEnabled && <div className="mt-4 space-y-2"><Label>Link de destino</Label><IconInput icon={Link2} value={cfg.redirectUrl || ""} onChange={(event) => setCfg("redirectUrl", event.target.value)} placeholder="https://seusite.com.br/obrigado" /></div>}</div>
                   <div className="space-y-2"><Label>Nome do link</Label><div className="flex min-w-0 items-center rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring"><span className="shrink-0 border-r border-border px-3 text-sm text-muted-foreground">/form/</span><Input value={slug} onChange={(event) => setSlug(slugify(event.target.value))} placeholder={generatedSlug} className="border-0 shadow-none focus-visible:ring-0" /></div><p className="break-all text-xs text-muted-foreground">Prévia: {publicUrl}</p></div>
                 </div>}
 
