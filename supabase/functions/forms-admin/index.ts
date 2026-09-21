@@ -76,7 +76,7 @@ function safeFormConfig(value: unknown): Record<string, unknown> {
     distributionMode: input.distributionMode === "round_robin" ? "round_robin" : "fixed",
     notifyAssigned: input.notifyAssigned !== false,
     redirectEnabled: input.redirectEnabled === true,
-    redirectUrl: /^https:\/\//i.test(str(input.redirectUrl, 900) || "") ? str(input.redirectUrl, 900) : "",
+    redirectUrl: normalizeUrl(str(input.redirectUrl, 900) || ""),
     metaPixelId: /^\d{6,20}$/.test(metaPixelId) ? metaPixelId : "",
     googleTagManagerId: /^GTM-[A-Z0-9]+$/.test(googleTagManagerId) ? googleTagManagerId : "",
     googleAdsId: /^AW-\d+$/.test(googleAdsId) ? googleAdsId : "",
