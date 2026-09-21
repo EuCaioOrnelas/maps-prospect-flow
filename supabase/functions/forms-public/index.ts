@@ -42,6 +42,38 @@ function clientIp(req: Request): string {
 
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 
+async function chooseResponsible(form: any): Promise<string | null> {
+  const candidates = Array.isArray(form.crm_responsibles)
+    ? form.crm_responsibles.filter((id: unknown) => typeof id === "string").slice(0, 20)
+    : [];
+  if (!candidates.length) return null;
+  if (form.config?.distributionMode !== "balanced") return candidates[0];
+
+  const { data: activeMembers } = await admin
+    .from("account_members")
+    .select("user_id")
+    .eq("owner_user_id", form.owner_user_id)
+    .eq("status", "active")
+    .in("user_id", candidates);
+  const allowed = new Set([form.owner_user_id, ...(activeMembers || []).map((member) => member.user_id)]);
+  const eligible = candidates.filter((id: string) => allowed.has(id));
+  if (!eligible.length) return null;
+
+  const { data: assigned } = await admin
+    .from("leads")
+    .select("responsible_user_id")
+    .eq("owner_user_id", form.owner_user_id)
+    .eq("form_id", form.id)
+    .in("responsible_user_id", eligible);
+  const counts = new Map(eligible.map((id: string) => [id, 0]));
+  for (const row of assigned || []) {
+    if (row.responsible_user_id && counts.has(row.responsible_user_id)) {
+      counts.set(row.responsible_user_id, (counts.get(row.responsible_user_id) || 0) + 1);
+    }
+  }
+  return [...eligible].sort((a, b) => (counts.get(a) || 0) - (counts.get(b) || 0) || a.localeCompare(b))[0] || null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -225,9 +257,7 @@ Deno.serve(async (req) => {
           stageId = stage?.id || null;
         }
 
-        const responsible = Array.isArray(form.crm_responsibles) && form.crm_responsibles.length
-          ? form.crm_responsibles[0]
-          : null;
+        const responsible = existing ? null : await chooseResponsible(form);
 
         const leadPayload: Record<string, unknown> = {
           owner_user_id: form.owner_user_id,

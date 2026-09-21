@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { AlignLeft, AtSign, CheckCircle2, ChevronDown, CircleDot, Hash, Loader2, Phone, Type } from "lucide-react";
 
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
 
@@ -19,6 +19,16 @@ export interface PublicFormField {
   required: boolean;
   options: any;
 }
+
+const iconForField = (type: string) => {
+  if (type === "email") return AtSign;
+  if (type === "phone" || type === "whatsapp") return Phone;
+  if (type === "number") return Hash;
+  if (type === "textarea") return AlignLeft;
+  if (type === "select") return ChevronDown;
+  if (type === "radio" || type === "checkbox") return CircleDot;
+  return Type;
+};
 
 function useTrackingParams(slug: string) {
   const [params] = useSearchParams();
@@ -78,6 +88,40 @@ export default function PublicForm() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
+
+  useEffect(() => {
+    if (state !== "ready" || !form?.config) return;
+    const pixelId = String(form.config.metaPixelId || "");
+    const googleId = String(form.config.googleTagId || "").toUpperCase();
+    const added: HTMLElement[] = [];
+
+    if (/^\d{6,30}$/.test(pixelId)) {
+      const script = document.createElement("script");
+      script.dataset.formTracking = "meta";
+      script.text = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${pixelId}');fbq('track','PageView');`;
+      document.head.appendChild(script);
+      added.push(script);
+    }
+
+    if (/^GTM-[A-Z0-9]+$/.test(googleId)) {
+      const script = document.createElement("script");
+      script.dataset.formTracking = "google";
+      script.text = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${googleId}');`;
+      document.head.appendChild(script);
+      added.push(script);
+    } else if (/^AW-\d+$/.test(googleId)) {
+      const external = document.createElement("script");
+      external.async = true;
+      external.src = `https://www.googletagmanager.com/gtag/js?id=${googleId}`;
+      external.dataset.formTracking = "google";
+      const config = document.createElement("script");
+      config.dataset.formTracking = "google";
+      config.text = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${googleId}');`;
+      document.head.append(external, config);
+      added.push(external, config);
+    }
+    return () => { added.forEach((node) => node.remove()); };
+  }, [form, state]);
 
   const cfg = form?.config || {};
   const primary = cfg.primaryColor || "#3daa57";
@@ -181,9 +225,11 @@ export default function PublicForm() {
                   const value = values[f.name] || "";
                   const set = (v: string) => setValues((prev) => ({ ...prev, [f.name]: v }));
                   const opts: string[] = Array.isArray(f.options) ? f.options : [];
+                  const FieldIcon = iconForField(f.field_type);
                   return (
                     <div key={f.id} className="space-y-1.5">
-                      <Label className="text-sm font-medium" style={{ color: textColor }}>
+                      <Label className="flex items-center gap-1.5 text-sm font-medium" style={{ color: textColor }}>
+                        <FieldIcon className="h-3.5 w-3.5 opacity-60" />
                         {f.label}{f.required && <span className="ml-0.5 text-red-500">*</span>}
                       </Label>
 
