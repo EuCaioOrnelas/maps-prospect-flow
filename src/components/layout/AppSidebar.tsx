@@ -496,6 +496,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
+            {/* Forms */}
+            <li data-tour="sidebar-forms">
+              <SidebarNavItem
+                title="Forms"
+                icon={ClipboardList}
+                url="/forms"
+                isActive={currentPath.startsWith("/forms")}
+                isExpanded={isExpanded}
+                tooltip="Formulários e links rastreados"
+              />
+            </li>
+
             {/* Números (Atendimento + Marketing) */}
             <li data-tour="sidebar-numeros">
               <SidebarNavItem
