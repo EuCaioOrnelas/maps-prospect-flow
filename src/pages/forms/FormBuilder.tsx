@@ -221,6 +221,7 @@ export default function FormBuilder() {
           description: form.description.trim() || null,
           button_text: form.button_text.trim() || "Enviar",
           success_message: form.success_message.trim() || "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
+          config: { ...(form.config || {}), redirectUrl: normalizeLink(form.config?.redirectUrl || "") },
         },
         fields: fields.filter((field) => field.label.trim()).map((field, index) => ({ ...field, name: field.name || fieldName(field.label), position: index, page: Math.min(10, Math.max(1, Number(field.page) || 1)) })),
       };
