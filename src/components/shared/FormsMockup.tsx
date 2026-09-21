@@ -39,20 +39,11 @@ export const FormsMockup = () => (
 
     {/* Página do formulário */}
     <div className="overflow-hidden rounded-card border border-border/60 bg-card">
-      <div className="relative h-9 overflow-hidden bg-primary/15">
-        <motion.div
-          aria-hidden
-          initial={{ x: "-120%" }}
-          animate={{ x: "120%" }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.2 }}
-          className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-primary/25 to-transparent"
-        />
-      </div>
-      <div className="-mt-3 flex items-center gap-2 px-3">
+      <div className="flex items-center gap-2 px-3 pt-3">
         <span className="flex h-8 w-8 items-center justify-center rounded-card border border-border/60 bg-background text-[10px] font-extrabold text-primary shadow-sm">
           SL
         </span>
-        <div className="pt-3">
+        <div>
           <p className="text-[11px] font-semibold leading-none text-foreground">Sua Logo Aqui</p>
           <p className="mt-1 text-[9px] text-muted-foreground">Peça uma demonstração</p>
         </div>
@@ -60,7 +51,7 @@ export const FormsMockup = () => (
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={VIEW}
-          className="ml-auto pt-3 text-[10px] font-bold text-primary"
+          className="ml-auto text-[10px] font-bold text-primary"
         >
           67%
         </motion.span>
