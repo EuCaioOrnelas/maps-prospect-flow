@@ -78,7 +78,31 @@ async function encryptNote(value: string): Promise<string | null> {
   return `${MESSAGE_PREFIX}${bufferToBase64(iv.buffer)}:${bufferToBase64(ciphertext)}`;
 }
 
-Deno.serve(async (req) => {
+Deno.
+/** Origem real do lead: UTM > site de origem externo > acesso direto. */
+const INTERNAL_HOSTS = ["wiize.com.br", "lovable.app", "localhost", "127.0.0.1"];
+const KNOWN_HOSTS: Record<string, string> = {
+  "google.": "Google", "bing.": "Bing", "instagram.": "Instagram", "facebook.": "Facebook",
+  "whatsapp": "WhatsApp", "wa.me": "WhatsApp", "linkedin.": "LinkedIn", "lnkd.in": "LinkedIn",
+  "youtube.": "YouTube", "youtu.be": "YouTube", "tiktok.": "TikTok", "t.me": "Telegram",
+};
+function resolveOrigin(payload: { utm_source?: string | null; utm_medium?: string | null; utm_campaign?: string | null; referrer?: string | null }) {
+  const source = (payload.utm_source || "").trim();
+  const medium = (payload.utm_medium || "").trim().toLowerCase();
+  const campaign = (payload.utm_campaign || "").trim();
+  if (source) {
+    const pretty = Object.entries(KNOWN_HOSTS).find(([key]) => source.toLowerCase().includes(key.replace(/\.$/, "")))?.[1]
+      || source.replace(/^\w/, (c) => c.toUpperCase());
+    const paid = ["cpc", "ppc", "paid", "paid-social", "ads", "display"].includes(medium);
+    return `${paid ? `${pretty} Ads` : pretty}${campaign ? ` · ${campaign}` : ""}`;
+  }
+  let host = "";
+  try { host = new URL(payload.referrer || "").hostname.replace(/^www\./, "").toLowerCase(); } catch { /* sem referência */ }
+  if (!host || INTERNAL_HOSTS.some((self) => host === self || host.endsWith(`.${self}`) || host.includes(self))) return "Acesso direto";
+  return Object.entries(KNOWN_HOSTS).find(([key]) => host.includes(key))?.[1] || host;
+}
+
+serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
@@ -375,9 +399,7 @@ Deno.serve(async (req) => {
             const answerLines = (fields || [])
               .filter((f: any) => values[f.name])
               .map((f: any) => `• *${f.label}*\n  ${values[f.name]}`);
-            const originLine = submissionPayload.utm_source
-              ? `${submissionPayload.utm_source}${submissionPayload.utm_campaign ? ` · ${submissionPayload.utm_campaign}` : ""}`
-              : (submissionPayload.referrer || "Acesso direto");
+            const originLine = resolveOrigin(submissionPayload);
             const noteText = [
               "👋 *Wian · Assistente comercial*",
               "",
@@ -436,7 +458,7 @@ Deno.serve(async (req) => {
             ["E-mail", email],
             ["Telefone", phoneRaw],
             ["Mensagem", message],
-            ["Origem", submissionPayload.utm_source || submissionPayload.referrer || "Direto"],
+            ["Origem", resolveOrigin(submissionPayload)],
             ["Campanha", submissionPayload.utm_campaign || "—"],
             ["Data/hora", new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })],
           ].filter(([, v]) => v);
