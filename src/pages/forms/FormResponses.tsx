@@ -142,6 +142,12 @@ export default function FormResponses() {
     return map;
   }, [fields]);
 
+  const fieldTypeByName = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const field of fields) map[field.name] = field.field_type;
+    return map;
+  }, [fields]);
+
   const columnKeys = useMemo(() => {
     const keys = fields.map((field) => field.name);
     for (const submission of submissions) for (const key of Object.keys(submission.data || {})) if (!keys.includes(key)) keys.push(key);
