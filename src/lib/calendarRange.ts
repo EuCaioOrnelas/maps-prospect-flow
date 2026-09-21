@@ -10,6 +10,9 @@ export const rangeCalendarClassNames = {
   months: "flex flex-col sm:flex-row gap-4 sm:gap-6",
   month: "space-y-4 w-[252px]",
   caption: "flex justify-center pt-1 relative items-center",
+  // Setas ancoradas nas bordas do cabeçalho (precisam de ! para vencer .btn-shine).
+  nav_button_previous: "!absolute !left-1",
+  nav_button_next: "!absolute !right-1",
   caption_label: "text-sm font-semibold text-popover-foreground",
   table: "w-full border-collapse",
   head_row: "flex",
