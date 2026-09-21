@@ -433,12 +433,13 @@ Deno.serve(async (req) => {
             .from("leads").insert(leadPayload).select("id").single();
           if (leadErr) console.error("[forms-public] lead insert", leadErr);
           leadId = lead?.id || null;
+          createdLead = !!leadId;
         }
         if (leadId) await admin.from("form_submissions").update({ lead_id: leadId }).eq("id", submission.id);
 
         // Registra a entrada na etapa do CRM — é esse evento que dispara os
         // Fluxos com gatilho "Lead entrou em uma etapa".
-        if (leadId && stageId) {
+        if (leadId && stageId && createdLead) {
           const { data: stageRow } = await admin
             .from("pipeline_stages").select("name").eq("id", stageId).maybeSingle();
           if (stageRow?.name) {
