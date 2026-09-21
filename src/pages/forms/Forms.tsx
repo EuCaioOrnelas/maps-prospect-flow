@@ -22,10 +22,11 @@ import {
 import {
   FileText, Link2, Plus, Copy, Power, Trash2, BarChart3, Pencil,
   Eye, MousePointerClick, Users, Search, ExternalLink, Loader2, Lock,
-  Activity, CalendarClock, CheckCircle2, Globe2, TrendingUp,
+  Activity, CalendarClock, CheckCircle2, Code2, Globe2, TrendingUp,
 } from "lucide-react";
 import { useForms } from "@/hooks/useForms";
 import { TrackedLinkDialog } from "@/components/forms/TrackedLinkDialog";
+import { FormEmbedDialog } from "@/components/forms/FormEmbedDialog";
 import { toast } from "sonner";
 import { rangeCalendarClassNames } from "@/lib/calendarRange";
 
@@ -66,6 +67,7 @@ export default function Forms() {
   const [confirm, setConfirm] = useState<{ kind: "form" | "link"; id: string; name: string } | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [linkDialog, setLinkDialog] = useState<{ open: boolean; link: any | null }>({ open: false, link: null });
+  const [embedForm, setEmbedForm] = useState<{ name: string; slug: string } | null>(null);
   const [quickDays, setQuickDays] = useState<number | null>(30);
   const [fromDate, setFromDate] = useState(() => toDateInput(new Date(Date.now() - 30 * dayMs)));
   const [toDate, setToDate] = useState(() => toDateInput(new Date()));
@@ -362,6 +364,9 @@ export default function Forms() {
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copy(url)}>
                           <Copy className="h-3.5 w-3.5" /> Link
                         </Button>
+                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEmbedForm({ name: f.name, slug: f.slug })}>
+                          <Code2 className="h-3.5 w-3.5" /> Incorporar
+                        </Button>
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => window.open(url, "_blank")}>
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Button>
@@ -480,6 +485,7 @@ export default function Forms() {
         onOpenChange={(open) => setLinkDialog({ open, link: open ? linkDialog.link : null })}
         onSaved={refresh}
       />
+      <FormEmbedDialog open={Boolean(embedForm)} onOpenChange={(open) => { if (!open) setEmbedForm(null); }} formName={embedForm?.name || "Formulário"} slug={embedForm?.slug || ""} />
 
       <AlertDialog open={!!confirm} onOpenChange={(open) => !open && setConfirm(null)}>
         <AlertDialogContent>
