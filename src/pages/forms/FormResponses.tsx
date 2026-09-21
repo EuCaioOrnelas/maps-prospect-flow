@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,7 +67,8 @@ export default function FormResponses() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [leads, setLeads] = useState<Record<string, any>>({});
   const [selected, setSelected] = useState<any>(null);
-  const [viewer, setViewer] = useState<{ url: string; mime: string; filename: string } | null>(null);
+  const [viewer, setViewer] = useState<{ url: string; downloadUrl: string; mime: string; filename: string } | null>(null);
+  const viewerRef = useRef<string | null>(null);
   const [openingFile, setOpeningFile] = useState<string | null>(null);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
 
@@ -223,28 +224,54 @@ export default function FormResponses() {
     return (data as any).url as string;
   };
 
+  /** Converte o link assinado em blob local — evita bloqueio do navegador ao exibir o arquivo. */
+  const fetchBlobUrl = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("fetch");
+    return URL.createObjectURL(await response.blob());
+  };
+
   const openFile = async (submissionId: string, file: SubmissionFile) => {
     setOpeningFile(file.path);
-    const url = await signedUrl(submissionId, file);
-    setOpeningFile(null);
-    if (!url) { toast.error("Não foi possível abrir o arquivo."); return; }
-    setViewer({ url, mime: file.mime, filename: file.name || file.filename || "arquivo" });
+    const filename = file.name || file.filename || "arquivo";
+    try {
+      const url = await signedUrl(submissionId, file);
+      if (!url) throw new Error("url");
+      let viewerUrl = url;
+      let objectUrl: string | null = null;
+      try {
+        objectUrl = await fetchBlobUrl(url);
+        viewerUrl = objectUrl;
+      } catch {
+        objectUrl = null;
+      }
+      if (viewerRef.current) URL.revokeObjectURL(viewerRef.current);
+      viewerRef.current = objectUrl;
+      setViewer({ url: viewerUrl, downloadUrl: url, mime: file.mime, filename });
+    } catch {
+      toast.error("Não foi possível abrir o arquivo.");
+    } finally {
+      setOpeningFile(null);
+    }
+  };
+
+  const closeViewer = () => {
+    if (viewerRef.current) URL.revokeObjectURL(viewerRef.current);
+    viewerRef.current = null;
+    setViewer(null);
   };
 
   /** Baixa via blob para preservar o nome original do arquivo. */
   const saveBlob = async (url: string, filename: string) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("download");
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
+      const objectUrl = await fetchBlobUrl(url);
       const anchor = document.createElement("a");
       anchor.href = objectUrl;
       anchor.download = filename;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(objectUrl);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
     } catch {
       window.open(url, "_blank", "noopener");
     }
@@ -256,6 +283,13 @@ export default function FormResponses() {
     setDownloadingFile(null);
     if (!url) { toast.error("Não foi possível baixar o arquivo."); return; }
     await saveBlob(url, file.name || file.filename || "arquivo");
+  };
+
+  /** Fecha o popup antes de navegar e abre o contato direto no CRM. */
+  const openLeadInCrm = (leadId: string) => {
+    setSelected(null);
+    closeViewer();
+    setTimeout(() => navigate("/crm", { state: { openLeadId: leadId } }), 80);
   };
 
   return (
@@ -289,7 +323,10 @@ export default function FormResponses() {
                   <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, e-mail, resposta ou campanha" className="pl-9" />
                 </div>
               </div>
-              <div className="space-y-1.5 xl:col-span-2">
+            </div>
+
+            <div className="mt-3">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Período</Label>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Popover open={rangeOpen} onOpenChange={openRange}>
@@ -335,7 +372,9 @@ export default function FormResponses() {
                   ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Origem</Label>
                   <Select value={source} onValueChange={setSource}>
@@ -356,7 +395,6 @@ export default function FormResponses() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
               <span>{filtered.length} resultado(s) no filtro atual · exibindo {pageRows.length} nesta página</span>
@@ -400,7 +438,7 @@ export default function FormResponses() {
                           <td className="px-4 py-3">
                             <div className="flex justify-end gap-2">
                               {submission.lead_id && (
-                                <Button variant="outline" size="sm" className="gap-2 shadow-none" onClick={() => navigate(`/crm?lead=${submission.lead_id}`)}>
+                                <Button variant="outline" size="sm" className="gap-2 shadow-none" onClick={() => openLeadInCrm(submission.lead_id)}>
                                   <UserRound className="h-4 w-4" /> CRM
                                 </Button>
                               )}
@@ -520,7 +558,7 @@ export default function FormResponses() {
               )}
 
               {selected.lead_id && (
-                <Button className="w-full gap-2 shadow-none" onClick={() => navigate(`/crm?lead=${selected.lead_id}`)}>
+                <Button className="w-full gap-2 shadow-none" onClick={() => openLeadInCrm(selected.lead_id)}>
                   <UserRound className="h-4 w-4" /> Abrir contato no CRM
                 </Button>
               )}
@@ -529,7 +567,7 @@ export default function FormResponses() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(viewer)} onOpenChange={(open) => !open && setViewer(null)}>
+      <Dialog open={Boolean(viewer)} onOpenChange={(open) => !open && closeViewer()}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-hidden p-4 sm:w-full">
           <DialogHeader className="pr-10">
             <DialogTitle className="truncate text-base">{viewer?.filename}</DialogTitle>
@@ -540,10 +578,10 @@ export default function FormResponses() {
                 ? <img src={viewer.url} alt={viewer.filename} className="max-h-[68vh] w-full rounded-lg object-contain" />
                 : <iframe title={viewer.filename} src={viewer.url} className="h-[68vh] w-full rounded-lg border border-border" />}
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" className="gap-2 shadow-none" onClick={() => window.open(viewer.url, "_blank", "noopener")}>
+                <Button variant="outline" className="gap-2 shadow-none" onClick={() => window.open(viewer.downloadUrl, "_blank", "noopener")}>
                   <ExternalLink className="h-4 w-4" /> Abrir em nova aba
                 </Button>
-                <Button className="gap-2 shadow-none" onClick={() => saveBlob(viewer.url, viewer.filename)}>
+                <Button className="gap-2 shadow-none" onClick={() => saveBlob(viewer.downloadUrl, viewer.filename)}>
                   <Download className="h-4 w-4" /> Baixar arquivo
                 </Button>
               </div>
