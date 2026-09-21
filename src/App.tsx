@@ -113,6 +113,7 @@ const MetaWhatsAppTemplates = lazyWithRetry(() => import("./pages/meta/MetaWhats
 const Forms = lazyWithRetry(() => import("./pages/forms/Forms"), "Forms");
 const FormBuilder = lazyWithRetry(() => import("./pages/forms/FormBuilder"), "FormBuilder");
 const FormAnalytics = lazyWithRetry(() => import("./pages/forms/FormAnalytics"), "FormAnalytics");
+const FormResponses = lazyWithRetry(() => import("./pages/forms/FormResponses"), "FormResponses");
 const PublicForm = lazyWithRetry(() => import("./pages/PublicForm"), "PublicForm");
 const TrackedLinkRedirect = lazyWithRetry(() => import("./pages/TrackedLinkRedirect"), "TrackedLinkRedirect");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
