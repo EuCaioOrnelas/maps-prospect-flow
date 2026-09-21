@@ -223,28 +223,54 @@ export default function FormResponses() {
     return (data as any).url as string;
   };
 
+  /** Converte o link assinado em blob local — evita bloqueio do navegador ao exibir o arquivo. */
+  const fetchBlobUrl = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("fetch");
+    return URL.createObjectURL(await response.blob());
+  };
+
   const openFile = async (submissionId: string, file: SubmissionFile) => {
     setOpeningFile(file.path);
-    const url = await signedUrl(submissionId, file);
-    setOpeningFile(null);
-    if (!url) { toast.error("Não foi possível abrir o arquivo."); return; }
-    setViewer({ url, mime: file.mime, filename: file.name || file.filename || "arquivo" });
+    const filename = file.name || file.filename || "arquivo";
+    try {
+      const url = await signedUrl(submissionId, file);
+      if (!url) throw new Error("url");
+      let viewerUrl = url;
+      let objectUrl: string | null = null;
+      try {
+        objectUrl = await fetchBlobUrl(url);
+        viewerUrl = objectUrl;
+      } catch {
+        objectUrl = null;
+      }
+      if (viewerRef.current) URL.revokeObjectURL(viewerRef.current);
+      viewerRef.current = objectUrl;
+      setViewer({ url: viewerUrl, downloadUrl: url, mime: file.mime, filename });
+    } catch {
+      toast.error("Não foi possível abrir o arquivo.");
+    } finally {
+      setOpeningFile(null);
+    }
+  };
+
+  const closeViewer = () => {
+    if (viewerRef.current) URL.revokeObjectURL(viewerRef.current);
+    viewerRef.current = null;
+    setViewer(null);
   };
 
   /** Baixa via blob para preservar o nome original do arquivo. */
   const saveBlob = async (url: string, filename: string) => {
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("download");
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
+      const objectUrl = await fetchBlobUrl(url);
       const anchor = document.createElement("a");
       anchor.href = objectUrl;
       anchor.download = filename;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(objectUrl);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
     } catch {
       window.open(url, "_blank", "noopener");
     }
@@ -256,6 +282,13 @@ export default function FormResponses() {
     setDownloadingFile(null);
     if (!url) { toast.error("Não foi possível baixar o arquivo."); return; }
     await saveBlob(url, file.name || file.filename || "arquivo");
+  };
+
+  /** Fecha o popup antes de navegar e abre o contato direto no CRM. */
+  const openLeadInCrm = (leadId: string) => {
+    setSelected(null);
+    closeViewer();
+    setTimeout(() => navigate("/crm", { state: { openLeadId: leadId } }), 80);
   };
 
   return (
