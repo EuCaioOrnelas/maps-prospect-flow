@@ -68,7 +68,10 @@ export const normalizeLink = (value: string) => {
   if (/^https?:\/\//i.test(clean)) return clean;
   return `https://${clean.replace(/^\/+/, "")}`;
 };
-const isValidLink = (value: string) => /^[^\s.]+\.[a-z]{2,}(\/.*)?$/i.test((value || "").trim().replace(/^https?:\/\//i, ""));
+const isValidLink = (value: string) => {
+  const host = (value || "").trim().replace(/^https?:\/\//i, "").split(/[/?#]/)[0];
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(host) && /\.[a-z]{2,}$/i.test(host);
+};
 const automaticFieldName = (label: string, type: string) => {
   const normalized = fieldName(label);
   if (type === "email") return "email";

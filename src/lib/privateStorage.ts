@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Buckets that are private: objects are only reachable through short-lived
  * signed URLs generated for the authenticated owner.
  */
-export const PRIVATE_BUCKETS = ["chat-media", "deal-attachments"] as const;
+export const PRIVATE_BUCKETS = ["chat-media", "deal-attachments", "form-uploads"] as const;
 
 const SIGN_TTL_SECONDS = 60 * 60 * 6; // 6h
 
@@ -16,6 +16,10 @@ type ParsedObject = { bucket: string; path: string };
  */
 export function parsePrivateStorageUrl(url?: string | null): ParsedObject | null {
   if (!url) return null;
+  // Anexos de formulário são gravados como caminho puro dentro do bucket privado.
+  if (!/^https?:\/\//i.test(url) && !url.startsWith("/")) {
+    return { bucket: "form-uploads", path: url };
+  }
   const match = url.match(/\/storage\/v1\/object\/(?:public\/|sign\/|authenticated\/)?([^/?]+)\/(.+?)(?:\?|$)/);
   if (!match) return null;
   const bucket = match[1];
