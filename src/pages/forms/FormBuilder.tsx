@@ -118,6 +118,29 @@ export default function FormBuilder() {
   });
   const [fields, setFields] = useState<any[]>(DEFAULT_FIELDS.map((field) => ({ ...field })));
   const [trackingOpen, setTrackingOpen] = useState(false);
+  const [activePage, setActivePage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
+  const [uploadingAsset, setUploadingAsset] = useState<string | null>(null);
+
+  const uploadAsset = async (key: "logoUrl" | "coverUrl", file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("Envie uma imagem PNG, JPG, SVG ou WEBP."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("A imagem precisa ter no máximo 5 MB."); return; }
+    if (!user?.id) return;
+    setUploadingAsset(key);
+    try {
+      const extension = (file.name.split(".").pop() || "png").toLowerCase().slice(0, 5);
+      const path = `${user.id}/forms/${key}-${Date.now()}-${randomSuffix()}.${extension}`;
+      const { error } = await supabase.storage.from("agent-media").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("agent-media").getPublicUrl(path);
+      setCfg(key, data.publicUrl);
+      toast.success("Imagem enviada com sucesso.");
+    } catch {
+      toast.error("Não foi possível enviar a imagem. Tente novamente.");
+    } finally {
+      setUploadingAsset(null);
+    }
+  };
 
   useEffect(() => {
     if (!ownerId) return;
