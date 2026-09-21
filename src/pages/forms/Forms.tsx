@@ -38,8 +38,7 @@ const metricCards = {
   links: [
     { key: "links", label: "Links rastreados", icon: Link2 },
     { key: "clicks", label: "Cliques totais", icon: MousePointerClick },
-    { key: "unique", label: "Visitantes únicos", icon: Users },
-    { key: "leads", label: "Leads atribuídos", icon: TrendingUp },
+    { key: "unique", label: "Pessoas únicas", icon: Users },
   ],
 } as const;
 
