@@ -179,7 +179,30 @@ Deno.serve(async (req) => {
 
       const raw = (body?.data && typeof body.data === "object") ? body.data : {};
       const values: Record<string, string> = {};
+
+      // ── anexos enviados pelo lead (imagens comprimidas e PDFs) ──
+      const incomingFiles = Array.isArray(body?.files) ? body.files.slice(0, MAX_UPLOADS) : [];
+      const uploads: { field: string; name: string; mime: string; bytes: Uint8Array }[] = [];
+      for (const item of incomingFiles) {
+        const mime = sanitize(item?.mime, 80);
+        const name = safeFileName(sanitize(item?.filename, 120));
+        if (!ALLOWED_UPLOAD_MIMES.includes(mime)) {
+          return json({ error: `Formato não permitido em "${name}". Envie imagens (JPG, PNG, WEBP) ou PDF.` }, 400);
+        }
+        let bytes: Uint8Array;
+        try { bytes = decodeBase64(String(item?.data || "")); } catch { return json({ error: `Não foi possível ler o arquivo "${name}".` }, 400); }
+        if (!bytes.length) return json({ error: `O arquivo "${name}" está vazio.` }, 400);
+        if (bytes.length > MAX_UPLOAD_BYTES) return json({ error: `O arquivo "${name}" excede 8 MB.` }, 400);
+        uploads.push({ field: sanitize(item?.field, 60), name, mime, bytes });
+      }
+
       for (const f of fields || []) {
+        if (f.field_type === "file") {
+          const attached = uploads.filter((upload) => upload.field === f.name);
+          if (f.required && !attached.length) return json({ error: `Envie um arquivo em "${f.label}".` }, 400);
+          if (attached.length) values[f.name] = attached.map((upload) => upload.name).join(", ");
+          continue;
+        }
         const value = sanitize(raw[f.name], f.field_type === "textarea" ? 4000 : 400);
         if (f.required && !value) return json({ error: `O campo "${f.label}" é obrigatório.` }, 400);
         if (value && f.field_type === "email" && !isEmail(value)) {
