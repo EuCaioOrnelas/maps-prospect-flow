@@ -3796,6 +3796,7 @@ export type Database = {
       }
       form_submissions: {
         Row: {
+          consent: Json | null
           created_at: string
           data: Json
           device: string | null
@@ -3816,6 +3817,7 @@ export type Database = {
           utm_term: string | null
         }
         Insert: {
+          consent?: Json | null
           created_at?: string
           data?: Json
           device?: string | null
@@ -3836,6 +3838,7 @@ export type Database = {
           utm_term?: string | null
         }
         Update: {
+          consent?: Json | null
           created_at?: string
           data?: Json
           device?: string | null
