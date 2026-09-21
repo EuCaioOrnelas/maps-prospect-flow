@@ -289,7 +289,10 @@ export default function FormResponses() {
                   <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, e-mail, resposta ou campanha" className="pl-9" />
                 </div>
               </div>
-              <div className="space-y-1.5 xl:col-span-2">
+            </div>
+
+            <div className="mt-3">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Período</Label>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Popover open={rangeOpen} onOpenChange={openRange}>
