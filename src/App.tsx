@@ -110,6 +110,11 @@ const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), 
 const MetaCampanhas = lazyWithRetry(() => import("./pages/meta/MetaCampanhas"), "MetaCampanhas");
 const MetaTemplates = lazyWithRetry(() => import("./pages/meta/MetaTemplates"), "MetaTemplates");
 const MetaWhatsAppTemplates = lazyWithRetry(() => import("./pages/meta/MetaWhatsAppTemplates"), "MetaWhatsAppTemplates");
+const Forms = lazyWithRetry(() => import("./pages/forms/Forms"), "Forms");
+const FormBuilder = lazyWithRetry(() => import("./pages/forms/FormBuilder"), "FormBuilder");
+const FormAnalytics = lazyWithRetry(() => import("./pages/forms/FormAnalytics"), "FormAnalytics");
+const PublicForm = lazyWithRetry(() => import("./pages/PublicForm"), "PublicForm");
+const TrackedLinkRedirect = lazyWithRetry(() => import("./pages/TrackedLinkRedirect"), "TrackedLinkRedirect");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
 const NumerosComparativo = lazyWithRetry(() => import("./pages/NumerosComparativo"), "NumerosComparativo");
 const MetaConnectGuide = lazyWithRetry(() => import("./pages/MetaConnectGuide"), "MetaConnectGuide");
