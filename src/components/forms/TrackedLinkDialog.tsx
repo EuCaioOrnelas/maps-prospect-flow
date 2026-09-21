@@ -10,8 +10,8 @@ import { toast } from "sonner";
 import type { LucideIcon } from "lucide-react";
 
 const slugify = (value: string) =>
-  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
 function IconField({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
