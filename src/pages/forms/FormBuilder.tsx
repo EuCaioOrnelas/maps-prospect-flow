@@ -80,6 +80,7 @@ const automaticFieldName = (label: string, type: string) => {
   if (type === "phone") return "whatsapp";
   if (/nome/.test(normalized)) return "nome_completo";
   if (/empresa|companhia/.test(normalized)) return "empresa";
+  if (/cidade|municipio/.test(normalized)) return "cidade";
   if (/observa|mensagem|coment/.test(normalized)) return "mensagem";
   return normalized || `campo_${randomSuffix()}`;
 };
@@ -275,7 +276,7 @@ export default function FormBuilder() {
                   <div className="space-y-2"><Label>Descrição breve</Label><Textarea value={form.description || ""} onChange={(event) => set("description", event.target.value)} placeholder="Ex.: Conte o que você precisa e retornaremos em breve." className="min-h-[96px] resize-y" /></div>
                    <div className="space-y-2"><Label>Texto do botão</Label><IconInput icon={MousePointerClick} value={form.button_text} onChange={(event) => set("button_text", event.target.value)} placeholder="Ex.: Solicitar contato" /></div>
                   <div className="space-y-2"><Label>Mensagem após o envio</Label><Textarea value={form.success_message} onChange={(event) => set("success_message", event.target.value)} placeholder="Ex.: Obrigado! Recebemos seus dados." className="min-h-[84px] resize-y" /></div>
-                   <div className="rounded-lg border border-border/60 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Redirecionar após o envio</p><p className="mt-1 text-xs text-muted-foreground">Após a confirmação, mostra uma contagem de 3 segundos antes de abrir o seu link. Pode informar só o www.</p></div><Switch checked={Boolean(cfg.redirectEnabled)} onCheckedChange={(checked) => setCfg("redirectEnabled", checked)} /></div>{cfg.redirectEnabled && <div className="mt-4 space-y-2"><Label>Link de destino</Label><IconInput icon={Link2} value={cfg.redirectUrl || ""} onChange={(event) => setCfg("redirectUrl", event.target.value)} placeholder="www.seusite.com.br/obrigado" /></div>}</div>
+                   <div className="rounded-lg border border-border/60 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold">Redirecionar após o envio</p><p className="mt-1 text-xs text-muted-foreground">Após a confirmação, mostra uma contagem de 3 segundos antes de abrir o seu link. Pode informar só o www.</p></div><Switch checked={Boolean(cfg.redirectEnabled)} onCheckedChange={(checked) => setCfg("redirectEnabled", checked)} /></div>{cfg.redirectEnabled && <div className="mt-4 space-y-2"><Label>Link de destino</Label><IconInput icon={Link2} value={cfg.redirectUrl || ""} onChange={(event) => setCfg("redirectUrl", event.target.value)} placeholder="www.seusite.com.br" /></div>}</div>
                   <div className="space-y-2"><Label>Nome do link</Label><div className="flex min-w-0 items-center rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring"><span className="shrink-0 border-r border-border px-3 text-sm text-muted-foreground">/form/</span><Input value={slug} onChange={(event) => setSlug(slugify(event.target.value))} placeholder={generatedSlug} className="border-0 shadow-none focus-visible:ring-0" /></div><p className="break-all text-xs text-muted-foreground">Prévia: {publicUrl}</p></div>
                 </div>}
 
