@@ -347,6 +347,7 @@ Deno.serve(async (req) => {
 
       // ───── CRM ─────
       let leadId: string | null = null;
+      let createdLead = false;
       let responsible: string | null = null;
       if (form.crm_enabled) {
         let existing: any = null;
