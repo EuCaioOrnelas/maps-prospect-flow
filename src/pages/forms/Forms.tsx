@@ -55,6 +55,7 @@ export default function Forms() {
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<{ kind: "form" | "link"; id: string; name: string } | null>(null);
+  const [deleteText, setDeleteText] = useState("");
   const [linkDialog, setLinkDialog] = useState<{ open: boolean; link: any | null }>({ open: false, link: null });
 
   const filteredForms = useMemo(
@@ -128,7 +129,7 @@ export default function Forms() {
                 <Button
                   onClick={() => navigate("/forms/novo")}
                   disabled={formsAtLimit}
-                  className="gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                  className="gap-2 disabled:border-primary/15 disabled:bg-primary/10 disabled:text-primary/45 disabled:opacity-100 disabled:shadow-none"
                 >
                   {formsAtLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   {formsAtLimit ? "Limite atingido" : "Novo formulário"}
@@ -137,7 +138,7 @@ export default function Forms() {
                 <Button
                   onClick={() => setLinkDialog({ open: true, link: null })}
                   disabled={linksAtLimit}
-                  className="gap-2 disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                  className="gap-2 disabled:border-primary/15 disabled:bg-primary/10 disabled:text-primary/45 disabled:opacity-100 disabled:shadow-none"
                 >
                   {linksAtLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   {linksAtLimit ? "Limite atingido" : "Novo link"}
@@ -270,7 +271,7 @@ export default function Forms() {
                         <Button
                           size="sm" variant="outline"
                           className="gap-1.5 text-destructive"
-                          onClick={() => setConfirm({ kind: "form", id: f.id, name: f.name })}
+                           onClick={() => { setDeleteText(""); setConfirm({ kind: "form", id: f.id, name: f.name }); }}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -344,7 +345,7 @@ export default function Forms() {
                       <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setLinkDialog({ open: true, link: l })}>
                         <Pencil className="h-3.5 w-3.5" /> Editar
                       </Button>
-                      <Button size="sm" variant="outline" className="gap-1.5 text-destructive" onClick={() => setConfirm({ kind: "link", id: l.id, name: l.name })}>
+                       <Button size="sm" variant="outline" className="gap-1.5 text-destructive" onClick={() => { setDeleteText(""); setConfirm({ kind: "link", id: l.id, name: l.name }); }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -364,18 +365,31 @@ export default function Forms() {
         onSaved={refresh}
       />
 
-      <AlertDialog open={!!confirm} onOpenChange={(open) => !open && setConfirm(null)}>
+       <AlertDialog open={!!confirm} onOpenChange={(open) => { if (!open) { setConfirm(null); setDeleteText(""); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir {confirm?.kind === "form" ? "formulário" : "link"}?</AlertDialogTitle>
             <AlertDialogDescription>
               “{confirm?.name}” será removido permanentemente, junto com suas estatísticas. Os leads já enviados ao CRM permanecem.
             </AlertDialogDescription>
+            <div className="space-y-2 pt-2">
+              <label htmlFor="confirm-delete" className="text-sm font-medium text-foreground">Digite <strong>EXCLUIR</strong> para confirmar</label>
+              <Input
+                id="confirm-delete"
+                autoFocus
+                autoComplete="off"
+                value={deleteText}
+                onChange={(event) => setDeleteText(event.target.value.toUpperCase())}
+                placeholder="EXCLUIR"
+                className="uppercase"
+              />
+            </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteText !== "EXCLUIR"}
               onClick={() => {
                 const target = confirm;
                 setConfirm(null);
