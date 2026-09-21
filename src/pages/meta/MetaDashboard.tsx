@@ -416,14 +416,13 @@ function DateRangeBar({
   start, end, onStart, onEnd,
 }: { start: Date; end: Date; onStart: (d: Date) => void; onEnd: (d: Date) => void; }) {
   const [open, setOpen] = useState(false);
-  const [draftStart, setDraftStart] = useState(start);
-  const [draftEnd, setDraftEnd] = useState(end);
+  const [draft, setDraft] = useState<{ from?: Date; to?: Date }>({ from: start, to: end });
   const label = `${format(start, "dd MMM yyyy", { locale: ptBR })} — ${format(end, "dd MMM yyyy", { locale: ptBR })}`;
   const applyRange = () => {
-    const nextStart = draftStart <= draftEnd ? draftStart : draftEnd;
-    const nextEnd = draftStart <= draftEnd ? draftEnd : draftStart;
-    onStart(nextStart);
-    onEnd(nextEnd);
+    const from = draft.from || start;
+    const to = draft.to || draft.from || end;
+    onStart(from <= to ? from : to);
+    onEnd(from <= to ? to : from);
     setOpen(false);
   };
   return (
@@ -432,10 +431,7 @@ function DateRangeBar({
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
-          if (next) {
-            setDraftStart(start);
-            setDraftEnd(end);
-          }
+          if (next) setDraft({ from: start, to: end });
         }}
       >
         <PopoverTrigger asChild>
@@ -449,27 +445,13 @@ function DateRangeBar({
             <Calendar
               mode="range"
               numberOfMonths={2}
-              defaultMonth={draftStart}
-              selected={{ from: draftStart, to: draftEnd }}
-              onSelect={(r: any) => {
-                if (r?.from) setDraftStart(r.from);
-                if (r?.to) setDraftEnd(r.to);
-              }}
+              locale={ptBR}
+              defaultMonth={draft.from || start}
+              selected={draft as any}
+              onSelect={(r: any) => setDraft(r || {})}
               initialFocus
               className={cn("p-0 pointer-events-auto")}
-              classNames={{
-                months: "flex flex-col sm:flex-row gap-4 sm:gap-5",
-                month: "space-y-4 w-[260px]",
-                caption_label: "text-sm font-semibold text-popover-foreground",
-                head_cell: "text-muted-foreground rounded-md w-9 font-medium text-[0.78rem]",
-                day: cn(buttonVariants({ variant: "ghost" }), "h-9 w-9 p-0 text-sm font-medium aria-selected:opacity-100"),
-                day_selected: "!bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                day_range_start: "day-range-start !bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                day_range_end: "day-range-end !bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
-                day_range_middle: "aria-selected:!bg-primary/90 aria-selected:!text-primary-foreground",
-                day_outside: "day-outside text-muted-foreground/55 aria-selected:bg-primary/45 aria-selected:text-primary-foreground aria-selected:opacity-100",
-                day_today: "font-semibold aria-selected:!bg-primary aria-selected:!text-primary-foreground",
-              }}
+              classNames={rangeCalendarClassNames}
             />
           </div>
           <div className="border-t border-border/70 bg-secondary/35 p-3">
