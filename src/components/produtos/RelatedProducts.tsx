@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { HiArrowUpRight, HiChevronLeft, HiChevronRight } from "react-icons/hi2";
-import { getRelatedProducts } from "@/data/products";
+import { PRODUCTS } from "@/data/products";
 import { ProductStageShowcase } from "./ProductStageShowcase";
 
 /* Paleta viva por card (tons que conversam com o verde Wiize) */
