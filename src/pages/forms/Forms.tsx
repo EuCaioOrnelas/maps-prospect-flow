@@ -38,8 +38,7 @@ const metricCards = {
   links: [
     { key: "links", label: "Links rastreados", icon: Link2 },
     { key: "clicks", label: "Cliques totais", icon: MousePointerClick },
-    { key: "unique", label: "Visitantes únicos", icon: Users },
-    { key: "leads", label: "Leads atribuídos", icon: TrendingUp },
+    { key: "unique", label: "Pessoas únicas", icon: Users },
   ],
 } as const;
 
@@ -49,7 +48,7 @@ export default function Forms() {
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") === "links" ? "links" : "forms";
   const {
-    loading, forms, links, statsByForm, clicksByLink, leadsByLink, limits, totals, refresh, callAdmin,
+    loading, forms, links, statsByForm, clicksByLink, limits, totals, refresh, callAdmin,
   } = useForms();
 
   const [search, setSearch] = useState("");
@@ -69,7 +68,6 @@ export default function Forms() {
 
   const totalClicks = Object.values(clicksByLink).reduce((a, c) => a + c.clicks, 0);
   const totalUniqueClicks = Object.values(clicksByLink).reduce((a, c) => a + c.unique, 0);
-  const totalLinkLeads = Object.values(leadsByLink).reduce((a, value) => a + value, 0);
   const conversion = totals.views ? (totals.submissions / totals.views) * 100 : 0;
 
   const run = async (key: string, fn: () => Promise<void>) => {
@@ -99,7 +97,6 @@ export default function Forms() {
     links: `${links.length}/${limits.links}`,
     clicks: totalClicks,
     unique: totalUniqueClicks,
-    leads: totalLinkLeads,
   };
 
   const setTab = (next: string) => {
@@ -296,14 +293,13 @@ export default function Forms() {
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {filteredLinks.map((l) => {
                 const stats = clicksByLink[l.id] || { clicks: 0, unique: 0, last: null };
-                const leads = leadsByLink[l.id] || 0;
                 const url = `${PUBLIC_BASE}/r/${l.slug}`;
                 return (
                   <Card key={l.id} className="flex min-h-[330px] flex-col overflow-hidden border-border/60 bg-card shadow-sm">
                     <div className="flex flex-1 flex-col p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
                           <Link2 className="h-4 w-4" />
                         </span>
                         <div className="min-w-0">
@@ -326,10 +322,15 @@ export default function Forms() {
                       <span className="line-clamp-2 break-all" title={l.destination_url}>{l.destination_url}</span>
                     </div>
 
-                    <div className="mt-5 grid grid-cols-3 divide-x divide-border/70 border-y border-border/60 py-4 text-center">
-                      <div><p className="text-lg font-semibold tabular-nums">{stats.clicks}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Cliques</p></div>
-                      <div><p className="text-lg font-semibold tabular-nums">{stats.unique}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Únicos</p></div>
-                      <div><p className="text-lg font-semibold tabular-nums">{leads}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Leads</p></div>
+                    <div className="mt-5 grid grid-cols-2 divide-x divide-border/70 border-y border-border/60 py-4 text-center">
+                      <div>
+                        <p className="text-lg font-semibold tabular-nums">{stats.clicks}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">Cliques</p>
+                      </div>
+                      <div title="Pessoas diferentes que abriram o link (sem contar repetições)">
+                        <p className="text-lg font-semibold tabular-nums">{stats.unique}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">Pessoas únicas</p>
+                      </div>
                     </div>
 
                     {(l.utm_source || l.utm_campaign) && (
