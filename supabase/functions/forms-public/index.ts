@@ -246,6 +246,22 @@ Deno.serve(async (req) => {
         tracked_link_id: null as string | null,
       };
 
+      // ── consentimento obrigatório (LGPD) ──
+      const consentInput = (body?.consent && typeof body.consent === "object") ? body.consent : {};
+      if (consentInput?.accepted !== true || !sanitize(consentInput?.text, 600)) {
+        return json({ error: "Confirme o aceite para que possamos entrar em contato." }, 400);
+      }
+      (submissionPayload as Record<string, unknown>).consent = {
+        accepted: true,
+        text: sanitize(consentInput.text, 600),
+        version: sanitize(consentInput.version, 40) || "v1",
+        accepted_at: new Date().toISOString(),
+        ip,
+        user_agent: ua.slice(0, 400),
+        form_id: form.id,
+        form_slug: form.slug,
+      };
+
       const wzLink = sanitize(body?.wz_link, 80);
       if (wzLink) {
         const { data: link } = await admin
