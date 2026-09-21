@@ -580,6 +580,14 @@ export default function AdminInfluencerOutreach() {
                             {p.notes && (
                               <p className="text-[10px] text-muted-foreground mt-1 truncate">📝 {p.notes}</p>
                             )}
+                            {p.status === "email_enviado" && (
+                              <p className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1">
+                                <Mail size={11} className="text-primary" /> E-mail enviado
+                                {p.last_contacted_at
+                                  ? ` · ${new Date(p.last_contacted_at).toLocaleDateString("pt-BR")}`
+                                  : ""}
+                              </p>
+                            )}
                           </TableCell>
                           <TableCell className="py-3 text-right text-sm">{fmtNum(p.subscriber_count)}</TableCell>
                           <TableCell className="py-3 text-right text-sm">{p.fit_score ?? 0}</TableCell>
