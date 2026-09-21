@@ -276,7 +276,14 @@ Deno.serve(async (req) => {
       }
 
       // ───── notificação por e-mail ─────
-      if (form.notify_enabled && Array.isArray(form.notify_user_ids) && form.notify_user_ids.length) {
+      const configuredNotifyIds = Array.isArray(form.notify_user_ids)
+        ? form.notify_user_ids.filter((value: unknown) => typeof value === "string").slice(0, 10)
+        : [];
+      const notificationRecipientIds = Array.from(new Set([
+        ...(form.config?.notifyAssigned && responsible ? [responsible] : []),
+        ...configuredNotifyIds,
+      ]));
+      if (form.notify_enabled && notificationRecipientIds.length) {
         try {
           const rows = [
             ["Nome", name],
@@ -289,7 +296,7 @@ Deno.serve(async (req) => {
             ["Data/hora", new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })],
           ].filter(([, v]) => v);
 
-          for (const recipientId of form.notify_user_ids.slice(0, 10)) {
+          for (const recipientId of notificationRecipientIds) {
             await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
               method: "POST",
               headers: {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ComponentProps } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,7 +80,7 @@ function SectionHeading({ icon: Icon, title, description }: { icon: typeof FileT
   );
 }
 
-function IconInput({ icon: Icon, className, ...props }: React.ComponentProps<typeof Input> & { icon: typeof FileText }) {
+function IconInput({ icon: Icon, className, ...props }: ComponentProps<typeof Input> & { icon: typeof FileText }) {
   return <div className="relative min-w-0"><Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input {...props} className={cn("pl-9", className)} /></div>;
 }
 
