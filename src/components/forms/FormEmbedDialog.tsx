@@ -70,7 +70,8 @@ function reactSnippet(url: string, mode: EmbedMode, next = false) {
 
 export function ${component}() {
   const [open, setOpen] = useState(false);
-  const src = "${source}&" + new URLSearchParams(window.location.search).toString();
+  const query = typeof window === "undefined" ? "" : window.location.search.slice(1);
+  const src = "${source}" + (query ? "&" + query : "");
 
   return <>
     <button type="button" onClick={() => setOpen(true)}>Abrir formulário</button>
@@ -94,9 +95,24 @@ export function ${component}() {
 }
 
 function phpSnippet(url: string, mode: EmbedMode) {
-  const separator = url.includes("?") ? "&" : "?";
-  const header = `<?php\n$query = htmlspecialchars($_SERVER['QUERY_STRING'] ?? '', ENT_QUOTES, 'UTF-8');\n$formUrl = '${url}${separator}embed=1' . ($query ? '&' . $query : '');\n?>\n`;
-  return header + htmlSnippet("<?= $formUrl ?>", mode).replace("?embed=1", "").replace(/<script>[\s\S]*<\/script>/, "");
+  const header = `<?php\n$query = htmlspecialchars($_SERVER['QUERY_STRING'] ?? '', ENT_QUOTES, 'UTF-8');\n$formUrl = '${url}?embed=1' . ($query ? '&' . $query : '');\n?>\n`;
+  if (mode === "popup") return header + `<button type="button" id="wiize-form-open">Abrir formulário</button>
+<dialog id="wiize-form-popup" style="width:min(680px,calc(100% - 24px));height:min(820px,calc(100vh - 24px));padding:0;border:0;border-radius:12px;">
+  <button type="button" id="wiize-form-close" aria-label="Fechar" style="position:absolute;right:12px;top:12px;z-index:2;">✕</button>
+  <iframe title="Formulário" data-src="<?= $formUrl ?>" style="width:100%;height:100%;border:0;"></iframe>
+</dialog>
+<script>
+  const popup = document.getElementById('wiize-form-popup');
+  const frame = popup.querySelector('iframe');
+  document.getElementById('wiize-form-open').onclick = () => { frame.src = frame.dataset.src; popup.showModal(); };
+  document.getElementById('wiize-form-close').onclick = () => popup.close();
+</script>`;
+  return header + `<iframe
+  src="<?= $formUrl ?>"
+  title="Formulário"
+  loading="lazy"
+  style="${frameStyle(mode === "card")}"
+></iframe>`;
 }
 
 export function FormEmbedDialog({ open, onOpenChange, formName, slug }: FormEmbedDialogProps) {
