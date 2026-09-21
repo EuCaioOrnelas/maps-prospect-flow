@@ -361,7 +361,6 @@ export default function FormResponses() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
               <span>{filtered.length} resultado(s) no filtro atual · exibindo {pageRows.length} nesta página</span>
