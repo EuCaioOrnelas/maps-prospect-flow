@@ -408,14 +408,24 @@ Deno.serve(async (req) => {
         utm_content: str(input.utm_content, 120),
         status: input.status === "inactive" ? "inactive" : "active",
       };
+      const desiredSlug = str(input.slug, 80) ? slugify(str(input.slug, 80)!) : "";
+      const linkId = str(input.id, 64);
+      if (desiredSlug) {
+        const { data: slugOwner } = await admin.from("tracked_links").select("id").eq("slug", desiredSlug).maybeSingle();
+        if (slugOwner && slugOwner.id !== linkId) {
+          return json({ error: `O endereço "/r/${desiredSlug}" já está em uso. Escolha outro.` }, 409);
+        }
+        payload.slug = desiredSlug;
+      }
+
       if (action === "create_link") {
         payload.created_by = user.id;
-        payload.slug = await uniqueSlug("tracked_links", str(input.slug, 80) || name);
+        if (!payload.slug) payload.slug = await uniqueSlug("tracked_links", name);
         const { data, error } = await admin.from("tracked_links").insert(payload).select("*").single();
         if (error) throw error;
         return json({ link: data });
       }
-      const id = str(input.id, 64);
+      const id = linkId;
       const { data: existing } = await admin
         .from("tracked_links").select("id").eq("id", id).eq("owner_user_id", ownerId).maybeSingle();
       if (!existing) return json({ error: "Link não encontrado." }, 404);
