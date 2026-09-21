@@ -306,23 +306,6 @@ export default function Forms() {
             ))}
           </div>
 
-          {/* Tabs */}
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="h-10 border border-border/60 bg-muted/40 p-1">
-                <TabsTrigger value="forms" className="gap-2 px-4">
-                  <FileText className="h-4 w-4" /> Formulários
-                </TabsTrigger>
-                <TabsTrigger value="links" className="gap-2 px-4">
-                  <Link2 className="h-4 w-4" /> Links rastreados
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="relative ml-auto w-full sm:w-64">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="pl-9" />
-            </div>
-          </div>
 
           {/* Conteúdo */}
           {loading ? (
