@@ -68,7 +68,6 @@ export default function Forms() {
 
   const totalClicks = Object.values(clicksByLink).reduce((a, c) => a + c.clicks, 0);
   const totalUniqueClicks = Object.values(clicksByLink).reduce((a, c) => a + c.unique, 0);
-  const totalLinkLeads = Object.values(leadsByLink).reduce((a, value) => a + value, 0);
   const conversion = totals.views ? (totals.submissions / totals.views) * 100 : 0;
 
   const run = async (key: string, fn: () => Promise<void>) => {
