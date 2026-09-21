@@ -9,9 +9,9 @@ const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_c
 const ACCEPTED_UPLOADS = "image/jpeg,image/png,image/webp,application/pdf";
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
-export const CONSENT_VERSION = "2026-09-v1";
+export const CONSENT_VERSION = "2026-09-v2";
 export const CONSENT_TEXT =
-  "Ao enviar este formulário, você concorda com o tratamento dos seus dados para que possamos entrar em contato e atender à sua solicitação.";
+  "Ao enviar, você concorda com o uso dos seus dados para contato sobre esta solicitação (LGPD).";
 const REDIRECT_SECONDS = 3;
 
 export interface PublicFormField {
@@ -430,12 +430,12 @@ export default function PublicForm() {
                   })}
 
                   {isLastPage && (
-                    <label className="flex cursor-pointer items-start gap-3 border border-zinc-200 bg-zinc-50/70 px-3 py-3 text-[13px] leading-relaxed text-zinc-700" style={inputStyle}>
+                    <label className="flex cursor-pointer items-start gap-2.5 pt-1 text-xs leading-relaxed opacity-70" style={{ color: textColor }}>
                       <input
                         type="checkbox"
                         checked={consent}
                         onChange={(event) => { setConsent(event.target.checked); if (event.target.checked) setError(null); }}
-                        className="mt-0.5 h-4 w-4 shrink-0"
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0"
                         style={{ accentColor: primary }}
                       />
                       <span>{CONSENT_TEXT}</span>
