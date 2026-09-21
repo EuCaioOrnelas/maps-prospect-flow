@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const { data: rateLimitResult } = await supabase.rpc("check_rate_limit", {
       p_identifier: clientIP,
       p_endpoint: "enterprise-contact",
-      p_max_requests: 3,
+      p_max_requests: 2,
       p_window_seconds: 86400,
     });
 
