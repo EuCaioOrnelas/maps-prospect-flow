@@ -347,6 +347,39 @@ Deno.serve(async (req) => {
           leadId = lead?.id || null;
         }
         if (leadId) await admin.from("form_submissions").update({ lead_id: leadId }).eq("id", submission.id);
+
+        // Registra as respostas como nota interna e anexa os arquivos ao contato
+        if (leadId) {
+          try {
+            const answerLines = (fields || [])
+              .filter((f: any) => values[f.name])
+              .map((f: any) => `${f.label}: ${values[f.name]}`);
+            const noteText = [`Formulário "${form.name}" respondido`, ...answerLines].join("\n").slice(0, 3900);
+            const encrypted = await encryptNote(noteText);
+            if (encrypted) {
+              await admin.from("lead_notes").insert({
+                lead_id: leadId,
+                user_id: form.owner_user_id,
+                owner_user_id: form.owner_user_id,
+                content: encrypted,
+              });
+            }
+            if (storedFiles.length) {
+              await admin.from("lead_files").insert(storedFiles.map((file) => ({
+                lead_id: leadId,
+                user_id: form.owner_user_id,
+                owner_user_id: form.owner_user_id,
+                file_name: file.name,
+                file_type: file.mime,
+                file_url: file.path,
+                file_size: file.size,
+                source: "form",
+              })));
+            }
+          } catch (crmErr) {
+            console.error("[forms-public] crm attachments", crmErr);
+          }
+        }
       }
 
       // ───── notificação por e-mail ─────
