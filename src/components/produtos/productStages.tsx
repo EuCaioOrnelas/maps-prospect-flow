@@ -16,6 +16,8 @@ import {
   BellRing,
   Zap,
   ArrowUpRight,
+  ClipboardList,
+  Link2,
 } from "lucide-react";
 import {
   HiArrowTrendingUp,

@@ -192,7 +192,7 @@ export default function PublicForm() {
   const totalPages = Math.max(1, pages.length);
   const currentFields = pages[pageIndex] || [];
   const isLastPage = pageIndex >= totalPages - 1;
-  const progress = done ? 100 : Math.round(((pageIndex + (isLastPage ? 1 : 0)) / totalPages) * 100);
+  const progress = Math.min(99, Math.round(((pageIndex + 1) / totalPages) * 100));
 
   const setValue = useCallback((name: string, value: string) => {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -295,10 +295,7 @@ export default function PublicForm() {
 
           {totalPages > 1 && !done && (
             <div className="px-5 pt-4 sm:px-7">
-              <div className="flex items-center justify-between text-xs font-medium opacity-70">
-                <span>Etapa {pageIndex + 1} de {totalPages}</span>
-                <span>{progress}%</span>
-              </div>
+               <div className="flex items-center justify-end text-xs font-semibold opacity-70"><span>{progress}%</span></div>
               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-100">
                 <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.max(6, progress)}%`, background: primary }} />
               </div>
@@ -374,12 +371,15 @@ export default function PublicForm() {
                           </label>
                         ) : f.field_type === "file" ? (
                           <div className="space-y-2">
-                            <label
-                              className="flex cursor-pointer items-center justify-center border border-dashed border-zinc-300 bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-600"
+                             <label
+                               onDragOver={(event) => event.preventDefault()}
+                               onDrop={(event) => { event.preventDefault(); void attach(f, event.dataTransfer.files); }}
+                               className="flex cursor-pointer items-center justify-center gap-3 border border-dashed border-zinc-300 bg-zinc-50 px-3 py-4 text-left text-sm text-zinc-600 transition-colors hover:border-zinc-400"
                               style={inputStyle}
                             >
                               <input type="file" accept={ACCEPTED_UPLOADS} multiple className="hidden" onChange={(e) => attach(f, e.target.files)} />
-                              {f.placeholder || "Clique para enviar imagens ou PDF (até 8 MB)"}
+                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 shrink-0" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M12 18v-6m-3 3 3-3 3 3"/></svg>
+                               <span><strong className="block font-medium text-zinc-800">Arraste um arquivo ou clique para enviar</strong><span className="mt-0.5 block text-xs text-zinc-500">Imagens ou PDF, até 8 MB</span></span>
                             </label>
                             {(files[f.name] || []).map((file, index) => (
                               <div key={`${file.filename}-${index}`} className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-700">

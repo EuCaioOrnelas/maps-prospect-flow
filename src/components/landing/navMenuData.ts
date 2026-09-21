@@ -20,6 +20,7 @@ import {
   Rocket,
   CreditCard,
   PlayCircle,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +59,12 @@ export const PRODUCT_COLUMNS: MenuColumn[] = [
         description: "Reuniões marcadas sem esforço manual",
         to: "/produtos/agenda-inteligente",
         icon: CalendarClock,
+      },
+      {
+        label: "Formulários e Links",
+        description: "Capture leads e rastreie cada origem",
+        to: "/produtos/formularios-e-links-rastreados",
+        icon: ClipboardList,
       },
     ],
   },

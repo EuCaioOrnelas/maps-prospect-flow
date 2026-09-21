@@ -5,6 +5,7 @@ import {
   Sparkles,
   Workflow,
   FileSignature,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,7 +15,8 @@ export type ProductVisualKey =
   | "agenda"
   | "engajamento"
   | "automacao"
-  | "contratos";
+  | "contratos"
+  | "formularios";
 
 /** Etapa da operação comercial na arquitetura Wiize */
 export type ProductStage = "Capte" | "Converta" | "Gerencie" | "Otimize";
@@ -483,6 +485,44 @@ export const PRODUCTS: ProductConfig[] = [
       { label: "Atendimento", value: "imediato", hint: "suporte, pedidos e consultas" },
       { label: "Trabalho repetitivo", value: "reduzido", hint: "sem tirar pessoas do processo" },
       { label: "Conformidade", value: "canal oficial", hint: "sem automações não autorizadas" },
+    ],
+  },
+  {
+    slug: "formularios-e-links-rastreados",
+    key: "formularios",
+    category: "Capte",
+    stage: "Capte",
+    name: "Formulários e Links Rastreados",
+    shortDescription: "Transforme cada acesso em uma oportunidade rastreável",
+    cardTagline: "Capture a origem. Entenda a intenção. Converta em venda.",
+    cardDescription:
+      "Crie formulários com a sua marca, rastreie campanhas e leve cada resposta direto ao CRM, com origem, contexto e responsável definidos.",
+    icon: ClipboardList,
+    heroTitle: "Capture leads com contexto",
+    heroHighlight: "e venda com precisão",
+    heroDescription:
+      "Publique formulários com a sua marca, descubra quais campanhas geram oportunidades e envie cada novo contato ao CRM com respostas, UTMs e arquivos organizados.",
+    seoTitle: "Formulários e links rastreados para geração de leads B2B",
+    seoDescription:
+      "Crie formulários profissionais, rastreie UTMs e links e envie respostas automaticamente ao CRM da Wiize.",
+    keywords:
+      "formulários B2B, links rastreados, captura de leads, UTM, formulário para CRM, geração de leads",
+    howItWorksTitle: "Do clique ao CRM, sem perder a origem",
+    howItWorksHighlight: "sem perder a origem",
+    howItWorks: [
+      { title: "Crie com a sua marca", description: "Monte páginas curtas ou em etapas, personalize a aparência e publique um endereço profissional.", preview: ["Marca personalizada", "Campos em etapas", "Link pronto para compartilhar"] },
+      { title: "Rastreie cada entrada", description: "Identifique campanha, canal, termo, dispositivo e link que trouxe cada oportunidade.", preview: ["UTMs preservadas", "Origem identificada", "Conversão acompanhada"] },
+      { title: "Receba tudo no CRM", description: "Dados, respostas e arquivos chegam ao contato certo, prontos para o time continuar a conversa.", preview: ["Contato criado ou atualizado", "Respostas organizadas", "Responsável definido"] },
+    ],
+    features: [
+      { eyebrow: "Conversão", title: "Seu tráfego deixa de terminar em uma página", titleHighlight: "deixa de terminar em uma página", description: "Transforme interesse em contatos identificados com formulários rápidos, claros e adaptados à sua marca.", bullets: ["Formulários responsivos em várias etapas", "Campos, listas, seleções e arquivos", "Página de agradecimento e redirecionamento"], metrics: [{ label: "Experiência", value: "com sua marca" }, { label: "Destino", value: "direto no CRM" }] },
+      { eyebrow: "Atribuição", title: "Saiba qual campanha trouxe cada oportunidade", titleHighlight: "qual campanha", description: "Links rastreados e UTMs preservam a origem do acesso até a resposta, para você investir com mais clareza.", bullets: ["Origem, mídia e campanha por lead", "Cliques, respostas e conversão", "Filtros e exportação completa"], reverse: true },
+      { eyebrow: "Operação", title: "Cada resposta já chega pronta para agir", titleHighlight: "pronta para agir", description: "A Wiize cria ou atualiza o contato, registra as respostas e distribui o lead para sua equipe sem trabalho manual.", bullets: ["Deduplicação automática de contatos", "Distribuição inteligente entre vendedores", "Respostas e anexos dentro do CRM"] },
+    ],
+    proof: [
+      { label: "Origem", value: "rastreada", hint: "UTMs e links por oportunidade" },
+      { label: "Respostas", value: "no CRM", hint: "dados e arquivos organizados" },
+      { label: "Distribuição", value: "automática", hint: "para o responsável certo" },
     ],
   },
   {
