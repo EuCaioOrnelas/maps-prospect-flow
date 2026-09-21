@@ -484,6 +484,33 @@ export default function AdminInfluencerOutreach() {
                 </div>
               )}
 
+              <div className="flex items-center gap-1 rounded-xl border border-border p-1 w-fit">
+                <Button size="sm" variant={view === "kanban" ? "default" : "ghost"} className="h-8"
+                  onClick={() => setView("kanban")}>
+                  <LayoutGrid size={14} className="mr-2" /> Kanban
+                </Button>
+                <Button size="sm" variant={view === "lista" ? "default" : "ghost"} className="h-8"
+                  onClick={() => setView("lista")}>
+                  <List size={14} className="mr-2" /> Lista
+                </Button>
+              </div>
+
+              {view === "kanban" ? (
+                loading ? (
+                  <div className="py-12 text-center">
+                    <Loader2 className="animate-spin mx-auto text-muted-foreground" size={18} />
+                  </div>
+                ) : (
+                  <InfluencerKanbanBoard
+                    prospects={filtered}
+                    emailOf={emailOf}
+                    onStatusChange={(id, status) => updateStatus([id], status)}
+                    onOpen={(p) => setDetail(p)}
+                    onThread={(p) => setThread(p)}
+                    onApproach={(p, email) => setApproach({ prospect: p, email })}
+                  />
+                )
+              ) : (
               <div className="rounded-xl border border-border overflow-x-auto">
                 <Table>
                   <TableHeader>
