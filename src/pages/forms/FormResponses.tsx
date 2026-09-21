@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Download, ExternalLink, FileText, Image as ImageIcon, Loader2, Paperclip, Search, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { formatLeadOrigin, resolveLeadOrigin } from "@/lib/leadOrigin";
 
 const PAGE_SIZE = 60;
 
@@ -74,7 +75,7 @@ export default function FormResponses() {
   }, [fields, submissions]);
 
   const sourceOptions = useMemo(
-    () => Array.from(new Set(submissions.map((s) => s.utm_source).filter(Boolean))) as string[],
+    () => Array.from(new Set(submissions.map((s) => resolveLeadOrigin(s).label))).sort(),
     [submissions],
   );
   const deviceOptions = useMemo(
@@ -90,7 +91,7 @@ export default function FormResponses() {
       const created = new Date(submission.created_at).getTime();
       if (from && created < from) return false;
       if (to && created > to) return false;
-      if (source !== "all" && (submission.utm_source || "") !== source) return false;
+      if (source !== "all" && resolveLeadOrigin(submission).label !== source) return false;
       if (device !== "all" && (submission.device || "") !== device) return false;
       if (!term) return true;
       const haystack = [
@@ -116,6 +117,7 @@ export default function FormResponses() {
     const rows = filtered.map((submission) => {
       const row: Record<string, any> = { "Data": fmtDateTime(submission.created_at) };
       for (const key of columnKeys) row[labelByName[key] || key] = submission.data?.[key] ?? "";
+      row["Origem do lead"] = formatLeadOrigin(submission);
       row["Origem (UTM)"] = submission.utm_source || "";
       row["Mídia (UTM)"] = submission.utm_medium || "";
       row["Campanha (UTM)"] = submission.utm_campaign || "";
@@ -245,7 +247,7 @@ export default function FormResponses() {
                             {files.length > 0 && <Badge variant="outline" className="ml-2 gap-1 align-middle"><Paperclip className="h-3 w-3" />{files.length}</Badge>}
                           </td>
                           <td className="max-w-[220px] truncate px-4 py-3 text-muted-foreground">{displayEmail(submission)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{submission.utm_source || submission.referrer || "Direto"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{formatLeadOrigin(submission)}</td>
                           <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">{fmtDateTime(submission.created_at)}</td>
                           <td className="px-4 py-3">
                             <div className="flex justify-end gap-2">

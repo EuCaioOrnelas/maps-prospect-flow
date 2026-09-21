@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CheckCircle2, Download, Eye, Loader2, MousePointerClick, Users } from "lucide-react";
+import { formatLeadOrigin } from "@/lib/leadOrigin";
 
 const fmtDateTime = (s: string) =>
   new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -41,7 +42,7 @@ export default function FormAnalytics() {
   const sources = useMemo(() => {
     const map: Record<string, number> = {};
     for (const s of subs) {
-      const key = s.utm_source || (s.referrer ? new URL(s.referrer).hostname : "Direto");
+      const key = formatLeadOrigin(s);
       map[key] = (map[key] || 0) + 1;
     }
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8);
