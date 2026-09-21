@@ -25,7 +25,7 @@ import {
   CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Code2, Copy, ExternalLink, FileText,
   FormInput, Hash, Image, Info, ListChecks, Loader2, Mail, MessageSquareText,
   Link2, MousePointerClick, Palette, Phone, Plus, Radio, RefreshCw, Save, Settings2,
-  ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap,
+  ShieldCheck, Sparkles, Trash2, Type, UserRound, Users, Zap, Paperclip, Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
