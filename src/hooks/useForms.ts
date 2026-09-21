@@ -86,49 +86,34 @@ export function useForms() {
     if (!ownerId) return;
     setLoading(true);
     try {
-      const [{ data: formRows }, { data: linkRows }, limitsRes] = await Promise.all([
+      const [{ data: formRows }, { data: linkRows }, limitsRes, analyticsRes] = await Promise.all([
         supabase.from("forms").select("*").eq("owner_user_id", ownerId).order("created_at", { ascending: false }),
         supabase.from("tracked_links").select("*").eq("owner_user_id", ownerId).order("created_at", { ascending: false }),
         callAdmin({ action: "limits" }).catch(() => null),
+        callAdmin({ action: "analytics_summary" }).catch(() => null),
       ]);
       setForms((formRows as any) || []);
       setLinks((linkRows as any) || []);
       if (limitsRes?.limits) setLimits(limitsRes.limits);
 
-      const [{ data: views }, { data: subs }, { data: clicks }] = await Promise.all([
-        supabase.from("form_views").select("form_id").eq("owner_user_id", ownerId),
-        supabase.from("form_submissions").select("form_id, created_at, tracked_link_id").eq("owner_user_id", ownerId),
-        supabase.from("tracked_link_clicks").select("tracked_link_id, visitor_hash, created_at").eq("owner_user_id", ownerId),
-      ]);
-
       const stats: Record<string, FormStats> = {};
       for (const f of (formRows as any) || []) stats[f.id] = { views: 0, submissions: 0, lastSubmission: null };
-      for (const v of (views as any) || []) if (stats[v.form_id]) stats[v.form_id].views++;
-      for (const s of (subs as any) || []) {
-        if (!stats[s.form_id]) continue;
-        stats[s.form_id].submissions++;
-        if (!stats[s.form_id].lastSubmission || s.created_at > stats[s.form_id].lastSubmission!) {
-          stats[s.form_id].lastSubmission = s.created_at;
-        }
+      for (const [formId, summary] of Object.entries((analyticsRes as any)?.forms || {})) {
+        if (!stats[formId]) continue;
+        stats[formId] = summary as FormStats;
       }
       setStatsByForm(stats);
 
       const linkStats: Record<string, { clicks: number; unique: number; last: string | null }> = {};
-      const uniqueSets: Record<string, Set<string>> = {};
-      for (const c of (clicks as any) || []) {
-        const id = c.tracked_link_id;
-        if (!linkStats[id]) { linkStats[id] = { clicks: 0, unique: 0, last: null }; uniqueSets[id] = new Set(); }
-        linkStats[id].clicks++;
-        if (c.visitor_hash) uniqueSets[id].add(c.visitor_hash);
-        if (!linkStats[id].last || c.created_at > linkStats[id].last!) linkStats[id].last = c.created_at;
-      }
-      for (const id of Object.keys(linkStats)) linkStats[id].unique = uniqueSets[id].size;
-      setClicksByLink(linkStats);
-
       const leadsPerLink: Record<string, number> = {};
-      for (const s of (subs as any) || []) {
-        if (s.tracked_link_id) leadsPerLink[s.tracked_link_id] = (leadsPerLink[s.tracked_link_id] || 0) + 1;
+      for (const link of (linkRows as any) || []) {
+        const summary = (analyticsRes as any)?.links?.[link.id];
+        linkStats[link.id] = summary
+          ? { clicks: summary.clicks, unique: summary.unique, last: summary.last }
+          : { clicks: 0, unique: 0, last: null };
+        leadsPerLink[link.id] = summary?.leads || 0;
       }
+      setClicksByLink(linkStats);
       setLeadsByLink(leadsPerLink);
     } finally {
       setLoading(false);

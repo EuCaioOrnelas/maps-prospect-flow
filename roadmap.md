@@ -48,3 +48,5 @@
 - [x] Refinar os cards sem blocos internos pesados e padronizar o seletor de área
 - [x] Exibir limite atingido e bloquear duplicação quando o plano não permitir
 - [x] Validar visualmente o painel em desktop e compilar os analytics
+- [x] Remover faixas superiores e proteger textos longos nos cards
+- [x] Garantir totais completos de visualizações, leads, conversão e atribuição UTM
