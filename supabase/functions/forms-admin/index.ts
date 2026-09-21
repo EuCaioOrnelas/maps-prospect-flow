@@ -150,14 +150,19 @@ Deno.serve(async (req) => {
     // Totais completos, sem o limite padrão de 1.000 linhas da API de dados.
     if (action === "analytics_summary") {
       const pageSize = 1000;
+      // Filtro de período opcional (ISO). Sem período = histórico completo.
+      const fromIso = str(body?.from, 40);
+      const toIso = str(body?.to, 40);
       const readAll = async (table: "form_views" | "form_submissions" | "tracked_link_clicks", columns: string) => {
         const rows: any[] = [];
         for (let from = 0; ; from += pageSize) {
-          const { data, error } = await admin
+          let q = admin
             .from(table)
             .select(columns)
-            .eq("owner_user_id", ownerId)
-            .range(from, from + pageSize - 1);
+            .eq("owner_user_id", ownerId);
+          if (fromIso) q = q.gte("created_at", fromIso);
+          if (toIso) q = q.lte("created_at", toIso);
+          const { data, error } = await q.range(from, from + pageSize - 1);
           if (error) throw error;
           rows.push(...(data || []));
           if (!data || data.length < pageSize) break;

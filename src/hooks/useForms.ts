@@ -70,9 +70,15 @@ async function callAdmin(payload: Record<string, unknown>) {
   return data as any;
 }
 
+export interface PeriodRange {
+  from: string | null;
+  to: string | null;
+}
+
 export function useForms() {
   const { user, accountOwnerId } = useAuth();
   const ownerId = accountOwnerId || user?.id || null;
+  const [range, setRange] = useState<PeriodRange>({ from: null, to: null });
 
   const [forms, setForms] = useState<FormRecord[]>([]);
   const [links, setLinks] = useState<TrackedLink[]>([]);
@@ -90,7 +96,7 @@ export function useForms() {
         supabase.from("forms").select("*").eq("owner_user_id", ownerId).order("created_at", { ascending: false }),
         supabase.from("tracked_links").select("*").eq("owner_user_id", ownerId).order("created_at", { ascending: false }),
         callAdmin({ action: "limits" }).catch(() => null),
-        callAdmin({ action: "analytics_summary" }).catch(() => null),
+        callAdmin({ action: "analytics_summary", from: range.from, to: range.to }).catch(() => null),
       ]);
       setForms((formRows as any) || []);
       setLinks((linkRows as any) || []);
@@ -118,7 +124,7 @@ export function useForms() {
     } finally {
       setLoading(false);
     }
-  }, [ownerId]);
+  }, [ownerId, range.from, range.to]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -140,5 +146,7 @@ export function useForms() {
     totals,
     refresh,
     callAdmin,
+    range,
+    setRange,
   };
 }
