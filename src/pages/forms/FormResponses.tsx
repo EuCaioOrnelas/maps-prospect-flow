@@ -524,7 +524,7 @@ export default function FormResponses() {
               )}
 
               {selected.lead_id && (
-                <Button className="w-full gap-2 shadow-none" onClick={() => navigate(`/crm?lead=${selected.lead_id}`)}>
+                <Button className="w-full gap-2 shadow-none" onClick={() => openLeadInCrm(selected.lead_id)}>
                   <UserRound className="h-4 w-4" /> Abrir contato no CRM
                 </Button>
               )}
