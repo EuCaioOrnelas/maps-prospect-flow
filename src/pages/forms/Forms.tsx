@@ -42,13 +42,17 @@ const metricCards = {
   ],
 } as const;
 
+const dayMs = 24 * 60 * 60 * 1000;
+const toDateInput = (d: Date) => d.toISOString().slice(0, 10);
+const QUICK_PERIODS = [7, 30, 60, 90] as const;
+
 export default function Forms() {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") === "links" ? "links" : "forms";
   const {
-    loading, forms, links, statsByForm, clicksByLink, limits, totals, refresh, callAdmin,
+    loading, forms, links, statsByForm, clicksByLink, limits, totals, refresh, callAdmin, setRange,
   } = useForms();
 
   const [search, setSearch] = useState("");
@@ -56,6 +60,29 @@ export default function Forms() {
   const [confirm, setConfirm] = useState<{ kind: "form" | "link"; id: string; name: string } | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [linkDialog, setLinkDialog] = useState<{ open: boolean; link: any | null }>({ open: false, link: null });
+  const [quickDays, setQuickDays] = useState<number | null>(30);
+  const [fromDate, setFromDate] = useState(() => toDateInput(new Date(Date.now() - 30 * dayMs)));
+  const [toDate, setToDate] = useState(() => toDateInput(new Date()));
+
+  const applyPeriod = (from: string, to: string, days: number | null) => {
+    setQuickDays(days);
+    setFromDate(from);
+    setToDate(to);
+    if (!from || !to) return;
+    const start = new Date(`${from}T00:00:00`);
+    const end = new Date(`${to}T23:59:59.999`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) return;
+    setRange({ from: start.toISOString(), to: end.toISOString() });
+  };
+
+  const applyQuick = (days: number) => {
+    const to = toDateInput(new Date());
+    const from = toDateInput(new Date(Date.now() - days * dayMs));
+    applyPeriod(from, to, days);
+  };
+
+  // Período padrão: últimos 30 dias.
+  useEffect(() => { applyQuick(30); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredForms = useMemo(
     () => forms.filter((f) => !search || `${f.name} ${f.title}`.toLowerCase().includes(search.toLowerCase())),
