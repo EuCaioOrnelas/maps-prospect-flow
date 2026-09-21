@@ -895,6 +895,7 @@ Deno.serve(async (req) => {
       "SUPPORT_TICKET_NEW",
       "SDR_MEETING_SCHEDULED",
       "ADMIN_BROADCAST",
+      "FORM_NEW_LEAD",
     ]);
     if (!COOLDOWN_BYPASS.has(email_type)) {
       const COOLDOWN_MINUTES = 360; // 6h
