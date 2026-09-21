@@ -516,7 +516,7 @@ export const PRODUCTS: ProductConfig[] = [
     ],
     features: [
       { eyebrow: "Conversão", title: "Seu tráfego deixa de terminar em uma página", titleHighlight: "deixa de terminar em uma página", description: "Transforme interesse em contatos identificados com formulários rápidos, claros e adaptados à sua marca.", bullets: ["Formulários responsivos em várias etapas", "Campos, listas, seleções e arquivos", "Página de agradecimento e redirecionamento"], metrics: [{ label: "Experiência", value: "com sua marca" }, { label: "Destino", value: "direto no CRM" }] },
-      { eyebrow: "Atribuição", title: "Saiba qual campanha trouxe cada oportunidade", titleHighlight: "qual campanha", description: "Links rastreados e UTMs preservam a origem do acesso até a resposta, para você investir com mais clareza.", bullets: ["Origem, mídia e campanha por lead", "Cliques, respostas e conversão", "Filtros e exportação completa"], reverse: true },
+      { eyebrow: "Atribuição", title: "Saiba qual campanha trouxe cada oportunidade", titleHighlight: "trouxe cada oportunidade", description: "Links rastreados e UTMs preservam a origem do acesso até a resposta, para você investir com mais clareza.", bullets: ["Origem, mídia e campanha por lead", "Cliques, respostas e conversão", "Filtros e exportação completa"], reverse: true },
       { eyebrow: "Operação", title: "Cada resposta já chega pronta para agir", titleHighlight: "pronta para agir", description: "A Wiize cria ou atualiza o contato, registra as respostas e distribui o lead para sua equipe sem trabalho manual.", bullets: ["Deduplicação automática de contatos", "Distribuição inteligente entre vendedores", "Respostas e anexos dentro do CRM"] },
     ],
     proof: [

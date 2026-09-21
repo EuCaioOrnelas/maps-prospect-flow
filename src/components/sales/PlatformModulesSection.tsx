@@ -1146,6 +1146,117 @@ const WianMock = () => (
   </MockShell>
 );
 
+/* Forms & Links — réplica de um formulário publicado com a marca do cliente */
+const FormsMock = () => (
+  <MockShell title="forms.suaempresa.com.br/proposta" badge="Nova resposta">
+    <div className="space-y-2">
+      {/* Barra de endereço + origem rastreada */}
+      <div className="flex items-center gap-2 rounded-card border border-border/60 bg-background/80 px-2.5 py-1.5">
+        <Globe className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <p className="truncate text-[10px] text-muted-foreground">
+          suaempresa.com.br/proposta
+          <span className="text-primary/80">?utm_source=google&utm_campaign=demo</span>
+        </p>
+        <ShieldCheck className="ml-auto h-3.5 w-3.5 shrink-0 text-primary/70" />
+      </div>
+
+      {/* Página do formulário com capa, logo e marca do cliente */}
+      <div className="overflow-hidden rounded-card border border-border/60 bg-card">
+        <div className="relative h-9 bg-gradient-to-r from-primary/35 via-emerald-400/25 to-teal-400/20">
+          <div className="absolute inset-0 [background-image:radial-gradient(hsl(var(--primary)/0.25)_1px,transparent_1px)] [background-size:12px_12px] opacity-60" />
+        </div>
+        <div className="-mt-4 flex items-center gap-2 px-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-card border border-border/60 bg-background text-[10px] font-extrabold text-primary shadow-sm">
+            SL
+          </span>
+          <div className="pt-3">
+            <p className="text-[11px] font-semibold leading-none text-foreground">Sua Logo Aqui</p>
+            <p className="mt-1 text-[9px] text-muted-foreground">Peça uma demonstração</p>
+          </div>
+          <span className="ml-auto pt-3 text-[10px] font-bold text-primary">67%</span>
+        </div>
+        <div className="px-3 pt-2">
+          <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: "67%" }}
+              viewport={VIEW}
+              transition={{ duration: 0.9, ease: "easeOut" }}
+              className="h-full rounded-full bg-primary"
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5 p-3 pt-2.5">
+          {[
+            { label: "Nome completo", value: "Marina Oliveira", icon: UserCheck },
+            { label: "E-mail profissional", value: "marina@empresa.com.br", icon: Mail },
+            { label: "Empresa", value: "Oliveira Distribuidora", icon: Building2 },
+          ].map((field) => (
+            <div key={field.label} className="rounded-hover border border-border/60 bg-background/70 px-2.5 py-1.5">
+              <p className="text-[8px] uppercase tracking-wide text-muted-foreground">{field.label}</p>
+              <div className="mt-0.5 flex items-center gap-1.5">
+                <field.icon className="h-3 w-3 shrink-0 text-primary/70" />
+                <p className="truncate text-[10px] font-medium text-foreground">{field.value}</p>
+              </div>
+            </div>
+          ))}
+          <div className="flex items-start gap-1.5 pt-0.5">
+            <span className="mt-[1px] flex h-3 w-3 items-center justify-center rounded-[3px] bg-primary">
+              <Check className="h-2 w-2 text-primary-foreground" strokeWidth={4} />
+            </span>
+            <p className="text-[8.5px] leading-snug text-muted-foreground">
+              Concordo com o uso dos meus dados para contato (LGPD).
+            </p>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={VIEW}
+            transition={{ delay: 0.3 }}
+            className="mt-1.5 flex h-8 items-center justify-center gap-1.5 rounded-hover bg-primary text-[11px] font-bold text-primary-foreground shadow-[0_8px_18px_-10px_hsl(var(--primary))]"
+          >
+            Enviar e falar com um especialista
+            <ArrowRight className="h-3.5 w-3.5" />
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Rastreio e destino */}
+      <div className="grid grid-cols-2 gap-2">
+        <Row>
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            <div className="min-w-0">
+              <p className="text-[9px] text-muted-foreground">Origem rastreada</p>
+              <p className="truncate text-[11px] font-semibold">Google Ads · demo</p>
+            </div>
+          </div>
+        </Row>
+        <Row>
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="h-4 w-4 text-primary" />
+            <div className="min-w-0">
+              <p className="text-[9px] text-muted-foreground">Destino</p>
+              <p className="truncate text-[11px] font-semibold">CRM Wiize</p>
+            </div>
+          </div>
+        </Row>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={VIEW}
+        transition={{ delay: 0.5 }}
+        className="flex items-center gap-2 rounded-card bg-primary/10 p-3 text-[11px] font-semibold text-primary"
+      >
+        <CheckCheck className="h-4 w-4" />
+        Lead recebido com respostas, arquivos e origem
+      </motion.div>
+    </div>
+  </MockShell>
+);
+
 /* ------------------------------------------------------------------ */
 
 
@@ -1249,7 +1360,7 @@ const modules: ModuleItem[] = [
     description:
       "Crie formulários com a sua marca, descubra exatamente de onde cada lead veio e envie respostas, arquivos e contexto direto para o CRM.",
     benefits: ["Formulários em várias etapas", "Links e UTMs rastreados", "Respostas e arquivos no CRM", "Distribuição automática de leads"],
-    mock: () => <MockShell title="Forms & Links" badge="Nova resposta"><div className="space-y-2"><div className="rounded-card border border-border/60 bg-background/80 p-3"><div className="flex items-center justify-between"><p className="text-xs font-semibold">Peça uma demonstração</p><span className="text-[10px] font-bold text-primary">67%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary"><motion.div initial={{ width: 0 }} whileInView={{ width: "67%" }} viewport={VIEW} transition={{ duration: 0.8 }} className="h-full rounded-full bg-primary" /></div>{["Nome completo", "E-mail profissional", "Empresa"].map((field) => <div key={field} className="mt-2 flex h-9 items-center rounded-hover border border-border/60 bg-card px-3 text-[10px] text-muted-foreground">{field}</div>)}</div><div className="grid grid-cols-2 gap-2"><Row><div className="flex items-center gap-2"><Link2 className="h-4 w-4 text-primary"/><div><p className="text-[9px] text-muted-foreground">Origem rastreada</p><p className="text-[11px] font-semibold">Google Ads</p></div></div></Row><Row><div className="flex items-center gap-2"><LayoutDashboard className="h-4 w-4 text-primary"/><div><p className="text-[9px] text-muted-foreground">Destino</p><p className="text-[11px] font-semibold">CRM Wiize</p></div></div></Row></div><motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={VIEW} transition={{ delay: 0.5 }} className="flex items-center gap-2 rounded-card bg-primary/10 p-3 text-[11px] font-semibold text-primary"><CheckCheck className="h-4 w-4"/>Lead recebido com respostas e origem</motion.div></div></MockShell>,
+    mock: FormsMock,
   },
   {
     icon: BrainCircuit,
