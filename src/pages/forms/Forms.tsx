@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SEO } from "@/components/SEO";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -63,6 +68,9 @@ export default function Forms() {
   const [quickDays, setQuickDays] = useState<number | null>(30);
   const [fromDate, setFromDate] = useState(() => toDateInput(new Date(Date.now() - 30 * dayMs)));
   const [toDate, setToDate] = useState(() => toDateInput(new Date()));
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState<Date>(() => new Date());
+  const [draftTo, setDraftTo] = useState<Date>(() => new Date());
 
   const applyPeriod = (from: string, to: string, days: number | null) => {
     setQuickDays(days);
@@ -80,6 +88,25 @@ export default function Forms() {
     const from = toDateInput(new Date(Date.now() - days * dayMs));
     applyPeriod(from, to, days);
   };
+
+  const openRange = (next: boolean) => {
+    setRangeOpen(next);
+    if (next) {
+      setDraftFrom(fromDate ? new Date(`${fromDate}T12:00:00`) : new Date());
+      setDraftTo(toDate ? new Date(`${toDate}T12:00:00`) : new Date());
+    }
+  };
+
+  const applyRangeDraft = () => {
+    const start = draftFrom <= draftTo ? draftFrom : draftTo;
+    const end = draftFrom <= draftTo ? draftTo : draftFrom;
+    applyPeriod(toDateInput(start), toDateInput(end), null);
+    setRangeOpen(false);
+  };
+
+  const periodLabel = fromDate && toDate
+    ? `${format(new Date(`${fromDate}T12:00:00`), "dd MMM yyyy", { locale: ptBR })} — ${format(new Date(`${toDate}T12:00:00`), "dd MMM yyyy", { locale: ptBR })}`
+    : "Período";
 
   // Período padrão: últimos 30 dias.
   useEffect(() => { applyQuick(30); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -172,46 +199,89 @@ export default function Forms() {
             </div>
           </div>
 
+          {/* Abas + busca */}
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="h-10 border border-border/60 bg-muted/40 p-1">
+                <TabsTrigger value="forms" className="gap-2 px-4">
+                  <FileText className="h-4 w-4" /> Formulários
+                </TabsTrigger>
+                <TabsTrigger value="links" className="gap-2 px-4">
+                  <Link2 className="h-4 w-4" /> Links rastreados
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="relative ml-auto w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="pl-9" />
+            </div>
+          </div>
+
           {/* Filtro de período */}
-          <Card className="mt-6 flex flex-col gap-3 border-border/60 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <CalendarClock className="h-3.5 w-3.5 text-primary" />
-                Período
-              </span>
-              {QUICK_PERIODS.map((d) => (
-                <Button
-                  key={d}
-                  type="button"
-                  size="sm"
-                  variant={quickDays === d ? "default" : "outline"}
-                  className="h-8 rounded-lg px-3 text-xs shadow-none"
-                  onClick={() => applyQuick(d)}
-                >
-                  {d} dias
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <Popover open={rangeOpen} onOpenChange={openRange}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1.5 border-border/60 text-xs">
+                  <CalendarClock size={13} />
+                  {periodLabel}
                 </Button>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                type="date"
-                value={fromDate}
-                max={toDate}
-                onChange={(e) => applyPeriod(e.target.value, toDate, null)}
-                className="h-8 w-[140px] rounded-lg text-xs"
-                aria-label="Data inicial"
-              />
-              <span className="text-xs text-muted-foreground">até</span>
-              <Input
-                type="date"
-                value={toDate}
-                min={fromDate}
-                onChange={(e) => applyPeriod(fromDate, e.target.value, null)}
-                className="h-8 w-[140px] rounded-lg text-xs"
-                aria-label="Data final"
-              />
-            </div>
-          </Card>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-auto overflow-hidden rounded-2xl border-border/70 bg-popover p-0 shadow-xl"
+                align="start"
+              >
+                <div className="p-3">
+                  <Calendar
+                    mode="range"
+                    numberOfMonths={2}
+                    defaultMonth={draftFrom}
+                    selected={{ from: draftFrom, to: draftTo }}
+                    onSelect={(r: any) => {
+                      if (r?.from) setDraftFrom(r.from);
+                      if (r?.to) setDraftTo(r.to);
+                    }}
+                    initialFocus
+                    className={cn("pointer-events-auto p-0")}
+                    classNames={{
+                      months: "flex flex-col sm:flex-row gap-4 sm:gap-5",
+                      month: "space-y-4 w-[260px]",
+                      caption_label: "text-sm font-semibold text-popover-foreground",
+                      head_cell: "text-muted-foreground rounded-md w-9 font-medium text-[0.78rem]",
+                      day: cn(buttonVariants({ variant: "ghost" }), "h-9 w-9 p-0 text-sm font-medium aria-selected:opacity-100"),
+                      day_selected: "!bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
+                      day_range_start: "day-range-start !bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
+                      day_range_end: "day-range-end !bg-primary !text-primary-foreground hover:!bg-primary hover:!text-primary-foreground focus:!bg-primary focus:!text-primary-foreground",
+                      day_range_middle: "aria-selected:!bg-primary/90 aria-selected:!text-primary-foreground",
+                      day_outside: "day-outside text-muted-foreground/55 aria-selected:bg-primary/45 aria-selected:text-primary-foreground aria-selected:opacity-100",
+                      day_today: "font-semibold aria-selected:!bg-primary aria-selected:!text-primary-foreground",
+                    }}
+                  />
+                </div>
+                <div className="border-t border-border/70 bg-secondary/35 p-3">
+                  <Button size="sm" className="h-9 w-full rounded-lg text-xs" onClick={applyRangeDraft}>
+                    Aplicar
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <div className="mx-1 h-6 w-px bg-border" />
+
+            {QUICK_PERIODS.map((d) => (
+              <Button
+                key={d}
+                variant={quickDays === d ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "h-9 text-xs",
+                  quickDays === d && "bg-primary text-primary-foreground hover:bg-primary/90",
+                )}
+                onClick={() => applyQuick(d)}
+              >
+                {d} dias
+              </Button>
+            ))}
+          </div>
 
           {/* KPIs */}
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -236,23 +306,6 @@ export default function Forms() {
             ))}
           </div>
 
-          {/* Tabs */}
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="h-10 border border-border/60 bg-muted/40 p-1">
-                <TabsTrigger value="forms" className="gap-2 px-4">
-                  <FileText className="h-4 w-4" /> Formulários
-                </TabsTrigger>
-                <TabsTrigger value="links" className="gap-2 px-4">
-                  <Link2 className="h-4 w-4" /> Links rastreados
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="relative ml-auto w-full sm:w-64">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="pl-9" />
-            </div>
-          </div>
 
           {/* Conteúdo */}
           {loading ? (
