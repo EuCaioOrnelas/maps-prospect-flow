@@ -43,6 +43,15 @@ const EMPTY = {
 export function TrackedLinkDialog({ open, link, onOpenChange, onSaved }: Props) {
   const [form, setForm] = useState<any>(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [slugTaken, setSlugTaken] = useState(false);
+
+  const checkSlug = async () => {
+    if (!form.slug) { setSlugTaken(false); return; }
+    const { data } = await supabase.functions.invoke("forms-admin", {
+      body: { action: "check_link_slug", slug: form.slug, id: link?.id },
+    });
+    setSlugTaken((data as any)?.available === false);
+  };
 
   useEffect(() => {
     if (open) setForm(link ? { ...EMPTY, ...link } : EMPTY);
