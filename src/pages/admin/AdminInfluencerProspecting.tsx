@@ -66,6 +66,8 @@ export default function AdminInfluencerProspecting() {
   const [maxSubs, setMaxSubs] = useState("100000");
   const [minViews, setMinViews] = useState("");
   const [recency, setRecency] = useState("90");
+  const [onlyActiveChannels, setOnlyActiveChannels] = useState(false);
+  const [activeWindowDays, setActiveWindowDays] = useState("30");
   const [keywords, setKeywords] = useState<string[]>(DEFAULT_KEYWORDS);
   const [kwInput, setKwInput] = useState("");
 
