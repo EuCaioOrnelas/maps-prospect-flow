@@ -13,10 +13,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Download, ExternalLink, FileText, Image as ImageIcon, Loader2, Paperclip, Search, UserRound } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { rangeCalendarClassNames } from "@/lib/calendarRange";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  ArrowLeft, AtSign, CalendarClock, Check, CheckCircle2, ChevronLeft, ChevronRight, Copy, Download,
+  ExternalLink, FileText, Hash, Image as ImageIcon, ListChecks, Loader2, MessageSquareText, Paperclip,
+  Phone, Search, Type, UserRound,
+} from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { formatLeadOrigin, resolveLeadOrigin, getReferralSource, NOT_IDENTIFIED } from "@/lib/leadOrigin";
+
+const dayMs = 24 * 60 * 60 * 1000;
+const toDateInput = (d: Date) => d.toISOString().slice(0, 10);
+const QUICK_PERIODS = [7, 30, 60, 90] as const;
+
+const FIELD_ICONS: Record<string, any> = {
+  text: Type,
+  email: AtSign,
+  phone: Phone,
+  number: Hash,
+  textarea: MessageSquareText,
+  select: ListChecks,
+  radio: ListChecks,
+  checkbox: CheckCircle2,
+  file: Paperclip,
+};
 
 /** Origem exibida: UTM/Referer normalizados; sem evidência → "Não identificado". */
 const originOf = (submission: any) => submission?.detected_source && submission.detected_source !== NOT_IDENTIFIED
