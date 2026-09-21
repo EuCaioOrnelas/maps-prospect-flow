@@ -249,18 +249,50 @@ export default function FormResponses() {
                   <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome, e-mail, resposta ou campanha" className="pl-9" />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Início</Label>
-                <div className="relative">
-                  <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} className="pl-9" />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Fim</Label>
-                <div className="relative">
-                  <Calendar className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} className="pl-9" />
+              <div className="space-y-1.5 xl:col-span-2">
+                <Label className="text-xs">Período</Label>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Popover open={rangeOpen} onOpenChange={openRange}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-9 gap-1.5 border-border/60 text-xs shadow-none">
+                        <CalendarClock size={13} />
+                        {periodLabel}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto overflow-hidden rounded-2xl border-border/70 bg-popover p-0 shadow-xl" align="start">
+                      <div className="p-3">
+                        <CalendarPicker
+                          mode="range"
+                          numberOfMonths={2}
+                          locale={ptBR}
+                          defaultMonth={draftFrom}
+                          selected={{ from: draftFrom, to: draftTo } as any}
+                          onSelect={(r: any) => {
+                            setDraftFrom(r?.from || r?.to || new Date());
+                            setDraftTo(r?.to || r?.from || new Date());
+                          }}
+                          initialFocus
+                          className="pointer-events-auto p-0"
+                          classNames={rangeCalendarClassNames}
+                        />
+                      </div>
+                      <div className="border-t border-border/70 bg-secondary/35 p-3">
+                        <Button size="sm" className="h-9 w-full rounded-lg text-xs" onClick={applyRangeDraft}>Aplicar</Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="mx-1 h-6 w-px bg-border" />
+                  {QUICK_PERIODS.map((d) => (
+                    <Button
+                      key={d}
+                      variant={quickDays === d ? "default" : "ghost"}
+                      size="sm"
+                      className={cn("h-9 text-xs shadow-none", quickDays === d && "bg-primary text-primary-foreground hover:bg-primary/90")}
+                      onClick={() => applyQuick(d)}
+                    >
+                      {d} dias
+                    </Button>
+                  ))}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
