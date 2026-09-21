@@ -174,9 +174,9 @@ export default function PublicForm() {
     const rawRedirect = (form?.config?.redirectUrl || "").trim();
     const redirectUrl = rawRedirect && !/^https?:\/\//i.test(rawRedirect) ? `https://${rawRedirect.replace(/^\/+/, "")}` : rawRedirect;
     if (!done || !form?.config?.redirectEnabled || !redirectUrl) return;
-    setRedirectSeconds(3);
+    setRedirectSeconds(REDIRECT_SECONDS);
     const interval = window.setInterval(() => setRedirectSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
-    const timeout = window.setTimeout(() => window.location.assign(redirectUrl), 3000);
+    const timeout = window.setTimeout(() => window.location.assign(redirectUrl), REDIRECT_SECONDS * 1000);
     return () => { window.clearInterval(interval); window.clearTimeout(timeout); };
   }, [done, form]);
 
