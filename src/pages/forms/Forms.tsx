@@ -172,8 +172,49 @@ export default function Forms() {
             </div>
           </div>
 
+          {/* Filtro de período */}
+          <Card className="mt-6 flex flex-col gap-3 border-border/60 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <CalendarClock className="h-3.5 w-3.5 text-primary" />
+                Período
+              </span>
+              {QUICK_PERIODS.map((d) => (
+                <Button
+                  key={d}
+                  type="button"
+                  size="sm"
+                  variant={quickDays === d ? "default" : "outline"}
+                  className="h-8 rounded-lg px-3 text-xs shadow-none"
+                  onClick={() => applyQuick(d)}
+                >
+                  {d} dias
+                </Button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                type="date"
+                value={fromDate}
+                max={toDate}
+                onChange={(e) => applyPeriod(e.target.value, toDate, null)}
+                className="h-8 w-[140px] rounded-lg text-xs"
+                aria-label="Data inicial"
+              />
+              <span className="text-xs text-muted-foreground">até</span>
+              <Input
+                type="date"
+                value={toDate}
+                min={fromDate}
+                onChange={(e) => applyPeriod(fromDate, e.target.value, null)}
+                className="h-8 w-[140px] rounded-lg text-xs"
+                aria-label="Data final"
+              />
+            </div>
+          </Card>
+
           {/* KPIs */}
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {metricCards[tab].map((kpi, index) => (
               <Card key={kpi.label} className="min-h-[138px] border-border/60 bg-card p-5 shadow-sm">
                 <div className="flex items-center gap-3">
@@ -187,9 +228,9 @@ export default function Forms() {
                   <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                   {index === 0
                     ? `${tab === "forms" ? forms.length : links.length} de ${tab === "forms" ? limits.forms : limits.links} utilizados`
-                    : tab === "forms"
-                      ? "Dados atualizados automaticamente"
-                      : "Rastreamento atualizado automaticamente"}
+                    : quickDays
+                      ? `Últimos ${quickDays} dias`
+                      : `${fmtDate(fromDate ? new Date(`${fromDate}T12:00:00`).toISOString() : null)} – ${fmtDate(toDate ? new Date(`${toDate}T12:00:00`).toISOString() : null)}`}
                 </div>
               </Card>
             ))}
