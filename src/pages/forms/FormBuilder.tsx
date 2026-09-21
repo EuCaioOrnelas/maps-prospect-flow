@@ -297,7 +297,15 @@ export default function FormBuilder() {
 
                 {step === 1 && <div className="space-y-5">
                   <SectionHeading icon={FormInput} title="Campos do formulário" description="Organize os dados em uma sequência simples para quem vai responder." />
-                  <div className="space-y-4">{fields.map((field, index) => {
+                  {totalPages > 1 && <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-background p-2">
+                    {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1).map((pageNumber) => {
+                      const count = fields.filter((field) => pageOf(field) === pageNumber).length;
+                      return <Button key={pageNumber} variant="ghost" onClick={() => setActivePage(pageNumber)} className={cn("h-9 gap-2 rounded-md px-3 shadow-none hover:translate-y-0 hover:bg-primary/10 hover:text-foreground", currentPage === pageNumber && "bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary")}>
+                        <Layers className="h-4 w-4" />Página {pageNumber}<span className="text-xs opacity-70">({count})</span>
+                      </Button>;
+                    })}
+                  </div>}
+                  <div className="space-y-4">{fields.map((field, index) => ({ field, index })).filter(({ field }) => pageOf(field) === currentPage).map(({ field, index }) => {
                     const type = FIELD_TYPES.find((item) => item.value === field.field_type) || FIELD_TYPES[0];
                     const FieldIcon = type.icon;
                     return <div key={field.id || index} className="rounded-lg border border-border/60 bg-background p-4">
