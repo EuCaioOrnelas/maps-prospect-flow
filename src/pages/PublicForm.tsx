@@ -319,8 +319,23 @@ export default function PublicForm() {
                 <h2 className="text-xl font-semibold" style={{ color: textColor }}>Obrigado!</h2>
                 <p className="mx-auto mt-2 max-w-sm text-sm opacity-75" style={{ color: textColor }}>{done}</p>
                 {cfg.redirectEnabled && Boolean((cfg.redirectUrl || "").trim()) && (
-                  <div className="mx-auto mt-5 max-w-sm rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
-                    Você será redirecionado em <strong>{redirectSeconds}</strong> segundo{redirectSeconds === 1 ? "" : "s"}.
+                  <div className="mx-auto mt-6 flex max-w-sm items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-left">
+                    <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                      <svg viewBox="0 0 36 36" className="h-9 w-9 -rotate-90">
+                        <circle cx="18" cy="18" r="16" fill="none" stroke="#e4e4e7" strokeWidth="3" />
+                        <circle
+                          cx="18" cy="18" r="16" fill="none" stroke={primary} strokeWidth="3" strokeLinecap="round"
+                          strokeDasharray={2 * Math.PI * 16}
+                          strokeDashoffset={2 * Math.PI * 16 * (1 - redirectSeconds / REDIRECT_SECONDS)}
+                          style={{ transition: "stroke-dashoffset 1s linear" }}
+                        />
+                      </svg>
+                      <span className="absolute text-xs font-semibold text-zinc-700">{redirectSeconds}</span>
+                    </span>
+                    <span className="text-sm text-zinc-700">
+                      <strong className="block font-medium text-zinc-900">Redirecionando você</strong>
+                      Aguarde {redirectSeconds} segundo{redirectSeconds === 1 ? "" : "s"}, estamos abrindo a próxima página.
+                    </span>
                   </div>
                 )}
               </div>
@@ -413,6 +428,19 @@ export default function PublicForm() {
                       </div>
                     );
                   })}
+
+                  {isLastPage && (
+                    <label className="flex cursor-pointer items-start gap-3 border border-zinc-200 bg-zinc-50/70 px-3 py-3 text-[13px] leading-relaxed text-zinc-700" style={inputStyle}>
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        onChange={(event) => { setConsent(event.target.checked); if (event.target.checked) setError(null); }}
+                        className="mt-0.5 h-4 w-4 shrink-0"
+                        style={{ accentColor: primary }}
+                      />
+                      <span>{CONSENT_TEXT}</span>
+                    </label>
+                  )}
 
                   {error && <p className="text-sm text-red-600">{error}</p>}
 
