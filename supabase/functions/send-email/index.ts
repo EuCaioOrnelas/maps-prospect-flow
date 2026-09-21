@@ -661,7 +661,25 @@ function templateLeadEventReminder(payload: Record<string, unknown>): TemplateRe
   };
 }
 
+function templateFormNewLead(payload: Record<string, unknown>): TemplateResult {
+  const formName = (payload.form_name as string) || "seu formulário";
+  const rows = Array.isArray(payload.rows) ? (payload.rows as [string, string][]) : [];
+  const crmUrl = (payload.crm_url as string) || `${BRAND.url}/crm`;
+  return {
+    subject: `Novo lead recebido pelo formulário ${formName}`,
+    html: baseLayout("Novo lead recebido", `
+      <h1 style="margin:0 0 16px;font-size:22px;color:#18181b;">Novo lead recebido</h1>
+      <p style="margin:0 0 16px;color:#3f3f46;font-size:15px;">Um novo lead foi recebido através do formulário <strong>${formName}</strong>.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;color:#3f3f46;">
+        ${rows.map(([k, v]) => `<tr><td style="padding:6px 0;color:#71717a;width:130px;">${k}</td><td style="padding:6px 0;"><strong>${v}</strong></td></tr>`).join("")}
+      </table>
+      <a href="${crmUrl}" style="display:inline-block;margin-top:20px;padding:12px 24px;background:${BRAND.color};color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Ver no CRM</a>
+    `, `Novo lead pelo formulário ${formName}`),
+  };
+}
+
 const TEMPLATES: Record<string, (payload: Record<string, unknown>) => TemplateResult> = {
+  FORM_NEW_LEAD: templateFormNewLead,
   CAMPAIGN_SCHEDULED_STARTED: templateCampaignStarted,
   WEEKLY_SUMMARY: templateWeeklySummary,
   NUMBER_DISCONNECTED: templateNumberDisconnected,
@@ -877,6 +895,7 @@ Deno.serve(async (req) => {
       "SUPPORT_TICKET_NEW",
       "SDR_MEETING_SCHEDULED",
       "ADMIN_BROADCAST",
+      "FORM_NEW_LEAD",
     ]);
     if (!COOLDOWN_BYPASS.has(email_type)) {
       const COOLDOWN_MINUTES = 360; // 6h

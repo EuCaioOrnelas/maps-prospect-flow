@@ -110,6 +110,11 @@ const MetaDashboard = lazyWithRetry(() => import("./pages/meta/MetaDashboard"), 
 const MetaCampanhas = lazyWithRetry(() => import("./pages/meta/MetaCampanhas"), "MetaCampanhas");
 const MetaTemplates = lazyWithRetry(() => import("./pages/meta/MetaTemplates"), "MetaTemplates");
 const MetaWhatsAppTemplates = lazyWithRetry(() => import("./pages/meta/MetaWhatsAppTemplates"), "MetaWhatsAppTemplates");
+const Forms = lazyWithRetry(() => import("./pages/forms/Forms"), "Forms");
+const FormBuilder = lazyWithRetry(() => import("./pages/forms/FormBuilder"), "FormBuilder");
+const FormAnalytics = lazyWithRetry(() => import("./pages/forms/FormAnalytics"), "FormAnalytics");
+const PublicForm = lazyWithRetry(() => import("./pages/PublicForm"), "PublicForm");
+const TrackedLinkRedirect = lazyWithRetry(() => import("./pages/TrackedLinkRedirect"), "TrackedLinkRedirect");
 const MetaNumeros = lazyWithRetry(() => import("./pages/meta/MetaNumeros"), "MetaNumeros");
 const NumerosComparativo = lazyWithRetry(() => import("./pages/NumerosComparativo"), "NumerosComparativo");
 const MetaConnectGuide = lazyWithRetry(() => import("./pages/MetaConnectGuide"), "MetaConnectGuide");
@@ -333,6 +338,8 @@ const App = () => (
                 <Route path="/inteligencia" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><InteligenciaWiize /></Suspense></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
+                <Route path="/form/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><PublicForm /></Suspense></LightThemeWrapper>} />
+                <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
                 <Route path="/tour-completo" element={<LightThemeWrapper><TourCompleto /></LightThemeWrapper>} />

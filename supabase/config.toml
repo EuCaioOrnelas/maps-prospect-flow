@@ -170,3 +170,6 @@ verify_jwt = false
 
 [functions.intel-engine]
 verify_jwt = false
+
+[functions.forms-public]
+verify_jwt = false
