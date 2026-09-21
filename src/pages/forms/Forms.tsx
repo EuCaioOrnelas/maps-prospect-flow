@@ -48,7 +48,7 @@ export default function Forms() {
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") === "links" ? "links" : "forms";
   const {
-    loading, forms, links, statsByForm, clicksByLink, leadsByLink, limits, totals, refresh, callAdmin,
+    loading, forms, links, statsByForm, clicksByLink, limits, totals, refresh, callAdmin,
   } = useForms();
 
   const [search, setSearch] = useState("");
