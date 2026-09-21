@@ -1,0 +1,298 @@
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const admin = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  { auth: { persistSession: false } },
+);
+
+const PLAN_LIMITS: Record<string, { forms: number; links: number }> = {
+  start: { forms: 1, links: 1 },
+  growth: { forms: 5, links: 5 },
+  scale: { forms: 50, links: 50 },
+  free: { forms: 1, links: 1 },
+};
+
+function limitsFor(plan: string | null | undefined) {
+  return PLAN_LIMITS[(plan || "free").toLowerCase()] ?? PLAN_LIMITS.free;
+}
+
+function slugify(value: string): string {
+  return (value || "form")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "form";
+}
+
+async function uniqueSlug(table: "forms" | "tracked_links", base: string): Promise<string> {
+  let slug = slugify(base);
+  for (let i = 0; i < 40; i++) {
+    const candidate = i === 0 ? slug : `${slug}-${i + 1}`;
+    const { data } = await admin.from(table).select("id").eq("slug", candidate).maybeSingle();
+    if (!data) return candidate;
+  }
+  return `${slug}-${crypto.randomUUID().slice(0, 6)}`;
+}
+
+function str(value: unknown, max = 500): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim().slice(0, max);
+  return trimmed.length ? trimmed : null;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!token) return json({ error: "Não autenticado" }, 401);
+    const { data: userData } = await admin.auth.getUser(token);
+    const user = userData?.user;
+    if (!user) return json({ error: "Não autenticado" }, 401);
+
+    // Resolve tenant (account owner) — nunca confiar em id vindo do frontend
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id, plan, parent_owner_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    let ownerId = (profile as any)?.parent_owner_id || user.id;
+    if (!(profile as any)?.parent_owner_id) {
+      const { data: member } = await admin
+        .from("account_members")
+        .select("owner_user_id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+      if (member?.owner_user_id) ownerId = member.owner_user_id;
+    }
+
+    const { data: ownerProfile } = await admin
+      .from("profiles")
+      .select("plan")
+      .eq("id", ownerId)
+      .maybeSingle();
+    const limits = limitsFor((ownerProfile as any)?.plan);
+
+    const body = await req.json().catch(() => ({}));
+    const action = String(body?.action || "");
+
+    // ─────────── LIMITES ───────────
+    const counts = async () => {
+      const [{ count: forms }, { count: links }] = await Promise.all([
+        admin.from("forms").select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId),
+        admin.from("tracked_links").select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId),
+      ]);
+      return { forms: forms || 0, links: links || 0 };
+    };
+
+    if (action === "limits") {
+      const c = await counts();
+      return json({ limits, counts: c });
+    }
+
+    // ─────────── FORMULÁRIOS ───────────
+    if (action === "create_form" || action === "duplicate_form") {
+      const c = await counts();
+      if (c.forms >= limits.forms) {
+        return json({ error: "limit_reached", message: "Você atingiu o limite de formulários do seu plano." }, 403);
+      }
+    }
+
+    if (action === "create_form" || action === "update_form") {
+      const input = body?.form || {};
+      const name = str(input.name, 120) || "Formulário sem nome";
+      const stageId = str(input.crm_stage_id, 64);
+      const responsibles: string[] = Array.isArray(input.crm_responsibles) ? input.crm_responsibles.slice(0, 20) : [];
+      const notifyIds: string[] = Array.isArray(input.notify_user_ids) ? input.notify_user_ids.slice(0, 20) : [];
+
+      // Ownership da coluna do CRM
+      if (stageId) {
+        const { data: stage } = await admin
+          .from("pipeline_stages")
+          .select("id")
+          .eq("id", stageId)
+          .eq("owner_user_id", ownerId)
+          .maybeSingle();
+        if (!stage) return json({ error: "Coluna do CRM inválida para esta conta." }, 400);
+      }
+
+      const payload: Record<string, unknown> = {
+        owner_user_id: ownerId,
+        name,
+        title: str(input.title, 160) || name,
+        description: str(input.description, 600),
+        button_text: str(input.button_text, 60) || "Enviar",
+        success_message:
+          str(input.success_message, 400) ||
+          "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
+        status: input.status === "inactive" ? "inactive" : "active",
+        config: typeof input.config === "object" && input.config ? input.config : {},
+        crm_enabled: input.crm_enabled !== false,
+        crm_stage_id: stageId,
+        crm_responsibles: responsibles,
+        notify_enabled: !!input.notify_enabled,
+        notify_user_ids: notifyIds,
+      };
+
+      let formId = str(input.id, 64);
+      if (action === "create_form") {
+        payload.created_by = user.id;
+        payload.slug = await uniqueSlug("forms", str(input.slug, 80) || name);
+        const { data, error } = await admin.from("forms").insert(payload).select("*").single();
+        if (error) throw error;
+        formId = data.id;
+      } else {
+        if (!formId) return json({ error: "Formulário não informado." }, 400);
+        const { data: existing } = await admin
+          .from("forms").select("id").eq("id", formId).eq("owner_user_id", ownerId).maybeSingle();
+        if (!existing) return json({ error: "Formulário não encontrado." }, 404);
+        payload.updated_at = new Date().toISOString();
+        const { error } = await admin.from("forms").update(payload).eq("id", formId);
+        if (error) throw error;
+      }
+
+      // Campos
+      if (Array.isArray(body?.fields)) {
+        await admin.from("form_fields").delete().eq("form_id", formId);
+        const rows = body.fields.slice(0, 40).map((f: any, i: number) => ({
+          form_id: formId,
+          owner_user_id: ownerId,
+          field_type: str(f.field_type, 24) || "text",
+          label: str(f.label, 120) || "Campo",
+          name: slugify(str(f.name, 60) || str(f.label, 60) || `campo_${i + 1}`).replace(/-/g, "_"),
+          placeholder: str(f.placeholder, 120),
+          required: !!f.required,
+          position: i,
+          is_active: f.is_active !== false,
+          options: Array.isArray(f.options) ? f.options.slice(0, 30) : [],
+        }));
+        if (rows.length) {
+          const { error } = await admin.from("form_fields").insert(rows);
+          if (error) throw error;
+        }
+      }
+
+      const { data: form } = await admin.from("forms").select("*").eq("id", formId).single();
+      return json({ form });
+    }
+
+    if (action === "duplicate_form") {
+      const id = str(body?.id, 64);
+      const { data: src } = await admin
+        .from("forms").select("*").eq("id", id).eq("owner_user_id", ownerId).maybeSingle();
+      if (!src) return json({ error: "Formulário não encontrado." }, 404);
+      const { id: _id, created_at: _c, updated_at: _u, slug: _s, ...rest } = src as any;
+      const { data: copy, error } = await admin
+        .from("forms")
+        .insert({
+          ...rest,
+          name: `${src.name} (cópia)`,
+          slug: await uniqueSlug("forms", `${src.name}-copia`),
+          created_by: user.id,
+          status: "inactive",
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      const { data: fields } = await admin.from("form_fields").select("*").eq("form_id", id);
+      if (fields?.length) {
+        await admin.from("form_fields").insert(
+          fields.map((f: any) => {
+            const { id: _fid, created_at: _fc, ...fr } = f;
+            return { ...fr, form_id: copy.id };
+          }),
+        );
+      }
+      return json({ form: copy });
+    }
+
+    if (action === "toggle_form") {
+      const id = str(body?.id, 64);
+      const { data: form } = await admin
+        .from("forms").select("status").eq("id", id).eq("owner_user_id", ownerId).maybeSingle();
+      if (!form) return json({ error: "Formulário não encontrado." }, 404);
+      const next = form.status === "active" ? "inactive" : "active";
+      await admin.from("forms").update({ status: next, updated_at: new Date().toISOString() }).eq("id", id);
+      return json({ status: next });
+    }
+
+    if (action === "delete_form") {
+      const id = str(body?.id, 64);
+      const { error } = await admin.from("forms").delete().eq("id", id).eq("owner_user_id", ownerId);
+      if (error) throw error;
+      return json({ ok: true });
+    }
+
+    // ─────────── LINKS RASTREADOS ───────────
+    if (action === "create_link") {
+      const c = await counts();
+      if (c.links >= limits.links) {
+        return json({ error: "limit_reached", message: "Você atingiu o limite de links rastreados do seu plano." }, 403);
+      }
+    }
+
+    if (action === "create_link" || action === "update_link") {
+      const input = body?.link || {};
+      const name = str(input.name, 120) || "Link sem nome";
+      const destination = str(input.destination_url, 900);
+      if (!destination || !/^https?:\/\//i.test(destination)) {
+        return json({ error: "Informe uma URL de destino válida (http ou https)." }, 400);
+      }
+      const payload: Record<string, unknown> = {
+        owner_user_id: ownerId,
+        name,
+        destination_url: destination,
+        utm_source: str(input.utm_source, 120),
+        utm_medium: str(input.utm_medium, 120),
+        utm_campaign: str(input.utm_campaign, 120),
+        utm_term: str(input.utm_term, 120),
+        utm_content: str(input.utm_content, 120),
+        status: input.status === "inactive" ? "inactive" : "active",
+      };
+      if (action === "create_link") {
+        payload.created_by = user.id;
+        payload.slug = await uniqueSlug("tracked_links", str(input.slug, 80) || name);
+        const { data, error } = await admin.from("tracked_links").insert(payload).select("*").single();
+        if (error) throw error;
+        return json({ link: data });
+      }
+      const id = str(input.id, 64);
+      const { data: existing } = await admin
+        .from("tracked_links").select("id").eq("id", id).eq("owner_user_id", ownerId).maybeSingle();
+      if (!existing) return json({ error: "Link não encontrado." }, 404);
+      payload.updated_at = new Date().toISOString();
+      const { data, error } = await admin.from("tracked_links").update(payload).eq("id", id).select("*").single();
+      if (error) throw error;
+      return json({ link: data });
+    }
+
+    if (action === "delete_link") {
+      const id = str(body?.id, 64);
+      const { error } = await admin.from("tracked_links").delete().eq("id", id).eq("owner_user_id", ownerId);
+      if (error) throw error;
+      return json({ ok: true });
+    }
+
+    return json({ error: "Ação inválida." }, 400);
+  } catch (e) {
+    console.error("[forms-admin]", e);
+    return json({ error: (e as Error)?.message || "Erro inesperado" }, 500);
+  }
+});
