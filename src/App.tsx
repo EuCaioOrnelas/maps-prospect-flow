@@ -338,6 +338,8 @@ const App = () => (
                 <Route path="/inteligencia" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><InteligenciaWiize /></Suspense></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
+                <Route path="/form/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><PublicForm /></Suspense></LightThemeWrapper>} />
+                <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
                 <Route path="/tour-completo" element={<LightThemeWrapper><TourCompleto /></LightThemeWrapper>} />
