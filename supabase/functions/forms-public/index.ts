@@ -84,6 +84,8 @@ const KNOWN_HOSTS: Record<string, string> = {
   "google.": "Google", "bing.": "Bing", "instagram.": "Instagram", "facebook.": "Facebook",
   "whatsapp": "WhatsApp", "wa.me": "WhatsApp", "linkedin.": "LinkedIn", "lnkd.in": "LinkedIn",
   "youtube.": "YouTube", "youtu.be": "YouTube", "tiktok.": "TikTok", "t.me": "Telegram",
+  "x.com": "X (Twitter)", "twitter.": "X (Twitter)", "t.co": "X (Twitter)",
+  "duckduckgo.": "DuckDuckGo", "mail.google": "E-mail", "outlook.": "E-mail",
 };
 const NOT_IDENTIFIED = "Não identificado";
 
