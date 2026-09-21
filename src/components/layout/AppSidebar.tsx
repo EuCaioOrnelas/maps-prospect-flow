@@ -26,6 +26,7 @@ import {
   Brain,
   MessageCircle,
   Workflow,
+  ClipboardList,
   LayoutDashboard as LayoutDashboardIcon,
   Megaphone as MegaphoneIcon,
   MessageSquare as MessageSquareIcon,
