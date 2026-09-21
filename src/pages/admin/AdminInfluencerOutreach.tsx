@@ -70,6 +70,7 @@ const QUALIFIED_STATUSES = [
 export default function AdminInfluencerOutreach() {
   const { toast } = useToast();
   const [tab, setTab] = useState("abordagens");
+  const [view, setView] = useState<"kanban" | "lista">("kanban");
 
   // ── Abordagens ────────────────────────────────────────────────────────────
   const [prospects, setProspects] = useState<any[]>([]);
