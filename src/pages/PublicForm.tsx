@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import {
+  AtSign, CheckCircle2, FileText, Hash, ListChecks, MessageSquareText,
+  Paperclip, Phone, Radio, Type,
+} from "lucide-react";
 import { hostFromUrl, inferUtmFromParams, isInternalHost } from "@/lib/leadOrigin";
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/forms-public`;
@@ -33,6 +37,41 @@ export interface PublicFormField {
 }
 
 interface PendingFile { field: string; filename: string; mime: string; data: string; size: number }
+
+const FIELD_ICONS: Record<string, typeof Type> = {
+  text: Type,
+  email: AtSign,
+  phone: Phone,
+  whatsapp: Phone,
+  number: Hash,
+  textarea: MessageSquareText,
+  select: ListChecks,
+  radio: Radio,
+  checkbox: CheckCircle2,
+  file: Paperclip,
+};
+
+const formRequests = new Map<string, Promise<any>>();
+const viewedForms = new Set<string>();
+const FORM_CACHE_MS = 5 * 60 * 1000;
+
+function readCachedForm(slug: string) {
+  if (!slug) return null;
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(`wz_form_${slug}`) || "null");
+    return cached?.savedAt && Date.now() - cached.savedAt < FORM_CACHE_MS ? cached.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadPublicForm(slug: string) {
+  const existing = formRequests.get(slug);
+  if (existing) return existing;
+  const request = callPublic<any>({ action: "get_form", slug }).finally(() => formRequests.delete(slug));
+  formRequests.set(slug, request);
+  return request;
+}
 
 async function callPublic<T = any>(payload: Record<string, unknown>): Promise<T> {
   const response = await fetch(FUNCTIONS_URL, {
@@ -116,10 +155,11 @@ function useTrackingParams(slug: string) {
 export default function PublicForm() {
   const { slug = "" } = useParams();
   const tracking = useTrackingParams(slug);
+  const initial = useMemo(() => readCachedForm(slug), [slug]);
 
-  const [state, setState] = useState<"loading" | "ready" | "inactive" | "missing">("loading");
-  const [form, setForm] = useState<any>(null);
-  const [fields, setFields] = useState<PublicFormField[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "inactive" | "missing">(initial?.form ? "ready" : "loading");
+  const [form, setForm] = useState<any>(initial?.form || null);
+  const [fields, setFields] = useState<PublicFormField[]>(initial?.fields || []);
   const [values, setValues] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<Record<string, PendingFile[]>>({});
   const [pageIndex, setPageIndex] = useState(0);
@@ -135,14 +175,18 @@ export default function PublicForm() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await callPublic<any>({ action: "get_form", slug });
+        const data = await loadPublicForm(slug);
         if (cancelled) return;
         if (data?.status === "inactive") { setState("inactive"); return; }
         setForm(data.form);
         setFields(data.fields || []);
         setState("ready");
         document.title = data.form?.title || "Formulário";
-        callPublic({ action: "view", slug, utm: tracking.utm, referrer: tracking.referrer }).catch(() => undefined);
+        try { sessionStorage.setItem(`wz_form_${slug}`, JSON.stringify({ savedAt: Date.now(), data })); } catch { /* cache opcional */ }
+        if (!viewedForms.has(slug)) {
+          viewedForms.add(slug);
+          callPublic({ action: "view", slug, utm: tracking.utm, referrer: tracking.referrer }).catch(() => viewedForms.delete(slug));
+        }
       } catch {
         if (!cancelled) setState("missing");
       }
@@ -375,9 +419,11 @@ export default function PublicForm() {
                   {currentFields.map((f) => {
                     const value = values[f.name] || "";
                     const opts: string[] = Array.isArray(f.options) ? f.options : [];
+                    const FieldIcon = FIELD_ICONS[f.field_type] || FileText;
                     return (
                       <div key={f.id} className="space-y-1.5">
-                        <label className="block text-sm font-medium" style={{ color: textColor }}>
+                        <label className="flex items-center gap-1.5 text-sm font-medium" style={{ color: textColor }}>
+                          <FieldIcon className="h-4 w-4 shrink-0" style={{ color: primary }} aria-hidden="true" />
                           {f.label}{f.required && <span className="ml-0.5 text-red-500">*</span>}
                         </label>
 
