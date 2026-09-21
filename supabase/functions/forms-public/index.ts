@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
 
       // ───── CRM ─────
       let leadId: string | null = null;
+      let responsible: string | null = null;
       if (form.crm_enabled) {
         let existing: any = null;
         if (email) {
@@ -228,7 +229,7 @@ Deno.serve(async (req) => {
         const configuredResponsibles = Array.isArray(form.crm_responsibles)
           ? form.crm_responsibles.filter((value: unknown) => typeof value === "string").slice(0, 20)
           : [];
-        let responsible = configuredResponsibles[0] || null;
+        responsible = configuredResponsibles[0] || null;
         if (form.config?.distributionMode === "round_robin" && configuredResponsibles.length > 1) {
           const { data: assignedRows } = await admin
             .from("leads")
