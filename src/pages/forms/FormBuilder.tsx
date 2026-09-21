@@ -56,6 +56,8 @@ const DEFAULT_FIELDS = [
   { field_type: "text", label: "Nome completo", name: "nome_completo", placeholder: "Ex.: Marina Oliveira", required: true, is_active: true, options: [] },
   { field_type: "email", label: "E-mail", name: "email", placeholder: "Ex.: marina@empresa.com.br", required: true, is_active: true, options: [] },
   { field_type: "phone", label: "Telefone / WhatsApp", name: "whatsapp", placeholder: "Ex.: (11) 99999-9999", required: true, is_active: true, options: [] },
+  { field_type: "text", label: "Nome da empresa", name: "empresa", placeholder: "Ex.: Oliveira Distribuidora", required: false, is_active: true, options: [] },
+  { field_type: "text", label: "Cidade", name: "cidade", placeholder: "Ex.: São Paulo - SP", required: false, is_active: true, options: [] },
   { field_type: "textarea", label: "Observações", name: "mensagem", placeholder: "Ex.: Conte brevemente como podemos ajudar", required: false, is_active: true, options: [] },
 ];
 const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48);
@@ -181,7 +183,7 @@ export default function FormBuilder() {
       if (!(form.crm_responsibles || []).length) issues.push({ step: 3, message: "Selecione ao menos um responsável pelo lead." });
     }
     if (form.notify_enabled && !cfg.notifyAssigned && !(form.notify_user_ids || []).length) issues.push({ step: 4, message: "Escolha quem deve receber os avisos." });
-    if (cfg.redirectEnabled && !isValidLink(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um endereço válido para o redirecionamento (ex.: www.seusite.com.br/obrigado)." });
+    if (cfg.redirectEnabled && !isValidLink(cfg.redirectUrl || "")) issues.push({ step: 0, message: "Informe um endereço válido para o redirecionamento (ex.: www.seusite.com.br)." });
     return issues;
   }, [cfg.notifyAssigned, cfg.redirectEnabled, cfg.redirectUrl, fields, form.crm_enabled, form.crm_responsibles, form.name, form.notify_enabled, form.notify_user_ids]);
 
