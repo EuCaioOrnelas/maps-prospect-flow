@@ -27,6 +27,7 @@ import {
 import { useForms } from "@/hooks/useForms";
 import { TrackedLinkDialog } from "@/components/forms/TrackedLinkDialog";
 import { toast } from "sonner";
+import { rangeCalendarClassNames } from "@/lib/calendarRange";
 
 const PUBLIC_BASE = typeof window !== "undefined" ? window.location.origin : "";
 
