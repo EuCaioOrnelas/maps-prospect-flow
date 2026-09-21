@@ -214,14 +214,47 @@ export default function FormResponses() {
     toast.success(`${rows.length} resposta(s) exportada(s).`);
   };
 
-  const openFile = async (submissionId: string, file: SubmissionFile) => {
-    setOpeningFile(file.path);
+  const signedUrl = async (submissionId: string, file: SubmissionFile) => {
     const { data, error } = await supabase.functions.invoke("forms-admin", {
       body: { action: "submission_file_url", submission_id: submissionId, path: file.path },
     });
+    if (error || !(data as any)?.url) return null;
+    return (data as any).url as string;
+  };
+
+  const openFile = async (submissionId: string, file: SubmissionFile) => {
+    setOpeningFile(file.path);
+    const url = await signedUrl(submissionId, file);
     setOpeningFile(null);
-    if (error || !(data as any)?.url) { toast.error("Não foi possível abrir o arquivo."); return; }
-    setViewer({ url: (data as any).url, mime: file.mime, filename: file.name || file.filename || "arquivo" });
+    if (!url) { toast.error("Não foi possível abrir o arquivo."); return; }
+    setViewer({ url, mime: file.mime, filename: file.name || file.filename || "arquivo" });
+  };
+
+  /** Baixa via blob para preservar o nome original do arquivo. */
+  const saveBlob = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("download");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(url, "_blank", "noopener");
+    }
+  };
+
+  const downloadFile = async (submissionId: string, file: SubmissionFile) => {
+    setDownloadingFile(file.path);
+    const url = await signedUrl(submissionId, file);
+    setDownloadingFile(null);
+    if (!url) { toast.error("Não foi possível baixar o arquivo."); return; }
+    await saveBlob(url, file.name || file.filename || "arquivo");
   };
 
   return (
