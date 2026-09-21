@@ -436,6 +436,22 @@ Deno.serve(async (req) => {
         }
         if (leadId) await admin.from("form_submissions").update({ lead_id: leadId }).eq("id", submission.id);
 
+        // Registra a entrada na etapa do CRM — é esse evento que dispara os
+        // Fluxos com gatilho "Lead entrou em uma etapa".
+        if (leadId && stageId) {
+          const { data: stageRow } = await admin
+            .from("pipeline_stages").select("name").eq("id", stageId).maybeSingle();
+          if (stageRow?.name) {
+            await admin.from("lead_activities").insert({
+              lead_id: leadId,
+              owner_user_id: form.owner_user_id,
+              user_id: form.owner_user_id,
+              activity_type: "stage_changed",
+              description: `Movido para ${stageRow.name}`,
+            }).then(() => {}, (e: unknown) => console.error("[forms-public] stage activity", e));
+          }
+        }
+
         // Registra as respostas como nota interna e anexa os arquivos ao contato
         if (leadId) {
           try {
