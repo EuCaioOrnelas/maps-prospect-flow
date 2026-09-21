@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock3, Loader2 } from "lucide-react";
 
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
 
@@ -58,6 +58,7 @@ export default function PublicForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [redirectSeconds, setRedirectSeconds] = useState(3);
   const honeypot = useRef("");
 
   useEffect(() => {
@@ -86,6 +87,15 @@ export default function PublicForm() {
     }
     return () => { scripts.forEach((script) => script.remove()); };
   }, [form]);
+
+  useEffect(() => {
+    const redirectUrl = form?.config?.redirectUrl;
+    if (!done || !form?.config?.redirectEnabled || !/^https:\/\//i.test(redirectUrl || "")) return;
+    setRedirectSeconds(3);
+    const interval = window.setInterval(() => setRedirectSeconds((seconds) => Math.max(0, seconds - 1)), 1000);
+    const timeout = window.setTimeout(() => window.location.assign(redirectUrl), 3000);
+    return () => { window.clearInterval(interval); window.clearTimeout(timeout); };
+  }, [done, form]);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,13 +195,15 @@ export default function PublicForm() {
             <img src={cfg.coverUrl} alt="" className="mb-5 h-32 w-full rounded-xl object-cover" />
           )}
           {cfg.logoUrl && (
-            <img src={cfg.logoUrl} alt="" className="mb-4 h-10 w-auto object-contain" style={{ marginInline: align === "center" ? "auto" : undefined }} />
+             <div className="mb-4 flex h-14 w-44 items-center" style={{ marginInline: align === "center" ? "auto" : undefined }}><img src={cfg.logoUrl} alt="" className="max-h-14 max-w-44 object-contain" /></div>
           )}
 
           {done ? (
-            <div className="py-6 text-center">
-              <CheckCircle2 className="mx-auto mb-3 h-10 w-10" style={{ color: primary }} />
-              <p className="text-base font-medium" style={{ color: textColor }}>{done}</p>
+             <div className="py-6 text-center" role="dialog" aria-modal="true" aria-label="Formulário enviado">
+               <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ backgroundColor: `${primary}18` }}><CheckCircle2 className="h-8 w-8" style={{ color: primary }} /></span>
+               <h2 className="text-xl font-semibold" style={{ color: textColor }}>Obrigado!</h2>
+               <p className="mx-auto mt-2 max-w-sm text-sm opacity-75" style={{ color: textColor }}>{done}</p>
+               {cfg.redirectEnabled && /^https:\/\//i.test(cfg.redirectUrl || "") && <div className="mx-auto mt-5 flex max-w-sm items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700"><Clock3 className="h-4 w-4" /><span>Você será redirecionado em <strong>{redirectSeconds}</strong> segundo{redirectSeconds === 1 ? "" : "s"}.</span></div>}
             </div>
           ) : (
             <>

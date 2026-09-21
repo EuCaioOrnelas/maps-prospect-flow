@@ -54,3 +54,5 @@
 - [x] Adicionar slug personalizado, confirmação EXCLUIR e estados de publicação
 - [x] Integrar responsáveis com foto, cores das colunas e distribuição inteligente
 - [x] Adicionar prévia de e-mail e rastreamento Meta Pixel, GTM e Google Ads
+- [x] Estruturar campos CRM automáticos, opções individuais e validação antes de publicar
+- [x] Notificar o vendedor atribuído e redirecionar após a confirmação de envio
