@@ -124,7 +124,7 @@ export function useForms() {
     } finally {
       setLoading(false);
     }
-  }, [ownerId]);
+  }, [ownerId, range.from, range.to]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -146,5 +146,7 @@ export function useForms() {
     totals,
     refresh,
     callAdmin,
+    range,
+    setRange,
   };
 }
