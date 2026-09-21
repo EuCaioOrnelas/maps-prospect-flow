@@ -318,7 +318,8 @@ export default function FormBuilder() {
                       </div>
                     </div>;
                   })}</div>
-                   <div className="grid gap-3 sm:grid-cols-2"><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: Math.max(1, ...previous.map((field) => Number(field.page) || 1)) }])}><Plus /> Adicionar campo</Button><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: Math.min(10, Math.max(1, ...previous.map((field) => Number(field.page) || 1)) + 1) }])}><Layers /> Adicionar página</Button></div>
+                   <div className="grid gap-3 sm:grid-cols-2"><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" onClick={() => setFields((previous) => [...previous, { ...EMPTY_FIELD, page: currentPage }])}><Plus /> Adicionar campo na página {currentPage}</Button><Button variant="outline" className="w-full gap-2 border-dashed shadow-none" disabled={totalPages >= 10} onClick={() => { const next = Math.min(10, totalPages + 1); setPageCount(next); setActivePage(next); }}><Layers /> Criar nova página</Button></div>
+                   {fields.filter((field) => pageOf(field) === currentPage).length === 0 && <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Página {currentPage} ainda está vazia. Adicione os campos que você quer coletar nesta etapa.</div>}
                    <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm"><Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><p className="min-w-0 leading-6 text-muted-foreground">Para publicar com o CRM ativo, mantenha Nome completo e pelo menos E-mail ou Telefone no formulário.</p></div>
                 </div>}
 
