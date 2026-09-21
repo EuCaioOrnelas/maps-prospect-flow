@@ -69,6 +69,7 @@ export default function FormResponses() {
   const [selected, setSelected] = useState<any>(null);
   const [viewer, setViewer] = useState<{ url: string; mime: string; filename: string } | null>(null);
   const [openingFile, setOpeningFile] = useState<string | null>(null);
+  const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState(() => toDateInput(new Date(Date.now() - 30 * dayMs)));
