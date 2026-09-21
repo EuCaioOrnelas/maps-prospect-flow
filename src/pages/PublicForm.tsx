@@ -9,6 +9,11 @@ const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_c
 const ACCEPTED_UPLOADS = "image/jpeg,image/png,image/webp,application/pdf";
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
+export const CONSENT_VERSION = "2026-09-v1";
+export const CONSENT_TEXT =
+  "Ao enviar este formulário, você concorda com o tratamento dos seus dados para que possamos entrar em contato e atender à sua solicitação.";
+const REDIRECT_SECONDS = 3;
+
 export interface PublicFormField {
   id: string;
   field_type: string;
@@ -110,6 +115,7 @@ export default function PublicForm() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [redirectSeconds, setRedirectSeconds] = useState(3);
+  const [consent, setConsent] = useState(false);
   const honeypot = useRef("");
 
   // Carregamento do formulário — uma única chamada, sem dependências pesadas.
