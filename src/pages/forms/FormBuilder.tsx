@@ -48,6 +48,7 @@ const FIELD_TYPES = [
   { value: "select", label: "Lista suspensa", icon: ListChecks },
   { value: "radio", label: "Múltipla escolha", icon: Radio },
   { value: "checkbox", label: "Confirmação", icon: CheckCircle2 },
+  { value: "file", label: "Arquivo (imagem ou PDF)", icon: Paperclip },
 ];
 
 const EMPTY_FIELD = { field_type: "text", label: "", name: "", placeholder: "", required: false, is_active: true, options: [] };
