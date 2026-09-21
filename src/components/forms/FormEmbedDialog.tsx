@@ -49,11 +49,17 @@ function htmlSnippet(url: string, mode: EmbedMode) {
   document.getElementById('wiize-form-close').onclick = () => popup.close();
 </script>`;
   return `<iframe
-  src="${source}"
+  id="wiize-form"
+  data-src="${source}"
   title="Formulário"
   loading="lazy"
   style="${frameStyle(mode === "card")}"
-></iframe>`;
+></iframe>
+<script>
+  const frame = document.getElementById('wiize-form');
+  const query = new URLSearchParams(location.search);
+  frame.src = frame.dataset.src + (query.size ? '&' + query.toString() : '');
+</script>`;
 }
 
 function reactSnippet(url: string, mode: EmbedMode, next = false) {
@@ -77,8 +83,9 @@ export function ${component}() {
   </>;
 }`;
   return `${directive}export function ${component}() {
+  const query = typeof window === "undefined" ? "" : window.location.search.slice(1);
   return <iframe
-    src="${source}"
+    src={"${source}" + (query ? "&" + query : "")}
     title="Formulário"
     loading="lazy"
     style={{ width:"100%", height:760, border:${mode === "card" ? `"1px solid #e4e4e7"` : "0"}, borderRadius:${mode === "card" ? "12" : "0"}, background:"#f6f7f9" }}
@@ -89,7 +96,7 @@ export function ${component}() {
 function phpSnippet(url: string, mode: EmbedMode) {
   const separator = url.includes("?") ? "&" : "?";
   const header = `<?php\n$query = htmlspecialchars($_SERVER['QUERY_STRING'] ?? '', ENT_QUOTES, 'UTF-8');\n$formUrl = '${url}${separator}embed=1' . ($query ? '&' . $query : '');\n?>\n`;
-  return header + htmlSnippet("<?= $formUrl ?>", mode).replace("?embed=1", "");
+  return header + htmlSnippet("<?= $formUrl ?>", mode).replace("?embed=1", "").replace(/<script>[\s\S]*<\/script>/, "");
 }
 
 export function FormEmbedDialog({ open, onOpenChange, formName, slug }: FormEmbedDialogProps) {

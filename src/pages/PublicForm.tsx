@@ -15,6 +15,12 @@ export const CONSENT_TEXT =
   "Ao enviar, você concorda com o uso dos seus dados para contato sobre esta solicitação (LGPD).";
 const REDIRECT_SECONDS = 3;
 
+const normalizeAssetUrl = (value?: string | null) => {
+  const clean = (value || "").trim();
+  if (!clean || /^https?:\/\//i.test(clean)) return clean;
+  return `https://${clean.replace(/^\/+/, "")}`;
+};
+
 export interface PublicFormField {
   id: string;
   field_type: string;
@@ -305,7 +311,7 @@ export default function PublicForm() {
         <div className="overflow-hidden bg-white shadow-sm" style={{ borderRadius: radius + 8 }}>
           {cfg.coverUrl && (
             <div className="p-2">
-              <img src={cfg.coverUrl} alt="" loading="eager" className="h-28 w-full object-cover sm:h-36" style={{ borderRadius: Math.max(4, radius) }} />
+              <img src={normalizeAssetUrl(cfg.coverUrl)} alt="" loading="eager" className="h-28 w-full object-cover sm:h-36" style={{ borderRadius: Math.max(4, radius) }} />
             </div>
           )}
 
@@ -351,7 +357,7 @@ export default function PublicForm() {
               <>
                 {cfg.logoUrl && (
                   <div className="mb-5 flex h-14 w-[220px] max-w-full items-center" style={{ justifyContent: align === "center" ? "center" : "flex-start", marginInline: align === "center" ? "auto" : undefined }}>
-                    <img src={cfg.logoUrl} alt="" className="h-full w-full object-contain" style={{ objectPosition: align === "center" ? "center" : "left center" }} />
+                    <img src={normalizeAssetUrl(cfg.logoUrl)} alt="" className="h-full w-full object-contain" style={{ objectPosition: align === "center" ? "center" : "left center" }} />
                   </div>
                 )}
                 <div style={{ textAlign: align as any }}>

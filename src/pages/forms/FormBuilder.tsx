@@ -208,7 +208,12 @@ export default function FormBuilder() {
           description: form.description.trim() || null,
           button_text: form.button_text.trim() || "Enviar",
           success_message: form.success_message.trim() || "Obrigado! Recebemos seus dados e entraremos em contato em breve.",
-          config: { ...(form.config || {}), redirectUrl: normalizeLink(form.config?.redirectUrl || "") },
+          config: {
+            ...(form.config || {}),
+            redirectUrl: normalizeLink(form.config?.redirectUrl || ""),
+            logoUrl: normalizeLink(form.config?.logoUrl || ""),
+            coverUrl: normalizeLink(form.config?.coverUrl || ""),
+          },
         },
         fields: fields.filter((field) => field.label.trim()).map((field, index) => ({ ...field, name: field.name || fieldName(field.label), position: index, page: Math.min(10, Math.max(1, Number(field.page) || 1)) })),
       };
@@ -356,7 +361,7 @@ export default function FormBuilder() {
 
             <Card className="sticky top-4 h-fit border-border/60 bg-card p-4 shadow-sm">
               <div className="mb-3 flex items-center justify-between"><div><p className="text-sm font-semibold">Prévia ao vivo</p><p className="text-xs text-muted-foreground">{`/form/${effectiveSlug}`}</p></div><Badge variant="outline">{form.status === "active" ? "Ativo" : isEdit ? "Inativo" : "Rascunho"}</Badge></div>
-                <div className="overflow-hidden rounded-lg p-4" style={{ background: cfg.backgroundColor || "#f6f7f9" }}><div className="p-4 shadow-sm" style={{ borderRadius: (cfg.radius ?? 10) + 6, background: "#ffffff", border: "1px solid #ececf0" }}>{cfg.coverUrl && <img src={cfg.coverUrl} alt="Capa" className="mb-4 h-24 w-full object-cover" style={{ borderRadius: cfg.radius ?? 10 }} />}{cfg.logoUrl && <div className="mb-4 flex h-14 w-48 items-center" style={{ marginInline: cfg.align === "center" ? "auto" : undefined }}><img src={cfg.logoUrl} alt="Logo" className="h-full w-full object-contain object-left" style={{ objectPosition: cfg.align === "center" ? "center" : "left center" }} /></div>}<div style={{ textAlign: cfg.align || "left" }}><p className="text-base font-semibold" style={{ color: cfg.textColor || "#18181b" }}>{previewTitle}</p><p className="mt-1 text-xs opacity-70" style={{ color: cfg.textColor || "#18181b" }}>{previewDescription}</p></div>
+                <div className="overflow-hidden rounded-lg p-4" style={{ background: cfg.backgroundColor || "#f6f7f9" }}><div className="p-4 shadow-sm" style={{ borderRadius: (cfg.radius ?? 10) + 6, background: "#ffffff", border: "1px solid #ececf0" }}>{cfg.coverUrl && <img src={normalizeLink(cfg.coverUrl)} alt="Capa" className="mb-4 h-24 w-full object-cover" style={{ borderRadius: cfg.radius ?? 10 }} />}{cfg.logoUrl && <div className="mb-4 flex h-14 w-48 items-center" style={{ marginInline: cfg.align === "center" ? "auto" : undefined }}><img src={normalizeLink(cfg.logoUrl)} alt="Logo" className="h-full w-full object-contain object-left" style={{ objectPosition: cfg.align === "center" ? "center" : "left center" }} /></div>}<div style={{ textAlign: cfg.align || "left" }}><p className="text-base font-semibold" style={{ color: cfg.textColor || "#18181b" }}>{previewTitle}</p><p className="mt-1 text-xs opacity-70" style={{ color: cfg.textColor || "#18181b" }}>{previewDescription}</p></div>
                  {totalPages > 1 && <div className="mt-3 flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: "#e7e7ec" }}><div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${Math.min(99, Math.round((currentPage / totalPages) * 100))}%`, background: cfg.primaryColor || "#3daa57" }} /></div><span className="text-[10px] font-medium" style={{ color: "#8a8a94" }}>{Math.min(99, Math.round((currentPage / totalPages) * 100))}%</span></div>}
                  <div className="mt-4 space-y-3">{fields.filter((field) => field.is_active !== false && field.label.trim() && pageOf(field) === currentPage).slice(0, 6).map((field, index) => {
                    const item = FIELD_TYPES.find((type) => type.value === field.field_type) || FIELD_TYPES[0];
