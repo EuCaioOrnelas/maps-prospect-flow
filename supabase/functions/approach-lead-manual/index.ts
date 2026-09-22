@@ -257,6 +257,27 @@ COMO VOCÊ ESCREVE
 - NÃO ofereça, apresente, explique, liste ou cite produtos, serviços, planos, preços, condições ou benefícios da empresa. O perfil e o catálogo servem somente para orientar o tema do gancho e impedir assuntos desconectados.`;
 }
 
+function buildOperationalContext(profile: any, lead: any): string {
+  const seller = normalizeForMatch(`${profile?.company_niche || ""} ${profile?.company_products || ""} ${profile?.company_differential || ""} ${profile?.company_objective || ""}`);
+  const niche = normalizeForMatch(`${lead?.category || ""} ${lead?.company_name || ""}`);
+  if (/(internet|conectividade|telecom|banda larga|fibra)/.test(seller)) {
+    if (/(academia|fitness|bodybuild|crossfit|pilates)/.test(niche)) {
+      return `ACADEMIA + CONECTIVIDADE: considere a operação completa, não apenas agenda e pagamentos. Usos plausíveis incluem sistemas internos, recepção e equipe, catracas e controle de acesso, equipamentos/dispositivos conectados, música e telas, monitoramento por câmeras e Wi-Fi usado pelos alunos. Escolha somente 2 ou 3 aspectos relevantes para compor uma frase natural. Trate-os como necessidades típicas do segmento, nunca como instalações confirmadas neste lead.`;
+    }
+    if (/(restaurante|bar|caf[eé]|lanchonete|delivery)/.test(niche)) {
+      return `ALIMENTAÇÃO + CONECTIVIDADE: considere pedidos e delivery, caixa e pagamentos, comunicação da equipe, música/TV, monitoramento e Wi-Fi para clientes nos horários de pico. Selecione 2 ou 3 aspectos, sem afirmar que o lead usa sistemas específicos.`;
+    }
+    if (/(cl[ií]nica|consult[oó]rio|hospital|odont)/.test(niche)) {
+      return `SAÚDE + CONECTIVIDADE: considere recepção, prontuários e sistemas internos, agenda, comunicação da equipe, equipamentos conectados, teleatendimento e Wi-Fi para pacientes. Selecione 2 ou 3 aspectos, sem afirmar infraestrutura não comprovada.`;
+    }
+    if (/(loja|varejo|mercado|farm[aá]cia|com[eé]rcio)/.test(niche)) {
+      return `VAREJO + CONECTIVIDADE: considere caixa e pagamentos, estoque, emissão fiscal, comunicação, monitoramento, dispositivos da equipe e Wi-Fi para clientes. Selecione 2 ou 3 aspectos, sem afirmar infraestrutura não comprovada.`;
+    }
+    return `CONECTIVIDADE + SEGMENTO: raciocine sobre a operação completa do lead: sistemas internos, equipe, atendimento, dispositivos, comunicação, monitoramento e experiência dos clientes. Escolha 2 ou 3 usos realmente coerentes com o nicho, sem transformar possibilidades típicas em fatos confirmados.`;
+  }
+  return `CRUZAMENTO OPERACIONAL: use todo o perfil da empresa prospectora para identificar o que ela realmente resolve e cruze isso com a rotina completa do segmento do lead. Considere pessoas, processos, sistemas, equipamentos, atendimento e clientes finais. Escolha somente 2 ou 3 aspectos relevantes, sem listas artificiais e sem afirmar fatos não comprovados.`;
+}
+
 /** Mensagem sem nenhuma referência concreta ao lead = genérica. */
 function messageLacksPersonalization(message: string, lead: any): boolean {
   const m = (message || "").toLowerCase();
@@ -293,6 +314,10 @@ function messageHasMultipleQuestions(message: string): boolean {
 
 function messageLacksPraiseHook(message: string): boolean {
   return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
+}
+
+function messageStatesUnverifiedOperation(message: string): boolean {
+  return /\b(?:catracas?|controle de acesso|equipamentos? conectados?|wi-?fi|c[aâ]meras?|monitoramento|m[uú]sica|telas?)\s+(?:que\s+)?(?:voc[eê]s\s+)?(?:oferecem|utilizam|usam|possuem|t[eê]m|mant[eê]m)\b/i.test(message || "");
 }
 
 
@@ -379,6 +404,18 @@ serve(async (req) => {
       );
     }
 
+    const savedManualApproach = lead?.enrichment_data?.manual_approach;
+    if (!internalMode && String(savedManualApproach?.message || "").trim()) {
+      return new Response(JSON.stringify({
+        mensagem: savedManualApproach.message,
+        gancho: savedManualApproach.gancho || "",
+        motivo: savedManualApproach.motivo || "",
+        insight: savedManualApproach.insight || "",
+        estrategia: savedManualApproach.estrategia || "",
+        reused: true,
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const { data: companyProfile } = await supabase
       .from("company_profiles").select("*").eq("user_id", user.id).single();
 
@@ -439,6 +476,7 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
     const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
+    const operationalContext = buildOperationalContext(companyProfile, lead);
 
     const prompt = `Você é um VENDEDOR CONSULTIVO B2B escrevendo a PRIMEIRA mensagem no WhatsApp para o dono/gestor de uma empresa que você acabou de analisar.
 
@@ -450,6 +488,11 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 
 ${companyContext}
 ${diagnosticContext}
+
+═══ LEITURA OPERACIONAL OBRIGATÓRIA ═══
+${operationalContext}
+
+Use o PERFIL COMPLETO da empresa prospectora para decidir o ângulo: produtos/serviços, nicho, diferencial, objetivo, público-alvo e catálogo. Quanto mais específico for o perfil, mais específica deve ser a conexão. Não reduza a operação do lead a um único uso óbvio e não escreva uma lista; selecione os 2 ou 3 aspectos mais relevantes e una-os em uma percepção natural.
 
 ═══ CLIENTE POTENCIAL — DADOS DO LEAD ═══
 Tudo deste bloco descreve QUEM RECEBE a mensagem. Use como matéria-prima do gancho, mas nunca trate o nicho ou os produtos do lead como se fossem da empresa que envia.
@@ -567,7 +610,8 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
      Antes de escrever o insight, se pergunte: "esse ponto que vou levantar tem ligação natural com o que eu vendo?".
      Se a resposta for NÃO, troque o ângulo — escolha um ponto do diagnóstico do lead que se conecte com "${companyProfile?.company_products || "seu serviço"}".
    • ANCORAGEM: use os dados do "DIAGNÓSTICO DESTE LEAD" (pontos fracos, análise de site, redes, concorrência, demanda) e cruze com o produto da sua empresa.
-     Exemplo mental: se você vende "sistema de delivery próprio" e o lead não tem site com pedido online → insight sobre canal de vendas direto.
+     Exemplo mental: se você vende internet empresarial para uma academia, não reduza o contexto a agenda e pagamentos; considere também equipe, catracas, dispositivos, monitoramento, música/telas e Wi-Fi dos alunos, escolhendo apenas 2 ou 3 aspectos para uma frase natural e sem afirmar que o lead já usa cada item.
+     Se você vende "sistema de delivery próprio" e o lead não tem site com pedido online → insight sobre canal de vendas direto.
      Se você vende "gestão de tráfego" e o lead tem baixa presença em redes → insight sobre captação previsível.
      Se você vende "CRM/WhatsApp" e o lead tem muitos reviews mas fluxo desorganizado → insight sobre pós-venda/retenção.
    • Uma percepção inteligente, específica ao NEGÓCIO DELE. NUNCA apontar defeito de forma direta.
@@ -639,6 +683,7 @@ Regras de personalização:
 • Se o perfil da empresa informar um diferencial específico (metodologia, tipo de atendimento, região, especialização), use esse diferencial como pano de fundo sutil da autoridade — sem exagerar.
 • A Curiosidade e o CTA devem deixar claro que a continuação da conversa será sobre o tema que a empresa prospectadora domina, não sobre algo genérico.
 • TESTE DE ADEQUAÇÃO: depois de pronta, a mensagem deve parecer escrita por alguém que trabalha com "${companyProfile?.company_products || "os serviços da empresa"}". Se parecer genérica o suficiente para qualquer empresa, REESCREVA.
+• TESTE DE PROFUNDIDADE: o contexto não pode reduzir a operação do lead a um único uso óbvio quando o produto vendido sustenta várias partes dela. Selecione 2 ou 3 necessidades coerentes com o segmento, sem listar demais e sem inventar fatos.
 
 ═══════════════════════════════════════════
 LINGUAGEM E ESTILO
@@ -800,7 +845,9 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
               ? "multiple_questions"
               : messageLacksPraiseHook(parsed.mensagem || "")
                 ? "missing_praise_hook"
-                : null;
+                : messageStatesUnverifiedOperation(parsed.mensagem || "")
+                  ? "unverified_operation"
+                  : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -817,7 +864,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e EXATAMENTE UMA pergunta, no final. Nada pode vir depois dela. Preserve esta ordem: saudação curta; elogio factual ANTES da apresentação; nome, empresa e área ampla de atuação; contexto; conexão comercial; pergunta objetiva. O elogio deve variar conforme os dados disponíveis entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado. Não invente elogios e não use sempre avaliação. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
+ Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e EXATAMENTE UMA pergunta, no final. Nada pode vir depois dela. Preserve esta ordem: saudação curta; elogio factual ANTES da apresentação; nome, empresa e área ampla de atuação; contexto; conexão comercial; pergunta objetiva. ${operationalContext} Use todo o perfil da empresa prospectora e selecione 2 ou 3 aspectos relevantes da operação, sem lista e sem afirmar fatos não comprovados. Todo uso não confirmado deve ser escrito como necessidade típica ou possibilidade do segmento, nunca como algo que "vocês usam", "vocês oferecem" ou "vocês possuem". O elogio deve variar conforme os dados disponíveis entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado. Não invente elogios e não use sempre avaliação. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}

@@ -243,6 +243,27 @@ COMO VOCÊ ESCREVE
 - Ofereça SOMENTE o que está em "O que você vende de fato"/catálogo.`;
 }
 
+function buildOperationalContext(profile: any, lead: any): string {
+  const seller = normalizeForMatch(`${profile?.company_niche || ""} ${profile?.company_products || ""} ${profile?.company_differential || ""} ${profile?.company_objective || ""}`);
+  const niche = normalizeForMatch(`${lead?.category || ""} ${lead?.company_name || ""}`);
+  if (/(internet|conectividade|telecom|banda larga|fibra)/.test(seller)) {
+    if (/(academia|fitness|bodybuild|crossfit|pilates)/.test(niche)) {
+      return `ACADEMIA + CONECTIVIDADE: considere a operação completa, não apenas agenda e pagamentos. Usos plausíveis incluem sistemas internos, recepção e equipe, catracas e controle de acesso, equipamentos/dispositivos conectados, música e telas, monitoramento por câmeras e Wi-Fi usado pelos alunos. Escolha somente 2 ou 3 aspectos relevantes para compor uma frase natural. Trate-os como necessidades típicas do segmento, nunca como instalações confirmadas neste lead.`;
+    }
+    if (/(restaurante|bar|caf[eé]|lanchonete|delivery)/.test(niche)) {
+      return `ALIMENTAÇÃO + CONECTIVIDADE: considere pedidos e delivery, caixa e pagamentos, comunicação da equipe, música/TV, monitoramento e Wi-Fi para clientes nos horários de pico. Selecione 2 ou 3 aspectos, sem afirmar que o lead usa sistemas específicos.`;
+    }
+    if (/(cl[ií]nica|consult[oó]rio|hospital|odont)/.test(niche)) {
+      return `SAÚDE + CONECTIVIDADE: considere recepção, prontuários e sistemas internos, agenda, comunicação da equipe, equipamentos conectados, teleatendimento e Wi-Fi para pacientes. Selecione 2 ou 3 aspectos, sem afirmar infraestrutura não comprovada.`;
+    }
+    if (/(loja|varejo|mercado|farm[aá]cia|com[eé]rcio)/.test(niche)) {
+      return `VAREJO + CONECTIVIDADE: considere caixa e pagamentos, estoque, emissão fiscal, comunicação, monitoramento, dispositivos da equipe e Wi-Fi para clientes. Selecione 2 ou 3 aspectos, sem afirmar infraestrutura não comprovada.`;
+    }
+    return `CONECTIVIDADE + SEGMENTO: raciocine sobre a operação completa do lead: sistemas internos, equipe, atendimento, dispositivos, comunicação, monitoramento e experiência dos clientes. Escolha 2 ou 3 usos realmente coerentes com o nicho, sem transformar possibilidades típicas em fatos confirmados.`;
+  }
+  return `CRUZAMENTO OPERACIONAL: use todo o perfil da empresa prospectora para identificar o que ela realmente resolve e cruze isso com a rotina completa do segmento do lead. Considere pessoas, processos, sistemas, equipamentos, atendimento e clientes finais. Escolha somente 2 ou 3 aspectos relevantes, sem listas artificiais e sem afirmar fatos não comprovados.`;
+}
+
 /** Mensagem sem nenhuma referência concreta ao lead = genérica. */
 function messageLacksPersonalization(message: string, lead: any): boolean {
   const m = (message || "").toLowerCase();
@@ -268,6 +289,11 @@ function messageLacksSenderPresentation(message: string, profile: any): boolean 
     (attendantName && !normalizedMessage.includes(attendantName))
     || (companyName && !normalizedMessage.includes(companyName))
   );
+}
+
+function messageLacksOpeningPresentation(message: string): boolean {
+  const firstBlock = String(message || "").trim().split(/\n{2,}/)[0] || "";
+  return !/^\s*(?:sou|me chamo)\b/i.test(firstBlock);
 }
 
 function messageAssumesConversation(message: string): boolean {
@@ -306,6 +332,10 @@ function ensureSingleFinalQuestion(message: string): string {
 
 function messageLacksPraiseHook(message: string): boolean {
   return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
+}
+
+function messageStatesUnverifiedOperation(message: string): boolean {
+  return /\b(?:catracas?|controle de acesso|equipamentos? conectados?|wi-?fi|c[aâ]meras?|monitoramento|m[uú]sica|telas?)\s+(?:que\s+)?(?:voc[eê]s\s+)?(?:oferecem|utilizam|usam|possuem|t[eê]m|mant[eê]m)\b/i.test(message || "");
 }
 
 function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
@@ -408,6 +438,14 @@ serve(async (req) => {
       );
     }
 
+    if (!internalMode && String(lead?.ai_approach_message || "").trim()) {
+      return new Response(JSON.stringify({
+        mensagem: lead.ai_approach_message,
+        ...(typeof lead.enrichment_data?.approach_analysis === "object" ? lead.enrichment_data.approach_analysis : {}),
+        reused: true,
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
 
 
     // Fetch the company profile for personalization
@@ -492,6 +530,7 @@ IMPORTANTE: Antes da apresentação, use um ELOGIO factual como gatilho de aten�
     const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
     const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
     const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
+    const operationalContext = buildOperationalContext(companyProfile, lead);
 
     const prompt = `Você é um VENDEDOR CONSULTIVO B2B escrevendo a PRIMEIRA MENSAGEM HUMANA depois de um template oficial da Meta.
 
@@ -514,6 +553,11 @@ ${companyContext}
 ${businessModelBlock}
 ${diagnosticContext}
 
+═══ LEITURA OPERACIONAL OBRIGATÓRIA ═══
+${operationalContext}
+
+Use o PERFIL COMPLETO da empresa prospectora para decidir o ângulo: produtos/serviços, nicho, diferencial, objetivo, público-alvo e catálogo. Quanto mais específico for o perfil, mais específica deve ser a conexão. Não reduza a operação do lead a um único uso óbvio e não escreva uma lista; selecione os 2 ou 3 aspectos mais relevantes e una-os em uma percepção natural.
+
 ═══ CLIENTE POTENCIAL — DADOS DO LEAD ═══
 Tudo deste bloco descreve QUEM RECEBE a mensagem. Não atribua o nicho, os produtos ou a identidade do lead à empresa que envia.
 - Empresa: ${lead.company_name || "Não informado"}
@@ -535,18 +579,17 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 
 ═══ ESTRUTURA OBRIGATÓRIA (abordagem humana após o template) ═══
 Escreva entre 90 e 160 palavras, com blocos curtos separados por \\n\\n, nesta ordem e sem títulos no texto final:
-1. CONTINUAÇÃO NATURAL: NÃO use nova saudação. Comece com "O motivo do meu contato foi..." ou uma variação natural equivalente que anuncie por que você chamou, sem dizer "entender como podemos ajudar", sem agradecer e sem interpretar o conteúdo da resposta anterior.
-2. ELOGIO/GATILHO DE ATENÇÃO: antes da apresentação, elogie algo REAL e comprovado do lead. Varie entre reputação na região, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque existente nos dados. Não invente fatos e não use sempre avaliação.
-3. APRESENTAÇÃO COMERCIAL: apresente obrigatoriamente "${companyProfile?.attendant_name || "[nome]"}", "${companyProfile?.company_name || "[empresa]"}" e a área ampla em que atua.
-4. CONEXÃO COMERCIAL: explique por que esse destaque chamou sua atenção e conecte-o ao contexto operacional pertinente ao campo de atuação da empresa remetente. Não afirme que o lead tem um problema sem evidência.
-5. INTERESSE: indique que pode existir uma oportunidade concreta de melhoria, sem revelar catálogo, plano, preço, condição ou proposta.
-6. CTA OBJETIVO: termine perguntando sobre a situação atual do lead ou se ele quer entender o ponto ESPECÍFICO. A pergunta precisa dizer claramente qual é o assunto. NÃO peça call, reunião, agenda, proposta ou orçamento.
+1. APRESENTAÇÃO COMERCIAL: sem nova saudação, apresente obrigatoriamente "${companyProfile?.attendant_name || "[nome]"}", "${companyProfile?.company_name || "[empresa]"}" e a área ampla em que atua.
+2. ELOGIO/GATILHO DE ATENÇÃO: elogie algo REAL e comprovado do lead. Varie entre reputação na região, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque existente nos dados. Não invente fatos e não use sempre avaliação.
+3. MOTIVO DO CONTATO: explique naturalmente por que chamou aquela empresa, sem dizer "entender como podemos ajudar", sem agradecer e sem interpretar o conteúdo da resposta anterior.
+4. CONTEXTO OPERACIONAL: conecte o motivo ao que a empresa remetente vende e à rotina completa do segmento. Selecione 2 ou 3 necessidades coerentes, em uma frase natural, sem afirmar problema ou infraestrutura sem evidência.
+5. CTA OBJETIVO: termine perguntando sobre a situação atual do lead ou sobre o ponto ESPECÍFICO levantado. A pergunta precisa dizer claramente qual é o assunto. NÃO peça call, reunião, agenda, proposta ou orçamento.
    A pergunta deve tratar obrigatoriamente da área que a empresa remetente vende. Se vende internet, pergunte sobre conexão, estabilidade, rede ou estrutura atual; NUNCA pergunte apenas sobre agenda, pagamentos, marketing ou outro sistema que ela não vende.
    Faça UMA pergunta simples, sem juntar duas alternativas com "ou". Exemplo de estrutura: "Hoje a conexão de vocês atende bem a operação nos horários de maior movimento?"
    A mensagem inteira deve ter EXATAMENTE UMA interrogação, somente nesta última frase. Nada pode vir depois dela.
 
 FLUXO INEGOCIÁVEL:
-Motivo do contato, sem nova saudação → Elogio factual → Apresentação → Conexão comercial → Interesse específico → Pergunta objetiva.
+Apresentação, sem nova saudação → Elogio factual → Motivo do contato → Contexto operacional específico → Pergunta objetiva.
 A única diferença para a mensagem manual é que esta acontece depois do template; não presuma o conteúdo da resposta.
 
 ═══ REGRAS CRÍTICAS ═══
@@ -628,6 +671,8 @@ Retorne APENAS JSON válido:
           ? "missing_personalization"
         : messageLacksSenderPresentation(parsed.mensagem || "", companyProfile)
           ? "missing_sender_presentation"
+          : messageLacksOpeningPresentation(parsed.mensagem || "")
+            ? "missing_opening_presentation"
           : messageAssumesConversation(parsed.mensagem || "")
             ? "false_conversation_assumption"
             : messageHasVagueCommercialCTA(parsed.mensagem || "")
@@ -640,7 +685,9 @@ Retorne APENAS JSON válido:
                     ? "multiple_questions"
                     : messageLacksPraiseHook(parsed.mensagem || "")
                       ? "missing_praise_hook"
-                      : null;
+                      : messageStatesUnverifiedOperation(parsed.mensagem || "")
+                        ? "unverified_operation"
+                        : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -657,7 +704,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia". NÃO use "Oi", "Olá", "tudo bem?" nem outra saudação; NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Comece naturalmente por "O motivo do meu contato foi..." ou equivalente, sem dizer "entender como podemos ajudar". Use 90 a 160 palavras em blocos curtos: (1) motivo do contato; (2) elogio factual ANTES da apresentação, escolhendo conforme os dados entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado; (3) nome, empresa e área ampla de atuação; (4) conexão do destaque com o contexto operacional e com o campo em que o remetente atua; (5) oportunidade específica sem apresentar solução; (6) pergunta objetiva. Não invente elogios e não use sempre avaliação do Google. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. Não diga que o lead "pode se beneficiar", não prometa melhoria e não venda "internet de alta qualidade". NÃO peça call, reunião, agenda ou horário. O CTA deve tratar do que o remetente realmente vende; se vende internet, faça UMA pergunta simples sobre conexão, estabilidade, rede ou estrutura atual, nunca apenas sobre agenda, pagamentos, marketing ou sistemas e nunca junte duas perguntas com "ou". Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
+ Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia". NÃO use "Oi", "Olá", "tudo bem?" nem outra saudação; NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Use 90 a 160 palavras em blocos curtos e preserve esta ordem exata: (1) apresentação iniciada naturalmente por "Sou [nome], da [empresa]" e área ampla de atuação; (2) elogio factual; (3) motivo do contato; (4) contexto operacional específico; (5) pergunta objetiva. ${operationalContext} Use todo o perfil da empresa prospectora e selecione 2 ou 3 aspectos relevantes da operação, sem lista e sem afirmar fatos não comprovados. Todo uso não confirmado deve ser escrito como necessidade típica ou possibilidade do segmento, nunca como algo que "vocês usam", "vocês oferecem" ou "vocês possuem". Não invente elogios e não use sempre avaliação do Google. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. Não diga que o lead "pode se beneficiar", não prometa melhoria e não venda "internet de alta qualidade". NÃO peça call, reunião, agenda ou horário. O CTA deve tratar do que o remetente realmente vende; se vende internet, faça UMA pergunta simples sobre conexão, estabilidade, rede ou estrutura atual e sua capacidade de atender a operação, nunca apenas sobre agenda, pagamentos, marketing ou sistemas e nunca junte duas perguntas com "ou". Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
