@@ -8,6 +8,7 @@ import { NavMegaMenu } from "./NavMegaMenu";
 import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, type MenuItem } from "./navMenuData";
 import { cn } from "@/lib/utils";
 import { trackFreeTrialClick } from "@/lib/analytics";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 interface NavbarProps {
   onSignupClick?: () => void;
