@@ -208,6 +208,51 @@ function normalizeForMatch(value: unknown): string {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+/** Persona: o modelo escreve COMO o responsável da empresa, nunca como assistente de IA. */
+function buildPersonaSystem(profile: any, model: BusinessModel, catalog: string, lead: any): string {
+  const nome = String(profile?.attendant_name || "").trim() || "o responsável comercial";
+  const empresa = String(profile?.company_name || "").trim() || "a empresa";
+  return `Você NÃO é um assistente de IA. Você É ${nome}, responsável comercial da ${empresa}, escrevendo pessoalmente pelo WhatsApp.
+
+QUEM VOCÊ É
+- Nome: ${nome}
+- Empresa: ${empresa} (${BUSINESS_MODEL_LABELS[model]})
+- Nicho: ${profile?.company_niche || "conforme perfil"}
+- O que você vende de fato: ${profile?.company_products || "conforme perfil"}
+${catalog ? `- Seu catálogo:\n${catalog}` : ""}
+- Seu diferencial: ${profile?.company_differential || "conforme perfil"}
+- Seu objetivo comercial: ${profile?.company_objective || "abrir conversa qualificada"}
+- Seu público-alvo: ${profile?.company_target_audience || "conforme perfil"}
+
+COM QUEM VOCÊ ESTÁ FALANDO
+- Empresa do lead: ${lead?.company_name || "lead"}${lead?.category ? ` (${lead.category})` : ""}${lead?.city ? ` — ${lead.city}${lead?.state ? `/${lead.state}` : ""}` : ""}
+- O lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que VOCÊ vende" : "um CLIENTE COMPRADOR dos produtos que VOCÊ vende"}.
+
+COMO VOCÊ ESCREVE
+- Sempre em 1ª pessoa ("eu", "a gente", "nós aqui da ${empresa}"). Nunca descreva sua empresa em 3ª pessoa como se fosse um anúncio.
+- Você leu a análise/diagnóstico deste lead antes de escrever: cite algo concreto dele (nome da empresa, cidade, segmento, ponto observado). Mensagem genérica é falha.
+- Tom humano de WhatsApp: curto, direto, sem jargão de marketing, sem emoji exagerado, sem promessa inventada.
+- Nunca invente números, prêmios, anos de mercado, clientes ou resultados que não estejam no seu perfil.
+- Ofereça SOMENTE o que está em "O que você vende de fato"/catálogo.`;
+}
+
+/** Mensagem sem nenhuma referência concreta ao lead = genérica. */
+function messageLacksPersonalization(message: string, lead: any): boolean {
+  const m = (message || "").toLowerCase();
+  if (!m.trim()) return true;
+  const tokens: string[] = [];
+  const push = (v: unknown) => {
+    const s = String(v ?? "").trim().toLowerCase();
+    if (s.length >= 4) tokens.push(s);
+  };
+  push(lead?.company_name);
+  push(lead?.city);
+  push(lead?.category);
+  push(lead?.neighborhood);
+  if (!tokens.length) return false;
+  return !tokens.some((t) => m.includes(t));
+}
+
 function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
   const normalized = normalizeForMatch(message);
   const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
@@ -375,6 +420,8 @@ REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_prod
 - Ação recomendada: ${lead.ai_recommended_action || "N/A"}
 ${pontosFortes.length > 0 ? `- Pontos fortes identificados: ${pontosFortes.join("; ")}` : ""}
 ${pontosFracos.length > 0 ? `- Pontos fracos identificados: ${pontosFracos.join("; ")}` : "- Pontos fracos: não identificados (nicho muito específico — foque na região e tipo de negócio)"}
+${analiseSite ? `- Site analisado: ${analiseSite}` : ""}
+${analiseRedes ? `- Redes sociais analisadas: ${analiseRedes}` : ""}
 ${analiseConcorrencia ? `- Concorrência regional: ${analiseConcorrencia}` : ""}
 ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
@@ -389,6 +436,7 @@ IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se nã
     // Estratégia de abordagem definida pelo MODELO DE NEGÓCIO real (não por palavra-chave solta)
     const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
     const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
+    const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
 
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
 
@@ -465,7 +513,10 @@ Retorne APENAS JSON válido:
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: personaSystem },
+          { role: "user", content: prompt },
+        ],
         temperature: 0.7,
         max_tokens: 1200,
         response_format: { type: "json_object" },
@@ -499,7 +550,9 @@ Retorne APENAS JSON válido:
       ? "offering_mismatch"
       : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
         ? "role_confusion"
-        : null;
+        : messageLacksPersonalization(parsed.mensagem || "", lead)
+          ? "missing_personalization"
+          : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -507,7 +560,7 @@ Retorne APENAS JSON válido:
           headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "gpt-4o-mini",
-            messages: [{
+            messages: [{ role: "system", content: personaSystem }, {
               role: "user",
                content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
 
@@ -516,7 +569,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho e estrutura. Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva mantendo o mesmo tom, tamanho e estrutura, em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
