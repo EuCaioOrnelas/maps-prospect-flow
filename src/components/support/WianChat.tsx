@@ -285,7 +285,6 @@ export function WianChat() {
   const [comment, setComment] = useState("");
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [npsRecommend, setNpsRecommend] = useState<number | null>(null);
-  const [npsComment, setNpsComment] = useState("");
   const [npsSubmitting, setNpsSubmitting] = useState(false);
   const [isAuthed, setIsAuthed] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
@@ -796,7 +795,7 @@ export function WianChat() {
     try {
       if (ticketId) {
         const { error } = await supabase.functions.invoke("support-feedback-submit", {
-          body: { ticketId, visitorSession: visitorSessionRef.current, type: "nps", npsScore, npsRecommend, npsComment, wasEscalated },
+          body: { ticketId, visitorSession: visitorSessionRef.current, type: "nps", npsScore, npsRecommend, wasEscalated },
         });
         if (error) throw error;
       }
@@ -812,7 +811,7 @@ export function WianChat() {
     } finally {
       setNpsSubmitting(false);
     }
-  }, [wasEscalated, npsScore, npsRecommend, npsComment, ticketId, toast]);
+  }, [wasEscalated, npsScore, npsRecommend, ticketId, toast]);
 
 
   const submitEscalation = async () => {
@@ -1002,10 +1001,8 @@ export function WianChat() {
             key="nps-overlay"
             score={npsScore}
             recommend={npsRecommend}
-            comment={npsComment}
             onScoreChange={setNpsScore}
             onRecommendChange={setNpsRecommend}
-            onCommentChange={setNpsComment}
             onSubmit={submitNps}
             submitting={npsSubmitting}
             wasEscalated={wasEscalated}

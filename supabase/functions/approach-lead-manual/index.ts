@@ -219,6 +219,19 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
   return MARKETING_TERMS.test(message || "");
 }
 
+function normalizeForMatch(value: unknown): string {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
+  const normalized = normalizeForMatch(message);
+  const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
+  const sellerOffer = normalizeForMatch(profile?.company_products);
+  return leadCategory.some((word) =>
+    !sellerOffer.includes(word) && new RegExp(`(?:nos|nossa empresa|a gente)\\s+(?:vende|oferece|fornece|fabrica|distribui)[^.!?]{0,70}\\b${word}\\b`).test(normalized)
+  );
+}
+
 
 
 serve(async (req) => {
@@ -324,6 +337,13 @@ serve(async (req) => {
 
     const businessModel = resolveBusinessModel(companyProfile);
     const productCatalog = formatProductCatalog(companyServices);
+
+    if (!companyProfile || (!String(companyProfile.company_products || "").trim() && !productCatalog)) {
+      return new Response(JSON.stringify({
+        error: "missing_company_profile",
+        message: "Complete os produtos ou serviços da sua empresa antes de gerar a abordagem.",
+      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
 
     const companyContext = companyProfile ? `
@@ -366,7 +386,8 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ${companyContext}
 ${diagnosticContext}
 
-DADOS DO LEAD (use como matéria-prima do gancho e do insight):
+═══ CLIENTE POTENCIAL — DADOS DO LEAD ═══
+Tudo deste bloco descreve QUEM RECEBE a mensagem. Use como matéria-prima do gancho, mas nunca trate o nicho ou os produtos do lead como se fossem da empresa que envia.
 - Empresa: ${lead.company_name || "N/A"}
 - Contato: ${lead.contact_name || "responsável"}
 - Nicho / ICP: ${lead.category || "N/A"}
@@ -690,8 +711,13 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       return blocks.join("\n\n");
     };
 
-    // Revisão final: mensagem que oferece algo fora do modelo de negócio é reescrita UMA vez.
-    if (messageViolatesModel(parsed.mensagem || "", businessModel)) {
+    // Revisão final: mensagem que oferece algo fora do modelo ou troca os papéis é reescrita UMA vez.
+    const rewriteReason = messageViolatesModel(parsed.mensagem || "", businessModel)
+      ? "offering_mismatch"
+      : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
+        ? "role_confusion"
+        : null;
+    if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -700,13 +726,14 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
             model: "gpt-4o-mini",
             messages: [{
               role: "user",
-              content: `A mensagem abaixo oferece marketing/presença digital, mas quem envia NÃO vende isso.
+               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
 
 QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
 O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Remova QUALQUER menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online, trocando o ângulo pelo que a empresa realmente vende.
+Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
@@ -739,6 +766,8 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
         motivo: parsed.motivo || "",
         insight: parsed.insight || "",
         estrategia: parsed.estrategia || "",
+        business_model_used: businessModel,
+        rewrite_reason: rewriteReason,
         generated_at: new Date().toISOString(),
       },
     };
