@@ -4,4 +4,4 @@
 - [x] Follow-up: apresentação, elogio, motivo, contexto e CTA.
 - [x] Manual e follow-up: ampliar contexto operacional conforme o segmento, sem inventar nem oferecer catálogo.
 - [x] Remover ações de regeneração dos dois fluxos após a primeira geração.
-- [ ] Publicar e validar as funções alteradas sem enviar mensagens reais.
+- [x] Publicar e validar as funções alteradas sem enviar mensagens reais.

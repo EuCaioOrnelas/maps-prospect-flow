@@ -291,6 +291,11 @@ function messageLacksSenderPresentation(message: string, profile: any): boolean 
   );
 }
 
+function messageLacksOpeningPresentation(message: string): boolean {
+  const firstBlock = String(message || "").trim().split(/\n{2,}/)[0] || "";
+  return !/^\s*(?:sou|me chamo)\b/i.test(firstBlock);
+}
+
 function messageAssumesConversation(message: string): boolean {
   return /\b(?:agrade[cç]o|obrigad[oa]\s+(?:pela|por)|fico feliz em saber|estamos alinhados|que bom que (?:respondeu|tem interesse)|como combinamos|conforme conversamos)\b/i.test(message || "");
 }
@@ -666,6 +671,8 @@ Retorne APENAS JSON válido:
           ? "missing_personalization"
         : messageLacksSenderPresentation(parsed.mensagem || "", companyProfile)
           ? "missing_sender_presentation"
+          : messageLacksOpeningPresentation(parsed.mensagem || "")
+            ? "missing_opening_presentation"
           : messageAssumesConversation(parsed.mensagem || "")
             ? "false_conversation_assumption"
             : messageHasVagueCommercialCTA(parsed.mensagem || "")
