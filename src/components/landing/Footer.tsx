@@ -75,7 +75,7 @@ export const Footer = () => {
                   aria-label="Acessar o Reclame Aqui para reclamações"
                 >
                   <img
-                    src={reclameAquiLogo.url}
+                    src={reclameAquiLogo}
                     alt="Reclame Aqui"
                     className="h-10 w-10 shrink-0 rounded-lg bg-background object-contain p-1"
                   />
