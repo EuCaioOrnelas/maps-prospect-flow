@@ -21,7 +21,7 @@ export const Footer = () => {
     if (location.pathname !== "/") {
       navigate("/");
       window.setTimeout(() => scrollToSection(id), 250);
-et      return;
+      return;
     }
     scrollToSection(id);
   };
