@@ -25,7 +25,9 @@ export function scrollToSection(id: string, timeoutMs = 6000) {
       document.documentElement.scrollHeight - window.innerHeight,
     );
     if (window.scrollY < max) {
-      window.scrollTo({ top: Math.min(window.scrollY + window.innerHeight * 0.9, max) });
+      // "instant": com scroll-behavior: smooth no html, cada passo animaria
+      // e reiniciaria a animação a cada 120ms, tornando a descida lenta.
+      window.scrollTo({ top: Math.min(window.scrollY + window.innerHeight * 0.9, max), behavior: "instant" });
     }
     window.setTimeout(step, 120);
   };
