@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
 import wianAvatar from "@/assets/wian-avatar.png";
+import { EmojiRating, EMOJI_RATING_OPTIONS } from "./EmojiRating";
 
 const CATEGORY_ICONS: Record<string, typeof Megaphone> = {
   campanhas: Megaphone,
@@ -1218,19 +1219,17 @@ export function WianChat() {
 
             <Textarea
               rows={2}
-              placeholder="Quer deixar um comentário? (opcional)"
+              placeholder={npsScore !== null && npsScore <= 4 ? "O que deu errado? Conta pra gente para corrigirmos." : "Quer deixar um comentário? (opcional)"}
               value={npsComment}
               onChange={(e) => setNpsComment(e.target.value)}
             />
 
-            <div className="flex gap-2">
-              <Button size="sm" onClick={submitNps} disabled={npsScore === null || npsRecommend === null} className="flex-1">
-                Enviar feedback
-              </Button>
-              <Button size="sm" variant="ghost" onClick={skipNps}>
-                Pular
-              </Button>
-            </div>
+            <Button size="sm" onClick={submitNps} disabled={npsScore === null || npsRecommend === null} className="w-full">
+              Enviar avaliação
+            </Button>
+            <p className="text-[11px] text-center text-muted-foreground">
+              Sua avaliação é anônima para o time de atendimento e usada só para melhorar o suporte.
+            </p>
           </motion.div>
         )}
 
