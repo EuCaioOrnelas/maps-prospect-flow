@@ -173,7 +173,7 @@ export const PRODUCTS: ProductConfig[] = [
     heroTitle: "SDR Inteligente que",
     heroHighlight: "vende sozinho",
     heroDescription:
-      "O SDR Inteligente conversa como gente: compreende o que o lead diz, entende o momento dele, diagnostica a necessidade, apresenta a solução, contorna objeções e agenda a reunião pela Agenda Inteligente, sem precisar de alguém disponível.",
+      "Um SDR com IA que conversa, qualifica e negocia com seus leads, responde objeções e agenda reuniões automaticamente do primeiro contato à oportunidade comercial.",
     seoTitle: "SDR Inteligente: SDR autônomo que atende, qualifica e agenda",
     seoDescription:
       "Um SDR autônomo que conversa, compreende, diagnostica, qualifica, vende e agenda reuniões automaticamente pela Agenda Inteligente, com histórico completo no CRM.",
