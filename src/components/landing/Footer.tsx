@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Instagram, Youtube, Lightbulb, ArrowUpRight } from "lucide-react";
-import reclameAquiLogo from "@/assets/reclame-aqui-logo.png.asset.json";
+import reclameAquiLogo from "@/assets/reclame-aqui-logo.png";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
