@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight, Megaphone, MessageSquare, Building2, Bot, LayoutGrid, GitBranch, CreditCard, Package, BarChart3, Headphones, HelpCircle, AlertCircle, Wrench, CheckCircle2, XCircle, Loader, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
 import wianAvatar from "@/assets/wian-avatar.png";
-import { EmojiRating, EMOJI_RATING_OPTIONS } from "./EmojiRating";
+import { EmojiRating } from "./EmojiRating";
+import { SupportRatingOverlay } from "./SupportRatingOverlay";
 
 const CATEGORY_ICONS: Record<string, typeof Megaphone> = {
   campanhas: Megaphone,
@@ -285,6 +286,7 @@ export function WianChat() {
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [npsRecommend, setNpsRecommend] = useState<number | null>(null);
   const [npsComment, setNpsComment] = useState("");
+  const [npsSubmitting, setNpsSubmitting] = useState(false);
   const [isAuthed, setIsAuthed] = useState(false);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [wasEscalated, setWasEscalated] = useState(false);
@@ -784,12 +786,13 @@ export function WianChat() {
     }
   };
 
-  const submitNps = async () => {
+  const submitNps = useCallback(async () => {
     const finalPhase: Phase = wasEscalated ? "done-escalated" : "done-resolved";
     if (npsScore === null && npsRecommend === null) {
       setPhase(finalPhase);
       return;
     }
+    setNpsSubmitting(true);
     try {
       if (ticketId) {
         const { error } = await supabase.functions.invoke("support-feedback-submit", {
@@ -798,12 +801,18 @@ export function WianChat() {
         if (error) throw error;
       }
       toast({ title: "Obrigado pelo feedback! 🙌" });
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "Pronto! ✅ Sua avaliação foi registrada e vai direto para a liderança da Wiize. Muito obrigado pelo retorno! 🙏" },
+      ]);
       setPhase(finalPhase);
     } catch (e: any) {
       toast({ title: "Erro", description: e.message, variant: "destructive" });
       setPhase(finalPhase);
+    } finally {
+      setNpsSubmitting(false);
     }
-  };
+  }, [wasEscalated, npsScore, npsRecommend, npsComment, ticketId, toast]);
 
 
   const submitEscalation = async () => {
@@ -986,7 +995,24 @@ export function WianChat() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0" onPaste={handlePaste}>
+    <div className="relative flex flex-col h-full min-h-0" onPaste={handlePaste}>
+      <AnimatePresence>
+        {phase === "nps" && (
+          <SupportRatingOverlay
+            key="nps-overlay"
+            score={npsScore}
+            recommend={npsRecommend}
+            comment={npsComment}
+            onScoreChange={setNpsScore}
+            onRecommendChange={setNpsRecommend}
+            onCommentChange={setNpsComment}
+            onSubmit={submitNps}
+            submitting={npsSubmitting}
+            wasEscalated={wasEscalated}
+            ticketNumber={ticketNumber}
+          />
+        )}
+      </AnimatePresence>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/30">
         {/* Mensagens já trocadas */}
         <AnimatePresence initial={false}>
@@ -1149,63 +1175,6 @@ export function WianChat() {
             <Button size="sm" onClick={submitRating} disabled={stars === null} className="w-full">
               Enviar avaliação
             </Button>
-          </motion.div>
-        )}
-
-        {phase === "nps" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-4 shadow-sm">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold">Falta só um passo: avalie este atendimento ⭐</p>
-              <p className="text-xs text-muted-foreground leading-snug">
-                {wasEscalated
-                  ? "Seu chamado já está aberto e o time humano vai responder por e-mail. Aqui você avalia apenas como foi o atendimento do Wian até agora."
-                  : "Leva 10 segundos e é o que nos ajuda a melhorar o suporte da Wiize."}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2">Como você avalia este atendimento?</p>
-              <EmojiRating value={npsScore} onChange={setNpsScore} size="sm" />
-              {npsScore !== null && (
-                <p className="text-[11px] text-muted-foreground mt-2">
-                  Você marcou <span className="font-medium text-foreground">{EMOJI_RATING_OPTIONS.find((o) => o.value === npsScore)?.label}</span>. Obrigado! 🙏
-                </p>
-              )}
-            </div>
-
-            <div>
-              <p className="text-sm font-medium mb-2">De 0 a 10, qual a chance de você indicar a Wiize para um amigo próximo?</p>
-              <div className="flex flex-wrap gap-1.5">
-                {Array.from({ length: 11 }, (_, n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setNpsRecommend(n)}
-                    className={`w-8 h-8 text-xs rounded-md border transition-colors ${
-                      npsRecommend === n
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border hover:border-primary/50 hover:bg-muted"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Textarea
-              rows={2}
-              placeholder={npsScore !== null && npsScore <= 4 ? "O que deu errado? Conta pra gente para corrigirmos." : "Quer deixar um comentário? (opcional)"}
-              value={npsComment}
-              onChange={(e) => setNpsComment(e.target.value)}
-            />
-
-            <Button size="sm" onClick={submitNps} disabled={npsScore === null || npsRecommend === null} className="w-full">
-              Enviar avaliação
-            </Button>
-            <p className="text-[11px] text-center text-muted-foreground">
-              Sua avaliação vai direto para a liderança da Wiize e é usada para melhorar o suporte.
-            </p>
           </motion.div>
         )}
 
