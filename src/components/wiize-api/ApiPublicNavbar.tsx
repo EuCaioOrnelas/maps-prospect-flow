@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { scrollToSection } from "@/lib/scrollToSection";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import wiizeLogo from "@/assets/logo-icon-new.png";
