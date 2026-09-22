@@ -420,6 +420,8 @@ REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_prod
 - Ação recomendada: ${lead.ai_recommended_action || "N/A"}
 ${pontosFortes.length > 0 ? `- Pontos fortes identificados: ${pontosFortes.join("; ")}` : ""}
 ${pontosFracos.length > 0 ? `- Pontos fracos identificados: ${pontosFracos.join("; ")}` : "- Pontos fracos: não identificados (nicho muito específico — foque na região e tipo de negócio)"}
+${analiseSite ? `- Site analisado: ${analiseSite}` : ""}
+${analiseRedes ? `- Redes sociais analisadas: ${analiseRedes}` : ""}
 ${analiseConcorrencia ? `- Concorrência regional: ${analiseConcorrencia}` : ""}
 ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
