@@ -63,8 +63,24 @@ export const Footer = () => {
             <nav aria-label="Produto">
               <h2 className="mb-5 text-sm font-semibold text-foreground">Produto</h2>
               <ul className="space-y-3.5">
-                <li><Link to="/#recursos" className={linkClass}>Recursos</Link></li>
-                <li><Link to="/#pricing" className={linkClass}>Planos</Link></li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleSectionClick("recursos")}
+                    className={`${linkClass} cursor-pointer`}
+                  >
+                    Recursos
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleSectionClick("pricing")}
+                    className={`${linkClass} cursor-pointer`}
+                  >
+                    Planos
+                  </button>
+                </li>
                 <li><Link to="/signup/escolher-plano" className={linkClass}>Teste grátis</Link></li>
                 <li><Link to="/login" className={linkClass}>Entrar</Link></li>
               </ul>
@@ -75,7 +91,6 @@ export const Footer = () => {
               <ul className="space-y-3.5">
                 <li><Link to="/contato" className={linkClass}>Contato</Link></li>
                 <li><Link to="/ajuda" className={linkClass}>Central de ajuda</Link></li>
-                <li><Link to="/diretrizes-de-envio" className={linkClass}>Diretrizes de envio</Link></li>
                 <li><Link to="/seguranca-faq" className={linkClass}>Segurança</Link></li>
               </ul>
             </nav>
