@@ -204,6 +204,15 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
   return MARKETING_TERMS.test(message || "");
 }
 
+const REPUTATION_HOOK_TERMS = /(reputa[cç][aã]o|avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?[0-5](?:[.,]\d)?|reviews?|estrelas?)/i;
+const CONNECTIVITY_OFFER_TERMS = /(internet|conectividade|banda larga|fibra|wi-?fi|telecom|\bmega\b|\bgb\b)/i;
+
+/** Evita usar prova social do lead como gancho quando a oferta resolve conectividade operacional. */
+function messageUsesDisconnectedHook(message: string, profile: any): boolean {
+  const offer = `${profile?.company_niche || ""} ${profile?.company_products || ""}`;
+  return CONNECTIVITY_OFFER_TERMS.test(offer) && REPUTATION_HOOK_TERMS.test(message || "");
+}
+
 function normalizeForMatch(value: unknown): string {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
@@ -231,6 +240,8 @@ COM QUEM VOCÊ ESTÁ FALANDO
 COMO VOCÊ ESCREVE
 - Sempre em 1ª pessoa ("eu", "a gente", "nós aqui da ${empresa}"). Nunca descreva sua empresa em 3ª pessoa como se fosse um anúncio.
 - Você leu a análise/diagnóstico deste lead antes de escrever: cite algo concreto dele (nome da empresa, cidade, segmento, ponto observado). Mensagem genérica é falha.
+- Escolha somente fatos do lead que tenham PONTE CAUSAL com o que você vende. Um dado verdadeiro, mas comercialmente desconectado, deve ser descartado.
+- Se você vende internet/conectividade, avaliações, reputação, presença digital e elogios genéricos NÃO são ganchos válidos. Relacione o contato à dependência operacional de conexão do segmento, como atendimento, sistemas, pagamentos, equipamentos conectados ou horários de pico, sem afirmar algo que não foi comprovado.
 - Tom humano de WhatsApp: curto, direto, sem jargão de marketing, sem emoji exagerado, sem promessa inventada.
 - Nunca invente números, prêmios, anos de mercado, clientes ou resultados que não estejam no seu perfil.
 - Ofereça SOMENTE o que está em "O que você vende de fato"/catálogo.`;
@@ -427,7 +438,7 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
 ${enrichment.custom_diagnosis ? `\n═══ OBSERVAÇÕES DO PROSPECTOR (diagnóstico adicional do usuário) ═══\n${enrichment.custom_diagnosis}` : ""}
 
-IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho. Se há observações do prospector, PRIORIZE essas informações pois são análises reais feitas pelo usuário.
+IMPORTANTE: Use somente pontos do diagnóstico que tenham conexão direta com o que a empresa prospectora vende. Dados verdadeiros sem relação comercial devem ser descartados. Se não houver evidência conectada à oferta, use a REGIÃO + TIPO DE NEGÓCIO e formule uma pergunta sobre uma necessidade plausível do segmento, sem apresentar suposição como fato. Se há observações do prospector, priorize apenas as que passarem por esse mesmo teste de conexão.
 ` : "";
 
     // Generate a random seed to force unique messages even for similar diagnostics
@@ -477,7 +488,7 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - Mantenha humano, consultivo, nada robótico ou genérico
 
 ═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos curtos, separados por \\n\\n) ═══
-1. Agradecimento curto pelo retorno + reconhecimento de que viu o negócio dele (ex: "Show que respondeu! Dei uma olhada na [empresa] aqui em [cidade]...")
+1. Agradecimento curto pelo retorno + reconhecimento de que viu o negócio dele. O reconhecimento deve selecionar um fato com relação direta à oferta; nome, segmento e cidade são preferíveis a elogios desconectados.
 2. Apresentação rápida (nome + empresa + o que faz em 1 linha, sem rodeios)
 3. Insight/valor real conectado à dor ou oportunidade detectada no diagnóstico — algo que mostre que ele NÃO está falando com um robô genérico
 4. Próximo passo claro e leve: uma pergunta qualificadora OU convite para uma call rápida de 10-15 min OU oferta de enviar um material/proposta
@@ -492,6 +503,7 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - ${companyProfile ? `Use "${companyProfile.company_differential}" como argumento natural` : ""}
 - Máx 4 parágrafos CURTOS separados por \\n\\n
 - NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
+- TESTE DA PONTE: complete mentalmente "esse dado importa para o que vendo porque...". Se não houver resposta concreta e honesta, descarte o dado. Para internet, conecte o segmento à continuidade da operação, sistemas, pagamentos, atendimento ou equipamentos; nunca à nota/reputação.
 - ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
@@ -550,6 +562,8 @@ Retorne APENAS JSON válido:
       ? "offering_mismatch"
       : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
         ? "role_confusion"
+        : messageUsesDisconnectedHook(parsed.mensagem || "", companyProfile)
+          ? "disconnected_hook"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
           : null;
@@ -569,7 +583,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho e estrutura, em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva mantendo o mesmo tom, tamanho e estrutura, em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. Todo fato usado como gancho deve ter conexão direta e explicável com a oferta. Se não houver evidência conectada, use segmento + cidade e faça uma pergunta sobre necessidade operacional plausível, sem inventar fatos. ${CONNECTIVITY_OFFER_TERMS.test(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""}`) ? "Como a oferta é internet/conectividade, remova avaliações, reputação, reviews e elogios genéricos; use continuidade da operação, sistemas, pagamentos, atendimento, equipamentos conectados ou demanda em horários de pico, sempre sem afirmar dados não comprovados." : ""} ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
