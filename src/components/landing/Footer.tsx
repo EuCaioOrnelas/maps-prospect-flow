@@ -26,10 +26,6 @@ export const Footer = () => {
     scrollToSection(id, 20000);
   };
 
-  const openCookiePreferences = () => {
-    resetConsent();
-    window.dispatchEvent(new Event("wiize:open-cookie-settings"));
-  };
 
   return (
     <footer className="w-full overflow-hidden border-t border-border bg-card">
@@ -141,8 +137,6 @@ export const Footer = () => {
             <Link to="/privacy" className={linkClass}>Política de Privacidade</Link>
             <span aria-hidden="true" className="select-none opacity-50">·</span>
             <Link to="/refund-policy" className={linkClass}>Política de Reembolso</Link>
-             <span aria-hidden="true" className="select-none opacity-50">·</span>
-             <button type="button" onClick={openCookiePreferences} className={linkClass}>Preferências de cookies</button>
           </nav>
         </div>
       </div>

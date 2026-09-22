@@ -105,11 +105,8 @@ const CookiePanel = (props: CookiePanelProps) => {
 
           <div className="flex flex-col items-center gap-1.5 lg:shrink-0">
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <button type="button" onClick={() => setCustomizing((value) => !value)} className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:text-sm">
-                <SlidersHorizontal className="size-4" aria-hidden="true" /> Personalizar
-              </button>
-              <button type="button" onClick={() => decide(OPTIONAL_DENIED)} className="rounded-lg px-3 py-2 text-[11px] font-medium text-muted-foreground/60 transition-colors hover:text-muted-foreground sm:text-xs">
-                {rejectText.replace("cookies", "opcionais")}
+              <button type="button" onClick={() => decide(OPTIONAL_DENIED)} className="rounded-lg border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:text-sm">
+                {rejectText}
               </button>
               <button
                 type="button"
@@ -121,24 +118,6 @@ const CookiePanel = (props: CookiePanelProps) => {
             </div>
           </div>
         </div>
-        {customizing && (
-          <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { key: "necessary", label: "Essenciais", description: "Sessão, segurança e funcionamento.", disabled: true },
-              { key: "functional", label: "Funcionais", description: "Preferências e recursos opcionais." },
-              { key: "analytics", label: "Analíticos", description: "Medição de uso e desempenho." },
-              { key: "marketing", label: "Marketing", description: "Campanhas e publicidade." },
-            ].map((item) => (
-              <label key={item.key} className="flex items-start gap-3 rounded-lg border border-border bg-background p-3">
-                <input type="checkbox" checked={preferences[item.key as keyof ConsentPrefs]} disabled={item.disabled} onChange={(event) => setPreferences((current) => ({ ...current, [item.key]: event.target.checked }))} className="mt-0.5 size-4 accent-primary" />
-                <span><span className="block text-sm font-medium text-foreground">{item.label}</span><span className="block text-xs text-muted-foreground">{item.description}</span></span>
-              </label>
-            ))}
-            <button type="button" onClick={() => decide(preferences)} className="rounded-lg bg-foreground px-5 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90 sm:col-span-2 lg:col-span-4 lg:justify-self-end">
-              Salvar preferências
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
