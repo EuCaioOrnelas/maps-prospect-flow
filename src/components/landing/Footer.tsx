@@ -21,7 +21,8 @@ export const Footer = () => {
     if (location.pathname !== "/") {
       navigate("/");
     }
-    scrollToSection(id);
+    // Timeout longo: as seções da landing são lazy e montam aos poucos.
+    scrollToSection(id, 20000);
   };
 
   return (
