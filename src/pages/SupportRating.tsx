@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/Logo";
 import { Loader2, CheckCircle2, Star } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { EmojiRating, EMOJI_RATING_OPTIONS } from "@/components/support/EmojiRating";
 
 export default function SupportRating() {
   const { token } = useParams<{ token: string }>();
