@@ -422,7 +422,7 @@ export const PRODUCTS: ProductConfig[] = [
     heroTitle: "Automatize seu atendimento",
     heroHighlight: "Direto pelo WhatsApp",
     heroDescription:
-      "Crie automações no WhatsApp para atender clientes, resolver suporte, receber pedidos e responder consultas. O cliente tem resposta imediata, o processo roda sozinho e sua equipe assume apenas os casos que exigem gente.",
+      "Crie fluxos automáticos no WhatsApp que atendem seus clientes, respondem solicitações e resolvem demandas sem intervenção da equipe, deixando seu time livre para o que realmente exige atenção.",
     seoTitle: "Automação no WhatsApp: atendimento, suporte, pedidos e consultas",
     seoDescription:
       "Automatize o WhatsApp da sua empresa: atendimento ao cliente, suporte, pedidos e consultas resolvidos automaticamente, com transferência para humano quando necessário.",
