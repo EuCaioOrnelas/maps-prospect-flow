@@ -162,6 +162,13 @@
       "when": 1790011857331,
       "tag": "0022_referrer_detected_source",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790088854589,
+      "tag": "0023_chat_scheduled_claim",
+      "breakpoints": true
     }
   ]
 }

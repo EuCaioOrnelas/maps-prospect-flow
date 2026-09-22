@@ -2368,6 +2368,8 @@ export type Database = {
       }
       chat_scheduled_messages: {
         Row: {
+          attempts: number
+          claimed_at: string | null
           contact_phone: string
           content: string | null
           conversation_id: string
@@ -2388,6 +2390,8 @@ export type Database = {
           waba_message_id: string | null
         }
         Insert: {
+          attempts?: number
+          claimed_at?: string | null
           contact_phone: string
           content?: string | null
           conversation_id: string
@@ -2408,6 +2412,8 @@ export type Database = {
           waba_message_id?: string | null
         }
         Update: {
+          attempts?: number
+          claimed_at?: string | null
           contact_phone?: string
           content?: string | null
           conversation_id?: string
@@ -13421,6 +13427,37 @@ export type Database = {
       check_signup_fraud_strict: {
         Args: { p_cpf?: string; p_fingerprint: string; p_ip: string }
         Returns: Json
+      }
+      claim_chat_scheduled_messages: {
+        Args: { _limit?: number }
+        Returns: {
+          attempts: number
+          claimed_at: string | null
+          contact_phone: string
+          content: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          kind: string
+          owner_user_id: string
+          scheduled_at: string
+          sent_at: string | null
+          sequence: number
+          status: string
+          template_language: string | null
+          template_name: string | null
+          updated_at: string
+          waba_connection_id: string
+          waba_message_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "chat_scheduled_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       claim_partner_goal_prize: { Args: { p_goal_id: string }; Returns: Json }
       cleanup_rate_limits: { Args: never; Returns: undefined }
