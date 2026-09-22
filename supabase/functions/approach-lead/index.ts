@@ -207,7 +207,8 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
 function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
   const commercialDetail = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensalidade|desconto|condi[cç][aã]o|proposta|or[cç]amento|contrata[cç][aã]o)\b/i;
   const explicitPitch = /\b(?:quero te oferecer|gostaria de oferecer|temos para voc[eê]|posso montar uma proposta|fechar agora|contratar agora)\b/i;
-  return commercialDetail.test(message || "") || explicitPitch.test(message || "");
+  const prematureBenefit = /\b(?:pode se beneficiar|internet de alta qualidade|melhorar(?:ia|ando)? a experi[eê]ncia|trazer (?:mais )?(?:resultado|efici[eê]ncia)|garantir uma conex[aã]o)\b/i;
+  return commercialDetail.test(message || "") || explicitPitch.test(message || "") || prematureBenefit.test(message || "");
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -284,6 +285,12 @@ function messageUsesDisconnectedCTA(message: string, profile: any): boolean {
   const lastQuestion = normalizedMessage.split(/(?<=[.!])\s+|\n+/).filter(Boolean).findLast((part) => part.includes("?")) || "";
   return /(agendamento|pagamento|captacao|marketing|redes sociais|site|sistema de gestao)/.test(lastQuestion)
     && !/(internet|conexao|conectividade|rede|estabilidade|velocidade)/.test(lastQuestion);
+}
+
+function messageUsesCompoundCTA(message: string): boolean {
+  const normalizedMessage = normalizeForMatch(message);
+  const lastQuestion = normalizedMessage.split(/\n+/).filter(Boolean).findLast((part) => part.includes("?")) || "";
+  return /\b(?:ou|e)\s+(?:ja\s+)?(?:pensou|considerou|gostaria|quer|pretende|esta)\b/.test(lastQuestion);
 }
 
 function messageHasMultipleQuestions(message: string): boolean {
@@ -535,6 +542,7 @@ Escreva entre 90 e 160 palavras, com blocos curtos separados por \\n\\n, nesta o
 5. INTERESSE: indique que pode existir uma oportunidade concreta de melhoria, sem revelar catálogo, plano, preço, condição ou proposta.
 6. CTA OBJETIVO: termine perguntando sobre a situação atual do lead ou se ele quer entender o ponto ESPECÍFICO. A pergunta precisa dizer claramente qual é o assunto. NÃO peça call, reunião, agenda, proposta ou orçamento.
    A pergunta deve tratar obrigatoriamente da área que a empresa remetente vende. Se vende internet, pergunte sobre conexão, estabilidade, rede ou estrutura atual; NUNCA pergunte apenas sobre agenda, pagamentos, marketing ou outro sistema que ela não vende.
+   Faça UMA pergunta simples, sem juntar duas alternativas com "ou". Exemplo de estrutura: "Hoje a conexão de vocês atende bem a operação nos horários de maior movimento?"
    A mensagem inteira deve ter EXATAMENTE UMA interrogação, somente nesta última frase. Nada pode vir depois dela.
 
 FLUXO INEGOCIÁVEL:
@@ -548,6 +556,7 @@ A única diferença para a mensagem manual é que esta acontece depois do templa
 - ⛔ PROIBIDO agradecer a resposta ou afirmar interesse/alinhamento sem conhecer o texto respondido
 - ⛔ PROIBIDO omitir a apresentação: nome + empresa + autoridade contextual são obrigatórios
 - ⛔ PROIBIDO apresentar catálogo, plano, velocidade, preço, condição, proposta ou orçamento; é permitido nomear a área de atuação da empresa
+- ⛔ PROIBIDO antecipar benefícios ou vender a solução com frases como "pode se beneficiar", "internet de alta qualidade" ou "melhorar a experiência"
 - ⛔ PROIBIDO pedir call, reunião, demonstração, agenda ou horário
 - ⛔ PROIBIDO CTA vago: "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?", "o que acha de avaliarmos?"
 - ⛔ PROIBIDO "como podemos ajudar" ou "ajudar a melhorar" na abertura; isso antecipa uma oferta. Apenas explique o motivo do contato
@@ -625,11 +634,13 @@ Retorne APENAS JSON válido:
               ? "vague_commercial_cta"
               : messageUsesDisconnectedCTA(parsed.mensagem || "", companyProfile)
                 ? "disconnected_cta"
-                : messageHasMultipleQuestions(parsed.mensagem || "")
-                  ? "multiple_questions"
-                  : messageLacksPraiseHook(parsed.mensagem || "")
-                    ? "missing_praise_hook"
-                    : null;
+                : messageUsesCompoundCTA(parsed.mensagem || "")
+                  ? "compound_cta"
+                  : messageHasMultipleQuestions(parsed.mensagem || "")
+                    ? "multiple_questions"
+                    : messageLacksPraiseHook(parsed.mensagem || "")
+                      ? "missing_praise_hook"
+                      : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -646,7 +657,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia". NÃO use "Oi", "Olá", "tudo bem?" nem outra saudação; NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Comece naturalmente por "O motivo do meu contato foi..." ou equivalente, sem dizer "entender como podemos ajudar". Use 90 a 160 palavras em blocos curtos: (1) motivo do contato; (2) elogio factual ANTES da apresentação, escolhendo conforme os dados entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado; (3) nome, empresa e área ampla de atuação; (4) conexão do destaque com o contexto operacional e com o campo em que o remetente atua; (5) oportunidade específica sem apresentar solução; (6) pergunta objetiva. Não invente elogios e não use sempre avaliação do Google. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. NÃO peça call, reunião, agenda ou horário. O CTA deve tratar do que o remetente realmente vende; se vende internet, pergunte sobre conexão, estabilidade, rede ou estrutura atual, nunca apenas sobre agenda, pagamentos, marketing ou sistemas. Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
+ Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia". NÃO use "Oi", "Olá", "tudo bem?" nem outra saudação; NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Comece naturalmente por "O motivo do meu contato foi..." ou equivalente, sem dizer "entender como podemos ajudar". Use 90 a 160 palavras em blocos curtos: (1) motivo do contato; (2) elogio factual ANTES da apresentação, escolhendo conforme os dados entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado; (3) nome, empresa e área ampla de atuação; (4) conexão do destaque com o contexto operacional e com o campo em que o remetente atua; (5) oportunidade específica sem apresentar solução; (6) pergunta objetiva. Não invente elogios e não use sempre avaliação do Google. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. Não diga que o lead "pode se beneficiar", não prometa melhoria e não venda "internet de alta qualidade". NÃO peça call, reunião, agenda ou horário. O CTA deve tratar do que o remetente realmente vende; se vende internet, faça UMA pergunta simples sobre conexão, estabilidade, rede ou estrutura atual, nunca apenas sobre agenda, pagamentos, marketing ou sistemas e nunca junte duas perguntas com "ou". Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
