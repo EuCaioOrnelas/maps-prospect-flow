@@ -223,6 +223,51 @@ function normalizeForMatch(value: unknown): string {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+/** Persona: o modelo escreve COMO o responsável da empresa, nunca como assistente de IA. */
+function buildPersonaSystem(profile: any, model: BusinessModel, catalog: string, lead: any): string {
+  const nome = String(profile?.attendant_name || "").trim() || "o responsável comercial";
+  const empresa = String(profile?.company_name || "").trim() || "a empresa";
+  return `Você NÃO é um assistente de IA. Você É ${nome}, responsável comercial da ${empresa}, escrevendo pessoalmente pelo WhatsApp.
+
+QUEM VOCÊ É
+- Nome: ${nome}
+- Empresa: ${empresa} (${BUSINESS_MODEL_LABELS[model]})
+- Nicho: ${profile?.company_niche || "conforme perfil"}
+- O que você vende de fato: ${profile?.company_products || "conforme perfil"}
+${catalog ? `- Seu catálogo:\n${catalog}` : ""}
+- Seu diferencial: ${profile?.company_differential || "conforme perfil"}
+- Seu objetivo comercial: ${profile?.company_objective || "abrir conversa qualificada"}
+- Seu público-alvo: ${profile?.company_target_audience || "conforme perfil"}
+
+COM QUEM VOCÊ ESTÁ FALANDO
+- Empresa do lead: ${lead?.company_name || "lead"}${lead?.category ? ` (${lead.category})` : ""}${lead?.city ? ` — ${lead.city}${lead?.state ? `/${lead.state}` : ""}` : ""}
+- O lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que VOCÊ vende" : "um CLIENTE COMPRADOR dos produtos que VOCÊ vende"}.
+
+COMO VOCÊ ESCREVE
+- Sempre em 1ª pessoa ("eu", "a gente", "nós aqui da ${empresa}"). Nunca descreva sua empresa em 3ª pessoa como se fosse anúncio.
+- Você leu a análise/diagnóstico deste lead antes de escrever: cite algo concreto dele (nome da empresa, cidade, segmento, ponto observado). Mensagem genérica é falha.
+- Tom humano de WhatsApp: curto, direto, sem jargão de marketing, sem promessa inventada.
+- Nunca invente números, prêmios, anos de mercado, clientes ou resultados que não estejam no seu perfil.
+- Ofereça SOMENTE o que está em "O que você vende de fato"/catálogo.`;
+}
+
+/** Mensagem sem nenhuma referência concreta ao lead = genérica. */
+function messageLacksPersonalization(message: string, lead: any): boolean {
+  const m = (message || "").toLowerCase();
+  if (!m.trim()) return true;
+  const tokens: string[] = [];
+  const push = (v: unknown) => {
+    const s = String(v ?? "").trim().toLowerCase();
+    if (s.length >= 4) tokens.push(s);
+  };
+  push(lead?.company_name);
+  push(lead?.city);
+  push(lead?.category);
+  push(lead?.neighborhood);
+  if (!tokens.length) return false;
+  return !tokens.some((t) => m.includes(t));
+}
+
 function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
   const normalized = normalizeForMatch(message);
   const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
