@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
-import { Instagram, Youtube, ArrowUpRight } from "lucide-react";
+import { Instagram, Youtube } from "lucide-react";
 import { scrollToSection } from "@/lib/scrollToSection";
 import reclameAquiLogo from "@/assets/reclame-aqui-logo.png";
 
