@@ -501,7 +501,7 @@ export const PRODUCTS: ProductConfig[] = [
     heroTitle: "Capture leads com contexto",
     heroHighlight: "e venda com precisão",
     heroDescription:
-      "Publique formulários com a sua marca, descubra quais campanhas geram oportunidades e envie cada novo contato ao CRM com respostas, UTMs e arquivos organizados.",
+      "Crie formulários personalizados, capture leads com contexto e entregue cada oportunidade à sua equipe pronta para ser trabalhada.",
     seoTitle: "Formulários e links rastreados para geração de leads B2B",
     seoDescription:
       "Crie formulários profissionais, rastreie UTMs e links e envie respostas automaticamente ao CRM da Wiize.",
