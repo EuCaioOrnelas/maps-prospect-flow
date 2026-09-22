@@ -122,14 +122,19 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-5 border-t border-border pt-7 text-sm text-muted-foreground sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-12 flex flex-col items-center gap-4 border-t border-border pt-7 text-center text-sm text-muted-foreground sm:flex-row sm:items-end sm:justify-between sm:text-left">
           <div className="space-y-1">
             <p>© {currentYear} Wiize. Todos os direitos reservados.</p>
             <p>Wiize · CNPJ 61.420.593/0001-30</p>
           </div>
-          <nav aria-label="Documentos legais" className="flex flex-wrap gap-x-6 gap-y-3">
+          <nav
+            aria-label="Documentos legais"
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:justify-end"
+          >
             <Link to="/terms" className={linkClass}>Termos de Uso</Link>
+            <span aria-hidden="true" className="select-none opacity-50">·</span>
             <Link to="/privacy" className={linkClass}>Política de Privacidade</Link>
+            <span aria-hidden="true" className="select-none opacity-50">·</span>
             <Link to="/refund-policy" className={linkClass}>Política de Reembolso</Link>
           </nav>
         </div>
