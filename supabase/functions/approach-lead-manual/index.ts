@@ -4,9 +4,9 @@
 //
 // Estrutura obrigatória (9 blocos, sem títulos no texto final):
 //   0. Saudação humanizada        — curta, natural, variada, adaptada ao ICP; NUNCA "bom dia/tarde/noite"
-//   1. Elogio personalizado       — gatilho factual antes da apresentação
-//   2. Identificação curta        — quem é / de onde
-//   3. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
+//   1. Gancho personalizado       — 1ª frase após a saudação, baseada em dado real do lead
+//   2. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
+//   3. Identificação curta        — quem é / de onde
 //   4. Motivo do contato          — natural, espontâneo
 //   5. Insight consultivo         — percepção inteligente, linguagem cautelosa
 //   6. Curiosidade                — NÃO revelar a solução
@@ -212,7 +212,7 @@ ${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insin
 `;
 }
 
-const MARKETING_TERMS = /(marketing|tr[aá]fego|an[uú]ncios?|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
+const MARKETING_TERMS = /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
 
 function messageViolatesModel(message: string, model: BusinessModel): boolean {
   if (model === "agencia") return false;
@@ -220,9 +220,12 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
 }
 
 function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
-  const commercialDetail = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensalidade|desconto|condi[cç][aã]o|proposta|or[cç]amento|contrata[cç][aã]o)\b/i;
-  const explicitPitch = /\b(?:quero te oferecer|gostaria de oferecer|temos para voc[eê]|posso montar uma proposta|fechar agora|contratar agora)\b/i;
-  return commercialDetail.test(message || "") || explicitPitch.test(message || "");
+  const normalizedMessage = normalizeForMatch(message);
+  const offerWords = normalizeForMatch(`${profile?.company_products || ""} ${catalog}`)
+    .split(/\W+/)
+    .filter((word) => word.length >= 6 && !["empresa", "empresas", "servico", "servicos", "produto", "produtos"].includes(word));
+  return /\b(?:r\$|plano|planos|pre[cç]o|benef[ií]cios?|oferecemos?|trabalhamos com)\b/i.test(message || "")
+    || offerWords.some((word) => normalizedMessage.includes(word));
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -281,18 +284,6 @@ function messageConfusesBusinessRoles(message: string, lead: any, profile: any):
   return leadCategory.some((word) =>
     !sellerOffer.includes(word) && new RegExp(`(?:nos|nossa empresa|a gente)\\s+(?:vende|oferece|fornece|fabrica|distribui)[^.!?]{0,70}\\b${word}\\b`).test(normalized)
   );
-}
-
-function messageHasVagueCommercialCTA(message: string): boolean {
-  return /\b(?:fiquei curioso para saber|gostaria de entender como isso poderia impactar|o que voc[eê] acha de avaliarmos|faz sentido(?:\s+para voc[eê])?|quer saber mais\??|gostaria de saber mais\??)\b/i.test(message || "");
-}
-
-function messageHasMultipleQuestions(message: string): boolean {
-  return ((message || "").match(/\?/g) || []).length !== 1;
-}
-
-function messageLacksPraiseHook(message: string): boolean {
-  return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
 }
 
 
@@ -440,13 +431,13 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
     const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
 
-    const prompt = `Você é um VENDEDOR CONSULTIVO B2B escrevendo a PRIMEIRA mensagem no WhatsApp para o dono/gestor de uma empresa que você acabou de analisar.
+    const prompt = `Você é um CONSULTOR B2B sênior escrevendo a PRIMEIRA mensagem no WhatsApp para o dono/gestor de uma empresa que você acabou de analisar.
 
-▸ OBJETIVO ÚNICO: abrir uma conversa comercial, despertar interesse genuíno no que a empresa remetente resolve e gerar UMA RESPOSTA natural do empresário.
-▸ É um primeiro contato de prospecção feito por um vendedor da empresa, mas NÃO é hora de apresentar catálogo, plano, preço, condição, proposta ou pedir reunião.
-▸ É OBRIGATÓRIO dizer claramente a área em que a empresa atua, em linguagem ampla (ex.: conectividade/internet empresarial), para o contato fazer sentido. Isso não é apresentar uma oferta.
+▸ OBJETIVO ÚNICO: gerar UMA RESPOSTA natural do empresário.
+▸ NÃO é vender. NÃO é marcar reunião. NÃO é apresentar serviço.
+▸ A mensagem NUNCA pode citar ou oferecer produtos, serviços, planos, preços, condições ou benefícios. Essas informações servem somente para orientar o assunto internamente.
 ▸ A mensagem tem que parecer 100% humana, como se você tivesse acabado de olhar a operação dele.
-▸ Sensação-alvo do leitor: "essa pessoa entendeu meu negócio e levantou um ponto relevante; quero entender o que ela percebeu".
+▸ Sensação-alvo do leitor: "essa pessoa realmente olhou meu negócio", nunca "mais uma tentando me vender algo".
 
 ${companyContext}
 ${diagnosticContext}
@@ -479,19 +470,13 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • A saudação vai em UMA linha, seguida de \\n\\n. Nunca fica isolada — o próximo bloco (Gancho) vem logo depois.
    • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
 
-1) ELOGIO PERSONALIZADO — gatilho de atenção antes da apresentação
-   • Elogie algo REAL e comprovado do lead, variando conforme os dados disponíveis: reputação na região, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque concreto.
-   • O elogio deve soar como uma observação humana e específica, nunca bajulação genérica. Não invente reconhecimento regional, força digital ou recomendações.
-   • Não use sempre avaliação ou nota do Google. Escolha o destaque mais forte e natural para aquele lead.
+1) GANCHO PERSONALIZADO — logo após a saudação
+   • Baseado em algo REAL do lead: escolha livremente entre avaliações Google, nº de reviews, especialidade, localização, diferencial, site, redes sociais, presença digital, reputação, horário, diagnóstico ou outro dado concreto. Adapte ao nicho e aos dados disponíveis; não fique preso à avaliação do Google.
    • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
    • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
-   • PROIBIDO repetir a saudação ou a identificação aqui.
+   • PROIBIDO repetir a saudação aqui. Também PROIBIDO começar o gancho com "Meu nome é" ou "Somos uma empresa" (isso é da identificação, mais adiante).
 
-2) IDENTIFICAÇÃO COMERCIAL CURTA — logo após o elogio
-   • Apresente nome, empresa e área ampla de atuação: "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalho com [área ampla e verdadeira]."
-   • Não cite catálogo, plano, velocidade, preço, condição ou proposta.
-
-3) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após a apresentação
+2) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
    • Explica de forma orgânica POR QUE essa empresa foi analisada, antes de qualquer diagnóstico.
    • NUNCA pule direto do gancho para insight/diagnóstico. O empresário precisa entender IMEDIATAMENTE por que recebeu a mensagem.
    • Deve soar verdadeiro, natural, conversacional — nunca como desculpa.
@@ -505,7 +490,7 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • 1 a 2 frases. Nunca genérico demais.
    • TESTE DE NATURALIDADE: se o empresário NÃO entender naturalmente por que você entrou em contato antes de você falar sobre o negócio dele, este bloco falhou — reescreva com mais contexto.
 
-4) AUTORIDADE CONTEXTUAL — complete a identificação sem repeti-la
+3) IDENTIFICAÇÃO + AUTORIDADE CONTEXTUAL — obrigatoriamente com 3 elementos
    • A apresentação simples ("Sou X, da Y.") NÃO É SUFICIENTE. Ela deixa o empresário pensando "quem é você?" e "por que eu deveria te ouvir?".
    • ESTRUTURA OBRIGATÓRIA (nesta ordem, em 1 a 2 frases naturais):
        (a) Nome: "${companyProfile?.attendant_name || "[nome]"}"
@@ -523,7 +508,7 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
          : businessModel === "agencia"
          ? `Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda.`
          : `Atendemos ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos serviços"}.`}"
-   • O objetivo do contexto de autoridade é explicar por que faz sentido essa pessoa estar comentando sobre aquele tema e deixar clara a área comercial em que atua, sem apresentar plano, preço ou proposta.
+   • O objetivo do contexto de autoridade NÃO é impressionar nem vender — é apenas explicar por que faz sentido essa pessoa estar comentando sobre aquele tema.
    • A autoridade deve parecer INCIDENTAL, nunca propaganda. O leitor deve pensar: "faz sentido essa pessoa entender desse assunto."
 
    FONTES DE AUTORIDADE PERMITIDAS (use apenas o que for verdadeiro, com base no PERFIL DA EMPRESA acima):
@@ -554,11 +539,11 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
    Se qualquer uma dessas 4 perguntas ficar sem resposta, REESCREVA o bloco.
 
 
-5) MOTIVO DO CONTATO — natural, espontâneo
+4) MOTIVO DO CONTATO — natural, espontâneo
    • Complementa o contexto (não repete). Ex.: "achei que fazia sentido te chamar rapidinho pra compartilhar uma percepção."
    • Nunca robótico.
 
-6) INSIGHT CONSULTIVO — o maior diferencial (REGRA DE CONEXÃO OBRIGATÓRIA)
+5) INSIGHT CONSULTIVO — o maior diferencial (REGRA DE CONEXÃO OBRIGATÓRIA)
    • Só aparece DEPOIS do contexto + identificação + motivo. Nunca antes.
    • ⚠️ REGRA DE OURO — CONEXÃO COM O SERVIÇO OFERECIDO:
      O insight PRECISA ter relação direta com o que "${companyProfile?.company_name || "sua empresa"}" REALMENTE vende:
@@ -575,31 +560,32 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
    • NUNCA dizer que a empresa "faz errado", "está ruim", "precisa melhorar urgentemente".
    • PROIBIDO insight solto que não plante a semente do que você vende — o leitor precisa terminar com curiosidade sobre uma área em que VOCÊ resolve.
 
-7) INTERESSE COMERCIAL
-   • Diga qual tipo de melhoria ou oportunidade pode existir, sem detalhar plano, preço, condição ou proposta.
-   • O leitor precisa entender exatamente QUAL assunto será explicado na continuação. Curiosidade sem assunto claro é proibida.
+6) CURIOSIDADE
+   • NÃO revelar a solução. NÃO explicar o serviço. NÃO apresentar produto.
+   • O leitor precisa terminar essa parte pensando: "o que será que ele encontrou?".
 
-8) BAIXA PRESSÃO
+7) BAIXA PRESSÃO
    • UMA linha curta, humilde, para reduzir sensação de venda.
    • Use frases como: "posso estar enganado", "talvez não seja o momento", "só compartilhando uma percepção".
    • PROIBIDO frases genéricas soltas tipo "achei interessante dar uma olhada nessa questão" — precisa amarrar com o insight anterior.
 
-9) CTA FINAL — SEMPRE UMA PERGUNTA FECHADA, ESPECÍFICA E COMERCIAL (regra absoluta)
-    • O CTA DEVE ser obrigatoriamente uma PERGUNTA FECHADA que convide o empresário a entender a oportunidade concreta levantada no insight.
+8) CTA FINAL — SEMPRE UMA PERGUNTA FECHADA (regra absoluta)
+    • O CTA DEVE ser obrigatoriamente uma PERGUNTA FECHADA que convide o empresário a receber uma explicação mais detalhada sobre o ponto levantado no insight.
     • A pergunta deve ser de resposta fácil (sim/não ou uma resposta curta) e deve terminar SEMPRE com o caractere "?".
     • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + perguntar se ele quer que você explique melhor por ali no WhatsApp.
-    • Exemplo para internet empresarial (adaptar, nunca copiar literal): "Hoje vocês já contam com uma conexão empresarial preparada para manter esses sistemas estáveis nos horários de maior movimento?"
-    • Outros formatos válidos: perguntar como o lead resolve hoje o ponto específico ou se já possui uma estrutura preparada para ele.
+    • Exemplos (adaptar ao insight real, nunca copiar literal):
+        – "Quer que eu te explique melhor como funciona um canal próprio de vendas por aqui?"
+        – "Posso te mostrar rapidamente como isso resolveria o ponto da agenda?"
+        – "Quer que eu te envie um exemplo prático de como a gente organiza isso?"
+        – "Posso te explicar em 2 mensagens como isso funciona na prática?"
     • PROIBIDO absolutamente: CTA em forma de afirmação/frase declarativa (ex.: "Se quiser, posso te explicar melhor por aqui.").
     • PROIBIDO absolutamente: pedir reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos", "call".
-    • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "fiquei curioso para saber", "gostaria de entender como isso impactaria", "quer saber mais?", "o que acha de avaliarmos?".
-    • PROIBIDO fingir curiosidade do vendedor. A pergunta deve investigar a situação atual do lead ou convidá-lo a entender um ponto específico.
+    • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "faz sentido pra você?", "concorda?" — SEM referência ao serviço soam sem contexto e fracos.
     • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", a pergunta fala em explicar melhor o canal próprio. Se foi sobre "agenda", pergunta se quer entender como organizam a agenda. Nunca desconecte.
-    • A mensagem inteira deve ter EXATAMENTE UMA interrogação, somente no CTA final. Depois do CTA não pode existir nenhuma frase.
 
 
 REGRA DE FLUXO (INEGOCIÁVEL):
-Saudação → Elogio factual → Identificação comercial curta → Contexto → Autoridade → Motivo → Insight → Interesse → Baixa pressão → CTA.
+Saudação → Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
 A saudação NUNCA fica isolada — sempre é seguida imediatamente pelo gancho no bloco seguinte.
 JAMAIS pular do gancho direto para o insight/diagnóstico. Sempre precisa existir a transição contextual.
 A leitura tem que fluir como uma conversa real no WhatsApp entre dois profissionais, nunca como um relatório de auditoria ou carta comercial.
@@ -643,7 +629,7 @@ Regras de personalização:
 ═══════════════════════════════════════════
 LINGUAGEM E ESTILO
 ═══════════════════════════════════════════
-- Escreva como VENDEDOR CONSULTIVO da empresa: intenção comercial clara, sem pressão e sem discurso de fechamento precoce.
+- Escreva como CONSULTOR, jamais como vendedor.
 - Tom conversacional, natural, sem excesso de formalidade.
 - PROIBIDO clichês de IA/marketing: "mercado competitivo", "potencial de crescimento", "solução inovadora", "empresa líder", "transformar resultados", "impulsionar vendas", "maximizar resultados", "otimizar processos" (como frase pronta), "revolucionar", "alavancar", "escalar".
 - SEM emojis. SEM listas. SEM hashtags. SEM links. SEM caixa alta. SEM negrito/markdown.
@@ -667,12 +653,11 @@ AUTO-AVALIAÇÃO ANTES DE RESPONDER
 ═══════════════════════════════════════════
 Avalie mentalmente antes de me devolver o JSON:
   ✓ Começa com uma saudação curta, natural e variada (nunca "bom dia/tarde/noite", nunca gíria)?
-  ✓ A saudação está adaptada ao ICP e é seguida por um elogio factual antes da apresentação?
-  ✓ O elogio varia conforme os dados entre reputação regional, presença forte, recomendações, avaliação ou outro destaque comprovado?
+  ✓ A saudação está adaptada ao ICP e não fica isolada (é seguida pelo gancho)?
   ✓ Parece uma conversa real iniciada por uma pessoa no WhatsApp — não uma carta comercial?
   ✓ Demonstra pesquisa real sobre a empresa?
-  ✓ Desperta interesse e deixa claro o assunto comercial, sem suspense vazio?
-  ✓ Diz a área em que a empresa atua, mas não apresenta catálogo, plano, preço, condição ou proposta?
+  ✓ Gera curiosidade sem revelar a solução?
+  ✓ Não cita nem oferece produto, serviço, plano, preço, condição ou benefício da empresa?
   ✓ Tem transparência (quem, por quê)?
   ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
   ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
@@ -745,6 +730,7 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
     if (!content) throw new Error("Resposta vazia da IA");
 
     const parsed = JSON.parse(content);
+
     // Sanitiza a saída: remove travessões, normaliza espaçamentos e capitaliza início de bloco/frase.
     const capFirst = (s: string) => s.replace(/^(\s*)([a-zà-ÿ])/, (_m, sp, ch) => sp + ch.toUpperCase());
     const sanitize = (s: string) => {
@@ -794,13 +780,7 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
           ? "revealed_offer"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
-          : messageHasVagueCommercialCTA(parsed.mensagem || "")
-            ? "vague_commercial_cta"
-            : messageHasMultipleQuestions(parsed.mensagem || "")
-              ? "multiple_questions"
-              : messageLacksPraiseHook(parsed.mensagem || "")
-                ? "missing_praise_hook"
-                : null;
+          : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -817,7 +797,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e EXATAMENTE UMA pergunta, no final. Nada pode vir depois dela. Preserve esta ordem: saudação curta; elogio factual ANTES da apresentação; nome, empresa e área ampla de atuação; contexto; conexão comercial; pergunta objetiva. O elogio deve variar conforme os dados disponíveis entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado. Não invente elogios e não use sempre avaliação. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
+Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem escreve e quem recebe. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição ou benefício da empresa. O perfil comercial serve apenas para orientar internamente o assunto da chamada de atenção. Preserve a curiosidade e peça somente autorização para explicar o ponto percebido. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
