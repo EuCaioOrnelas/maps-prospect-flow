@@ -329,6 +329,10 @@ function messageLacksPraiseHook(message: string): boolean {
   return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
 }
 
+function messageStatesUnverifiedOperation(message: string): boolean {
+  return /\b(?:catracas?|controle de acesso|equipamentos? conectados?|wi-?fi|c[aâ]meras?|monitoramento|m[uú]sica|telas?)\s+(?:que\s+)?(?:voc[eê]s\s+)?(?:oferecem|utilizam|usam|possuem|t[eê]m|mant[eê]m)\b/i.test(message || "");
+}
+
 function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
   const normalized = normalizeForMatch(message);
   const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
@@ -674,7 +678,9 @@ Retorne APENAS JSON válido:
                     ? "multiple_questions"
                     : messageLacksPraiseHook(parsed.mensagem || "")
                       ? "missing_praise_hook"
-                      : null;
+                      : messageStatesUnverifiedOperation(parsed.mensagem || "")
+                        ? "unverified_operation"
+                        : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -691,7 +697,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia". NÃO use "Oi", "Olá", "tudo bem?" nem outra saudação; NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Use 90 a 160 palavras em blocos curtos e preserve esta ordem exata: (1) nome, empresa e área ampla de atuação; (2) elogio factual; (3) motivo do contato; (4) contexto operacional específico; (5) pergunta objetiva. ${operationalContext} Use todo o perfil da empresa prospectora e selecione 2 ou 3 aspectos relevantes da operação, sem lista e sem afirmar fatos não comprovados. Não invente elogios e não use sempre avaliação do Google. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. Não diga que o lead "pode se beneficiar", não prometa melhoria e não venda "internet de alta qualidade". NÃO peça call, reunião, agenda ou horário. O CTA deve tratar do que o remetente realmente vende; se vende internet, faça UMA pergunta simples sobre conexão, estabilidade, rede ou estrutura atual e sua capacidade de atender a operação, nunca apenas sobre agenda, pagamentos, marketing ou sistemas e nunca junte duas perguntas com "ou". Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
+ Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia". NÃO use "Oi", "Olá", "tudo bem?" nem outra saudação; NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Use 90 a 160 palavras em blocos curtos e preserve esta ordem exata: (1) apresentação iniciada naturalmente por "Sou [nome], da [empresa]" e área ampla de atuação; (2) elogio factual; (3) motivo do contato; (4) contexto operacional específico; (5) pergunta objetiva. ${operationalContext} Use todo o perfil da empresa prospectora e selecione 2 ou 3 aspectos relevantes da operação, sem lista e sem afirmar fatos não comprovados. Todo uso não confirmado deve ser escrito como necessidade típica ou possibilidade do segmento, nunca como algo que "vocês usam", "vocês oferecem" ou "vocês possuem". Não invente elogios e não use sempre avaliação do Google. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. Não diga que o lead "pode se beneficiar", não prometa melhoria e não venda "internet de alta qualidade". NÃO peça call, reunião, agenda ou horário. O CTA deve tratar do que o remetente realmente vende; se vende internet, faça UMA pergunta simples sobre conexão, estabilidade, rede ou estrutura atual e sua capacidade de atender a operação, nunca apenas sobre agenda, pagamentos, marketing ou sistemas e nunca junte duas perguntas com "ou". Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
