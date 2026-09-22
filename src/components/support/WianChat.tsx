@@ -1136,33 +1136,10 @@ export function WianChat() {
         {phase === "rate" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-3">
             <div>
-              <p className="text-sm font-medium">Como foi o atendimento?</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Dê uma nota de 0 a 10</p>
+              <p className="text-sm font-medium">Como você avalia este atendimento?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Toque em um dos rostinhos abaixo.</p>
             </div>
-            <div className="grid grid-cols-11 gap-1">
-              {Array.from({ length: 11 }, (_, n) => {
-                const selected = stars === n;
-                const colorBg =
-                  n <= 4 ? "bg-red-500" : n <= 6 ? "bg-amber-500" : n <= 8 ? "bg-emerald-500" : "bg-emerald-600";
-                return (
-                  <button
-                    key={n}
-                    onClick={() => setStars(n)}
-                    className={`h-7 rounded-md text-[11px] font-semibold border transition flex items-center justify-center ${
-                      selected
-                        ? `${colorBg} text-white border-transparent shadow-sm scale-105`
-                        : "bg-background border-border hover:border-primary/40 hover:bg-muted/50 text-foreground"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-              <span>Péssimo</span>
-              <span>Excelente</span>
-            </div>
+            <EmojiRating value={stars} onChange={setStars} size="sm" />
             <Textarea
               placeholder="Como posso melhorar? Deixe seu comentário (opcional)"
               value={comment}
