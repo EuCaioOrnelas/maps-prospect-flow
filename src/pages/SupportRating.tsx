@@ -110,11 +110,13 @@ export default function SupportRating() {
 
               <div className="space-y-6">
                 <div>
-                  <p className="font-medium">De 0 a 10, o quanto isso te ajudou?</p>
-                  <Scale value={helpful} onChange={setHelpful} />
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>Não ajudou</span><span>Resolveu tudo</span>
-                  </div>
+                  <p className="font-medium">Como você avalia o atendimento que recebeu?</p>
+                  <EmojiRating value={helpful} onChange={setHelpful} className="mt-3" />
+                  {helpful !== null && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Você marcou <span className="font-medium text-foreground">{EMOJI_RATING_OPTIONS.find((o) => o.value === helpful)?.label}</span>. Obrigado! 🙏
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="font-medium">De 0 a 10, você indicaria a Wiize para um amigo ou parceiro?</p>
