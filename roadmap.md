@@ -5,5 +5,5 @@
 - [x] Auditar Wian e textos das novas funcionalidades
 - [x] Consolidar escopo e propor atualização sem claims não comprovados
 - [x] Atualizar conteúdo público e preferências de cookies
-- [ ] Atualizar artigos ativos da Central de Ajuda
-- [ ] Validar páginas e links em computador e celular
+- [x] Atualizar artigos ativos da Central de Ajuda
+- [x] Validar páginas e links em computador e celular
