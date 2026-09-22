@@ -450,7 +450,9 @@ export function validateApproachMessage(message: string, input: ApproachInput): 
   if (input.businessModel !== "agencia" && MARKETING_TERMS.test(text)) return "offering_mismatch";
 
   const intent = classifyLeadResponse(input.leadResponse);
-  const offerAllowed = input.messageType === "follow_up" && (intent === "interesse" || intent === "duvida");
+  const offerAllowed = input.messageType === "follow_up" &&
+    (intent === "interesse" || intent === "duvida") &&
+    leadAskedAboutOffer(input.leadResponse);
   if (!offerAllowed && OFFER_TERMS.test(text)) return "premature_offer";
 
   if (input.messageType === "follow_up" && GREETING_START.test(text)) return "restarted_conversation";
