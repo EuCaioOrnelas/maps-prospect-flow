@@ -62,7 +62,6 @@ const SupportRating = lazyWithRetry(() => import("./pages/SupportRating"), "Supp
 const Descadastro = lazyWithRetry(() => import("./pages/Descadastro"), "Descadastro");
 const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"), "RefundPolicy");
 const SecurityFAQ = lazyWithRetry(() => import("./pages/SecurityFAQ"), "SecurityFAQ");
-const InteligenciaWiize = lazyWithRetry(() => import("./pages/InteligenciaWiize"), "InteligenciaWiize");
 const SendingGuidelines = lazyWithRetry(() => import("./pages/SendingGuidelines"), "SendingGuidelines");
 const HelpCenter = lazyWithRetry(() => import("./pages/HelpCenter"), "HelpCenter");
 const HelpCenterFAQ = lazyWithRetry(() => import("./pages/HelpCenterFAQ"), "HelpCenterFAQ");
@@ -336,7 +335,6 @@ const App = () => (
                 <Route path="/avaliacao/:token" element={<LightThemeWrapper><SupportRating /></LightThemeWrapper>} />
                 <Route path="/descadastro" element={<LightThemeWrapper><Descadastro /></LightThemeWrapper>} />
                 <Route path="/refund-policy" element={<LightThemeWrapper><RefundPolicy /></LightThemeWrapper>} />
-                <Route path="/inteligencia" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><InteligenciaWiize /></Suspense></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
                 <Route path="/form/:slug" element={<LightThemeWrapper><PublicForm /></LightThemeWrapper>} />

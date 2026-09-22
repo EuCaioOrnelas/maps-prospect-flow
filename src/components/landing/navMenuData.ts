@@ -98,7 +98,6 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
   {
     title: "Conteúdo & Confiança",
     items: [
-      { label: "Inteligência do Wiize", description: "Como a plataforma lê e prioriza oportunidades", to: "/inteligencia", icon: Brain },
       { label: "Blog", description: "Estratégias de vendas B2B", to: "/blog", icon: BookOpen },
       { label: "Tour completo", description: "Veja a plataforma por dentro", to: "/tour-guiado", icon: BarChart3 },
       { label: "Segurança & LGPD", description: "Como protegemos seus dados", to: "/seguranca-faq", icon: ShieldCheck },
