@@ -12,6 +12,6 @@
 - [x] Separar empresa prospectora e lead nas duas abordagens por IA
 - [x] Bloquear geração sem oferta cadastrada e registrar correções automáticas
 
-- [ ] Persistir `company_business_model`, preencher a Bless como representante e remover o fallback silencioso do perfil.
-- [ ] Ajustar abordagem manual e follow-up Meta para usar somente observações do lead conectadas ao produto da empresa prospectora.
+- [x] Persistir `company_business_model`, preencher a Bless como representante e remover o fallback silencioso do perfil.
+- [x] Ajustar abordagem manual e follow-up Meta para usar somente observações do lead conectadas ao produto da empresa prospectora.
 - [ ] Validar persistência, reabertura da Gestão, edição futura e geração real alinhada.
