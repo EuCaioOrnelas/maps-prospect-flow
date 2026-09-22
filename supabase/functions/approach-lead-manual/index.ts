@@ -475,14 +475,19 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • A saudação vai em UMA linha, seguida de \\n\\n. Nunca fica isolada — o próximo bloco (Gancho) vem logo depois.
    • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
 
-1) GANCHO PERSONALIZADO — logo após a saudação
+1) IDENTIFICAÇÃO COMERCIAL CURTA — logo após a saudação
+   • Apresente imediatamente nome, empresa e área ampla de atuação: "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalho com [área ampla e verdadeira]."
+   • NÃO deixe o leitor receber uma análise sobre o negócio antes de saber quem está falando.
+   • Não cite catálogo, plano, velocidade, preço, condição ou proposta.
+
+2) GANCHO PERSONALIZADO
    • Baseado em algo REAL do lead, nesta prioridade: observação do prospector ou diagnóstico; nicho/especialidade; presença pública forte comprovada pelo site ou redes; reputação/recomendações; contexto da região/cidade. Mencionar site, redes ou presença digital como observação factual é permitido, mas nunca transforme isso em oferta de marketing.
    • Avaliação, nota e número de reviews do Google são o ÚLTIMO recurso e só podem aparecer quando nenhum dos sinais acima estiver disponível. Não invente reputação regional, recomendações ou força digital sem evidência nos dados.
    • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
    • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
-   • PROIBIDO repetir a saudação aqui. Também PROIBIDO começar o gancho com "Meu nome é" ou "Somos uma empresa" (isso é da identificação, mais adiante).
+   • PROIBIDO repetir a saudação ou a identificação aqui.
 
-2) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
+3) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
    • Explica de forma orgânica POR QUE essa empresa foi analisada, antes de qualquer diagnóstico.
    • NUNCA pule direto do gancho para insight/diagnóstico. O empresário precisa entender IMEDIATAMENTE por que recebeu a mensagem.
    • Deve soar verdadeiro, natural, conversacional — nunca como desculpa.
@@ -496,7 +501,7 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • 1 a 2 frases. Nunca genérico demais.
    • TESTE DE NATURALIDADE: se o empresário NÃO entender naturalmente por que você entrou em contato antes de você falar sobre o negócio dele, este bloco falhou — reescreva com mais contexto.
 
-3) IDENTIFICAÇÃO + AUTORIDADE CONTEXTUAL — obrigatoriamente com 3 elementos
+4) AUTORIDADE CONTEXTUAL — complete a identificação sem repeti-la
    • A apresentação simples ("Sou X, da Y.") NÃO É SUFICIENTE. Ela deixa o empresário pensando "quem é você?" e "por que eu deveria te ouvir?".
    • ESTRUTURA OBRIGATÓRIA (nesta ordem, em 1 a 2 frases naturais):
        (a) Nome: "${companyProfile?.attendant_name || "[nome]"}"
@@ -545,11 +550,11 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
    Se qualquer uma dessas 4 perguntas ficar sem resposta, REESCREVA o bloco.
 
 
-4) MOTIVO DO CONTATO — natural, espontâneo
+5) MOTIVO DO CONTATO — natural, espontâneo
    • Complementa o contexto (não repete). Ex.: "achei que fazia sentido te chamar rapidinho pra compartilhar uma percepção."
    • Nunca robótico.
 
-5) INSIGHT CONSULTIVO — o maior diferencial (REGRA DE CONEXÃO OBRIGATÓRIA)
+6) INSIGHT CONSULTIVO — o maior diferencial (REGRA DE CONEXÃO OBRIGATÓRIA)
    • Só aparece DEPOIS do contexto + identificação + motivo. Nunca antes.
    • ⚠️ REGRA DE OURO — CONEXÃO COM O SERVIÇO OFERECIDO:
      O insight PRECISA ter relação direta com o que "${companyProfile?.company_name || "sua empresa"}" REALMENTE vende:
@@ -566,16 +571,16 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
    • NUNCA dizer que a empresa "faz errado", "está ruim", "precisa melhorar urgentemente".
    • PROIBIDO insight solto que não plante a semente do que você vende — o leitor precisa terminar com curiosidade sobre uma área em que VOCÊ resolve.
 
-6) INTERESSE COMERCIAL
+7) INTERESSE COMERCIAL
    • Diga qual tipo de melhoria ou oportunidade pode existir, sem detalhar plano, preço, condição ou proposta.
    • O leitor precisa entender exatamente QUAL assunto será explicado na continuação. Curiosidade sem assunto claro é proibida.
 
-7) BAIXA PRESSÃO
+8) BAIXA PRESSÃO
    • UMA linha curta, humilde, para reduzir sensação de venda.
    • Use frases como: "posso estar enganado", "talvez não seja o momento", "só compartilhando uma percepção".
    • PROIBIDO frases genéricas soltas tipo "achei interessante dar uma olhada nessa questão" — precisa amarrar com o insight anterior.
 
-8) CTA FINAL — SEMPRE UMA PERGUNTA FECHADA, ESPECÍFICA E COMERCIAL (regra absoluta)
+9) CTA FINAL — SEMPRE UMA PERGUNTA FECHADA, ESPECÍFICA E COMERCIAL (regra absoluta)
     • O CTA DEVE ser obrigatoriamente uma PERGUNTA FECHADA que convide o empresário a entender a oportunidade concreta levantada no insight.
     • A pergunta deve ser de resposta fácil (sim/não ou uma resposta curta) e deve terminar SEMPRE com o caractere "?".
     • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + perguntar se ele quer que você explique melhor por ali no WhatsApp.
@@ -589,7 +594,7 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
 
 
 REGRA DE FLUXO (INEGOCIÁVEL):
-Saudação → Gancho → Contexto → Identificação → Motivo → Insight → Curiosidade → Baixa pressão → CTA.
+Saudação → Identificação comercial curta → Gancho → Contexto → Autoridade → Motivo → Insight → Interesse → Baixa pressão → CTA.
 A saudação NUNCA fica isolada — sempre é seguida imediatamente pelo gancho no bloco seguinte.
 JAMAIS pular do gancho direto para o insight/diagnóstico. Sempre precisa existir a transição contextual.
 A leitura tem que fluir como uma conversa real no WhatsApp entre dois profissionais, nunca como um relatório de auditoria ou carta comercial.
