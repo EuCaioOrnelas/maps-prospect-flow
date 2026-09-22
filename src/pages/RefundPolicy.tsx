@@ -41,7 +41,7 @@ const RefundPolicy = () => {
 
           <div className="prose prose-invert max-w-none space-y-4 sm:space-y-6 text-muted-foreground text-sm sm:text-base">
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Última atualização: {new Date().toLocaleDateString('pt-BR')}
+              Última atualização: 22 de setembro de 2026 · Versão 2.0
             </p>
 
             <p className="text-foreground">
@@ -51,10 +51,10 @@ const RefundPolicy = () => {
             <section className="space-y-3 sm:space-y-4 bg-primary/10 p-4 sm:p-6 rounded-lg border border-primary/30">
               <h2 className="text-lg sm:text-xl font-semibold text-primary">Período de Teste Gratuito</h2>
               <p className="text-foreground">
-                A Wiize oferece <strong>30 dias de teste gratuito</strong> para que você possa explorar e avaliar todas as funcionalidades da plataforma antes de efetuar qualquer pagamento.
+                A Wiize oferece <strong>7 dias de teste gratuito</strong>, nas condições apresentadas no cadastro, para que você possa avaliar as funcionalidades incluídas no plano escolhido antes da primeira cobrança.
               </p>
               <p>
-                Durante esse período, você tem acesso completo às ferramentas de prospecção, CRM, disparos e automações, permitindo que avalie se a plataforma atende às suas necessidades de forma prática e sem compromisso financeiro.
+                Durante esse período, você pode avaliar os recursos liberados para o plano selecionado. Se a assinatura não for cancelada antes do encerramento do teste, a cobrança começa no 8º dia.
               </p>
               <p className="font-medium text-foreground">
                 Ao optar pela contratação após o período de teste, o usuário declara que já testou e validou a plataforma, compreendendo que o reembolso não será possível, exceto nos casos específicos descritos nesta política.
@@ -70,7 +70,7 @@ const RefundPolicy = () => {
                 <li>APIs externas (como WhatsApp Business Platform)</li>
                 <li>Infraestrutura de servidores</li>
                 <li>Processamento e armazenamento em banco de dados</li>
-                <li>Disparos em massa de mensagens</li>
+                <li>Mensagens e campanhas enviadas pela API Oficial da Meta</li>
                 <li>Prospecção automatizada e assistida por Inteligência Artificial</li>
                 <li>Funcionalidades de CRM (gestão de contatos, histórico, tags, funis, etc.)</li>
                 <li>Custos de licenciamento, operação e manutenção do sistema</li>
@@ -89,7 +89,7 @@ const RefundPolicy = () => {
               
               <p className="font-medium text-foreground">Após qualquer tipo de uso da plataforma, incluindo, mas não se limitando a:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li>Disparos em massa de mensagens</li>
+                 <li>Mensagens, campanhas ou templates processados pela API Oficial da Meta</li>
                 <li>Prospecção manual ou automatizada com uso de IA</li>
                 <li>Conexão e ativação de números</li>
                 <li>Consumo de APIs externas</li>
@@ -144,7 +144,7 @@ const RefundPolicy = () => {
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
                 <li>A ferramenta oferece controle e infraestrutura, não garantia de resultados</li>
                 <li>Prospecção via WhatsApp envolve riscos inerentes às políticas de terceiros</li>
-                <li>Disparos em massa, uso de IA e CRM demandam estratégia adequada</li>
+                 <li>Campanhas, uso de IA e CRM demandam configuração e estratégia adequadas</li>
                 <li>O reembolso está condicionado ao não uso da plataforma ou a falhas técnicas comprovadas</li>
               </ul>
             </section>

@@ -41,7 +41,7 @@ const Terms = () => {
 
           <div className="prose prose-invert max-w-none space-y-4 sm:space-y-6 text-muted-foreground text-sm sm:text-base">
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Última atualização: {new Date().toLocaleDateString("pt-BR")}
+              Última atualização: 22 de setembro de 2026 · Versão 3.0
             </p>
 
             <section className="space-y-3 sm:space-y-4">
@@ -59,14 +59,15 @@ const Terms = () => {
               <p>
                 A Wiize é uma plataforma <strong>estritamente B2B</strong> destinada a pessoas jurídicas
                 para: prospecção de oportunidades comerciais, gestão de leads (CRM), atendimento no
-                número de suporte, chat, fluxos automatizados, SDR e agentes de IA, sistema de
-                Inteligência, integrações com Google (Sheets, Calendar, Gmail, Drive), relatórios e
-                APIs (Integration Layer).
+                 número de suporte, chat, fluxos automatizados, SDR Inteligente, Wian, formulários,
+                 links rastreados, templates de mensagem, agenda, integrações com Google (Sheets,
+                 Calendar, Gmail, Drive), relatórios e APIs.
               </p>
               <p>
-                A plataforma <strong>não oferece aquecimento de números</strong> nem
-                <strong> campanhas ou disparos de mensagens em massa</strong>. Esse tipo de uso é
-                <strong> proibido</strong> dentro da Wiize e pode levar à suspensão da conta.
+                 A plataforma <strong>não oferece aquecimento de números</strong>. Campanhas só podem
+                 ser realizadas pelo Número de Marketing conectado à API Oficial da Meta, com templates,
+                 consentimento, limites e demais regras aplicáveis. O Número de Suporte não pode ser usado
+                 para campanhas ou envios em massa.
               </p>
               <p>
                 É vedado o uso da plataforma para finalidades pessoais, de consumo (B2C) ou para tratar
@@ -105,7 +106,7 @@ const Terms = () => {
             <section className="space-y-3 sm:space-y-4">
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">5. Responsabilidades sobre dados de leads</h2>
               <p>
-                Nos módulos de prospecção, CRM, atendimento, chat, fluxos, SDR/IA e Inteligência, o <strong>cliente é o controlador</strong>
+                 Nos módulos de prospecção, CRM, atendimento, chat, fluxos, SDR/IA, Wian, formulários e links rastreados, o <strong>cliente é o controlador</strong>
                 dos dados dos leads. Cabe ao cliente:
               </p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
@@ -229,26 +230,24 @@ const Terms = () => {
               </p>
             </section>
 
-            <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">13. Conexão de número por API de suporte (WhatsApp Web) e riscos</h2>
+             <section className="space-y-3 sm:space-y-4">
+               <h2 className="text-lg sm:text-xl font-semibold text-foreground">13. Número de Suporte e condições de uso</h2>
               <p>
                 A Wiize oferece dois caminhos para conectar um número de WhatsApp. O
                 <strong> Número de Marketing</strong> usa a API Oficial da Meta (WhatsApp Cloud API),
-                com regras, modelos e aprovações da própria Meta. O <strong>Número de Atendimento</strong>
-                usa uma <strong>API de suporte de terceiros que simula uma sessão do WhatsApp Web</strong>
-                (leitura de QR Code a partir do seu aparelho), recurso <strong>não oficial e não
-                homologado pela Meta/WhatsApp</strong>. A Wiize não é proprietária, revendedora ou
-                representante do WhatsApp, da Meta ou dessa tecnologia de suporte, e não vende acesso
-                direto a ela: trata-se de um componente técnico de conveniência dentro da plataforma.
+                 com regras, templates e aprovações da própria Meta. O <strong>Número de Suporte</strong>
+                 é uma conexão destinada a atendimento individual, chat, SDR e automações de suporte.
+                 Ele não substitui a API Oficial da Meta para campanhas e pode depender da manutenção
+                 da sessão e do aparelho vinculado.
               </p>
               <p>O cliente declara estar ciente e aceitar, ao conectar um número por esse caminho, que:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
-                <li><strong>Risco de bloqueio</strong>: o WhatsApp pode advertir, limitar, banir temporária ou definitivamente o número, sem aviso prévio e sem possibilidade de recurso pela Wiize. Esse risco existe mesmo com uso moderado e restrito ao atendimento.</li>
-                <li><strong>Sem garantia de disponibilidade</strong>: atualizações do WhatsApp podem derrubar a sessão, exigir nova leitura de QR Code ou inviabilizar a conexão a qualquer momento, de forma permanente. Não há SLA de funcionamento para esse caminho.</li>
+                 <li><strong>Risco de restrição</strong>: o WhatsApp pode advertir, limitar ou bloquear o número conforme suas próprias políticas, sem controle ou possibilidade de reversão pela Wiize.</li>
+                 <li><strong>Sem garantia de disponibilidade</strong>: alterações no WhatsApp podem interromper a sessão, exigir nova conexão ou limitar o funcionamento. Não há garantia de disponibilidade contínua para esse caminho.</li>
                 <li><strong>Aparelho e sessão</strong>: a sessão depende do celular do cliente estar ativo e vinculado; perda de sessão, troca de aparelho ou desconexão interrompem os envios e recebimentos.</li>
                 <li><strong>Uso permitido</strong>: é proibido spam, disparo em massa para contatos sem relacionamento ou sem base legal, compra de listas, conteúdo enganoso, ilícito ou que viole os Termos do WhatsApp/Meta e a LGPD. O cliente é o único responsável pelo conteúdo, pela base de contatos e pelo cumprimento das políticas das plataformas.</li>
                 <li><strong>Uso restrito</strong>: esse caminho serve exclusivamente para atendimento e conversas individuais no número de suporte, com fluxos, chat, SDR e IA. Não é permitido usá-lo para aquecimento de número nem para disparos ou campanhas de mensagens.</li>
-                <li><strong>Isenção</strong>: a Wiize não responde por bloqueios, banimentos, perda de número, perda de conversas, prejuízos comerciais ou sanções decorrentes do uso desse caminho, nem por mudanças unilaterais promovidas pelo WhatsApp/Meta ou pelo fornecedor da tecnologia de suporte.</li>
+                 <li><strong>Responsabilidade do canal</strong>: a Wiize não controla bloqueios, perda do número, mudanças de política ou limitações aplicadas pelo WhatsApp/Meta.</li>
                 <li><strong>Sem devolução por bloqueio</strong>: o bloqueio de um número pelo WhatsApp não gera direito a reembolso da assinatura, por se tratar de evento externo e fora do controle da Wiize.</li>
               </ul>
             </section>
@@ -283,10 +282,11 @@ const Terms = () => {
                 plataforma e o pagamento de comissões não funcionam.
               </p>
               <p>
-                Cookies funcionais, analíticos e de marketing (incluindo Google Ads e Meta Ads, quando
+                 Cookies funcionais, analíticos e de marketing (incluindo Google Ads e Meta Ads, quando
                 ativados) só são carregados após consentimento e podem ser recusados individualmente. O
                 consentimento é registrado com data, categorias aceitas e versão da política, para fins
-                de prova.
+                 de prova. O visitante pode reabrir as preferências a qualquer momento pelo link
+                 “Preferências de cookies” no rodapé.
               </p>
             </section>
 

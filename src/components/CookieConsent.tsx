@@ -58,6 +58,9 @@ export const CookieConsent = () => {
 
   useEffect(() => {
     initConsentMode();
+    const openPreferences = () => setDecided(false);
+    window.addEventListener("wiize:open-cookie-settings", openPreferences);
+    return () => window.removeEventListener("wiize:open-cookie-settings", openPreferences);
   }, []);
 
   const logConsent = async (prefs: ConsentPrefs) => {
