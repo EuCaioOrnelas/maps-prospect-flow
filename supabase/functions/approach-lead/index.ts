@@ -266,6 +266,16 @@ function messageLacksPersonalization(message: string, lead: any): boolean {
   return !tokens.some((t) => m.includes(t));
 }
 
+function messageLacksSenderPresentation(message: string, profile: any): boolean {
+  const normalizedMessage = normalizeForMatch(message);
+  const attendantName = normalizeForMatch(profile?.attendant_name).trim();
+  const companyName = normalizeForMatch(profile?.company_name).trim();
+  return Boolean(
+    (attendantName && !normalizedMessage.includes(attendantName))
+    || (companyName && !normalizedMessage.includes(companyName))
+  );
+}
+
 function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
   const normalized = normalizeForMatch(message);
   const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
@@ -458,15 +468,16 @@ Esta mensagem NÃO é o primeiro contato. O primeiro contato já foi feito por u
 O lead JÁ RESPONDEU positivamente a esse template (ex: "sim", "pode", "quero saber", "manda detalhes", etc.) — ou seja, ele AUTORIZOU a conversa e a janela de 24h está aberta.
 Sua tarefa é gerar a SEGUNDA mensagem: a primeira resposta humana, consultiva e personalizada que vai dar continuidade à conversa AGORA que o lead demonstrou interesse.
 
-OBJETIVO ÚNICO: continuar a conversa e gerar uma nova resposta natural do empresário.
+OBJETIVO ÚNICO: continuar a conversa e gerar uma nova resposta natural do empresário, usando a MESMA qualidade, apresentação e construção consultiva da mensagem manual.
 NÃO é vender. NÃO é apresentar produto, serviço, plano, preço, condição ou benefício. NÃO é enviar proposta nem marcar reunião.
 O perfil comercial e o catálogo servem somente para orientar internamente o assunto e garantir conexão com o que a empresa faz; eles NUNCA podem aparecer como oferta nesta mensagem.
 
 Por isso:
-- ❌ NÃO se apresente como se fosse um primeiro contato frio
+- ❌ NÃO reinicie a conversa como se o template nunca tivesse sido enviado
 - ❌ NÃO pergunte se ele tem interesse (ele já disse que tem)
 - ❌ NÃO use frases como "tudo bem te chamar?", "posso te apresentar?", "pode te explicar?"
 - ✅ AGRADEÇA o retorno de forma natural, sem usar "show que respondeu" ou expressão semelhante
+- ✅ APRESENTE claramente nome, empresa e autoridade contextual, porque o template pode não ter explicado quem assumiria a conversa
 - ✅ Fale como quem já foi autorizado: direto e consultivo, mostrando que analisou o negócio dele
 - ✅ Compartilhe uma percepção cautelosa, preserve a curiosidade e termine com UMA pergunta fechada sobre o ponto percebido
 
@@ -493,23 +504,32 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - Varie levemente o tom, a forma de agradecer e o próximo passo proposto
 - Mantenha humano, consultivo, nada robótico ou genérico
 
-═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos curtos, separados por \\n\\n) ═══
-1. Agradecimento curto pelo retorno + chamada de atenção personalizada. Escolha nesta ordem: observação do prospector ou diagnóstico; nicho/especialidade; presença pública forte comprovada; reputação/recomendações comprovadas; contexto regional. Avaliação, nota e reviews do Google são o ÚLTIMO recurso. Não invente fatos.
-2. Identificação curta: nome + empresa, apenas para situar quem respondeu. NÃO diga o que vende e NÃO apresente autoridade comercial.
-3. Insight consultivo e cauteloso conectado ao diagnóstico e ao campo de atuação da empresa remetente, sem revelar a solução. Gere curiosidade; não descreva produto, serviço, plano, benefício ou condição.
-4. CTA leve em forma de pergunta fechada, terminada em "?", convidando o lead a continuar por ali sobre o ponto percebido. NÃO peça call, reunião, agenda, horário, proposta, orçamento ou autorização para apresentar uma oferta.
+═══ ESTRUTURA OBRIGATÓRIA (mesma lógica da mensagem manual, adaptada à continuação) ═══
+Escreva entre 90 e 160 palavras, com blocos curtos separados por \\n\\n, nesta ordem e sem títulos no texto final:
+1. CONTINUIDADE + AGRADECIMENTO: comece reconhecendo naturalmente a resposta ao contato anterior. Não use nova saudação fria, não pergunte novamente se há interesse e não aja como se fosse a primeira mensagem.
+2. GANCHO PERSONALIZADO: use algo REAL do lead. Prioridade: observação do prospector ou diagnóstico; nicho/especialidade; presença pública forte comprovada; reputação/recomendações comprovadas; contexto regional. Avaliação, nota e reviews do Google são o ÚLTIMO recurso. Não invente fatos.
+3. CONTEXTO: explique brevemente por que a empresa foi analisada ou por que aquele ponto chamou atenção, mantendo a continuidade natural da conversa.
+4. IDENTIFICAÇÃO + AUTORIDADE CONTEXTUAL: apresente obrigatoriamente "${companyProfile?.attendant_name || "[nome]"}" e "${companyProfile?.company_name || "[empresa]"}", mais UMA frase curta explicando por que essa pessoa entende do assunto. A autoridade deve vir somente do perfil real, nicho, público atendido, rotina ou experiência declarada. Não invente números, clientes, anos, prêmios ou liderança. Não apresente catálogo, plano, preço, benefício ou proposta.
+5. MOTIVO + INSIGHT: diga de forma natural por que decidiu continuar o assunto e traga uma percepção consultiva, específica e cautelosa, conectada ao diagnóstico e ao campo de atuação da empresa remetente. Use "talvez", "parece existir", "pode haver" ou equivalente quando não houver comprovação direta. Não revele a solução.
+6. CURIOSIDADE + BAIXA PRESSÃO: preserve o ponto principal sem transformar a mensagem em venda; uma frase curta basta.
+7. CTA: termine com UMA pergunta fechada sobre o tema percebido, para continuar pelo WhatsApp. Como o lead já autorizou o contato, convide-o a responder sobre o ponto, sem pedir nova permissão para apresentar algo. NÃO peça call, reunião, agenda, horário, proposta ou orçamento.
+
+FLUXO INEGOCIÁVEL:
+Resposta ao contato anterior → Gancho → Contexto → Apresentação completa → Motivo → Insight → Curiosidade → Baixa pressão → Pergunta final.
+A única diferença para a mensagem manual é que esta começa reconhecendo a resposta ao template e não solicita novamente autorização para iniciar a conversa.
 
 ═══ REGRAS CRÍTICAS ═══
 - ⛔ PROIBIDO cumprimentos temporais: "Bom dia", "Boa tarde", "Boa noite"
 - ⛔ PROIBIDO "Tudo bem?", "Como vai?", "Como está?" — o lead já respondeu, vá direto
 - ⛔ PROIBIDO pedir permissão de novo ("posso te apresentar?", "tudo bem se eu te explicar?")
 - ⛔ PROIBIDO tratar como mensagem fria — esta é a CONTINUAÇÃO de uma conversa
+- ⛔ PROIBIDO omitir a apresentação: nome + empresa + autoridade contextual são obrigatórios
 - ⛔ PROIBIDO revelar, citar, oferecer ou explicar produto, serviço, plano, preço, condição, benefício, proposta ou orçamento
 - ⛔ PROIBIDO pedir call, reunião, demonstração, agenda ou horário
 - ${companyProfile ? `Represente "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : "Mensagem genérica"}
 - ${companyProfile ? `Use internamente "${companyProfile.company_products}" apenas para escolher um insight conectado, mas NÃO cite nem ofereça isso na mensagem` : ""}
 - ${companyProfile ? `Use "${companyProfile.company_differential}" somente como contexto interno; NÃO transforme em argumento de venda` : ""}
-- Máx 4 parágrafos CURTOS separados por \\n\\n
+- Blocos CURTOS separados por \\n\\n, com 90 a 160 palavras e máximo absoluto de 180 palavras
 - NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
 - ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
@@ -579,6 +599,8 @@ Retorne APENAS JSON válido:
           ? "google_rating_overuse"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
+        : messageLacksSenderPresentation(parsed.mensagem || "", companyProfile)
+          ? "missing_sender_presentation"
           : null;
     if (rewriteReason) {
       try {
@@ -596,7 +618,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como FOLLOW-UP após resposta positiva ao template, mantendo o agradecimento curto, o tom consultivo e a personalização. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}), apresente apenas nome e empresa, traga uma percepção cautelosa e preserve a curiosidade. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição, benefício, proposta ou orçamento. NÃO peça call, reunião, agenda ou horário. Termine com uma pergunta fechada sobre o ponto percebido para continuar pelo WhatsApp. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
+ Reescreva como FOLLOW-UP após resposta positiva ao template, com 90 a 160 palavras e blocos separados por linha em branco. Preserve a mesma construção da mensagem manual, adaptada à continuação: (1) reconheça e agradeça a resposta anterior, sem nova saudação fria; (2) use gancho concreto do lead; (3) explique o contexto da análise; (4) apresente obrigatoriamente nome, empresa e autoridade contextual verdadeira; (5) traga motivo e percepção cautelosa; (6) preserve curiosidade e baixa pressão; (7) termine com pergunta fechada sobre o ponto percebido. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição, benefício, proposta ou orçamento. NÃO peça nova permissão para apresentar algo, call, reunião, agenda ou horário. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
