@@ -20,8 +20,6 @@ export const Footer = () => {
   const handleSectionClick = (id: string) => {
     if (location.pathname !== "/") {
       navigate("/");
-      window.setTimeout(() => scrollToSection(id), 250);
-      return;
     }
     scrollToSection(id);
   };
