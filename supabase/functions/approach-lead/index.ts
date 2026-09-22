@@ -539,9 +539,11 @@ function validateApproachMessage(message: string, input: ApproachInput): string 
   const tokens = [input.lead?.company_name, input.lead?.city, input.lead?.category, input.lead?.neighborhood]
     .map((v) => normalizeForMatch(v).trim())
     .filter((v) => v.length >= 4);
-  if (tokens.length && !tokens.some((t) => normalized.includes(t))) return "missing_personalization";
+  const requiresLeadReference = input.messageType === "manual_first_contact" || !input.previousMessage || intent === "saudacao" || intent === "sem_resposta";
+  if (requiresLeadReference && tokens.length && !tokens.some((t) => normalized.includes(t))) return "missing_personalization";
   const actionableTokens = actionableEvidenceTokens(input.enrichment);
-  if (actionableTokens.length >= 2 && !actionableTokens.some((token) => normalized.includes(token))) {
+  const requiresActionableEvidence = input.messageType === "manual_first_contact" || intent === "saudacao" || intent === "sem_resposta";
+  if (requiresActionableEvidence && actionableTokens.length >= 2 && !actionableTokens.some((token) => normalized.includes(token))) {
     return "missing_argument_personalization";
   }
 
@@ -574,11 +576,14 @@ const REWRITE_HINTS: Record<string, string> = {
 };
 
 function buildRewritePrompt(message: string, reason: string, input: ApproachInput): string {
-  return `A mensagem abaixo falhou na revisão de qualidade.
+  return `${buildApproachPrompt(input)}
+
+═══ REESCRITA OBRIGATÓRIA ═══
+A mensagem abaixo falhou na revisão de qualidade.
 
 PROBLEMA: ${REWRITE_HINTS[reason] || reason}
 
-Reescreva mantendo TODAS as regras já dadas: ${input.messageType === "follow_up" ? "é um follow-up, continuação de conversa, sem saudação inicial" : "é um primeiro contato manual, objetivo é gerar resposta"}; nada inventado; linguagem humana; exatamente UMA pergunta, na última frase; ${input.businessModel !== "agencia" ? "sem marketing/presença digital; " : ""}sem pedir reunião.
+Reescreva usando novamente todo o perfil comercial, as evidências do lead e o contexto da conversa acima. ${input.messageType === "follow_up" ? "É um follow-up: avance a conversa sem reiniciar com saudação" : "É um primeiro contato manual cujo objetivo é gerar resposta"}. Não invente; use linguagem humana; faça exatamente UMA pergunta na última frase; ${input.businessModel !== "agencia" ? "não ofereça marketing ou presença digital; " : ""}não peça reunião.
 
 MENSAGEM ORIGINAL:
 ${message}
