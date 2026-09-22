@@ -212,11 +212,15 @@ ${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insin
 `;
 }
 
-const MARKETING_TERMS = /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
+const MARKETING_TERMS = /(marketing|tr[aá]fego|an[uú]ncios?|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
 
 function messageViolatesModel(message: string, model: BusinessModel): boolean {
   if (model === "agencia") return false;
   return MARKETING_TERMS.test(message || "");
+}
+
+function messageOverusesGoogleRating(message: string, hasAlternativeSignals: boolean): boolean {
+  return hasAlternativeSignals && /(avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?\d|\d(?:[.,]\d)?\s*(?:de|\/)?\s*5|reviews?)/i.test(message || "");
 }
 
 function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
@@ -471,7 +475,8 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
 
 1) GANCHO PERSONALIZADO — logo após a saudação
-   • Baseado em algo REAL do lead: escolha livremente entre avaliações Google, nº de reviews, especialidade, localização, diferencial, site, redes sociais, presença digital, reputação, horário, diagnóstico ou outro dado concreto. Adapte ao nicho e aos dados disponíveis; não fique preso à avaliação do Google.
+   • Baseado em algo REAL do lead, nesta prioridade: observação do prospector ou diagnóstico; nicho/especialidade; presença pública forte comprovada pelo site ou redes; reputação/recomendações; contexto da região/cidade. Mencionar site, redes ou presença digital como observação factual é permitido, mas nunca transforme isso em oferta de marketing.
+   • Avaliação, nota e número de reviews do Google são o ÚLTIMO recurso e só podem aparecer quando nenhum dos sinais acima estiver disponível. Não invente reputação regional, recomendações ou força digital sem evidência nos dados.
    • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
    • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
    • PROIBIDO repetir a saudação aqui. Também PROIBIDO começar o gancho com "Meu nome é" ou "Somos uma empresa" (isso é da identificação, mais adiante).
@@ -730,6 +735,10 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
     if (!content) throw new Error("Resposta vazia da IA");
 
     const parsed = JSON.parse(content);
+    const hasAlternativeHookSignals = Boolean(
+      pontosFortes.length || pontosFracos.length || analiseSite || analiseRedes || analiseConcorrencia
+      || analiseDemanda || lead.ai_diagnosis || lead.category || lead.city || hasSite || socialMedia.length
+    );
 
     // Sanitiza a saída: remove travessões, normaliza espaçamentos e capitaliza início de bloco/frase.
     const capFirst = (s: string) => s.replace(/^(\s*)([a-zà-ÿ])/, (_m, sp, ch) => sp + ch.toUpperCase());
@@ -778,6 +787,8 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
         ? "role_confusion"
         : messageRevealsOffer(parsed.mensagem || "", companyProfile, productCatalog)
           ? "revealed_offer"
+        : messageOverusesGoogleRating(parsed.mensagem || "", hasAlternativeHookSignals)
+          ? "google_rating_overuse"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
           : null;
@@ -797,7 +808,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem escreve e quem recebe. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição ou benefício da empresa. O perfil comercial serve apenas para orientar internamente o assunto da chamada de atenção. Preserve a curiosidade e peça somente autorização para explicar o ponto percebido. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+ Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem escreve e quem recebe. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição ou benefício da empresa. O perfil comercial serve apenas para orientar internamente o assunto da chamada de atenção. Preserve a curiosidade e peça somente autorização para explicar o ponto percebido. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
