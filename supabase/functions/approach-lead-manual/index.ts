@@ -765,7 +765,9 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       ? "offering_mismatch"
       : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
         ? "role_confusion"
-        : null;
+        : messageLacksPersonalization(parsed.mensagem || "", lead)
+          ? "missing_personalization"
+          : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
