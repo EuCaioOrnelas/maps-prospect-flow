@@ -53,7 +53,7 @@ export const Footer = () => {
             <div className="col-span-2 sm:col-span-1">
               <h2 className="mb-5 text-sm font-semibold text-foreground">Atendimento</h2>
               <a
-                href="https://www.reclameaqui.com.br/"
+                href="https://www.reclameaqui.com.br/busca/?q=Wiize"
                 target="_blank"
                 rel="noreferrer"
                 className="group flex min-h-24 items-center justify-between gap-3 rounded-panel border border-border bg-background p-4 transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
