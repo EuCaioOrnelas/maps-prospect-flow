@@ -19,6 +19,17 @@ export const ApiPublicNavbar = () => {
   const tickingRef = useRef(false);
   const lastRef = useRef(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  /** Links com âncora (/api#secao) precisam rolar mesmo já estando na /api. */
+  const handleNavClick = (e: React.MouseEvent, to: string) => {
+    const [path, hash] = to.split("#");
+    if (!hash) return;
+    e.preventDefault();
+    setMobileOpen(false);
+    if (location.pathname !== path) navigate(to);
+    scrollToSection(hash);
+  };
 
   useEffect(() => {
     const evaluate = () => {
