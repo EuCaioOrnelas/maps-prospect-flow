@@ -350,8 +350,9 @@ function buildFollowUpRules(input: ApproachInput, intent: LeadIntent): string {
       "A resposta foi curta e pouco informativa. Reconheça brevemente, avance a conversa com um ângulo novo e faça uma pergunta de qualificação simples.",
     interesse:
       "O lead demonstrou INTERESSE. Pare de prospectar e comece a conduzir: responda objetivamente o que ele quer saber, podendo citar produtos e preços do catálogo quando isso responder à dúvida, e termine com UMA pergunta de qualificação (uso, porte, quantidade de pessoas, local, prazo).",
-    duvida:
-      "O lead fez uma pergunta. Responda diretamente e com objetividade primeiro, usando o catálogo quando for a resposta correta, depois faça UMA pergunta que avance a conversa.",
+    duvida: leadAskedAboutOffer(input.leadResponse)
+      ? "O lead perguntou sobre produto, preço ou funcionamento. Responda diretamente e com objetividade primeiro, usando o catálogo, depois faça UMA pergunta que avance a conversa."
+      : "O lead fez uma pergunta que NÃO é sobre produto ou preço (pode ser apenas cortesia). Proibido citar planos, preços, velocidades ou condições. Responda em uma frase curta, vá ao motivo do contato e faça UMA pergunta sobre a operação dele.",
     objecao:
       "O lead apresentou uma OBJEÇÃO. Não confronte, não diga que o seu é melhor. Valide a posição dele, tire a pressão ('a ideia nem seria trocar por trocar') e faça uma pergunta investigativa sobre a situação atual.",
     informacao:
