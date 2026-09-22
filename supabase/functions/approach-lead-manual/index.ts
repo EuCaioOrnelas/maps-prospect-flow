@@ -14,6 +14,7 @@ const corsHeaders = {
 
 // ---------------- Registro de custo de IA ----------------
 const AI_PRICES: Record<string, { in: number; out: number }> = {
+  "gpt-6-astra": { in: 0, out: 0 },
   "gpt-4o-mini": { in: 0.15 / 1_000_000, out: 0.6 / 1_000_000 },
   "gpt-4o": { in: 2.5 / 1_000_000, out: 10 / 1_000_000 },
   "gpt-4.1-mini": { in: 0.4 / 1_000_000, out: 1.6 / 1_000_000 },
@@ -38,7 +39,7 @@ async function logAiUsage(p: {
     const model = p.model.replace(/^openai\//, "").trim();
     const tin = p.tokens_in ?? p.usage?.prompt_tokens ?? 0;
     const tout = p.tokens_out ?? p.usage?.completion_tokens ?? 0;
-    const price = AI_PRICES[model] ?? AI_PRICES["gpt-4o-mini"];
+    const price = AI_PRICES[model] ?? { in: 0, out: 0 };
     const cost = p.cost_usd ?? tin * price.in + tout * price.out;
     await fetch(`${url}/rest/v1/ai_usage_logs`, {
       method: "POST",
@@ -587,20 +588,19 @@ async function callOpenAI(opts: {
   apiKey: string;
   system: string;
   user: string;
-  temperature: number;
   maxTokens: number;
 }): Promise<{ ok: true; data: any } | { ok: false; status: number }> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${opts.apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "openai/gpt-6-astra",
       messages: [
         { role: "system", content: opts.system },
         { role: "user", content: opts.user },
       ],
-      temperature: opts.temperature,
-      max_tokens: opts.maxTokens,
+      reasoning_effort: "low",
+      max_completion_tokens: opts.maxTokens,
       response_format: { type: "json_object" },
     }),
   });
@@ -613,13 +613,12 @@ async function generateApproachMessage(
   apiKey: string,
   input: ApproachInput,
   feature: string,
-): Promise<{ parsed: any; rewriteReason: string | null; intent: LeadIntent } | { error: "rate_limit" | "no_credits" | "gateway"; status: number }> {
+): Promise<{ parsed: any; rewriteReason: string | null; intent: LeadIntent } | { error: "rate_limit" | "no_credits" | "gateway" | "quality"; status: number }> {
   const system = buildPersonaSystem(input);
   const first = await callOpenAI({
     apiKey,
     system,
     user: buildApproachPrompt(input),
-    temperature: 0.85,
     maxTokens: 1200,
   });
   if (!first.ok) {
@@ -627,7 +626,7 @@ async function generateApproachMessage(
     if (first.status === 402) return { error: "no_credits", status: 402 };
     return { error: "gateway", status: first.status };
   }
-  logAiUsage({ feature, model: "gpt-4o-mini", usage: first.data.usage });
+  logAiUsage({ feature, model: "openai/gpt-6-astra", usage: first.data.usage });
   const content = first.data.choices?.[0]?.message?.content;
   const parsed = JSON.parse(content || "{}");
 
@@ -641,11 +640,10 @@ async function generateApproachMessage(
         apiKey,
         system,
         user: buildRewritePrompt(parsed.mensagem || "", rewriteReason, input),
-        temperature: 0.6,
         maxTokens: 900,
       });
       if (!fix.ok) break;
-      logAiUsage({ feature: `${feature}-fix`, model: "gpt-4o-mini", usage: fix.data.usage });
+      logAiUsage({ feature: `${feature}-fix`, model: "openai/gpt-6-astra", usage: fix.data.usage });
       const fixed = JSON.parse(fix.data.choices?.[0]?.message?.content || "{}");
       if (!fixed?.mensagem) break;
       parsed.mensagem = fixed.mensagem;
@@ -658,6 +656,11 @@ async function generateApproachMessage(
   rewriteReason = reasonsUsed.length ? reasonsUsed.join(",") : null;
 
   parsed.mensagem = ensureSingleFinalQuestion(sanitizeMessage(parsed.mensagem || ""));
+  const finalValidation = validateApproachMessage(parsed.mensagem, input);
+  if (finalValidation) {
+    console.error("approach quality validation failed", finalValidation);
+    return { error: "quality", status: 422 };
+  }
   return { parsed, rewriteReason, intent: classifyLeadResponse(input.leadResponse) };
 }
 
@@ -671,8 +674,8 @@ serve(async (req) => {
     new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -765,10 +768,11 @@ serve(async (req) => {
       seed: crypto.randomUUID().slice(0, 8),
     };
 
-    const result = await generateApproachMessage(OPENAI_API_KEY, input, "approach-lead-manual");
+    const result = await generateApproachMessage(LOVABLE_API_KEY, input, "approach-lead-manual");
     if ("error" in result) {
       if (result.error === "rate_limit") return json({ error: "Limite de requisições excedido. Tente novamente em instantes." }, 429);
       if (result.error === "no_credits") return json({ error: "Créditos de IA esgotados." }, 402);
+      if (result.error === "quality") return json({ error: "A mensagem não atingiu o padrão de qualidade. Tente novamente mais tarde." }, 422);
       throw new Error(`AI gateway error: ${result.status}`);
     }
 
