@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
-import { Instagram, Youtube, ArrowUpRight } from "lucide-react";
+import { Instagram, Youtube } from "lucide-react";
 import { scrollToSection } from "@/lib/scrollToSection";
 import reclameAquiLogo from "@/assets/reclame-aqui-logo.png";
 
@@ -115,7 +115,6 @@ export const Footer = () => {
                       Reclamações e demandas
                     </span>
                   </span>
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true" />
                 </a>
               </div>
             </div>
