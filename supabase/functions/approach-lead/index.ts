@@ -396,7 +396,7 @@ function buildFollowUpRules(input: ApproachInput, intent: LeadIntent): string {
     sem_resposta:
       "O lead NÃO deu resposta substantiva. Proibido: 'conseguiu ver?', 'viu minha mensagem?', 'passando para reforçar', 'gostaria de saber se'. Traga um NOVO motivo para responder: um ângulo diferente do primeiro contato, com uma pergunta objetiva sobre a situação atual dele.",
     saudacao:
-      "O lead só respondeu uma saudação. Não agradeça, não presuma interesse, não invente conversa anterior e não repita saudação. Vá direto ao motivo do contato, conecte ao negócio dele e faça uma pergunta.",
+      "O lead só respondeu uma saudação. Não agradeça, não presuma interesse, não invente conversa anterior e não repita saudação. Se não houver mensagem anterior registrada, apresente nome e empresa em uma frase. Cite explicitamente o lead ou um detalhe operacional dele, vá direto ao motivo do contato e faça uma pergunta.",
     resposta_curta:
       "A resposta foi curta e pouco informativa. Reconheça brevemente, avance a conversa com um ângulo novo e faça uma pergunta de qualificação simples.",
     interesse:
@@ -663,10 +663,10 @@ async function generateApproachMessage(
   const content = first.data.choices?.[0]?.message?.content;
   const parsed = JSON.parse(content || "{}");
 
-  // Revisão de qualidade: até 2 reescritas, revalidando a cada passagem.
+  // Revisão de qualidade: até 3 reescritas, revalidando a cada passagem.
   let rewriteReason = validateApproachMessage(parsed.mensagem || "", input);
   const reasonsUsed: string[] = [];
-  for (let attempt = 0; attempt < 2 && rewriteReason; attempt++) {
+  for (let attempt = 0; attempt < 3 && rewriteReason; attempt++) {
     reasonsUsed.push(rewriteReason);
     try {
       const fix = await callOpenAI({
