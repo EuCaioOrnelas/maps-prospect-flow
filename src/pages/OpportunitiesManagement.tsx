@@ -1573,7 +1573,7 @@ export default function OpportunitiesManagement() {
               <p className="text-xs text-muted-foreground leading-relaxed">
                 ⚡ <strong>Importante:</strong> esta <strong>NÃO</strong> é a mensagem fria — o primeiro contato é feito por um <strong>template oficial da Meta</strong>.
                 <br />
-                Esta é a <strong>resposta humana e consultiva</strong> enviada <strong>depois que o lead respondeu "sim/pode/quero saber"</strong> ao template, já com a janela de 24h aberta.
+                Esta é a <strong>resposta humana e consultiva</strong> enviada depois que o lead respondeu ao template, mesmo que tenha respondido apenas com uma saudação, já com a janela de 24h aberta.
               </p>
             </div>
             {lead.ai_approach_message ? (
@@ -1601,10 +1601,6 @@ export default function OpportunitiesManagement() {
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => { setEditedMessage(lead.ai_approach_message || ""); setEditingMessage(true); }} className="gap-1.5 text-xs">
                       <Pencil size={12} /> Editar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => approachLead(lead, "meta")} disabled={approachingLeadId === lead.id || !canGenerateMessage(lead)} className="gap-1.5 text-xs">
-                      {approachingLeadId === lead.id && approachingMode === "meta" ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                      Regenerar
                     </Button>
                   </div>
                 </div>
