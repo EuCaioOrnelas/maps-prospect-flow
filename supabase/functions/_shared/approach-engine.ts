@@ -204,14 +204,21 @@ export type LeadIntent = "sem_resposta" | "saudacao" | "interesse" | "objecao" |
 const GREETING_TOKENS = new Set([
   "oi", "ola", "bom", "boa", "dia", "tarde", "noite", "tudo", "bem", "certo", "beleza", "blz",
   "e", "voce", "vc", "com", "como", "vai", "esta", "ta", "opa", "ai", "sim", "obrigado", "obrigada",
-  "otimo", "otima", "tambem", "aqui", "graças", "gracas", "deus",
+  "otimo", "otima", "tambem", "aqui", "gracas", "deus", "por", "pra", "para", "contigo", "ok",
+  "novidade", "novidades", "sempre", "na", "no", "correria", "de", "boas", "firme", "show",
 ]);
 
 /** Só saudação = nenhuma palavra fora do vocabulário de cumprimento. */
 function isOnlyGreeting(t: string): boolean {
   const words = t.replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
-  if (!words.length || words.length > 8) return false;
+  if (!words.length || words.length > 12) return false;
   return words.every((w) => GREETING_TOKENS.has(w));
+}
+
+/** Dúvida só libera produto/preço quando o lead tocou no assunto comercial. */
+export function leadAskedAboutOffer(raw: unknown): boolean {
+  const t = normalizeForMatch(raw);
+  return /(pre[cç]o|valor|quanto|plano|planos|mensalidade|contrato|velocidade|mega|giga|como funciona|instala|proposta|or[cç]amento)/.test(t);
 }
 
 export function classifyLeadResponse(raw: unknown): LeadIntent {
