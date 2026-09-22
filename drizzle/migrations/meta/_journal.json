@@ -169,6 +169,13 @@
       "when": 1790088854589,
       "tag": "0023_chat_scheduled_claim",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790108379634,
+      "tag": "0024_add_company_business_model",
+      "breakpoints": true
     }
   ]
 }

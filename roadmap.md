@@ -11,3 +11,7 @@
 - [x] Ampliar os cards de emojis e remover o comentário opcional
 - [x] Separar empresa prospectora e lead nas duas abordagens por IA
 - [x] Bloquear geração sem oferta cadastrada e registrar correções automáticas
+
+- [x] Persistir `company_business_model`, preencher a Bless como representante e remover o fallback silencioso do perfil.
+- [x] Ajustar abordagem manual e follow-up Meta para usar somente observações do lead conectadas ao produto da empresa prospectora.
+- [ ] Validar geração real alinhada; persistência e reabertura da Gestão já confirmadas.

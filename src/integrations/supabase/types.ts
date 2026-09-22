@@ -2515,6 +2515,7 @@ export type Database = {
       company_profiles: {
         Row: {
           attendant_name: string
+          company_business_model: string | null
           company_differential: string
           company_name: string
           company_niche: string
@@ -2530,6 +2531,7 @@ export type Database = {
         }
         Insert: {
           attendant_name?: string
+          company_business_model?: string | null
           company_differential?: string
           company_name?: string
           company_niche?: string
@@ -2545,6 +2547,7 @@ export type Database = {
         }
         Update: {
           attendant_name?: string
+          company_business_model?: string | null
           company_differential?: string
           company_name?: string
           company_niche?: string
