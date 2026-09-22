@@ -20,17 +20,7 @@ function MenuLink({ item, onNavigate, compact }: { item: MenuItem; onNavigate?: 
       e.preventDefault();
       onNavigate?.();
       navigate(item.to);
-      const id = item.to.slice(2);
-      const start = Date.now();
-      const tryScroll = () => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-          return;
-        }
-        if (Date.now() - start < 4000) requestAnimationFrame(tryScroll);
-      };
-      tryScroll();
+      scrollToSection(item.to.slice(2));
       return;
     }
     onNavigate?.();
