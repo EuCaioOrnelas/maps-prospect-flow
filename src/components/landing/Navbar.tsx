@@ -77,20 +77,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     onSignupClick?.();
   };
 
-  const scrollToId = (id: string) => {
-    const start = Date.now();
-    const tryScroll = () => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-      }
-      if (Date.now() - start < 4000) {
-        requestAnimationFrame(tryScroll);
-      }
-    };
-    tryScroll();
-  };
+  const scrollToId = (id: string) => scrollToSection(id);
 
   const handleNavLinkClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
