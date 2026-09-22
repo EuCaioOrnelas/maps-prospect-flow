@@ -1,66 +1,46 @@
 // Dados do FAQ isolados do componente: assim a landing page consegue montar o
 // JSON-LD sem puxar o componente inteiro (Accordion, ícones) para o bundle inicial.
 export const faqs = [
- {
- question: "O que é a Wiize?",
- answer: "A Wiize é uma máquina de vendas B2B. Você diz o que vende e quem quer alcançar, e ela encontra empresas, inicia conversas, faz follow-up, qualifica o interesse e agenda reuniões para o seu time."
- },
- {
- question: "Como a Wiize encontra as empresas?",
- answer: "Você define nicho, região e o tipo de empresa que quer alcançar. A Wiize busca essas empresas, faz o diagnóstico e a análise de cada uma com IA (site, redes, presença digital, porte e maturidade) e mostra quais têm mais potencial. Depois gera a abordagem de cada empresa com base no perfil da sua empresa e no que você vende, pronta para enviar."
- },
- {
- question: "A Wiize escreve a abordagem para mim?",
- answer: "Sim. A partir do perfil da sua empresa, do que você vende e do diagnóstico feito em cada empresa encontrada, a IA gera uma abordagem individual e contextualizada. Você pode revisar, editar e enviar direto pela plataforma."
- },
- {
- question: "Consigo disparar campanhas de mensagem no WhatsApp?",
- answer: "Sim. Você cria campanhas de mensagem pela API oficial da Meta, usando modelos aprovados e variáveis personalizadas por empresa, com envio controlado dentro de limites seguros. As respostas caem direto no atendimento e ficam registradas no CRM."
- },
- {
- question: "O que é a Wian AI?",
- answer: "A Wian AI é a inteligência que acompanha sua operação. Todo dia ela lê o que aconteceu, monta um briefing executivo com as métricas, aponta quais oportunidades merecem atenção, o que está travando as vendas e o que fazer hoje. Você conversa com a Wian AI por texto ou áudio dentro da plataforma."
- },
- {
- question: "Como sei quais oportunidades merecem atenção?",
- answer: "A Wiize cruza o que sabe da empresa, o que acontece na conversa e o histórico das suas vendas anteriores para mostrar quem está mais perto de uma reunião, quem precisa de atenção agora e quem está esfriando. O engajamento é uma das leituras; o que você vê é a lista de quem chamar primeiro e o que fazer em cada caso."
- },
- {
- question: "Quem conversa com o lead?",
- answer: "A IA responde no WhatsApp a qualquer hora, entende o contexto, qualifica o interesse e passa a conversa para uma pessoa do time no momento certo. Tudo fica registrado no CRM."
- },
- {
- question: "O que acontece quando meu time está ocupado?",
- answer: "A máquina continua trabalhando. Follow-ups, movimentação das oportunidades, avisos e tarefas acontecem sozinhos, e a IA assume a conversa até alguém do time poder entrar."
- },
- {
- question: "Consigo falar com muitas empresas de uma vez?",
- answer: "Sim. Você escolhe o público e a Wiize escreve uma mensagem diferente para cada empresa, envia dentro de limites seguros e devolve as respostas no mesmo lugar. Não é disparo igual para todo mundo."
- },
- {
- question: "Preciso trocar de CRM?",
- answer: "A Wiize já vem com o CRM incluído. Cada conversa, atividade e oportunidade gerada pela máquina fica registrada e organizada lá automaticamente, sem alguém precisar preencher nada."
- },
- {
- question: "Como funciona o WhatsApp na Wiize?",
- answer: "Você conecta sua conta ao WhatsApp Business oficial da Meta. É a mesma infraestrutura usada por grandes empresas, com estabilidade e segurança para falar em volume com leads opt-in."
- },
- {
- question: "Corro risco de bloqueio no WhatsApp?",
- answer: "A Wiize opera com duas camadas: Meta API Oficial (relacionamento com leads opt-in) com risco zero, e infraestrutura outbound para prospecção ativa, com boas práticas operacionais como delays inteligentes, variações de mensagem, pausas adaptativas e limites diários para proteger seus números em cada disparo."
- },
- {
- question: "Quantos números WhatsApp posso conectar?",
- answer: "Como a Wiize opera com a Meta API Oficial, não existe limite de disparos por número. O que define o seu uso é o volume de oportunidades geradas dentro do plano contratado. Atendimento, Growth IA e Enterprise liberam diferentes capacidades de oportunidades e números conectados, com a robustez e estabilidade da infraestrutura oficial do WhatsApp Business."
- },
- {
- question: "Posso cancelar quando quiser?",
- answer: "Sim. Sem fidelidade, sem taxa de cancelamento. Você cancela direto na plataforma e mantém o acesso até o fim do período pago."
- },
- {
- question: "Como funciona o teste grátis?",
- answer: "São 7 dias de acesso total ao plano escolhido. No cadastro, você seleciona o plano desejado (Atendimento, Growth IA ou Enterprise) e informa um cartão de crédito, mas nenhuma cobrança é feita durante o período de teste. Durante os 7 dias, você tem acesso completo a tudo que o plano oferece. A cobrança só acontece no 8º dia, caso você não cancele antes. Sem fidelidade e cancelamento direto na plataforma."
- },
+  {
+    question: "O que é a Wiize?",
+    answer: "A Wiize é uma plataforma de inteligência comercial B2B que reúne prospecção, SDR Inteligente, CRM, WhatsApp, formulários, automações e análise de oportunidades em uma só operação."
+  },
+  {
+    question: "Como a Wiize encontra e prioriza empresas?",
+    answer: "Você define o perfil de empresa que procura. A Wiize pesquisa fontes empresariais, analisa sinais públicos e organiza as oportunidades por aderência e contexto. A pontuação é uma recomendação para priorização, não uma garantia de venda."
+  },
+  {
+    question: "O que o SDR Inteligente faz?",
+    answer: "O SDR Inteligente conversa com leads, faz perguntas de qualificação, responde com base nas informações da sua empresa, executa follow-ups e pode encaminhar a conversa para uma pessoa ou para o agendamento. Sua equipe pode acompanhar e assumir o atendimento quando quiser."
+  },
+  {
+    question: "O que é a Wian?",
+    answer: "A Wian é a inteligência da Wiize. Ela resume o que aconteceu na operação, destaca oportunidades e próximos passos e também orienta usuários na área de suporte. As recomendações apoiam a equipe, que continua responsável pelas decisões comerciais."
+  },
+  {
+    question: "Como funcionam o CRM, os formulários e os links rastreados?",
+    answer: "O CRM centraliza contatos, conversas, atividades e etapas comerciais. Formulários com a sua marca enviam respostas e arquivos ao CRM, enquanto links rastreados preservam a origem e as UTMs para você entender de onde veio cada oportunidade."
+  },
+  {
+    question: "Como funcionam os templates de mensagem?",
+    answer: "Você cria e gerencia modelos de mensagem na Wiize e os envia para análise da Meta. Fora da janela de atendimento de 24 horas, o WhatsApp exige um template aprovado para iniciar ou reabrir uma conversa. Aprovação, categoria e qualidade são definidas pela Meta."
+  },
+  {
+    question: "Qual a diferença entre Número de Marketing e Número de Suporte?",
+    answer: "O Número de Marketing usa a API Oficial da Meta para campanhas e mensagens com templates aprovados. O Número de Suporte é voltado a atendimento individual, chat, SDR e automações de suporte. Cada modalidade segue limites e condições próprios; campanhas devem usar o canal oficial da Meta."
+  },
+  {
+    question: "Como a Wiize protege dados e conversas?",
+    answer: "A Wiize usa conexões seguras, controles de acesso, isolamento dos dados de cada empresa, proteção de credenciais e registros de segurança. O cliente controla sua equipe e é responsável pela base legal dos contatos inseridos ou captados na plataforma."
+  },
+  {
+    question: "Como funciona o suporte?",
+    answer: "A Wian oferece orientação inicial a qualquer hora. Quando uma solicitação precisa de análise humana, ela pode ser encaminhada ao time de suporte, que atende pelos canais e horários informados na página de contato."
+  },
+  {
+    question: "Como funcionam o teste grátis e o cancelamento?",
+    answer: "O teste gratuito dura 7 dias nas condições mostradas no cadastro. Se você não cancelar antes do fim do período, a cobrança do plano escolhido começa no 8º dia. O cancelamento pode ser feito na plataforma, sem fidelidade, e o acesso segue até o fim do período pago."
+  },
 ];
 
 // FAQ JSON-LD for Google rich results

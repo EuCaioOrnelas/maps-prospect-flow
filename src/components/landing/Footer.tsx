@@ -3,6 +3,7 @@ import { Logo } from "@/components/Logo";
 import { Instagram, Youtube } from "lucide-react";
 import { scrollToSection } from "@/lib/scrollToSection";
 import reclameAquiLogo from "@/assets/reclame-aqui-logo.png";
+import { resetConsent } from "@/lib/consent";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -23,6 +24,11 @@ export const Footer = () => {
     }
     // Timeout longo: as seções da landing são lazy e montam aos poucos.
     scrollToSection(id, 20000);
+  };
+
+  const openCookiePreferences = () => {
+    resetConsent();
+    window.dispatchEvent(new Event("wiize:open-cookie-settings"));
   };
 
   return (
@@ -135,6 +141,8 @@ export const Footer = () => {
             <Link to="/privacy" className={linkClass}>Política de Privacidade</Link>
             <span aria-hidden="true" className="select-none opacity-50">·</span>
             <Link to="/refund-policy" className={linkClass}>Política de Reembolso</Link>
+             <span aria-hidden="true" className="select-none opacity-50">·</span>
+             <button type="button" onClick={openCookiePreferences} className={linkClass}>Preferências de cookies</button>
           </nav>
         </div>
       </div>

@@ -16,7 +16,7 @@ const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 export const CONSENT_VERSION = "2026-09-v2";
 export const CONSENT_TEXT =
-  "Ao enviar, você concorda com o uso dos seus dados para contato sobre esta solicitação (LGPD).";
+  "Ao enviar, você concorda com o uso dos seus dados para contato sobre esta solicitação.";
 const REDIRECT_SECONDS = 3;
 
 const normalizeAssetUrl = (value?: string | null) => {
@@ -498,7 +498,12 @@ export default function PublicForm() {
                         className="mt-0.5 h-3.5 w-3.5 shrink-0"
                         style={{ accentColor: primary }}
                       />
-                      <span>{CONSENT_TEXT}</span>
+                       <span>
+                         {CONSENT_TEXT}{" "}
+                         <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                           Consulte a Política de Privacidade.
+                         </a>
+                       </span>
                     </label>
                   )}
 

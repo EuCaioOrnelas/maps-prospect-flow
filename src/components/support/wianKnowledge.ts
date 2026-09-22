@@ -14,12 +14,13 @@ export const WIAN_KNOWLEDGE: Record<string, ModuleKnowledge> = {
   // -------------------------------------------------- WhatsApp / Conexões
   whatsapp: {
     description:
-      "Módulo de conexões de números WhatsApp via API Oficial da Meta (WhatsApp Cloud API / WABA). É a única API usada hoje pela Wiize para chat, campanhas e agentes de IA.",
+      "A Wiize oferece Número de Marketing pela API Oficial da Meta para campanhas e templates aprovados, e Número de Suporte para atendimento individual, chat, SDR e automações de suporte.",
     keyRules: [
-      "Todo número Meta Cloud precisa de DDI 55 obrigatório.",
       "Conexão é feita via Embedded Signup oficial da Meta (OAuth).",
       "Tokens Meta podem expirar; o sistema faz health checks periódicos e marca status.",
       "Só é possível operar com números aprovados na sua conta Meta Business.",
+      "Campanhas e reabertura de conversas fora da janela de 24 horas usam templates aprovados pela Meta.",
+      "Número de Suporte não deve ser usado para campanhas ou envios em massa.",
     ],
     commonFlows: [
       "Conectar Meta: WhatsApp → Conexões → 'Conectar Meta WhatsApp' → fluxo OAuth da Meta.",
@@ -38,11 +39,11 @@ export const WIAN_KNOWLEDGE: Record<string, ModuleKnowledge> = {
   // -------------------------------------------------- Campanhas
   campaigns: {
     description:
-      "Disparo em massa de mensagens via Meta Cloud (Outbound) ou via leads do CRM (Relational). Suporta IA na composição ou mensagens customizadas.",
+       "Campanhas de mensagens pela API Oficial da Meta, com público do CRM, templates aprovados e personalização por IA ou conteúdo configurado pelo usuário.",
     keyRules: [
-      "Delays de segurança são obrigatórios (intervalo + pausa após X contatos).",
+       "As regras de qualidade, consentimento, templates e limites da Meta devem ser respeitadas.",
       "Status: pending → running → paused/completed/failed.",
-      "DDI 55 obrigatório para Meta. Números inválidos viram 'failed'.",
+       "Números inválidos ou incompatíveis são marcados como falha.",
       "Campanhas de IA geram texto único por lead; Custom usa template fixo.",
     ],
     commonFlows: [
@@ -57,6 +58,42 @@ export const WIAN_KNOWLEDGE: Record<string, ModuleKnowledge> = {
       "Erro 'sem WhatsApp': remover contato, aquele número não tem WhatsApp ativo.",
     ],
     relatedRoutes: ["/campanhas", "/campanhas/nova"],
+  },
+
+  forms: {
+    description: "Formulários com identidade da empresa e links rastreados que registram respostas, arquivos, origem e UTMs diretamente no CRM.",
+    keyRules: [
+      "O responsável pelo formulário deve informar a finalidade e possuir base legal para o contato.",
+      "Respostas podem criar ou atualizar contatos, com deduplicação e distribuição para a equipe.",
+      "Arquivos aceitos e limites são informados no próprio formulário.",
+    ],
+    commonFlows: [
+      "Criar formulário: Forms & Links → Novo formulário → campos → aparência → distribuição → publicar.",
+      "Criar link rastreado: Forms & Links → Links → definir destino e parâmetros de campanha.",
+    ],
+    troubleshooting: [
+      "Resposta não apareceu: conferir se o formulário está ativo e se os campos obrigatórios foram preenchidos.",
+      "Origem ausente: conferir se o link usado preserva os parâmetros UTM.",
+    ],
+    relatedRoutes: ["/forms", "/tracked-links"],
+  },
+
+  templates: {
+    description: "Gerenciamento de templates da WhatsApp Business Platform, com criação, rascunho, envio para análise, sincronização de status e uso em campanhas ou reabertura de conversas.",
+    keyRules: [
+      "Fora da janela de 24 horas, a conversa só pode ser iniciada ou reaberta com template aprovado pela Meta.",
+      "Aprovação, categoria, qualidade e eventual rejeição são decisões da Meta.",
+      "Variáveis devem ser preenchidas na ordem exibida antes do envio.",
+    ],
+    commonFlows: [
+      "Criar template: Meta → Templates → Novo template → salvar rascunho ou enviar para análise.",
+      "Sincronizar status: Meta → Templates → Sincronizar.",
+    ],
+    troubleshooting: [
+      "Template não aparece: sincronizar e confirmar o número e a conta de WhatsApp selecionados.",
+      "Template rejeitado: abrir os detalhes, revisar o motivo informado pela Meta e criar uma nova versão adequada.",
+    ],
+    relatedRoutes: ["/meta/templates"],
   },
 
   // -------------------------------------------------- CRM
@@ -219,6 +256,8 @@ const CATEGORY_TO_KNOWLEDGE: Record<string, string[]> = {
   ia_agents: ["aiAgents", "chat"],
   chat: ["chat", "aiAgents"],
   flows: ["flows"],
+  formularios: ["forms", "crm"],
+  templates: ["templates", "whatsapp"],
   oportunidades: ["opportunities", "crm"],
   conta: ["account", "billing"],
   financeiro: ["billing"],
