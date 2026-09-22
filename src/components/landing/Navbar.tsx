@@ -8,6 +8,7 @@ import { NavMegaMenu } from "./NavMegaMenu";
 import { PRODUCT_COLUMNS, RESOURCE_COLUMNS, type MenuItem } from "./navMenuData";
 import { cn } from "@/lib/utils";
 import { trackFreeTrialClick } from "@/lib/analytics";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 interface NavbarProps {
   onSignupClick?: () => void;
@@ -77,20 +78,7 @@ export const Navbar = ({ onSignupClick }: NavbarProps) => {
     onSignupClick?.();
   };
 
-  const scrollToId = (id: string) => {
-    const start = Date.now();
-    const tryScroll = () => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        return;
-      }
-      if (Date.now() - start < 4000) {
-        requestAnimationFrame(tryScroll);
-      }
-    };
-    tryScroll();
-  };
+  const scrollToId = (id: string) => scrollToSection(id);
 
   const handleNavLinkClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { scrollToSection } from "@/lib/scrollToSection";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import wiizeLogo from "@/assets/logo-icon-new.png";
@@ -18,6 +19,17 @@ export const ApiPublicNavbar = () => {
   const tickingRef = useRef(false);
   const lastRef = useRef(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  /** Links com âncora (/api#secao) precisam rolar mesmo já estando na /api. */
+  const handleNavClick = (e: React.MouseEvent, to: string) => {
+    const [path, hash] = to.split("#");
+    if (!hash) return;
+    e.preventDefault();
+    setMobileOpen(false);
+    if (location.pathname !== path) navigate(to);
+    scrollToSection(hash);
+  };
 
   useEffect(() => {
     const evaluate = () => {
@@ -76,6 +88,7 @@ export const ApiPublicNavbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
+                  onClick={(e) => handleNavClick(e, link.to)}
                   className="rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:text-primary"
                 >
                   {link.label}
@@ -116,7 +129,7 @@ export const ApiPublicNavbar = () => {
                     key={link.to}
                     to={link.to}
                     className="border-b border-border/60 py-2.5 text-sm font-semibold text-foreground"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={(e) => { handleNavClick(e, link.to); setMobileOpen(false); }}
                   >
                     {link.label}
                   </Link>
