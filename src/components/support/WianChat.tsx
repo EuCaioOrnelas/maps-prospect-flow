@@ -805,7 +805,6 @@ export function WianChat() {
     }
   };
 
-  const skipNps = () => setPhase(wasEscalated ? "done-escalated" : "done-resolved");
 
   const submitEscalation = async () => {
     const errs: { name?: string; email?: string; phone?: string; category?: string } = {};
