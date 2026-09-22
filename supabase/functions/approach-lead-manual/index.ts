@@ -688,7 +688,10 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: personaSystem },
+          { role: "user", content: prompt },
+        ],
         temperature: 0.9,
         max_tokens: 1200,
         response_format: { type: "json_object" },
