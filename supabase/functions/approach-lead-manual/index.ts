@@ -420,6 +420,7 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ` : "";
 
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
+    const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
 
     const prompt = `Você é um CONSULTOR B2B sênior escrevendo a PRIMEIRA mensagem no WhatsApp para o dono/gestor de uma empresa que você acabou de analisar.
 
