@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Star, Loader2, User, Paperclip, X, FileText, Image as ImageIcon, Check, ChevronLeft, ExternalLink, List, ChevronRight, Megaphone, MessageSquare, Building2, Bot, LayoutGrid, GitBranch, CreditCard, Package, BarChart3, Headphones, HelpCircle, AlertCircle, Wrench, CheckCircle2, XCircle, Loader, Lightbulb } from "lucide-react";
 import { Link } from "react-router-dom";
