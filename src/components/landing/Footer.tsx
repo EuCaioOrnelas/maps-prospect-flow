@@ -3,7 +3,6 @@ import { Logo } from "@/components/Logo";
 import { Instagram, Youtube } from "lucide-react";
 import { scrollToSection } from "@/lib/scrollToSection";
 import reclameAquiLogo from "@/assets/reclame-aqui-logo.png";
-import { resetConsent } from "@/lib/consent";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
