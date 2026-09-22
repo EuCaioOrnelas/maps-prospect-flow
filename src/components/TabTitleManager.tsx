@@ -26,7 +26,6 @@ const TAB_TITLE_RULES: TabTitleRule[] = [
   { pattern: /^\/seguranca-faq\/?$/, label: "Segurança" },
   { pattern: /^\/diretrizes-de-envio\/?$/, label: "Diretrizes de Envio" },
   { pattern: /^\/ajuda(?:\/.*)?$/, label: "Central de Ajuda" },
-  { pattern: /^\/inteligencia\/?$/, label: "Inteligência Wiize" },
   { pattern: /^\/upgrade(?:-promo)?\/?$/, label: "Upgrade" },
   { pattern: /^\/checkout-(?:pix|card|success|failed)\/?$/, label: "Checkout" },
   { pattern: /^\/renewal-success\/?$/, label: "Assinatura Renovada" },

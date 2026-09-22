@@ -31,7 +31,6 @@ const PUBLIC_PATTERNS: RegExp[] = [
   /^\/enterprise$/,
   /^\/blog(\/|$)/,
   /^\/produtos(\/|$)/,
-  /^\/inteligencia$/,
   /^\/seguranca-faq$/,
   /^\/diretrizes-de-envio$/,
   /^\/ajuda(\/|$)/,
