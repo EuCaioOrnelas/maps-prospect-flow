@@ -25,7 +25,7 @@ interface EmojiRatingProps {
 
 export function EmojiRating({ value, onChange, size = "md", className }: EmojiRatingProps) {
   return (
-    <div className={cn("grid grid-cols-5 gap-1.5 sm:gap-2", className)}>
+    <div className={cn("grid grid-cols-5 gap-2 lg:gap-3", className)}>
       {EMOJI_RATING_OPTIONS.map((option) => {
         const active = value === option.value;
         const dimmed = value !== null && !active;
@@ -37,8 +37,8 @@ export function EmojiRating({ value, onChange, size = "md", className }: EmojiRa
             aria-label={option.label}
             onClick={() => onChange(option.value)}
             className={cn(
-              "group flex flex-col items-center justify-center gap-1 rounded-2xl border transition-all duration-200",
-              size === "sm" ? "px-1 py-2" : size === "md" ? "px-2 py-3" : "px-2 py-4",
+              "group min-w-0 flex flex-col items-center justify-center gap-1.5 rounded-2xl border transition-all duration-200",
+              size === "sm" ? "px-1 py-2" : size === "md" ? "px-2 py-3" : "min-h-24 px-2 py-4 lg:min-h-28 lg:px-3",
               active
                 ? "border-primary bg-primary/10 shadow-sm ring-2 ring-primary/30 -translate-y-0.5"
                 : "border-border bg-background hover:border-primary/40 hover:bg-muted/50 hover:-translate-y-0.5",

@@ -204,6 +204,19 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
   return MARKETING_TERMS.test(message || "");
 }
 
+function normalizeForMatch(value: unknown): string {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
+  const normalized = normalizeForMatch(message);
+  const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
+  const sellerOffer = normalizeForMatch(profile?.company_products);
+  return leadCategory.some((word) =>
+    !sellerOffer.includes(word) && new RegExp(`(?:nos|nossa empresa|a gente)\\s+(?:vende|oferece|fornece|fabrica|distribui)[^.!?]{0,70}\\b${word}\\b`).test(normalized)
+  );
+}
+
 
 
 serve(async (req) => {
@@ -328,6 +341,13 @@ serve(async (req) => {
     const businessModel = resolveBusinessModel(companyProfile);
     const productCatalog = formatProductCatalog(companyServices);
 
+    if (!companyProfile || (!String(companyProfile.company_products || "").trim() && !productCatalog)) {
+      return new Response(JSON.stringify({
+        error: "missing_company_profile",
+        message: "Complete os produtos ou serviços da sua empresa antes de gerar a abordagem.",
+      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Build company context
     const companyContext = companyProfile ? `
 ⚠️ INSTRUÇÃO PRIMÁRIA — PERFIL DA EMPRESA PROSPECTORA:
@@ -389,7 +409,8 @@ ${companyContext}
 ${businessModelBlock}
 ${diagnosticContext}
 
-DADOS DO LEAD:
+═══ CLIENTE POTENCIAL — DADOS DO LEAD ═══
+Tudo deste bloco descreve QUEM RECEBE a mensagem. Não atribua o nicho, os produtos ou a identidade do lead à empresa que envia.
 - Empresa: ${lead.company_name || "Não informado"}
 - Categoria/Nicho do lead: ${lead.category || "Não informado"}
 - Cidade: ${lead.city || "Não informado"}
@@ -473,8 +494,13 @@ Retorne APENAS JSON válido:
 
     const parsed = JSON.parse(content);
 
-    // Revisão final: se a mensagem ofereceu algo fora do modelo de negócio, reescreve UMA vez.
-    if (messageViolatesModel(parsed.mensagem || "", businessModel)) {
+    // Revisão final: se a mensagem ofereceu algo fora do modelo ou trocou os papéis, reescreve UMA vez.
+    const rewriteReason = messageViolatesModel(parsed.mensagem || "", businessModel)
+      ? "offering_mismatch"
+      : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
+        ? "role_confusion"
+        : null;
+    if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -483,13 +509,14 @@ Retorne APENAS JSON válido:
             model: "gpt-4o-mini",
             messages: [{
               role: "user",
-              content: `A mensagem abaixo foi escrita para um lead, mas ela oferece marketing/presença digital, e quem envia NÃO vende isso.
+               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
 
 QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
 O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho e estrutura, removendo QUALQUER menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online, e trocando o ângulo pelo que a empresa realmente vende.
+Reescreva mantendo o mesmo tom, tamanho e estrutura. Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
@@ -526,6 +553,8 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
               pontos_fracos: parsed.pontos_fracos || [],
               estrategia: parsed.estrategia || "",
               produto_sugerido: parsed.produto_sugerido || "",
+              business_model_used: businessModel,
+              rewrite_reason: rewriteReason,
               generated_at: new Date().toISOString(),
             },
           },
