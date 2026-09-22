@@ -436,6 +436,7 @@ IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se nã
     // Estratégia de abordagem definida pelo MODELO DE NEGÓCIO real (não por palavra-chave solta)
     const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
     const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
+    const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
 
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
 
@@ -512,7 +513,10 @@ Retorne APENAS JSON válido:
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: personaSystem },
+          { role: "user", content: prompt },
+        ],
         temperature: 0.7,
         max_tokens: 1200,
         response_format: { type: "json_object" },
