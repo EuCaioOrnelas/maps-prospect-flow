@@ -343,7 +343,7 @@ export const PRODUCTS: ProductConfig[] = [
     heroTitle: "Entenda seus leads",
     heroHighlight: "Priorize quem compra",
     heroDescription:
-      "A IA de Engajamento analisa as conversas com seus contatos e atribui pontuação por mensagem, palavras utilizadas, intenção demonstrada e tempo de resposta. O resultado é uma leitura clara de quem está pronto para comprar, quem precisa de atenção e quem está perdendo o interesse.",
+      "A IA analisa cada conversa e identifica automaticamente quais leads estão mais próximos da compra, quais precisam de atenção e quais estão perdendo o interesse.",
     seoTitle: "IA de Engajamento: pontuação de conversas e intenção de compra",
     seoDescription:
       "A IA analisa conversas e pontua cada contato por mensagem, palavras, intenção e tempo de resposta, mostrando quem está engajado, pronto para comprar ou esfriando.",
