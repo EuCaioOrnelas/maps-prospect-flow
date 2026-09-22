@@ -422,7 +422,7 @@ Retorne APENAS JSON válido:
 
 // ---------------- Validação de qualidade ----------------
 const CLICHES = /(espero que esteja tudo bem|gostaria de apresentar|solu[cç][aã]o inovadora|nossa empresa [eé] especializada|sabemos (?:que|da import[aâ]ncia)|neste cen[aá]rio|venho por meio desta|estou entrando em contato para|agregar valor|solu[cç][aã]o personalizada|transformar (?:seus )?resultados|potencializar (?:seus )?resultados|mercado competitivo|alavancar|maximizar resultados|j[aá] pensou em como|poderia impactar|[eé] fundamental para o sucesso|crucial para o sucesso)/i;
-const MARKETING_TERMS = /(marketing|tr[aá]fego|an[uú]ncios?|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|cria[cç][aã]o de site|posicionamento digital|branding)/i;
+const MARKETING_TERMS = /(marketing|tr[aá]fego|an[uú]ncios?|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|cria[cç][aã]o de site|posicionamento digital|presen[cç]a digital|branding)/i;
 const OFFER_TERMS = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensalidade|desconto|or[cç]amento|proposta)\b/i;
 const MEETING_TERMS = /\b(?:reuni[aã]o|call|liga[cç][aã]o r[aá]pida|demonstra[cç][aã]o|agendar|agenda(?:mos)?\s+(?:um|uma)|5 minutinhos)\b/i;
 const GREETING_START = /^\s*(?:oi|ol[aá]|bom dia|boa tarde|boa noite|tudo bem|tudo certo|e a[ií])\b/i;
