@@ -34,7 +34,7 @@ export const Footer = () => {
               <h2 className="mb-5 text-sm font-semibold text-foreground">Produto</h2>
               <ul className="space-y-3.5">
                 <li><Link to="/#recursos" className={linkClass}>Recursos</Link></li>
-                <li><Link to="/#planos" className={linkClass}>Planos</Link></li>
+                <li><Link to="/#pricing" className={linkClass}>Planos</Link></li>
                 <li><Link to="/signup/escolher-plano" className={linkClass}>Teste grátis</Link></li>
                 <li><Link to="/login" className={linkClass}>Entrar</Link></li>
               </ul>
