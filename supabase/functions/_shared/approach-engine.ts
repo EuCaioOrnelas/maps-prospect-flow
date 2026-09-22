@@ -567,8 +567,11 @@ export async function generateApproachMessage(
   const content = first.data.choices?.[0]?.message?.content;
   const parsed = JSON.parse(content || "{}");
 
+  // Revisão de qualidade: até 2 reescritas, revalidando a cada passagem.
   let rewriteReason = validateApproachMessage(parsed.mensagem || "", input);
-  if (rewriteReason) {
+  const reasonsUsed: string[] = [];
+  for (let attempt = 0; attempt < 2 && rewriteReason; attempt++) {
+    reasonsUsed.push(rewriteReason);
     try {
       const fix = await callOpenAI({
         apiKey,
@@ -577,15 +580,18 @@ export async function generateApproachMessage(
         temperature: 0.6,
         maxTokens: 900,
       });
-      if (fix.ok) {
-        logAiUsage({ feature: `${feature}-fix`, model: "gpt-4o-mini", usage: fix.data.usage });
-        const fixed = JSON.parse(fix.data.choices?.[0]?.message?.content || "{}");
-        if (fixed?.mensagem) parsed.mensagem = fixed.mensagem;
-      }
+      if (!fix.ok) break;
+      logAiUsage({ feature: `${feature}-fix`, model: "gpt-4o-mini", usage: fix.data.usage });
+      const fixed = JSON.parse(fix.data.choices?.[0]?.message?.content || "{}");
+      if (!fixed?.mensagem) break;
+      parsed.mensagem = fixed.mensagem;
+      rewriteReason = validateApproachMessage(parsed.mensagem, input);
     } catch (e) {
       console.error("approach rewrite falhou", String(e));
+      break;
     }
   }
+  rewriteReason = reasonsUsed.length ? reasonsUsed.join(",") : null;
 
   parsed.mensagem = ensureSingleFinalQuestion(sanitizeMessage(parsed.mensagem || ""));
   return { parsed, rewriteReason, intent: classifyLeadResponse(input.leadResponse) };
