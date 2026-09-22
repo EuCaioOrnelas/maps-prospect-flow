@@ -367,7 +367,8 @@ Regras do follow-up:
 - Não reinicie com "Oi", "Olá", "Bom dia", "Boa tarde", "Boa noite" nem "tudo bem?".
 - Não agradeça a resposta e não presuma alinhamento, interesse ou combinação que não existiu.
 - Seja mais curto que o primeiro contato: normalmente de 200 a 500 caracteres.
-- Só cite produto, plano ou preço quando a intenção for interesse ou dúvida direta sobre isso.
+${input.previousMessage ? "- O lead já sabe quem você é; não repita a apresentação inteira." : "- O lead ainda não sabe quem você é: diga em uma frase curta seu nome, sua empresa e a área em que atua antes de entrar no assunto."}
+- Só cite produto, plano ou preço quando a intenção for interesse ou dúvida direta sobre isso; caso contrário, o objetivo continua sendo entender a operação do lead.
 - Termine com UMA pergunta que avance para o próximo passo.`;
 }
 
