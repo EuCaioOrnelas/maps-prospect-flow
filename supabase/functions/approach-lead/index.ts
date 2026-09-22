@@ -496,6 +496,16 @@ const GREETING_START = /^\s*(?:oi|ol[aá]|bom dia|boa tarde|boa noite|tudo bem|t
 const EMPTY_PRAISE = /(parab[eé]ns pelo|excelente trabalho|[oó]timo trabalho|voc[eê]s s[aã]o incr[ií]veis)/i;
 const INVENTED_FACTS = /\b(?:(?:vi|percebi|notei) que voc[eê]s (?:t[eê]m|tem|possuem|usam|utilizam|enfrentam)\s+(?:um|uma|v[aá]rios|v[aá]rias|muitos|muitas|diversos|grande|alto|bastante)|voc[eê]s (?:utilizam|usam|possuem)\s+(?:v[aá]rios|diversos|m[uú]ltiplos)\s+(?:sistemas|computadores|equipamentos)|sei que voc[eê]s (?:sofrem|enfrentam|t[eê]m problemas))/i;
 
+const SOFT_VALIDATION_REASONS = new Set([
+  "missing_personalization",
+  "missing_argument_personalization",
+  "poor_visual_structure",
+  "hard_question",
+  "empty_praise",
+  "generic_argument",
+  "cliche_language",
+]);
+
 function validateApproachMessage(message: string, input: ApproachInput): string | null {
   const text = String(message || "").trim();
   if (!text) return "empty_message";
@@ -537,7 +547,7 @@ function validateApproachMessage(message: string, input: ApproachInput): string 
   // Nome/cidade/segmento isolados não validam personalização; devem existir junto de um argumento operacional.
   const normalized = normalizeForMatch(text);
   const tokens = [input.lead?.company_name, input.lead?.city, input.lead?.category, input.lead?.neighborhood]
-    .map((v) => normalizeForMatch(v).trim())
+    .flatMap((v) => normalizeForMatch(v).split(/[^a-z0-9]+/))
     .filter((v) => v.length >= 4);
   const requiresLeadReference = input.messageType === "manual_first_contact" || !input.previousMessage || intent === "saudacao" || intent === "sem_resposta";
   if (requiresLeadReference && tokens.length && !tokens.some((t) => normalized.includes(t))) return "missing_personalization";
@@ -690,10 +700,11 @@ async function generateApproachMessage(
 
   parsed.mensagem = ensureSingleFinalQuestion(sanitizeMessage(parsed.mensagem || ""));
   const finalValidation = validateApproachMessage(parsed.mensagem, input);
-  if (finalValidation) {
+  if (finalValidation && !SOFT_VALIDATION_REASONS.has(finalValidation)) {
     console.error("approach quality validation failed", finalValidation);
     return { error: "quality", status: 422 };
   }
+  if (finalValidation) console.warn("approach quality soft warning", finalValidation);
   return { parsed, rewriteReason, intent: classifyLeadResponse(input.leadResponse) };
 }
 
