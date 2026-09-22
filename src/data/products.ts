@@ -264,7 +264,7 @@ export const PRODUCTS: ProductConfig[] = [
     heroTitle: "Agende compromissos",
     heroHighlight: "sem trocar mensagens",
     heroDescription:
-      "A Agenda Inteligente é conectada ao SDR IA: ele fala com o contato, consulta a disponibilidade real da sua agenda e agenda o compromisso de forma autônoma. Depois, avisa você e também o seu lead ou cliente antes do horário.",
+      "Sua agenda trabalha junto com o SDR para encontrar horários livres, marcar reuniões automaticamente e manter leads e clientes sempre no horário certo.",
     seoTitle: "Agenda Inteligente: agendamento autônomo com IA",
     seoDescription:
       "Conectada ao SDR IA: a inteligência conversa com o contato, agenda de forma autônoma conforme a disponibilidade da sua agenda e avisa você e o cliente antes do compromisso.",
