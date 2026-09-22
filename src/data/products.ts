@@ -539,7 +539,7 @@ export const PRODUCTS: ProductConfig[] = [
     heroTitle: "Controle receita e contratos",
     heroHighlight: "com previsibilidade",
     heroDescription:
-      "Organize contratos, acompanhe vencimentos e renovações e mantenha sua operação comercial preparada para agir antes que uma oportunidade de receita seja perdida.",
+      "Gerencie contratos, acompanhe vencimentos e renovações e antecipe oportunidades para proteger sua receita e manter seus clientes ativos.",
     seoTitle: "Gestão de Contratos: renovações e receita sob controle",
     seoDescription:
       "Centralize contratos, antecipe vencimentos e transforme renovação em processo acompanhável, protegendo a receita já conquistada.",
