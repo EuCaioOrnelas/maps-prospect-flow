@@ -291,6 +291,14 @@ function messageHasVagueCommercialCTA(message: string): boolean {
   return /\b(?:fiquei curioso para saber|gostaria de entender como isso poderia impactar|o que voc[eê] acha de avaliarmos|faz sentido(?:\s+para voc[eê])?|quer saber mais\??|gostaria de saber mais\??)\b/i.test(message || "");
 }
 
+function messageHasMultipleQuestions(message: string): boolean {
+  return ((message || "").match(/\?/g) || []).length !== 1;
+}
+
+function messageUsesWeakPraise(message: string, hasOperationalSignals: boolean): boolean {
+  return hasOperationalSignals && /\b(?:boa|excelente|[oó]tima)\s+(?:reputa[cç][aã]o|avalia[cç][aã]o|presen[cç]a)|se destaca|refer[eê]ncia\s+(?:na|em|da)\s+regi[aã]o\b/i.test(message || "");
+}
+
 
 
 serve(async (req) => {
@@ -483,6 +491,7 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
 2) GANCHO PERSONALIZADO
    • Baseado em algo REAL do lead, nesta prioridade: observação do prospector ou diagnóstico; nicho/especialidade; presença pública forte comprovada pelo site ou redes; reputação/recomendações; contexto da região/cidade. Mencionar site, redes ou presença digital como observação factual é permitido, mas nunca transforme isso em oferta de marketing.
    • Avaliação, nota e número de reviews do Google são o ÚLTIMO recurso e só podem aparecer quando nenhum dos sinais acima estiver disponível. Não invente reputação regional, recomendações ou força digital sem evidência nos dados.
+   • Se houver qualquer ponto operacional no diagnóstico, use-o obrigatoriamente e descarte elogios sobre reputação, destaque regional, presença ou avaliações.
    • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
    • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
    • PROIBIDO repetir a saudação ou a identificação aqui.
@@ -591,6 +600,7 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
     • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "fiquei curioso para saber", "gostaria de entender como isso impactaria", "quer saber mais?", "o que acha de avaliarmos?".
     • PROIBIDO fingir curiosidade do vendedor. A pergunta deve investigar a situação atual do lead ou convidá-lo a entender um ponto específico.
     • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", a pergunta fala em explicar melhor o canal próprio. Se foi sobre "agenda", pergunta se quer entender como organizam a agenda. Nunca desconecte.
+    • A mensagem inteira deve ter EXATAMENTE UMA interrogação, somente no CTA final. Depois do CTA não pode existir nenhuma frase.
 
 
 REGRA DE FLUXO (INEGOCIÁVEL):
@@ -797,7 +807,11 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
           ? "missing_personalization"
           : messageHasVagueCommercialCTA(parsed.mensagem || "")
             ? "vague_commercial_cta"
-            : null;
+            : messageHasMultipleQuestions(parsed.mensagem || "")
+              ? "multiple_questions"
+              : messageUsesWeakPraise(parsed.mensagem || "", Boolean(pontosFracos.length || lead.ai_diagnosis))
+                ? "weak_praise"
+                : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -814,7 +828,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e pergunta final fechada. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
+ Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e EXATAMENTE UMA pergunta, no final. Nada pode vir depois dela. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". Se há diagnóstico operacional, use-o e NÃO elogie reputação, destaque regional, presença ou avaliações. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}

@@ -281,6 +281,14 @@ function messageHasVagueCommercialCTA(message: string): boolean {
   return /\b(?:fiquei curioso para saber|gostaria de entender como isso poderia impactar|o que voc[eê] acha de avaliarmos|faz sentido(?:\s+para voc[eê])?|quer saber mais\??|gostaria de saber mais\??)\b/i.test(message || "");
 }
 
+function messageHasMultipleQuestions(message: string): boolean {
+  return ((message || "").match(/\?/g) || []).length !== 1;
+}
+
+function messageUsesWeakPraise(message: string, hasOperationalSignals: boolean): boolean {
+  return hasOperationalSignals && /\b(?:boa|excelente|[oó]tima)\s+(?:reputa[cç][aã]o|avalia[cç][aã]o|presen[cç]a)|se destaca|refer[eê]ncia\s+(?:na|em|da)\s+regi[aã]o\b/i.test(message || "");
+}
+
 function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
   const normalized = normalizeForMatch(message);
   const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
@@ -511,9 +519,11 @@ Escreva entre 90 e 160 palavras, com blocos curtos separados por \\n\\n, nesta o
 1. ABERTURA NEUTRA: comece naturalmente, sem agradecer e sem interpretar o conteúdo da resposta anterior. Pode usar "Oi, tudo certo?" ou seguir direto para a apresentação.
 2. APRESENTAÇÃO COMERCIAL: apresente obrigatoriamente "${companyProfile?.attendant_name || "[nome]"}", "${companyProfile?.company_name || "[empresa]"}" e a área ampla em que atua.
 3. GANCHO PERSONALIZADO: use algo REAL do lead. Prioridade: observação do prospector ou diagnóstico; nicho/especialidade; presença pública comprovada; reputação/recomendações comprovadas; contexto regional. Avaliação do Google é o ÚLTIMO recurso.
+   Se houver qualquer ponto operacional no diagnóstico, use-o obrigatoriamente e descarte elogios sobre reputação, destaque regional, presença ou avaliações.
 4. CONEXÃO COMERCIAL: explique por que esse ponto é relevante para o tipo de operação do lead e conecte-o ao campo de atuação da empresa remetente. Não afirme que o lead tem um problema sem evidência.
 5. INTERESSE: indique que pode existir uma oportunidade concreta de melhoria, sem revelar catálogo, plano, preço, condição ou proposta.
 6. CTA OBJETIVO: termine perguntando sobre a situação atual do lead ou se ele quer entender o ponto ESPECÍFICO. A pergunta precisa dizer claramente qual é o assunto. NÃO peça call, reunião, agenda, proposta ou orçamento.
+   A mensagem inteira deve ter EXATAMENTE UMA interrogação, somente nesta última frase. Nada pode vir depois dela.
 
 FLUXO INEGOCIÁVEL:
 Abertura neutra → Apresentação → Gancho real → Conexão comercial → Interesse específico → Pergunta objetiva.
@@ -606,7 +616,11 @@ Retorne APENAS JSON válido:
             ? "false_conversation_assumption"
             : messageHasVagueCommercialCTA(parsed.mensagem || "")
               ? "vague_commercial_cta"
-              : null;
+              : messageHasMultipleQuestions(parsed.mensagem || "")
+                ? "multiple_questions"
+                : messageUsesWeakPraise(parsed.mensagem || "", Boolean(pontosFracos.length || lead.ai_diagnosis))
+                  ? "weak_praise"
+                  : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -623,7 +637,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia", então NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Use 90 a 160 palavras em blocos curtos: (1) abertura neutra; (2) nome, empresa e área ampla de atuação; (3) gancho concreto do lead; (4) conexão desse dado com o campo em que o remetente atua; (5) oportunidade específica sem apresentar solução; (6) pergunta objetiva sobre a situação atual do lead ou sobre o ponto levantado. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. NÃO peça call, reunião, agenda ou horário. Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
+ Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia", então NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Use 90 a 160 palavras em blocos curtos: (1) abertura neutra; (2) nome, empresa e área ampla de atuação; (3) gancho concreto do lead; (4) conexão desse dado com o campo em que o remetente atua; (5) oportunidade específica sem apresentar solução; (6) pergunta objetiva sobre a situação atual do lead ou sobre o ponto levantado. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. NÃO peça call, reunião, agenda ou horário. Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. Se há diagnóstico operacional, use-o e NÃO elogie reputação, destaque regional, presença ou avaliações. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
