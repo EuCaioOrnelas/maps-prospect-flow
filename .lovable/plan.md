@@ -1,16 +1,20 @@
-# Persistir o tipo de atuação da empresa
+# Corrigir abordagem manual e follow-up
 
-## Correção
-- Adicionar ao perfil empresarial o campo persistente `company_business_model`, que a interface já tenta salvar e consultar.
-- Preservar todos os perfis existentes e preencher o perfil atual da Bless como `representante`, conforme confirmado pelo usuário.
-- Remover o comportamento de compatibilidade que trata a ausência desse campo como sucesso, evitando que uma confirmação não salva pareça concluída.
+## Objetivo
+Fazer as duas mensagens funcionarem como contato comercial real da empresa: apresentar o vendedor, conectar o negócio do lead ao que a empresa vende, despertar interesse e terminar com uma pergunta clara.
+
+## Alterações
+- **Abordagem manual:** remover a construção excessivamente consultiva e vaga; exigir apresentação breve, motivo comercial contextualizado e uma chamada final específica sobre o assunto levantado.
+- **Follow-up após template:** tratar respostas como “bom dia”, “boa tarde” ou “boa noite” apenas como abertura da conversa; não agradecer, não presumir interesse ou alinhamento e não mencionar uma conversa que ainda não aconteceu.
+- **Ambas:** manter personalização por dados reais, impedir invenções e impedir catálogo, planos, preços ou proposta precoce; permitir dizer claramente a área em que o remetente atua para que a mensagem faça sentido.
+- **Proteções automáticas:** detectar frases vagas ou falsas, como “estamos alinhados”, “fiquei curioso para saber” e agradecimentos indevidos no follow-up, e reescrever uma vez.
 
 ## Validação
-- Confirmar no banco que o perfil da conta mantém `company_business_model = representante`.
-- Abrir novamente a Gestão de Oportunidades e verificar que a confirmação não reaparece.
-- Validar que futuras edições do perfil continuam salvando normalmente.
+- Publicar as duas funções atualizadas.
+- Gerar exemplos com o perfil Bless Internet e um lead de academia.
+- Confirmar que a manual inicia uma conversa comercial coerente e que o follow-up funciona mesmo quando a única resposta ao template foi uma saudação.
+- Não enviar nenhuma mensagem real pelo WhatsApp durante o teste.
 
-## Arquivos previstos
-- Nova migration em `supabase/migrations/`
-- `src/components/opportunities/CompanyProfileOnboarding.tsx`
-- `src/pages/Profile.tsx`
+## Arquivos
+- `supabase/functions/approach-lead/index.ts`
+- `supabase/functions/approach-lead-manual/index.ts`
