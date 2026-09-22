@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TRIAGE_TREE, findCategory, findProblem, type Solution, type Category } from "./triageTree";
 import wianAvatar from "@/assets/wian-avatar.png";
+import { EmojiRating, EMOJI_RATING_OPTIONS } from "./EmojiRating";
 
 const CATEGORY_ICONS: Record<string, typeof Megaphone> = {
   campanhas: Megaphone,
@@ -804,7 +805,6 @@ export function WianChat() {
     }
   };
 
-  const skipNps = () => setPhase(wasEscalated ? "done-escalated" : "done-resolved");
 
   const submitEscalation = async () => {
     const errs: { name?: string; email?: string; phone?: string; category?: string } = {};
@@ -1136,33 +1136,10 @@ export function WianChat() {
         {phase === "rate" && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-3">
             <div>
-              <p className="text-sm font-medium">Como foi o atendimento?</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Dê uma nota de 0 a 10</p>
+              <p className="text-sm font-medium">Como você avalia este atendimento?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Toque em um dos rostinhos abaixo.</p>
             </div>
-            <div className="grid grid-cols-11 gap-1">
-              {Array.from({ length: 11 }, (_, n) => {
-                const selected = stars === n;
-                const colorBg =
-                  n <= 4 ? "bg-red-500" : n <= 6 ? "bg-amber-500" : n <= 8 ? "bg-emerald-500" : "bg-emerald-600";
-                return (
-                  <button
-                    key={n}
-                    onClick={() => setStars(n)}
-                    className={`h-7 rounded-md text-[11px] font-semibold border transition flex items-center justify-center ${
-                      selected
-                        ? `${colorBg} text-white border-transparent shadow-sm scale-105`
-                        : "bg-background border-border hover:border-primary/40 hover:bg-muted/50 text-foreground"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-              <span>Péssimo</span>
-              <span>Excelente</span>
-            </div>
+            <EmojiRating value={stars} onChange={setStars} size="sm" />
             <Textarea
               placeholder="Como posso melhorar? Deixe seu comentário (opcional)"
               value={comment}
@@ -1176,30 +1153,24 @@ export function WianChat() {
         )}
 
         {phase === "nps" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-4">
-            <div>
-              <p className="text-sm font-semibold mb-1">Como foi o atendimento? 🙏</p>
-              <p className="text-xs text-muted-foreground">Sua resposta ajuda a gente a melhorar.</p>
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-4 shadow-sm">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Falta só um passo: avalie este atendimento ⭐</p>
+              <p className="text-xs text-muted-foreground leading-snug">
+                {wasEscalated
+                  ? "Seu chamado já está aberto e o time humano vai responder por e-mail. Aqui você avalia apenas como foi o atendimento do Wian até agora."
+                  : "Leva 10 segundos e é o que nos ajuda a melhorar o suporte da Wiize."}
+              </p>
             </div>
 
             <div>
-              <p className="text-sm font-medium mb-2">De 0 a 10, o quanto este atendimento te ajudou?</p>
-              <div className="flex flex-wrap gap-1.5">
-                {Array.from({ length: 11 }, (_, n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setNpsScore(n)}
-                    className={`w-8 h-8 text-xs rounded-md border transition-colors ${
-                      npsScore === n
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border hover:border-primary/50 hover:bg-muted"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+              <p className="text-sm font-medium mb-2">Como você avalia este atendimento?</p>
+              <EmojiRating value={npsScore} onChange={setNpsScore} size="sm" />
+              {npsScore !== null && (
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Você marcou <span className="font-medium text-foreground">{EMOJI_RATING_OPTIONS.find((o) => o.value === npsScore)?.label}</span>. Obrigado! 🙏
+                </p>
+              )}
             </div>
 
             <div>
@@ -1224,19 +1195,17 @@ export function WianChat() {
 
             <Textarea
               rows={2}
-              placeholder="Quer deixar um comentário? (opcional)"
+              placeholder={npsScore !== null && npsScore <= 4 ? "O que deu errado? Conta pra gente para corrigirmos." : "Quer deixar um comentário? (opcional)"}
               value={npsComment}
               onChange={(e) => setNpsComment(e.target.value)}
             />
 
-            <div className="flex gap-2">
-              <Button size="sm" onClick={submitNps} disabled={npsScore === null || npsRecommend === null} className="flex-1">
-                Enviar feedback
-              </Button>
-              <Button size="sm" variant="ghost" onClick={skipNps}>
-                Pular
-              </Button>
-            </div>
+            <Button size="sm" onClick={submitNps} disabled={npsScore === null || npsRecommend === null} className="w-full">
+              Enviar avaliação
+            </Button>
+            <p className="text-[11px] text-center text-muted-foreground">
+              Sua avaliação vai direto para a liderança da Wiize e é usada para melhorar o suporte.
+            </p>
           </motion.div>
         )}
 

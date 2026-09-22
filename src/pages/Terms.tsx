@@ -282,11 +282,17 @@ const Terms = () => {
                 plataforma e o pagamento de comissões não funcionam.
               </p>
               <p>
-                 Cookies funcionais, analíticos e de marketing (incluindo Google Ads e Meta Ads, quando
-                ativados) só são carregados após consentimento e podem ser recusados individualmente. O
-                consentimento é registrado com data, categorias aceitas e versão da política, para fins
-                 de prova. O visitante pode reabrir as preferências a qualquer momento pelo link
-                 “Preferências de cookies” no rodapé.
+                Cookies funcionais, analíticos e de marketing (incluindo Google Ads e Meta Ads, quando
+                ativados) só são carregados após consentimento. No aviso exibido na primeira visita o
+                visitante pode <strong>aceitar</strong> ou <strong>rejeitar</strong> esses cookies
+                opcionais, e a decisão é registrada com data, categorias aceitas e versão da política,
+                para fins de prova.
+              </p>
+              <p>
+                Para rever a escolha, basta limpar os cookies e dados do site no próprio navegador: o
+                aviso será exibido novamente na visita seguinte. As configurações do navegador também
+                permitem bloquear ou excluir cookies a qualquer momento — lembrando que o bloqueio de
+                cookies essenciais pode impedir o funcionamento da plataforma.
               </p>
             </section>
 
