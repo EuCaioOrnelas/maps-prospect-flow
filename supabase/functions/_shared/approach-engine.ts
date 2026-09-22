@@ -201,12 +201,25 @@ export interface ApproachInput {
 /** Classificação da resposta do lead — define o comportamento do follow-up. */
 export type LeadIntent = "sem_resposta" | "saudacao" | "interesse" | "objecao" | "duvida" | "resposta_curta" | "informacao";
 
+const GREETING_TOKENS = new Set([
+  "oi", "ola", "bom", "boa", "dia", "tarde", "noite", "tudo", "bem", "certo", "beleza", "blz",
+  "e", "voce", "vc", "com", "como", "vai", "esta", "ta", "opa", "ai", "sim", "obrigado", "obrigada",
+  "otimo", "otima", "tambem", "aqui", "graças", "gracas", "deus",
+]);
+
+/** Só saudação = nenhuma palavra fora do vocabulário de cumprimento. */
+function isOnlyGreeting(t: string): boolean {
+  const words = t.replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+  if (!words.length || words.length > 8) return false;
+  return words.every((w) => GREETING_TOKENS.has(w));
+}
+
 export function classifyLeadResponse(raw: unknown): LeadIntent {
   const t = normalizeForMatch(raw).trim();
   if (!t) return "sem_resposta";
-  if (/^(oi|ola|bom dia|boa tarde|boa noite|tudo bem\??|tudo certo\??|opa|e ai)[\s!.,?]*$/.test(t)) return "saudacao";
+  if (isOnlyGreeting(t)) return "saudacao";
   if (/(ja tenho|ja temos|ja uso|ja usamos|nao tenho interesse|nao preciso|nao quero|ja sou atendid|ja trabalho com|estamos atendidos|no momento nao|sem interesse|ta caro|muito caro)/.test(t)) return "objecao";
-  if (/(tenho interesse|me interessa|como funciona|quero saber|quanto custa|qual o valor|manda|pode mandar|me explica|quero sim|vamos|fechado)/.test(t)) return "interesse";
+  if (/(tenho interesse|me interessa|como funciona|quero saber|quanto custa|qual o valor|manda o|pode mandar|me explica|quero sim|fechado)/.test(t)) return "interesse";
   if (/\?/.test(t)) return "duvida";
   if (t.length <= 12) return "resposta_curta";
   return "informacao";
