@@ -41,7 +41,7 @@ const Privacy = () => {
 
           <div className="prose prose-invert max-w-none space-y-4 sm:space-y-6 text-muted-foreground text-sm sm:text-base">
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Última atualização: {new Date().toLocaleDateString("pt-BR")}
+              Última atualização: 22 de setembro de 2026 · Versão 3.0
             </p>
 
             <section className="space-y-3 sm:space-y-4">
@@ -69,8 +69,9 @@ const Privacy = () => {
                 </li>
                 <li>
                   <strong>Operadora</strong> — quanto aos dados de leads B2B, contatos, mensagens e
-                  automações criados, importados ou geridos pelo cliente dentro da plataforma (CRM,
-                  campanhas Meta, agentes de IA, fluxos), a Wiize atua como operadora,
+                   automações criados, importados, captados ou geridos pelo cliente dentro da plataforma
+                   (CRM, WhatsApp, formulários, links rastreados, SDR, campanhas Meta, agentes de IA e
+                   fluxos), a Wiize atua como operadora,
                   tratando dados em nome e sob instruções do cliente, que é o controlador desses dados.
                 </li>
               </ul>
@@ -99,6 +100,7 @@ const Privacy = () => {
                 <li>Dados obtidos de fontes públicas de internet (motores de busca, redes profissionais, sites corporativos) por meio do módulo de prospecção.</li>
                 <li>Dados importados pelo cliente (planilhas, CRM externo, integrações).</li>
                 <li>Dados coletados via WhatsApp/Meta durante conversas iniciadas pelo cliente ou por seus agentes.</li>
+                 <li>Respostas, consentimentos, arquivos e origem de campanha coletados por formulários e links rastreados.</li>
                 <li>Enriquecimento e sinais (site, redes sociais, tecnologias detectadas, sinais de intenção) usados pelos módulos de IA e scoring.</li>
                 <li>Resultados de análise por IA: score, estágio no CRM, resumos, transcrições e classificações geradas automaticamente.</li>
               </ul>
@@ -135,13 +137,18 @@ const Privacy = () => {
             </section>
 
             <section className="space-y-3 sm:space-y-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. WhatsApp — API Oficial da Meta</h2>
+               <h2 className="text-lg sm:text-xl font-semibold text-foreground">6. WhatsApp e modalidades de número</h2>
               <p>
-                A Wiize integra-se ao WhatsApp exclusivamente por meio da <strong>API Oficial WhatsApp Business (Meta Cloud)</strong>,
-                usada em chat, campanhas e fluxos. A conta WABA pertence ao cliente. A Wiize processa: ID da WABA,
+                 O <strong>Número de Marketing</strong> integra-se pela API Oficial WhatsApp Business da Meta e é usado em campanhas,
+                 templates e conversas. A conta WABA pertence ao cliente. A Wiize processa: ID da WABA,
                 nome comercial, número, tokens de acesso (armazenados criptografados), metadados de mensagens (status,
                 timestamps, IDs) e dados de contatos (número e nome de perfil informados pela API).
               </p>
+               <p>
+                 O <strong>Número de Suporte</strong> é destinado a atendimento individual, chat, SDR e automações de suporte.
+                 Nesse caminho podem ser processados dados da sessão, contatos, mensagens, mídias e eventos necessários ao atendimento.
+                 Ele não deve ser utilizado para campanhas ou envios em massa e pode exigir reconexão da sessão.
+               </p>
               <p>
                 O cliente é o único responsável pelo conteúdo enviado, pela obtenção de base legal para
                 contatar cada destinatário e pela aderência às políticas do WhatsApp/Meta. A Wiize não
@@ -248,7 +255,8 @@ const Privacy = () => {
               <h2 className="text-lg sm:text-xl font-semibold text-foreground">10. Retenção e eliminação</h2>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1 sm:space-y-2">
                 <li><strong>Dados de conta ativa</strong> — mantidos enquanto durar a relação contratual.</li>
-                <li><strong>Após encerramento</strong> — dados operacionais são eliminados ou anonimizados em até 90 dias, salvo obrigação legal de guarda (ex.: fiscal por até 5 anos).</li>
+                 <li><strong>Após encerramento</strong> — dados operacionais entram em processo de eliminação ou anonimização em até 90 dias, salvo obrigação legal, prevenção a fraude ou exercício de direitos.</li>
+                 <li><strong>Trials e contas inativas</strong> — podem ser eliminados ou anonimizados após o encerramento do acesso e dos prazos operacionais e legais aplicáveis.</li>
                 <li><strong>Tokens de terceiros</strong> (WhatsApp/Meta, Google) — eliminados em até 30 dias após revogação/desconexão.</li>
                 <li><strong>Logs de segurança</strong> — mantidos por período proporcional à finalidade de prevenção a fraude e auditoria.</li>
               </ul>
@@ -316,8 +324,8 @@ const Privacy = () => {
               <p>
                 Enquanto o visitante não decidir, nenhuma tag de analytics ou de publicidade é carregada
                 e o Consent Mode do Google permanece negado. Registramos data, categorias aceitas, página
-                e versão da política como prova de consentimento, e a escolha pode ser alterada limpando
-                os dados do site no navegador. Bloquear cookies essenciais pelo navegador pode
+                 e versão da política como prova de consentimento. A escolha pode ser alterada pelo link
+                 “Preferências de cookies” no rodapé. Bloquear cookies essenciais pelo navegador pode
                 inviabilizar o uso do serviço.
               </p>
             </section>

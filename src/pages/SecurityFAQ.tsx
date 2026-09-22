@@ -20,7 +20,7 @@ const SecurityFAQ = () => {
       questions: [
         {
           question: "Como meus dados são protegidos no Wiize?",
-          answer: "Utilizamos criptografia de ponta a ponta, controle de acesso rigoroso e monitoramento contínuo. Todos os dados sensíveis são criptografados em repouso e em trânsito usando protocolos de segurança avançados (TLS 1.3). Nossos servidores são hospedados em infraestrutura segura com certificações de segurança reconhecidas internacionalmente."
+          answer: "Usamos conexões protegidas por TLS, isolamento dos dados entre empresas, controles de acesso, proteção de credenciais e registros de segurança. Nenhum sistema é infalível, por isso também mantemos processos de prevenção, monitoramento e resposta a incidentes."
         },
         {
           question: "Vocês vendem meus dados para terceiros?",
@@ -28,7 +28,7 @@ const SecurityFAQ = () => {
         },
         {
           question: "Onde meus dados são armazenados?",
-          answer: "Seus dados são armazenados em servidores seguros com redundância geográfica. Utilizamos provedores de infraestrutura de classe mundial que seguem as melhores práticas de segurança e possuem certificações como ISO 27001 e SOC 2."
+          answer: "Os dados são mantidos em infraestrutura de nuvem gerenciada e podem ser processados por fornecedores necessários ao serviço. Aplicamos controles técnicos e contratuais e explicamos as categorias de subprocessadores na Política de Privacidade."
         },
         {
           question: "Por quanto tempo meus dados são mantidos?",
@@ -46,15 +46,15 @@ const SecurityFAQ = () => {
         },
         {
           question: "Como posso solicitar a exclusão dos meus dados?",
-          answer: "Você pode solicitar a exclusão dos seus dados através da página de contato ou diretamente nas configurações da sua conta. Processamos solicitações de exclusão em até 15 dias úteis, conforme exigido pela LGPD."
+          answer: "Você pode solicitar a exclusão pela página de contato ou usar a opção disponível nas configurações da conta. Alguns registros podem ser preservados pelo prazo necessário ao cumprimento de obrigações legais, segurança e prevenção a fraude."
         },
         {
           question: "Vocês usam cookies? Quais tipos?",
-          answer: "Sim, utilizamos cookies essenciais para o funcionamento da plataforma (autenticação, preferências) e cookies analíticos para melhorar a experiência do usuário. Você pode gerenciar suas preferências de cookies nas configurações do seu navegador."
+          answer: "Sim. Cookies essenciais mantêm segurança, sessão e funcionamento. Cookies funcionais, analíticos e de marketing são opcionais e podem ser aceitos, recusados ou alterados pelo aviso e pelo link “Preferências de cookies” no rodapé."
         },
         {
           question: "Minha atividade na plataforma é monitorada?",
-          answer: "Coletamos dados de uso agregados e anonimizados para melhorar nossos serviços. Não monitoramos o conteúdo das suas mensagens ou comunicações. Os logs de atividade são usados apenas para segurança, suporte técnico e melhoria da plataforma."
+          answer: "Registramos eventos de uso, auditoria e segurança necessários para operar, proteger, prestar suporte e melhorar a plataforma. Mensagens e arquivos podem ser processados para entregar chat, CRM, SDR, automações e suporte conforme as instruções do cliente."
         }
       ]
     },
@@ -64,15 +64,15 @@ const SecurityFAQ = () => {
       questions: [
         {
           question: "As mensagens enviadas pelo Wiize são criptografadas?",
-          answer: "Sim. Utilizamos a API oficial do WhatsApp Business, que oferece criptografia de ponta a ponta em todas as mensagens. Isso significa que apenas você e o destinatário têm acesso ao conteúdo das mensagens. Nem o Wiize nem o WhatsApp podem ler o conteúdo criptografado."
+          answer: "As comunicações entre a Wiize e os serviços conectados usam canais protegidos. Para prestar chat, CRM, SDR e automações, a plataforma precisa processar e armazenar o conteúdo autorizado pelo cliente. As proteções específicas também dependem da modalidade do número e das regras do WhatsApp."
         },
         {
           question: "O Wiize tem acesso ao conteúdo das minhas mensagens?",
-          answer: "Não temos acesso ao conteúdo criptografado das suas conversas. Os modelos de mensagem que você cria ficam armazenados de forma segura, mas as mensagens trocadas entre você e seus contatos são protegidas pela criptografia de ponta a ponta do WhatsApp."
+          answer: "A Wiize processa o conteúdo necessário para exibir o histórico, executar automações, operar o SDR, gerar resumos e permitir atendimento pela equipe. O acesso é limitado ao contexto da empresa e às permissões dos usuários autorizados."
         },
         {
           question: "Como funciona a segurança da conexão do WhatsApp?",
-          answer: "A conexão com o WhatsApp é feita de forma segura através de autenticação por QR Code. Suas credenciais de sessão são armazenadas de forma criptografada e não compartilhamos esses dados com terceiros. Você pode desconectar a qualquer momento através das configurações."
+          answer: "O Número de Marketing é conectado pelo fluxo oficial da Meta e usa permissões autorizadas pelo cliente. O Número de Suporte mantém uma sessão destinada a conversas individuais e pode exigir reconexão. Credenciais e sessões recebem controles de acesso e podem ser revogadas."
         },
         {
           question: "Meus contatos ficam expostos?",
@@ -86,11 +86,11 @@ const SecurityFAQ = () => {
       questions: [
         {
           question: "O Wiize opera com a API Oficial da Meta?",
-          answer: "Sim. O Wiize opera 100% via API Oficial da Meta (WhatsApp Cloud API), com templates aprovados e total conformidade com as políticas do WhatsApp Business. Isso garante criptografia de ponta a ponta, alta entregabilidade e segurança máxima nos envios."
+          answer: "Sim. O Número de Marketing usa a API Oficial da Meta para campanhas, templates aprovados e reabertura de conversas. A Wiize também oferece um Número de Suporte para atendimento individual, chat, SDR e automações de suporte; ele não deve ser usado para campanhas."
         },
         {
           question: "Existe risco de bloqueio de número na API Oficial?",
-          answer: "Como operamos via API Oficial da Meta, o risco de bloqueio arbitrário é mínimo. Ainda assim, o WhatsApp pode aplicar restrições em casos de violação das políticas oficiais (spam, conteúdo proibido, denúncias em massa). Seguir as boas práticas e nossas Diretrizes de Envio mantém sua conta saudável."
+          answer: "Sim. A Meta pode aplicar limites, reduzir a qualidade ou restringir contas e números conforme suas políticas, denúncias e padrões de uso. A conexão oficial reduz riscos operacionais, mas não elimina decisões da Meta nem garante entregabilidade."
         },
         {
           question: "O que acontece se minha conta Meta Business for restringida?",
@@ -108,7 +108,7 @@ const SecurityFAQ = () => {
       questions: [
         {
           question: "Meus dados de pagamento são seguros?",
-          answer: "Sim. Não armazenamos dados de cartão de crédito em nossos servidores. Todos os pagamentos são processados de forma segura pelo Stripe, uma das plataformas de pagamento mais seguras do mundo, com certificação PCI DSS Level 1."
+          answer: "Os pagamentos por cartão ou PIX são processados por provedores de pagamento integrados. A Wiize não armazena o número completo do cartão nem o código de segurança; recebe apenas informações necessárias sobre a cobrança, o status e a assinatura."
         },
         {
           question: "Posso cancelar minha assinatura a qualquer momento?",
