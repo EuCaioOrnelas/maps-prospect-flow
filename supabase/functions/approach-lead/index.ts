@@ -290,6 +290,13 @@ function messageHasMultipleQuestions(message: string): boolean {
   return ((message || "").match(/\?/g) || []).length !== 1;
 }
 
+function ensureSingleFinalQuestion(message: string): string {
+  const text = String(message || "").trim();
+  const lastQuestionMark = text.lastIndexOf("?");
+  if (lastQuestionMark < 0) return text;
+  return `${text.slice(0, lastQuestionMark).replace(/\?/g, ".")}${text.slice(lastQuestionMark)}`;
+}
+
 function messageLacksPraiseHook(message: string): boolean {
   return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
 }
@@ -661,6 +668,8 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
         console.error("model-fix falhou", String(e));
       }
     }
+
+    parsed.mensagem = ensureSingleFinalQuestion(parsed.mensagem || "");
 
     if (lead_id && !internalMode) {
       // Store the message on the lead
