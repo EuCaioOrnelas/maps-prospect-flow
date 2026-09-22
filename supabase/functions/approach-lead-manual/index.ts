@@ -1,329 +1,21 @@
-// Gera a MENSAGEM DE PRIMEIRO CONTATO manual (não é template Meta, não é follow-up).
-// Copy consultiva B2B — o objetivo é APENAS gerar uma resposta natural do empresário.
-// NÃO é vender, NÃO é marcar reunião, NÃO é apresentar serviço.
-//
-// Estrutura obrigatória (9 blocos, sem títulos no texto final):
-//   0. Saudação humanizada        — curta, natural, variada, adaptada ao ICP; NUNCA "bom dia/tarde/noite"
-//   1. Elogio personalizado       — gatilho factual antes da apresentação
-//   2. Identificação curta        — quem é / de onde
-//   3. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
-//   4. Motivo do contato          — natural, espontâneo
-//   5. Insight consultivo         — percepção inteligente, linguagem cautelosa
-//   6. Curiosidade                — NÃO revelar a solução
-//   7. Baixa pressão              — reduzir sensação de venda
-//   8. CTA leve                   — só incentiva UMA resposta (nunca reunião/ligação/agenda)
-
+// PRIMEIRO CONTATO MANUAL (não é template Meta, não é follow-up).
+// Toda a lógica de geração vive em ../_shared/approach-engine.ts (motor único).
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// ---- Registro de custo de IA (inline; sem módulo compartilhado) ----
-const AI_PRICES: Record<string, { in: number; out: number }> = {
-  "gpt-4o-mini": { in: 0.15 / 1_000_000, out: 0.6 / 1_000_000 },
-  "gpt-4o": { in: 2.5 / 1_000_000, out: 10 / 1_000_000 },
-  "gpt-4.1-mini": { in: 0.4 / 1_000_000, out: 1.6 / 1_000_000 },
-  "text-embedding-3-small": { in: 0.02 / 1_000_000, out: 0 },
-  "text-embedding-3-large": { in: 0.13 / 1_000_000, out: 0 },
-};
-async function logAiUsage(p: {
-  feature: string;
-  model: string;
-  usage?: { prompt_tokens?: number; completion_tokens?: number } | null;
-  tokens_in?: number;
-  tokens_out?: number;
-  cost_usd?: number;
-  user_id?: string | null;
-  metadata?: Record<string, unknown>;
-}): Promise<void> {
-  try {
-    const url = Deno.env.get("SUPABASE_URL");
-    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !key) return;
-    const model = p.model.replace(/^openai\//, "").trim();
-    const tin = p.tokens_in ?? p.usage?.prompt_tokens ?? 0;
-    const tout = p.tokens_out ?? p.usage?.completion_tokens ?? 0;
-    const price = AI_PRICES[model] ?? AI_PRICES["gpt-4o-mini"];
-    const cost = p.cost_usd ?? tin * price.in + tout * price.out;
-    await fetch(`${url}/rest/v1/ai_usage_logs`, {
-      method: "POST",
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        feature: p.feature,
-        model,
-        user_id: p.user_id ?? null,
-        tokens_in: Math.round(tin),
-        tokens_out: Math.round(tout),
-        cost_usd: Number(cost.toFixed(8)),
-        metadata: p.metadata ?? {},
-      }),
-    });
-  } catch (e) {
-    console.error("[aiUsage] log falhou", String(e));
-  }
-}
-// ---- fim registro de custo de IA ----
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-/** Telefone BR válido (fixo ou celular), com ou sem DDI 55. */
-function isValidBRPhone(raw: unknown): boolean {
-  let d = String(raw ?? "").replace(/\D/g, "");
-  if (!d) return false;
-  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) d = d.slice(2);
-  if (d.length !== 10 && d.length !== 11) return false;
-  const ddd = Number(d.slice(0, 2));
-  if (ddd < 11 || ddd > 99) return false;
-  const rest = d.slice(2);
-  if (/^(\d)\1+$/.test(rest)) return false;
-  if (d.length === 11 && rest[0] !== "9") return false;
-  return true;
-}
-
-/** Regra única: só existe abordagem quando há número de contato real. */
-function hasContactNumber(lead: any): boolean {
-  if (isValidBRPhone(lead?.phone)) return true;
-  const list = lead?.phone_numbers;
-  if (Array.isArray(list)) {
-    return list.some((p: any) => isValidBRPhone(typeof p === "string" ? p : p?.number ?? p?.phone));
-  }
-  return false;
-}
-
-// ===== Modelo de negócio de quem prospecta (impede mensagem de "agência" para quem é distribuidor) =====
-type BusinessModel =
-  | "distribuidor"
-  | "industria"
-  | "revenda"
-  | "servico"
-  | "software"
-  | "agencia"
-  | "representante"
-  | "outro";
-
-const BUSINESS_MODEL_LABELS: Record<BusinessModel, string> = {
-  distribuidor: "Distribuidor / Atacadista",
-  industria: "Indústria / Fabricante",
-  revenda: "Revenda / Varejo",
-  servico: "Prestador de serviço",
-  software: "Software / Tecnologia",
-  agencia: "Agência / Marketing",
-  representante: "Representante comercial",
-  outro: "Outro",
-};
-
-const BUSINESS_MODEL_ROLES: Record<BusinessModel, string> = {
-  distribuidor:
-    "DISTRIBUI E REVENDE PRODUTOS EM VOLUME para outros negócios. O lead é um CLIENTE COMPRADOR (ponto de venda, comércio, bar, restaurante, mercado, loja) que compra mercadoria para revender ou consumir na operação dele.",
-  industria:
-    "FABRICA/PRODUZ os próprios produtos e vende direto para empresas. O lead é um COMPRADOR/CLIENTE do produto fabricado.",
-  revenda:
-    "REVENDE produtos com pronta entrega. O lead é um COMPRADOR do produto.",
-  servico:
-    "PRESTA UM SERVIÇO operacional. O lead é uma empresa que pode CONTRATAR esse serviço.",
-  software:
-    "VENDE UM SISTEMA/SOFTWARE. O lead é uma empresa que pode USAR o sistema na operação.",
-  agencia:
-    "PRESTA SERVIÇOS DE MARKETING/PRESENÇA DIGITAL. O lead é uma empresa que pode contratar esses serviços.",
-  representante:
-    "REPRESENTA MARCAS/FABRICANTES e intermedeia a venda dos produtos representados. O lead é um COMPRADOR.",
-  outro:
-    "VENDE exatamente o que está descrito em 'Produtos/Serviços'. Nada além disso.",
-};
-
-const BUSINESS_MODEL_STRATEGY: Record<BusinessModel, string> = {
-  distribuidor:
-    "DISTRIBUIDOR/ATACADISTA: fale de MIX de produtos, condição comercial, prazo e regularidade de entrega, reposição, cobertura da região e atendimento direto sem atravessador. Gancho = a operação de COMPRA e ABASTECIMENTO do lead (o que ele vende ao cliente final, giro, sazonalidade, volume). NUNCA fale de divulgação, marketing, redes sociais, site ou captação de clientes.",
-  industria:
-    "INDÚSTRIA/FABRICANTE: fale de fornecimento direto da fábrica, volume, customização, padronização, prazo de produção e custo sem intermediário. Gancho = necessidade de insumo/produto na operação do lead.",
-  revenda:
-    "REVENDA/VAREJO: fale de disponibilidade, pronta entrega, variedade e condição de pagamento. Gancho = necessidade prática e imediata do lead.",
-  servico:
-    "SERVIÇO: fale da dor operacional que o serviço resolve e do ganho de tempo/custo ao terceirizar. Gancho = porte e rotina do negócio do lead.",
-  software:
-    "SOFTWARE: fale do processo manual que o sistema elimina e do controle que ele dá. Gancho = rotina desorganizada ou controle em papel/planilha.",
-  agencia:
-    "AGÊNCIA/MARKETING: aqui SIM use presença digital, site, redes sociais, avaliações, tráfego, captação e conversão como gancho e insight.",
-  representante:
-    "REPRESENTANTE COMERCIAL: fale das marcas representadas, acesso a condição de fábrica e atendimento local. Gancho = abastecimento e portfólio do lead.",
-  outro:
-    "Use apenas os produtos/serviços declarados no perfil. Gancho = região, tipo de negócio e necessidade prática, sem inventar serviço nenhum.",
-};
-
-function normalizeBusinessModel(raw: unknown): BusinessModel | null {
-  const v = String(raw || "").trim().toLowerCase();
-  if (!v) return null;
-  if (v in BUSINESS_MODEL_LABELS) return v as BusinessModel;
-  return null;
-}
-
-function inferBusinessModel(text: string): BusinessModel {
-  const t = (text || "").toLowerCase();
-  if (/(distribuidor|distribuidora|distribui[cç][aã]o|atacad|atacarejo|abastec)/.test(t)) return "distribuidor";
-  if (/(ind[uú]stria|industrial|f[aá]brica|fabricante|fabrica[cç][aã]o|manufatur|confec[cç])/.test(t)) return "industria";
-  if (/(representa[cç][aã]o comercial|representante comercial)/.test(t)) return "representante";
-  if (/(software|sistema|saas|aplicativo|erp|crm|plataforma|tecnologia da informa)/.test(t)) return "software";
-  if (/(marketing|ag[eê]ncia|tr[aá]fego pago|social media|seo|gest[aã]o de redes|crea[cç][aã]o de sites?)/.test(t)) return "agencia";
-  if (/(revenda|loja|varejo|com[eé]rcio|e-?commerce|papelaria|mercado)/.test(t)) return "revenda";
-  if (/(servi[cç]o|consultoria|assessoria|contabil|advoc|limpeza|facilities|manuten[cç][aã]o|instala[cç][aã]o|terceiriza|treinamento|mentoria)/.test(t)) return "servico";
-  return "outro";
-}
-
-function resolveBusinessModel(profile: any): BusinessModel {
-  const saved = normalizeBusinessModel(profile?.company_business_model);
-  if (saved) return saved;
-  const text = `${profile?.company_niche || ""} ${profile?.company_products || ""} ${profile?.company_name || ""}`;
-  return inferBusinessModel(text);
-}
-
-function formatProductCatalog(services: any): string {
-  const list = Array.isArray(services) ? services : [];
-  const items = list
-    .map((item: any) => {
-      const nome = String(item?.name || item?.nome || "").trim();
-      const desc = String(item?.description || item?.descricao || "").trim();
-      if (!nome) return "";
-      return desc ? `- ${nome}: ${desc}` : `- ${nome}`;
-    })
-    .filter(Boolean);
-  return items.length ? items.join("\n") : "";
-}
-
-function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any, catalog: string): string {
-  const blockedMarketing = model !== "agencia";
-  return `
-═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
-- Como a empresa atua: ${BUSINESS_MODEL_LABELS[model]}
-- Papel na cadeia: ${BUSINESS_MODEL_ROLES[model]}
-- O que ela entrega de fato: ${profile?.company_products || "conforme perfil"}
-${catalog ? `- Catálogo declarado:\n${catalog}` : ""}
-- Relação com este lead (${lead?.company_name || "lead"}${lead?.category ? `, ${lead.category}` : ""}): o lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que ela vende" : "um CLIENTE COMPRADOR dos produtos dela"}.
-
-ESTRATÉGIA OBRIGATÓRIA PARA ESTE MODELO:
-${BUSINESS_MODEL_STRATEGY[model]}
-
-${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insinuar marketing, divulgação, presença digital, redes sociais, tráfego pago, anúncios, site, SEO, engajamento, conversão online, "fortalecer a marca" ou "atrair mais clientes pela internet". Quem escreve NÃO vende nada disso. Se o insight que você pensou for sobre esses temas, DESCARTE e escolha outro ligado ao que a empresa realmente vende.` : ""}
-⛔ PROIBIDO tratar o lead como se ele fosse cliente de um serviço que a empresa não presta. A mensagem deve soar como alguém que ${model === "distribuidor" ? "abastece o negócio dele com produtos" : model === "industria" ? "fabrica e fornece o produto dele" : model === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}.
-`;
-}
-
-const MARKETING_TERMS = /(marketing|tr[aá]fego|an[uú]ncios?|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
-
-function messageViolatesModel(message: string, model: BusinessModel): boolean {
-  if (model === "agencia") return false;
-  return MARKETING_TERMS.test(message || "");
-}
-
-function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
-  const commercialDetail = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensalidade|desconto|condi[cç][aã]o|proposta|or[cç]amento|contrata[cç][aã]o)\b/i;
-  const explicitPitch = /\b(?:quero te oferecer|gostaria de oferecer|temos para voc[eê]|posso montar uma proposta|fechar agora|contratar agora)\b/i;
-  return commercialDetail.test(message || "") || explicitPitch.test(message || "");
-}
-
-function normalizeForMatch(value: unknown): string {
-  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
-
-/** Persona: o modelo escreve COMO o responsável da empresa, nunca como assistente de IA. */
-function buildPersonaSystem(profile: any, model: BusinessModel, catalog: string, lead: any): string {
-  const nome = String(profile?.attendant_name || "").trim() || "o responsável comercial";
-  const empresa = String(profile?.company_name || "").trim() || "a empresa";
-  return `Você NÃO é um assistente de IA. Você É ${nome}, responsável comercial da ${empresa}, escrevendo pessoalmente pelo WhatsApp.
-
-QUEM VOCÊ É
-- Nome: ${nome}
-- Empresa: ${empresa} (${BUSINESS_MODEL_LABELS[model]})
-- Nicho: ${profile?.company_niche || "conforme perfil"}
-- O que você vende de fato: ${profile?.company_products || "conforme perfil"}
-${catalog ? `- Seu catálogo:\n${catalog}` : ""}
-- Seu diferencial: ${profile?.company_differential || "conforme perfil"}
-- Seu objetivo comercial: ${profile?.company_objective || "abrir conversa qualificada"}
-- Seu público-alvo: ${profile?.company_target_audience || "conforme perfil"}
-
-COM QUEM VOCÊ ESTÁ FALANDO
-- Empresa do lead: ${lead?.company_name || "lead"}${lead?.category ? ` (${lead.category})` : ""}${lead?.city ? ` — ${lead.city}${lead?.state ? `/${lead.state}` : ""}` : ""}
-- O lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que VOCÊ vende" : "um CLIENTE COMPRADOR dos produtos que VOCÊ vende"}.
-
-COMO VOCÊ ESCREVE
-- Sempre em 1ª pessoa ("eu", "a gente", "nós aqui da ${empresa}"). Nunca descreva sua empresa em 3ª pessoa como se fosse anúncio.
-- Você leu a análise/diagnóstico deste lead antes de escrever: cite algo concreto dele (nome da empresa, cidade, segmento, ponto observado). Mensagem genérica é falha.
-- Tom humano de WhatsApp: curto, direto, sem jargão de marketing, sem promessa inventada.
-- Nunca invente números, prêmios, anos de mercado, clientes ou resultados que não estejam no seu perfil.
-- NÃO ofereça, apresente, explique, liste ou cite produtos, serviços, planos, preços, condições ou benefícios da empresa. O perfil e o catálogo servem somente para orientar o tema do gancho e impedir assuntos desconectados.`;
-}
-
-function buildOperationalContext(profile: any, lead: any): string {
-  const seller = normalizeForMatch(`${profile?.company_niche || ""} ${profile?.company_products || ""} ${profile?.company_differential || ""} ${profile?.company_objective || ""}`);
-  const niche = normalizeForMatch(`${lead?.category || ""} ${lead?.company_name || ""}`);
-  if (/(internet|conectividade|telecom|banda larga|fibra)/.test(seller)) {
-    if (/(academia|fitness|bodybuild|crossfit|pilates)/.test(niche)) {
-      return `ACADEMIA + CONECTIVIDADE: considere a operação completa, não apenas agenda e pagamentos. Usos plausíveis incluem sistemas internos, recepção e equipe, catracas e controle de acesso, equipamentos/dispositivos conectados, música e telas, monitoramento por câmeras e Wi-Fi usado pelos alunos. Escolha somente 2 ou 3 aspectos relevantes para compor uma frase natural. Trate-os como necessidades típicas do segmento, nunca como instalações confirmadas neste lead.`;
-    }
-    if (/(restaurante|bar|caf[eé]|lanchonete|delivery)/.test(niche)) {
-      return `ALIMENTAÇÃO + CONECTIVIDADE: considere pedidos e delivery, caixa e pagamentos, comunicação da equipe, música/TV, monitoramento e Wi-Fi para clientes nos horários de pico. Selecione 2 ou 3 aspectos, sem afirmar que o lead usa sistemas específicos.`;
-    }
-    if (/(cl[ií]nica|consult[oó]rio|hospital|odont)/.test(niche)) {
-      return `SAÚDE + CONECTIVIDADE: considere recepção, prontuários e sistemas internos, agenda, comunicação da equipe, equipamentos conectados, teleatendimento e Wi-Fi para pacientes. Selecione 2 ou 3 aspectos, sem afirmar infraestrutura não comprovada.`;
-    }
-    if (/(loja|varejo|mercado|farm[aá]cia|com[eé]rcio)/.test(niche)) {
-      return `VAREJO + CONECTIVIDADE: considere caixa e pagamentos, estoque, emissão fiscal, comunicação, monitoramento, dispositivos da equipe e Wi-Fi para clientes. Selecione 2 ou 3 aspectos, sem afirmar infraestrutura não comprovada.`;
-    }
-    return `CONECTIVIDADE + SEGMENTO: raciocine sobre a operação completa do lead: sistemas internos, equipe, atendimento, dispositivos, comunicação, monitoramento e experiência dos clientes. Escolha 2 ou 3 usos realmente coerentes com o nicho, sem transformar possibilidades típicas em fatos confirmados.`;
-  }
-  return `CRUZAMENTO OPERACIONAL: use todo o perfil da empresa prospectora para identificar o que ela realmente resolve e cruze isso com a rotina completa do segmento do lead. Considere pessoas, processos, sistemas, equipamentos, atendimento e clientes finais. Escolha somente 2 ou 3 aspectos relevantes, sem listas artificiais e sem afirmar fatos não comprovados.`;
-}
-
-/** Mensagem sem nenhuma referência concreta ao lead = genérica. */
-function messageLacksPersonalization(message: string, lead: any): boolean {
-  const m = (message || "").toLowerCase();
-  if (!m.trim()) return true;
-  const tokens: string[] = [];
-  const push = (v: unknown) => {
-    const s = String(v ?? "").trim().toLowerCase();
-    if (s.length >= 4) tokens.push(s);
-  };
-  push(lead?.company_name);
-  push(lead?.city);
-  push(lead?.category);
-  push(lead?.neighborhood);
-  if (!tokens.length) return false;
-  return !tokens.some((t) => m.includes(t));
-}
-
-function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
-  const normalized = normalizeForMatch(message);
-  const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
-  const sellerOffer = normalizeForMatch(profile?.company_products);
-  return leadCategory.some((word) =>
-    !sellerOffer.includes(word) && new RegExp(`(?:nos|nossa empresa|a gente)\\s+(?:vende|oferece|fornece|fabrica|distribui)[^.!?]{0,70}\\b${word}\\b`).test(normalized)
-  );
-}
-
-function messageHasVagueCommercialCTA(message: string): boolean {
-  return /\b(?:fiquei curioso para saber|gostaria de entender como isso poderia impactar|o que voc[eê] acha de avaliarmos|faz sentido(?:\s+para voc[eê])?|quer saber mais\??|gostaria de saber mais\??)\b/i.test(message || "");
-}
-
-function messageHasMultipleQuestions(message: string): boolean {
-  return ((message || "").match(/\?/g) || []).length !== 1;
-}
-
-function messageLacksPraiseHook(message: string): boolean {
-  return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
-}
-
-function messageStatesUnverifiedOperation(message: string): boolean {
-  return /\b(?:catracas?|controle de acesso|equipamentos? conectados?|wi-?fi|c[aâ]meras?|monitoramento|m[uú]sica|telas?)\s+(?:que\s+)?(?:voc[eê]s\s+)?(?:oferecem|utilizam|usam|possuem|t[eê]m|mant[eê]m)\b/i.test(message || "");
-}
-
-
+import {
+  type ApproachInput,
+  corsHeaders,
+  formatProductCatalog,
+  generateApproachMessage,
+  hasContactNumber,
+  resolveBusinessModel,
+} from "../_shared/approach-engine.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
@@ -334,14 +26,9 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return json({ error: "Não autorizado" }, 401);
     const token = authHeader.replace("Bearer ", "");
 
-    // Modo interno (Wiize API V1): service role + id da conta API no header
     const internalUserId = req.headers.get("x-wiize-api-user");
     const internalMode = !!internalUserId && token === SUPABASE_SERVICE_ROLE_KEY;
 
@@ -350,84 +37,50 @@ serve(async (req) => {
       user = { id: internalUserId! };
     } else {
       const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(token);
-      if (authErr || !authUser) {
-        return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      if (authErr || !authUser) return json({ error: "Usuário não autenticado" }, 401);
       user = authUser;
     }
 
     const body = await req.json();
     const { lead_id } = body ?? {};
 
-    // No modo interno o lead chega inline no corpo (a conta API não tem CRM na Wiize)
     let lead: any = null;
     if (internalMode && body?.lead && typeof body.lead === "object") {
       lead = body.lead;
     } else {
-      if (!lead_id) {
-        return new Response(JSON.stringify({ error: "lead_id é obrigatório" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      if (!lead_id) return json({ error: "lead_id é obrigatório" }, 400);
       const { data: leadRow, error: leadErr } = await supabase
         .from("leads").select("*").eq("id", lead_id).eq("user_id", user.id).single();
-      if (leadErr || !leadRow) {
-        return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      if (leadErr || !leadRow) return json({ error: "Lead não encontrado" }, 404);
       lead = leadRow;
     }
 
-
-    // Prospecção Web entrega somente análise e diagnóstico, nunca abordagem.
     if (lead?.source === "web") {
-      return new Response(
-        JSON.stringify({
-          error: "web_source_no_message",
-          message: "Oportunidades da Prospecção Web não geram mensagem de abordagem.",
-        }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return json({
+        error: "web_source_no_message",
+        message: "Oportunidades da Prospecção Web não geram mensagem de abordagem.",
+      }, 422);
     }
 
-    // Regra crítica: sem telefone/WhatsApp válido não há mensagem de abordagem.
     if (!hasContactNumber(lead)) {
-      return new Response(
-        JSON.stringify({
-          error: "no_contact_number",
-          message: "Número não encontrado para esta empresa.",
-        }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return json({ error: "no_contact_number", message: "Número não encontrado para esta empresa." }, 422);
     }
 
+    // Geração única: se já existe abordagem manual salva, devolve a mesma.
     const savedManualApproach = lead?.enrichment_data?.manual_approach;
     if (!internalMode && String(savedManualApproach?.message || "").trim()) {
-      return new Response(JSON.stringify({
+      return json({
         mensagem: savedManualApproach.message,
         gancho: savedManualApproach.gancho || "",
         motivo: savedManualApproach.motivo || "",
         insight: savedManualApproach.insight || "",
         estrategia: savedManualApproach.estrategia || "",
         reused: true,
-      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      });
     }
 
     const { data: companyProfile } = await supabase
       .from("company_profiles").select("*").eq("user_id", user.id).single();
-
-    const enrichment = lead.enrichment_data && typeof lead.enrichment_data === "object" ? lead.enrichment_data as Record<string, any> : {};
-    const pontosFortes = Array.isArray(enrichment.pontos_fortes) ? enrichment.pontos_fortes : [];
-    const pontosFracos = Array.isArray(enrichment.pontos_fracos) ? enrichment.pontos_fracos : [];
-    const analiseSite = enrichment.analise_site || "";
-    const analiseRedes = enrichment.analise_redes_sociais || "";
-    const analiseConcorrencia = enrichment.analise_concorrencia_regional || "";
-    const analiseDemanda = enrichment.analise_demanda_regional || "";
-    const socialMedia = Array.isArray(lead.social_media) ? lead.social_media : [];
-    const hasSite = !!lead.website && lead.website !== "-";
 
     const { data: companyServices } = await supabase
       .from("company_services")
@@ -439,495 +92,71 @@ serve(async (req) => {
     const productCatalog = formatProductCatalog(companyServices);
 
     if (!companyProfile || (!String(companyProfile.company_products || "").trim() && !productCatalog)) {
-      return new Response(JSON.stringify({
+      return json({
         error: "missing_company_profile",
         message: "Complete os produtos ou serviços da sua empresa antes de gerar a abordagem.",
-      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
-
-    const companyContext = companyProfile ? `
-⚠️ PERFIL DA EMPRESA QUE ESTÁ PROSPECTANDO:
-- Empresa: ${companyProfile.company_name}
-- Atendente/Vendedor: ${companyProfile.attendant_name}
-- Como atua (modelo de negócio): ${BUSINESS_MODEL_LABELS[businessModel]}
-- Nicho: ${companyProfile.company_niche}
-- Produtos/Serviços VENDIDOS: ${companyProfile.company_products}
-${productCatalog ? `- Catálogo declarado:\n${productCatalog}` : ""}
-- Diferencial: ${companyProfile.company_differential}
-- Objetivo: ${companyProfile.company_objective}
-- Público-alvo: ${companyProfile.company_target_audience}
-
-REGRA ABSOLUTA: A mensagem NUNCA deve mencionar algo que "${companyProfile.company_name}" NÃO vende. Não ofereça a solução — só plante a semente.
-${businessModelBlock}
-` : "";
-
-    const diagnosticContext = (lead.ai_score || lead.ai_diagnosis) ? `
-═══ DIAGNÓSTICO DESTE LEAD (matéria-prima do gancho e do insight) ═══
-- Score: ${lead.ai_score || "N/A"} | Nível: ${lead.opportunity_level || "N/A"}
-- Diagnóstico: ${lead.ai_diagnosis || "N/A"}
-${pontosFortes.length ? `- Pontos fortes: ${pontosFortes.join("; ")}` : ""}
-${pontosFracos.length ? `- Pontos fracos: ${pontosFracos.join("; ")}` : ""}
-${analiseSite ? `- Site: ${analiseSite}` : ""}
-${analiseRedes ? `- Redes sociais: ${analiseRedes}` : ""}
-${analiseConcorrencia ? `- Concorrência regional: ${analiseConcorrencia}` : ""}
-${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
-` : "";
-
-    const uniqueSeed = crypto.randomUUID().slice(0, 8);
-    const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
-    const operationalContext = buildOperationalContext(companyProfile, lead);
-
-    const prompt = `Você é um VENDEDOR CONSULTIVO B2B escrevendo a PRIMEIRA mensagem no WhatsApp para o dono/gestor de uma empresa que você acabou de analisar.
-
-▸ OBJETIVO ÚNICO: abrir uma conversa comercial, despertar interesse genuíno no que a empresa remetente resolve e gerar UMA RESPOSTA natural do empresário.
-▸ É um primeiro contato de prospecção feito por um vendedor da empresa, mas NÃO é hora de apresentar catálogo, plano, preço, condição, proposta ou pedir reunião.
-▸ É OBRIGATÓRIO dizer claramente a área em que a empresa atua, em linguagem ampla (ex.: conectividade/internet empresarial), para o contato fazer sentido. Isso não é apresentar uma oferta.
-▸ A mensagem tem que parecer 100% humana, como se você tivesse acabado de olhar a operação dele.
-▸ Sensação-alvo do leitor: "essa pessoa entendeu meu negócio e levantou um ponto relevante; quero entender o que ela percebeu".
-
-${companyContext}
-${diagnosticContext}
-
-═══ LEITURA OPERACIONAL OBRIGATÓRIA ═══
-${operationalContext}
-
-Use o PERFIL COMPLETO da empresa prospectora para decidir o ângulo: produtos/serviços, nicho, diferencial, objetivo, público-alvo e catálogo. Quanto mais específico for o perfil, mais específica deve ser a conexão. Não reduza a operação do lead a um único uso óbvio e não escreva uma lista; selecione os 2 ou 3 aspectos mais relevantes e una-os em uma percepção natural.
-
-═══ CLIENTE POTENCIAL — DADOS DO LEAD ═══
-Tudo deste bloco descreve QUEM RECEBE a mensagem. Use como matéria-prima do gancho, mas nunca trate o nicho ou os produtos do lead como se fossem da empresa que envia.
-- Empresa: ${lead.company_name || "N/A"}
-- Contato: ${lead.contact_name || "responsável"}
-- Nicho / ICP: ${lead.category || "N/A"}
-- Cidade: ${lead.city || "N/A"}
-- Endereço: ${lead.address || "N/A"}
-- Avaliação Google: ${lead.rating || 0}/5 (${lead.review_count || 0} avaliações)
-- Site: ${hasSite ? lead.website : "não localizado"}
-- Redes sociais: ${socialMedia.length ? socialMedia.join(", ") : "não localizadas"}
-
-═══════════════════════════════════════════
-ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto final)
-═══════════════════════════════════════════
-
-0) SAUDAÇÃO HUMANIZADA — PRIMEIRA LINHA, OBRIGATÓRIA
-   • Toda mensagem DEVE começar com uma saudação curta, natural, conversacional — como um humano abriria uma conversa no WhatsApp.
-   • Escolha UMA das opções abaixo (ou variação equivalente natural), evitando repetição entre mensagens diferentes:
-     "Olá, tudo bem?" · "Oi, tudo bem?" · "Olá!" · "Oi!" · "Oi, tudo certo?" · "Olá, tudo certo?" · "Oi, como vai?" · "Olá, como vai?" · "Tudo certo?" · "Tudo bem?"
-   • Adapte ao ICP "${lead.category || "N/A"}":
-       – Segmento tradicional (advocacia, contabilidade, clínica, indústria): prefira "Olá, tudo bem?", "Olá!", "Como vai?"
-       – Segmento descontraído (restaurante, bar, academia, loja, e-commerce): pode usar "Oi, tudo certo?", "Oi!", "Tudo certo?"
-       – Segmento muito formal: "Olá, tudo bem?", "Como vai?"
-   • PROIBIDO ABSOLUTAMENTE: "Bom dia", "Boa tarde", "Boa noite" (o horário real de envio é desconhecido — usar isso pode soar errado).
-   • PROIBIDO gírias: "E aí", "Fala", "Beleza", "Show", "Tudo joia", "Opa".
-   • A saudação vai em UMA linha, seguida de \\n\\n. Nunca fica isolada — o próximo bloco (Gancho) vem logo depois.
-   • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
-
-1) ELOGIO PERSONALIZADO — gatilho de atenção antes da apresentação
-   • Elogie algo REAL e comprovado do lead, variando conforme os dados disponíveis: reputação na região, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque concreto.
-   • O elogio deve soar como uma observação humana e específica, nunca bajulação genérica. Não invente reconhecimento regional, força digital ou recomendações.
-   • Não use sempre avaliação ou nota do Google. Escolha o destaque mais forte e natural para aquele lead.
-   • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
-   • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
-   • PROIBIDO repetir a saudação ou a identificação aqui.
-
-2) IDENTIFICAÇÃO COMERCIAL CURTA — logo após o elogio
-   • Apresente nome, empresa e área ampla de atuação: "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalho com [área ampla e verdadeira]."
-   • Não cite catálogo, plano, velocidade, preço, condição ou proposta.
-
-3) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após a apresentação
-   • Explica de forma orgânica POR QUE essa empresa foi analisada, antes de qualquer diagnóstico.
-   • NUNCA pule direto do gancho para insight/diagnóstico. O empresário precisa entender IMEDIATAMENTE por que recebeu a mensagem.
-   • Deve soar verdadeiro, natural, conversacional — nunca como desculpa.
-   • Exemplos de fraseado (adaptar, nunca copiar literal):
-       – "estava pesquisando empresas do segmento aqui em ${lead.city || "sua região"}"
-       – "estou fazendo um levantamento sobre ${lead.category || "negócios locais"} da região"
-       – "costumo mapear negócios locais pra entender como estão usando os canais digitais"
-       – "recentemente venho estudando como ${lead.category || "empresas desse setor"} estão captando clientes"
-       – "durante uma pesquisa sobre empresas de ${lead.city || "sua cidade"}, a sua apareceu como referência"
-       – "enquanto analisava alguns negócios do setor, encontrei o de vocês"
-   • 1 a 2 frases. Nunca genérico demais.
-   • TESTE DE NATURALIDADE: se o empresário NÃO entender naturalmente por que você entrou em contato antes de você falar sobre o negócio dele, este bloco falhou — reescreva com mais contexto.
-
-4) AUTORIDADE CONTEXTUAL — complete a identificação sem repeti-la
-   • A apresentação simples ("Sou X, da Y.") NÃO É SUFICIENTE. Ela deixa o empresário pensando "quem é você?" e "por que eu deveria te ouvir?".
-   • ESTRUTURA OBRIGATÓRIA (nesta ordem, em 1 a 2 frases naturais):
-       (a) Nome: "${companyProfile?.attendant_name || "[nome]"}"
-       (b) Empresa: "${companyProfile?.company_name || "[empresa]"}"
-       (c) Contexto de autoridade — UMA frase curta que justifique NATURALMENTE por que essa pessoa entende do assunto que vai comentar em seguida.
-    • Exemplo estrutural (adaptar ao MODELO DE NEGÓCIO, nunca copiar literal):
-       "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. ${businessModel === "distribuidor" || businessModel === "representante"
-         ? `Trabalhamos abastecendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}.`
-         : businessModel === "industria"
-         ? `Fabricamos ${companyProfile?.company_products || "nossos produtos"} e fornecemos direto para ${lead.category || "negócios como o seu"}.`
-         : businessModel === "revenda"
-         ? `Trabalhamos com ${companyProfile?.company_products || "esses produtos"} com pronta entrega para ${lead.category || "negócios da região"}.`
-         : businessModel === "software"
-         ? `Trabalhamos com ${companyProfile?.company_products || "nosso sistema"} dentro da operação de ${lead.category || "negócios como o seu"}.`
-         : businessModel === "agencia"
-         ? `Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda.`
-         : `Atendemos ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos serviços"}.`}"
-   • O objetivo do contexto de autoridade é explicar por que faz sentido essa pessoa estar comentando sobre aquele tema e deixar clara a área comercial em que atua, sem apresentar plano, preço ou proposta.
-   • A autoridade deve parecer INCIDENTAL, nunca propaganda. O leitor deve pensar: "faz sentido essa pessoa entender desse assunto."
-
-   FONTES DE AUTORIDADE PERMITIDAS (use apenas o que for verdadeiro, com base no PERFIL DA EMPRESA acima):
-     • especialização declarada da empresa (${companyProfile?.company_niche || "nicho da empresa"})
-     • nicho / segmento atendido (${companyProfile?.company_target_audience || "público declarado"})
-     • tipo de serviço prestado (${companyProfile?.company_products || "serviços declarados"})
-     • diferencial real declarado (${companyProfile?.company_differential || "-"})
-     • rotina de análise daquele segmento ("costumo acompanhar…", "trabalho analisando…", "faço parte de uma equipe especializada em…")
-     • propósito recorrente do contato (mapear negócios da região, entender como o negócio se abastece/opera, etc.)
-   Frases modelo (adaptar ao ICP "${lead.category || "N/A"}" E ao modelo de negócio, nunca copiar):
-${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digitais de ${lead.category || "negócios locais"}."
-     – "Faço parte de uma equipe especializada em presença digital para negócios locais."
-     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."` : `     – "Atendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}."
-     – "Costumo acompanhar como ${lead.category || "negócios desse segmento"} organizam ${businessModel === "distribuidor" || businessModel === "industria" || businessModel === "revenda" || businessModel === "representante" ? "o abastecimento e a reposição de produtos" : "essa parte da operação"}."
-     – "Trabalho direto com ${lead.category || "negócios como o seu"} aqui na região."`}
-
-   PROIBIÇÕES ABSOLUTAS (a IA NUNCA pode inventar):
-     • quantidade de clientes • faturamento • anos de mercado • prêmios • certificações
-     • liderança • rankings • participações • resultados numéricos • posições no mercado
-   PROIBIDO escrever frases como: "somos referência", "somos líderes", "somos especialistas reconhecidos",
-   "somos a maior/melhor", "temos milhares de clientes", "mais de X clientes", "mais de X anos",
-   "empresa premiada", "resultados extraordinários". Essas frases DERRUBAM a credibilidade quando não podem ser comprovadas.
-
-   SE o PERFIL DA EMPRESA acima trouxer dados reais e verificáveis (anos de atuação, região, certificações, especialização, reconhecimento público, diferencial concreto), a IA PODE usá-los — sempre de forma natural, jamais como propaganda.
-
-   TESTE FINAL DA APRESENTAÇÃO: ao terminar este bloco, o empresário precisa entender naturalmente:
-     (1) quem entrou em contato; (2) de qual empresa; (3) por que essa pessoa entende do assunto; (4) por que decidiu falar com ele.
-   Se qualquer uma dessas 4 perguntas ficar sem resposta, REESCREVA o bloco.
-
-
-5) MOTIVO DO CONTATO — natural, espontâneo
-   • Complementa o contexto (não repete). Ex.: "achei que fazia sentido te chamar rapidinho pra compartilhar uma percepção."
-   • Nunca robótico.
-
-6) INSIGHT CONSULTIVO — o maior diferencial (REGRA DE CONEXÃO OBRIGATÓRIA)
-   • Só aparece DEPOIS do contexto + identificação + motivo. Nunca antes.
-   • ⚠️ REGRA DE OURO — CONEXÃO COM O SERVIÇO OFERECIDO:
-     O insight PRECISA ter relação direta com o que "${companyProfile?.company_name || "sua empresa"}" REALMENTE vende:
-     "${companyProfile?.company_products || "-"}" (nicho: ${companyProfile?.company_niche || "-"}, diferencial: ${companyProfile?.company_differential || "-"}).
-     NUNCA levante um ponto de atenção genérico (ex.: "reputação boa mas...") se ele não conversa com a solução que você entrega.
-     Antes de escrever o insight, se pergunte: "esse ponto que vou levantar tem ligação natural com o que eu vendo?".
-     Se a resposta for NÃO, troque o ângulo — escolha um ponto do diagnóstico do lead que se conecte com "${companyProfile?.company_products || "seu serviço"}".
-   • ANCORAGEM: use os dados do "DIAGNÓSTICO DESTE LEAD" (pontos fracos, análise de site, redes, concorrência, demanda) e cruze com o produto da sua empresa.
-     Exemplo mental: se você vende internet empresarial para uma academia, não reduza o contexto a agenda e pagamentos; considere também equipe, catracas, dispositivos, monitoramento, música/telas e Wi-Fi dos alunos, escolhendo apenas 2 ou 3 aspectos para uma frase natural e sem afirmar que o lead já usa cada item.
-     Se você vende "sistema de delivery próprio" e o lead não tem site com pedido online → insight sobre canal de vendas direto.
-     Se você vende "gestão de tráfego" e o lead tem baixa presença em redes → insight sobre captação previsível.
-     Se você vende "CRM/WhatsApp" e o lead tem muitos reviews mas fluxo desorganizado → insight sobre pós-venda/retenção.
-   • Uma percepção inteligente, específica ao NEGÓCIO DELE. NUNCA apontar defeito de forma direta.
-   • SEMPRE em linguagem consultiva e cautelosa: "talvez", "parece existir", "pode haver", "é possível", "percebi um ponto interessante".
-   • NUNCA dizer que a empresa "faz errado", "está ruim", "precisa melhorar urgentemente".
-   • PROIBIDO insight solto que não plante a semente do que você vende — o leitor precisa terminar com curiosidade sobre uma área em que VOCÊ resolve.
-
-7) INTERESSE COMERCIAL
-   • Diga qual tipo de melhoria ou oportunidade pode existir, sem detalhar plano, preço, condição ou proposta.
-   • O leitor precisa entender exatamente QUAL assunto será explicado na continuação. Curiosidade sem assunto claro é proibida.
-
-8) BAIXA PRESSÃO
-   • UMA linha curta, humilde, para reduzir sensação de venda.
-   • Use frases como: "posso estar enganado", "talvez não seja o momento", "só compartilhando uma percepção".
-   • PROIBIDO frases genéricas soltas tipo "achei interessante dar uma olhada nessa questão" — precisa amarrar com o insight anterior.
-
-9) CTA FINAL — SEMPRE UMA PERGUNTA FECHADA, ESPECÍFICA E COMERCIAL (regra absoluta)
-    • O CTA DEVE ser obrigatoriamente uma PERGUNTA FECHADA que convide o empresário a entender a oportunidade concreta levantada no insight.
-    • A pergunta deve ser de resposta fácil (sim/não ou uma resposta curta) e deve terminar SEMPRE com o caractere "?".
-    • Estrutura obrigatória: referenciar o TEMA do insight (ex.: canal próprio de vendas, agenda, retenção, captação, delivery) + perguntar se ele quer que você explique melhor por ali no WhatsApp.
-    • Exemplo para internet empresarial (adaptar, nunca copiar literal): "Hoje vocês já contam com uma conexão empresarial preparada para manter esses sistemas estáveis nos horários de maior movimento?"
-    • Outros formatos válidos: perguntar como o lead resolve hoje o ponto específico ou se já possui uma estrutura preparada para ele.
-    • PROIBIDO absolutamente: CTA em forma de afirmação/frase declarativa (ex.: "Se quiser, posso te explicar melhor por aqui.").
-    • PROIBIDO absolutamente: pedir reunião, ligação, apresentação, demonstração, agenda, horário, "5 minutinhos", "call".
-    • PROIBIDO CTA morto/vago: "faz sentido?", "você também percebe isso?", "fiquei curioso para saber", "gostaria de entender como isso impactaria", "quer saber mais?", "o que acha de avaliarmos?".
-    • PROIBIDO fingir curiosidade do vendedor. A pergunta deve investigar a situação atual do lead ou convidá-lo a entender um ponto específico.
-    • O CTA precisa amarrar naturalmente com o insight anterior. Se o insight foi sobre "site/pedido online", a pergunta fala em explicar melhor o canal próprio. Se foi sobre "agenda", pergunta se quer entender como organizam a agenda. Nunca desconecte.
-    • A mensagem inteira deve ter EXATAMENTE UMA interrogação, somente no CTA final. Depois do CTA não pode existir nenhuma frase.
-
-
-REGRA DE FLUXO (INEGOCIÁVEL):
-Saudação → Elogio factual → Identificação comercial curta → Contexto → Autoridade → Motivo → Insight → Interesse → Baixa pressão → CTA.
-A saudação NUNCA fica isolada — sempre é seguida imediatamente pelo gancho no bloco seguinte.
-JAMAIS pular do gancho direto para o insight/diagnóstico. Sempre precisa existir a transição contextual.
-A leitura tem que fluir como uma conversa real no WhatsApp entre dois profissionais, nunca como um relatório de auditoria ou carta comercial.
-
-═══════════════════════════════════════════
-PERSONALIZAÇÃO POR ICP (regra mais importante)
-═══════════════════════════════════════════
-Antes de escrever, identifique o ICP a partir do nicho "${lead.category || "N/A"}". Adapte VOCABULÁRIO, ARGUMENTOS, OBSERVAÇÕES, GATILHOS e CTA a esse ICP.
-Eixos possíveis por segmento (use APENAS o que se aplica):
-- Restaurante/bar: fluxo, delivery, ticket médio, avaliações, retenção, horário de pico.
-- Clínica/consultório: agenda, no-show, retorno de paciente, reputação, primeira consulta.
-- Academia: retenção mensal, evasão, novos alunos, prova social.
-- Advocacia/contabilidade: autoridade, geração previsível de casos/clientes, presença digital sóbria.
-- Imobiliária/corretora/construtora: captação, qualificação de lead, tempo de resposta, funil.
-- Auto elétrica/oficina/serviço técnico: recorrência, agenda, orçamentos que não fecham.
-- Agência/distribuidora/indústria/transportadora: previsibilidade comercial, funil B2B, CRM, follow-up.
-- Loja/e-commerce: recompra, tráfego, conversão, CRM/WhatsApp, remarketing.
-NUNCA reutilize argumentos de um segmento em outro. Se o ICP não estiver claro, use uma observação neutra mas coerente com o nicho declarado.
-
-═══════════════════════════════════════════
-PERSONALIZAÇÃO PELO PERFIL DA EMPRESA PROSPECTADORA (obrigatória)
-═══════════════════════════════════════════
-A mensagem deve ser construída EM FUNÇÃO do que a empresa do usuário REALMENTE vende, não apenas do nicho do lead.
-Antes de escrever, cruze estes dados do perfil da empresa:
-- Modelo de negócio: ${BUSINESS_MODEL_LABELS[businessModel]}
-- Produtos/Serviços vendidos: ${companyProfile?.company_products || "N/A"}
-${productCatalog ? `${productCatalog}` : ""}
-- Nicho da empresa: ${companyProfile?.company_niche || "N/A"}
-- Diferencial real: ${companyProfile?.company_differential || "N/A"}
-- Público-alvo: ${companyProfile?.company_target_audience || "N/A"}
-- Objetivo: ${companyProfile?.company_objective || "N/A"}
-
-Regras de personalização:
-• Os eixos de ICP acima são do LEAD. Só use o eixo que combina com o que VOCÊ vende. Se você é ${BUSINESS_MODEL_LABELS[businessModel]}, eixos de marketing/tráfego/conversão só podem ser usados se você realmente vender marketing.
-• O insight deve levantar um ponto que TENHA solução natural dentro do cardápio de produtos/serviços acima. Nunca levante uma dor que sua empresa não resolve.
-• O vocabulário, exemplos e ângulo devem refletir o MODELO DE NEGÓCIO (ex.: distribuidor fala de mix, prazo, reposição e condição comercial; indústria fala de fornecimento direto e volume; software fala de processo manual; agência fala de captação).
-• Se o perfil da empresa informar um diferencial específico (metodologia, tipo de atendimento, região, especialização), use esse diferencial como pano de fundo sutil da autoridade — sem exagerar.
-• A Curiosidade e o CTA devem deixar claro que a continuação da conversa será sobre o tema que a empresa prospectadora domina, não sobre algo genérico.
-• TESTE DE ADEQUAÇÃO: depois de pronta, a mensagem deve parecer escrita por alguém que trabalha com "${companyProfile?.company_products || "os serviços da empresa"}". Se parecer genérica o suficiente para qualquer empresa, REESCREVA.
-• TESTE DE PROFUNDIDADE: o contexto não pode reduzir a operação do lead a um único uso óbvio quando o produto vendido sustenta várias partes dela. Selecione 2 ou 3 necessidades coerentes com o segmento, sem listar demais e sem inventar fatos.
-
-═══════════════════════════════════════════
-LINGUAGEM E ESTILO
-═══════════════════════════════════════════
-- Escreva como VENDEDOR CONSULTIVO da empresa: intenção comercial clara, sem pressão e sem discurso de fechamento precoce.
-- Tom conversacional, natural, sem excesso de formalidade.
-- PROIBIDO clichês de IA/marketing: "mercado competitivo", "potencial de crescimento", "solução inovadora", "empresa líder", "transformar resultados", "impulsionar vendas", "maximizar resultados", "otimizar processos" (como frase pronta), "revolucionar", "alavancar", "escalar".
-- SEM emojis. SEM listas. SEM hashtags. SEM links. SEM caixa alta. SEM negrito/markdown.
-- SEM travessão duplo "--". SEM travessão longo "—" no meio de frase (use vírgula ou quebra de linha).
-- Frases curtas, PT-BR natural.
-- ORTOGRAFIA: TODA frase começa com letra MAIÚSCULA. Todo parágrafo/bloco (após \\n\\n) começa com maiúscula. Nunca inicie um bloco com minúscula (ex.: NUNCA "estava pesquisando" — sempre "Estava pesquisando").
-- Use QUEBRAS DE LINHA em branco (\\n\\n) entre os blocos para dar respiro no WhatsApp.
-- Extensão-alvo: 90 a 160 palavras. Nunca ultrapasse 180.
-
-
-═══════════════════════════════════════════
-POLÍTICAS META (cumprir sempre)
-═══════════════════════════════════════════
-- Identifique claramente quem envia (nome + empresa).
-- Explique o motivo do contato.
-- Nada de informação falsa, indução ao erro, manipulação, urgência artificial ou aparência de spam.
-- Transparência total.
-
-═══════════════════════════════════════════
-AUTO-AVALIAÇÃO ANTES DE RESPONDER
-═══════════════════════════════════════════
-Avalie mentalmente antes de me devolver o JSON:
-  ✓ Começa com uma saudação curta, natural e variada (nunca "bom dia/tarde/noite", nunca gíria)?
-  ✓ A saudação está adaptada ao ICP e é seguida por um elogio factual antes da apresentação?
-  ✓ O elogio varia conforme os dados entre reputação regional, presença forte, recomendações, avaliação ou outro destaque comprovado?
-  ✓ Parece uma conversa real iniciada por uma pessoa no WhatsApp — não uma carta comercial?
-  ✓ Demonstra pesquisa real sobre a empresa?
-  ✓ Desperta interesse e deixa claro o assunto comercial, sem suspense vazio?
-  ✓ Diz a área em que a empresa atua, mas não apresenta catálogo, plano, preço, condição ou proposta?
-  ✓ Tem transparência (quem, por quê)?
-  ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
-  ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
-  ✓ A IDENTIFICAÇÃO contém os 3 elementos (nome + empresa + contexto de autoridade natural)?
-  ✓ A autoridade usa apenas fatos verdadeiros (especialização, nicho, serviço, rotina) — sem inventar números, anos, prêmios, liderança ou clientes?
-  ✓ Ao terminar a apresentação, dá pra responder: quem é? de qual empresa? por que entende disso? por que veio falar comigo?
-  ✓ Está personalizada ao ICP "${lead.category || "N/A"}"?
-  ✓ Está personalizada ao PERFIL DA EMPRESA que prospecta: produtos/serviços = "${companyProfile?.company_products || "N/A"}", nicho = "${companyProfile?.company_niche || "N/A"}"? A mensagem parece escrita por quem vende isso?
-
-  ✓ O GANCHO e o INSIGHT têm ligação direta com "${companyProfile?.company_products || "o serviço vendido"}"? (se não, reescreva)
-  ✓ A mensagem respeita o MODELO DE NEGÓCIO "${BUSINESS_MODEL_LABELS[businessModel]}"? ${businessModel === "agencia" ? "" : "Não pode ter NENHUMA menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Se tiver, REESCREVA."}
-  ✓ O leitor entenderia que quem escreveu ${businessModel === "distribuidor" ? "abastece o negócio dele com produtos" : businessModel === "industria" ? "fabrica e fornece o produto" : businessModel === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}? (se não, reescreva)
-  ✓ O CTA é obrigatoriamente uma PERGUNTA FECHADA que termina com "?"?
-  ✓ O CTA pergunta se o empresário quer que você explique melhor o tema do insight (nunca é pergunta vaga tipo "faz sentido?")?
-  ✓ O CTA amarra explicitamente com o tema do insight (canal próprio, agenda, retenção, etc.)?
-  ✓ Toda frase e todo bloco começam com letra MAIÚSCULA?
-  ✓ Parece consultoria, não venda?
-  ✓ Evita clichês de IA/marketing?
-  ✓ Segue Meta (sem spam, sem manipulação)?
-  ✓ Se eu fosse o dono, eu responderia?
-Se QUALQUER resposta for "não", REESCREVA internamente e só então devolva a versão final.
-
-VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) — a mensagem deve ser única para ESTE lead.
-
-Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste formato:
-{
-  "mensagem": "mensagem final pronta para colar no WhatsApp, com quebras \\n\\n entre os blocos, seguindo TODAS as regras acima",
-  "gancho": "a primeira frase da mensagem",
-  "motivo": "por que este lead foi escolhido (1 frase interna, para auditoria)",
-  "insight": "o insight consultivo usado (1 frase interna)",
-  "estrategia": "ICP identificado e ângulo escolhido (1 frase interna)"
-}`;
-
-    const aiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: personaSystem },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.9,
-        max_tokens: 1200,
-        response_format: { type: "json_object" },
-      }),
-    });
-
-    if (!aiRes.ok) {
-      const status = aiRes.status;
-      if (status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em instantes." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI gateway error: ${status}`);
+      }, 422);
     }
 
-    const aiData = await aiRes.json();
-    logAiUsage({ feature: 'approach-lead-manual', model: 'gpt-4o-mini', usage: aiData.usage });
-    const content = aiData.choices?.[0]?.message?.content;
-    if (!content) throw new Error("Resposta vazia da IA");
+    const enrichment = lead.enrichment_data && typeof lead.enrichment_data === "object"
+      ? lead.enrichment_data as Record<string, any>
+      : {};
 
-    const parsed = JSON.parse(content);
-    // Sanitiza a saída: remove travessões, normaliza espaçamentos e capitaliza início de bloco/frase.
-    const capFirst = (s: string) => s.replace(/^(\s*)([a-zà-ÿ])/, (_m, sp, ch) => sp + ch.toUpperCase());
-    const sanitize = (s: string) => {
-      let out = (s || "")
-        .replace(/\s*--\s*/g, ", ")                          // "palavra -- palavra" -> "palavra, palavra"
-        .replace(/([^\n])\s+—\s+([^\n])/g, "$1, $2")        // travessão longo no meio de frase -> vírgula
-        .replace(/[ \t]+\n/g, "\n")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
-
-      // Capitaliza a primeira letra de cada parágrafo (separados por \n\n) e de cada frase após . ! ?
-      out = out
-        .split(/\n{2,}/)
-        .map((block) => {
-          const capBlock = capFirst(block);
-          // dentro do bloco, capitaliza após ponto final/exclamação/interrogação seguidos de espaço
-          return capBlock.replace(/([.!?]\s+)([a-zà-ÿ])/g, (_m, p, ch) => p + ch.toUpperCase());
-        })
-        .join("\n\n");
-
-      return out;
+    const input: ApproachInput = {
+      messageType: "manual_first_contact",
+      companyProfile,
+      productCatalog,
+      businessModel,
+      lead,
+      enrichment,
+      seed: crypto.randomUUID().slice(0, 8),
     };
 
-    // Garante que o CTA final seja uma pergunta fechada terminada em "?"
-    const ensureClosedQuestionCTA = (s: string) => {
-      const blocks = s.split(/\n{2,}/).filter(Boolean);
-      if (blocks.length === 0) return s;
-      let last = blocks[blocks.length - 1].trim();
-      // Se já termina com ?, apenas normaliza espaços
-      if (/\?\s*$/.test(last)) {
-        blocks[blocks.length - 1] = last.replace(/\s+\?$/, "?");
-        return blocks.join("\n\n");
-      }
-      // Remove pontuação final declarativa e transforma em pergunta fechada
-      last = last.replace(/[.!,;:]\s*$/, "").trim();
-      if (!/\?\s*$/.test(last)) last = last + "?";
-      blocks[blocks.length - 1] = last;
-      return blocks.join("\n\n");
-    };
-
-    // Revisão final: mensagem que oferece algo fora do modelo ou troca os papéis é reescrita UMA vez.
-    const rewriteReason = messageViolatesModel(parsed.mensagem || "", businessModel)
-      ? "offering_mismatch"
-      : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
-        ? "role_confusion"
-        : messageRevealsOffer(parsed.mensagem || "", companyProfile, productCatalog)
-          ? "revealed_offer"
-        : messageLacksPersonalization(parsed.mensagem || "", lead)
-          ? "missing_personalization"
-          : messageHasVagueCommercialCTA(parsed.mensagem || "")
-            ? "vague_commercial_cta"
-            : messageHasMultipleQuestions(parsed.mensagem || "")
-              ? "multiple_questions"
-              : messageLacksPraiseHook(parsed.mensagem || "")
-                ? "missing_praise_hook"
-                : messageStatesUnverifiedOperation(parsed.mensagem || "")
-                  ? "unverified_operation"
-                  : null;
-    if (rewriteReason) {
-      try {
-        const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "system", content: personaSystem }, {
-              role: "user",
-               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
-
-QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
-O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
-ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
-CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
-
- Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e EXATAMENTE UMA pergunta, no final. Nada pode vir depois dela. Preserve esta ordem: saudação curta; elogio factual ANTES da apresentação; nome, empresa e área ampla de atuação; contexto; conexão comercial; pergunta objetiva. ${operationalContext} Use todo o perfil da empresa prospectora e selecione 2 ou 3 aspectos relevantes da operação, sem lista e sem afirmar fatos não comprovados. Todo uso não confirmado deve ser escrito como necessidade típica ou possibilidade do segmento, nunca como algo que "vocês usam", "vocês oferecem" ou "vocês possuem". O elogio deve variar conforme os dados disponíveis entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado. Não invente elogios e não use sempre avaliação. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
-
-MENSAGEM ORIGINAL:
-${parsed.mensagem}
-
-Retorne APENAS JSON: {"mensagem": "..."}`,
-            }],
-            temperature: 0.6,
-            max_tokens: 900,
-            response_format: { type: "json_object" },
-          }),
-        });
-        if (fixRes.ok) {
-          const fixData = await fixRes.json();
-          logAiUsage({ feature: 'approach-lead-manual-model-fix', model: 'gpt-4o-mini', usage: fixData.usage });
-          const fixed = JSON.parse(fixData.choices?.[0]?.message?.content || "{}");
-          if (fixed?.mensagem) parsed.mensagem = fixed.mensagem;
-        }
-      } catch (e) {
-        console.error("model-fix falhou", String(e));
-      }
+    const result = await generateApproachMessage(OPENAI_API_KEY, input, "approach-lead-manual");
+    if ("error" in result) {
+      if (result.error === "rate_limit") return json({ error: "Limite de requisições excedido. Tente novamente em instantes." }, 429);
+      if (result.error === "no_credits") return json({ error: "Créditos de IA esgotados." }, 402);
+      throw new Error(`AI gateway error: ${result.status}`);
     }
 
-    const finalMessage = ensureClosedQuestionCTA(sanitize(parsed.mensagem || ""));
-
-    const newEnrichment = {
-      ...(typeof lead.enrichment_data === "object" && lead.enrichment_data ? lead.enrichment_data : {}),
-      manual_approach: {
-        message: finalMessage,
-        gancho: parsed.gancho || "",
-        motivo: parsed.motivo || "",
-        insight: parsed.insight || "",
-        estrategia: parsed.estrategia || "",
-        business_model_used: businessModel,
-        rewrite_reason: rewriteReason,
-        generated_at: new Date().toISOString(),
-      },
-    };
+    const { parsed, rewriteReason } = result;
+    const finalMessage = parsed.mensagem || "";
 
     if (!internalMode) {
       const { error: updateErr } = await supabase
         .from("leads")
-        .update({ enrichment_data: newEnrichment })
+        .update({
+          enrichment_data: {
+            ...enrichment,
+            manual_approach: {
+              message: finalMessage,
+              gancho: parsed.gancho || "",
+              motivo: parsed.motivo || "",
+              insight: parsed.insight || "",
+              estrategia: parsed.estrategia || "",
+              business_model_used: businessModel,
+              rewrite_reason: rewriteReason,
+              generated_at: new Date().toISOString(),
+            },
+          },
+        })
         .eq("id", lead_id)
         .eq("user_id", user.id);
-
       if (updateErr) console.error("Update error:", updateErr);
     }
 
-    return new Response(
-      JSON.stringify({
-        mensagem: finalMessage,
-        gancho: parsed.gancho || "",
-        motivo: parsed.motivo || "",
-        insight: parsed.insight || "",
-        estrategia: parsed.estrategia || "",
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({
+      mensagem: finalMessage,
+      gancho: parsed.gancho || "",
+      motivo: parsed.motivo || "",
+      insight: parsed.insight || "",
+      estrategia: parsed.estrategia || "",
+    });
   } catch (err) {
     console.error("Approach-manual error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Erro interno" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
