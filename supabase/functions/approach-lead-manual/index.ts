@@ -14,6 +14,7 @@ const corsHeaders = {
 
 // ---------------- Registro de custo de IA ----------------
 const AI_PRICES: Record<string, { in: number; out: number }> = {
+  "gpt-6-astra": { in: 0, out: 0 },
   "gpt-4o-mini": { in: 0.15 / 1_000_000, out: 0.6 / 1_000_000 },
   "gpt-4o": { in: 2.5 / 1_000_000, out: 10 / 1_000_000 },
   "gpt-4.1-mini": { in: 0.4 / 1_000_000, out: 1.6 / 1_000_000 },
@@ -38,7 +39,7 @@ async function logAiUsage(p: {
     const model = p.model.replace(/^openai\//, "").trim();
     const tin = p.tokens_in ?? p.usage?.prompt_tokens ?? 0;
     const tout = p.tokens_out ?? p.usage?.completion_tokens ?? 0;
-    const price = AI_PRICES[model] ?? AI_PRICES["gpt-4o-mini"];
+    const price = AI_PRICES[model] ?? { in: 0, out: 0 };
     const cost = p.cost_usd ?? tin * price.in + tout * price.out;
     await fetch(`${url}/rest/v1/ai_usage_logs`, {
       method: "POST",
@@ -180,6 +181,45 @@ function normalizeForMatch(value: unknown): string {
   return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+function formatOperationalEvidence(enrichment: Record<string, any>): string {
+  const sources = [
+    enrichment?.servicos_identificados,
+    enrichment?.produtos_identificados,
+    enrichment?.estrutura_identificada,
+    enrichment?.caracteristicas_operacao,
+    enrichment?.tecnologias_identificadas,
+    enrichment?.sistemas_identificados,
+    enrichment?.unidades,
+    enrichment?.horarios,
+    enrichment?.tipo_atendimento,
+    enrichment?.operacao_digital,
+    enrichment?.expansao,
+    enrichment?.site_details,
+    enrichment?.business_details,
+  ];
+  const values = sources.flatMap((value) => {
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === "object") return Object.values(value);
+    return value ? [value] : [];
+  }).map((value) => String(value).trim()).filter((value) => value && value !== "-");
+  return [...new Set(values)].slice(0, 20).join("; ");
+}
+
+const PERSONALIZATION_STOP_WORDS = new Set([
+  "empresa", "empresas", "servico", "servicos", "produto", "produtos", "cliente", "clientes", "atendimento",
+  "negocio", "operacao", "trabalho", "trabalha", "oferece", "cidade", "regiao", "brasil", "site", "online",
+]);
+
+function actionableEvidenceTokens(enrichment: Record<string, any>): string[] {
+  const source = [
+    formatOperationalEvidence(enrichment),
+    ...(Array.isArray(enrichment?.pontos_fortes) ? enrichment.pontos_fortes : []),
+    enrichment?.custom_diagnosis,
+  ].filter(Boolean).join(" ");
+  return [...new Set(normalizeForMatch(source).split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 5 && !PERSONALIZATION_STOP_WORDS.has(token)))].slice(0, 40);
+}
+
 // ---------------- Entrada única do motor ----------------
 type MessageType = "manual_first_contact" | "follow_up";
 
@@ -254,6 +294,7 @@ function buildEvidenceBlock(input: ApproachInput): string {
   push("Redes sociais", social.length ? social.join(", ") : "");
   push("Análise do site", enrichment?.analise_site);
   push("Análise das redes", enrichment?.analise_redes_sociais);
+  push("Características operacionais identificadas", formatOperationalEvidence(enrichment));
   push("Concorrência regional", enrichment?.analise_concorrencia_regional);
   push("Demanda regional", enrichment?.analise_demanda_regional);
   push("Diagnóstico da Wiize", lead?.ai_diagnosis);
@@ -301,11 +342,16 @@ ${blockedMarketing ? `⛔ Você NÃO vende marketing, tráfego, redes sociais, s
 }
 
 const CORE_RULES = `═══ COMO PENSAR ANTES DE ESCREVER (não mostre esse raciocínio) ═══
-1. CONTEXTO: o que esse negócio faz de fato, segundo as evidências.
-2. GANCHO: o que existe de ESPECÍFICO nesse lead (serviço, estrutura, posicionamento, região, presença, porte, operação). Escolha o gancho com maior relação com o que você vende — não o mais bonito.
-3. NECESSIDADE POTENCIAL: qual necessidade plausível da operação dele conversa com a sua oferta.
-4. CONEXÃO: por que o que você vende é relevante PARA ESSE negócio.
-5. PERGUNTA: qual pergunta simples tem mais chance de gerar resposta.
+1. MOTIVO: responda internamente por que faz sentido falar com ESTA empresa, e não apenas com qualquer empresa do segmento.
+2. GANCHO: escolha o dado acionável com maior relação com o que você vende.
+3. ARGUMENTO: construa a sequência DADO DO LEAD → CARACTERÍSTICA RELEVANTE → NECESSIDADE POSSÍVEL → OFERTA DO USUÁRIO.
+4. PERGUNTA: transforme a hipótese não comprovada em UMA pergunta simples, específica e fácil de responder.
+
+PRIORIDADE DOS GANCHOS:
+- MUITO ALTA: serviço específico, estrutura, sistema/tecnologia, unidades, horário relevante, atendimento, operação digital, agendamento, pagamentos, equipe, ambientes, expansão ou detalhe específico do site.
+- MÉDIA: localização, segmento, público, reputação, redes e presença digital.
+- BAIXA: elogio, avaliação, endereço ou texto institucional sem relação direta com a oferta.
+Não use um dado apenas porque ele existe. Use somente se ele explicar o motivo comercial do contato.
 
 ═══ NÍVEIS DE EVIDÊNCIA (regra crítica) ═══
 - NÍVEL 1, evidência direta: pode afirmar ("Vi no site que vocês trabalham com X").
@@ -315,7 +361,9 @@ Nunca afirme problema, sistema, equipamento, equipe, volume, contrato ou dor que
 
 ═══ PERSONALIZAÇÃO REAL ═══
 - Inserir nome, cidade, nota do Google ou segmento NÃO é personalização. A personalização precisa mudar o RACIOCÍNIO da mensagem.
-- TESTE: se essa mensagem pudesse ser enviada para qualquer empresa do mesmo nicho, ela está errada — reescreva.
+- TESTE DE TROCA: substitua mentalmente o nome por outra empresa do mesmo nicho. Se o argumento continuar igual, reescreva com uma evidência específica deste lead.
+- Frases aplicáveis a 80% do segmento são genéricas e devem ser removidas.
+- Não force conexão superficial do tipo "vocês oferecem X, nós vendemos Y". Use X para formular uma pergunta relevante sobre Y.
 - Com poucos dados, escreva CURTO e honesto, com uma pergunta inteligente. Nunca encha linguiça para parecer personalizado.
 
 ═══ LINGUAGEM HUMANA ═══
@@ -323,6 +371,7 @@ Nunca afirme problema, sistema, equipamento, equipe, volume, contrato ou dor que
 - Proibido elogio vazio ("parabéns pelo excelente trabalho"). Um dado de reputação só entra se tiver função no argumento.
 - Varie a abertura. Não comece sempre com "Vi que" nem sempre com "Sou X da empresa Y". Alternativas: "Estava olhando...", "Pesquisando empresas de X em [cidade]...", "Me chamou atenção...", "Encontrei vocês enquanto analisava...".
 - Sem emojis, sem listas, sem markdown, sem caixa alta, sem hashtags, sem links, sem travessão longo. Frases curtas, PT-BR natural, blocos separados por linha em branco.
+- Use de 2 a 4 blocos, com 1 ou 2 frases por bloco. Nunca entregue um parágrafo único longo.
 - Toda frase começa com letra maiúscula.
 
 ═══ UMA PERGUNTA ═══
@@ -334,10 +383,10 @@ Objetivo: GERAR RESPOSTA. Não é fechar venda, não é reunião, não é catál
 Estrutura FLEXÍVEL (não é template rígido, a ordem pode variar conforme o contexto):
 - CONTEXTO: mostre que houve análise real daquele negócio.
 - CONEXÃO: relacione uma característica observada à área que você resolve.
-- CREDENCIAL: diga quem é você, de qual empresa e por que está falando com ele — de forma curta e incidental.
+- CREDENCIAL: apresentação curta, normalmente "[Nome] aqui, da [Empresa]". Não explique a empresa inteira.
 - PERGUNTA: uma pergunta específica e fácil de responder.
 
-Tamanho: normalmente entre 300 e 600 caracteres. Pode ser menor quando houver pouco contexto e um pouco maior quando houver uma oportunidade muito específica. Nunca escreva texto só para alongar.
+Tamanho: normalmente entre 180 e 550 caracteres, em 2 a 4 blocos. Poucos dados exigem mensagem menor, não invenção.
 
 ⛔ Nesta mensagem é proibido: apresentar planos, preços, velocidades, condições, proposta, orçamento, catálogo, pitch institucional, lista de benefícios, pedir reunião, call, demonstração ou agenda.
 ✅ É permitido e necessário dizer, de forma ampla, a área em que você atua.`;
@@ -347,16 +396,16 @@ function buildFollowUpRules(input: ApproachInput, intent: LeadIntent): string {
     sem_resposta:
       "O lead NÃO deu resposta substantiva. Proibido: 'conseguiu ver?', 'viu minha mensagem?', 'passando para reforçar', 'gostaria de saber se'. Traga um NOVO motivo para responder: um ângulo diferente do primeiro contato, com uma pergunta objetiva sobre a situação atual dele.",
     saudacao:
-      "O lead só respondeu uma saudação. Não agradeça, não presuma interesse, não invente conversa anterior e não repita saudação. Vá direto ao motivo do contato, conecte ao negócio dele e faça uma pergunta.",
+      "O lead só respondeu uma saudação. Não agradeça, não presuma interesse, não invente conversa anterior e não repita saudação. Se não houver mensagem anterior registrada, apresente nome e empresa em uma frase. Cite explicitamente o lead ou um detalhe operacional dele, vá direto ao motivo do contato e faça uma pergunta.",
     resposta_curta:
       "A resposta foi curta e pouco informativa. Reconheça brevemente, avance a conversa com um ângulo novo e faça uma pergunta de qualificação simples.",
     interesse:
-      "O lead demonstrou INTERESSE. Pare de prospectar e comece a conduzir: responda objetivamente o que ele quer saber, podendo citar produtos e preços do catálogo quando isso responder à dúvida, e termine com UMA pergunta de qualificação (uso, porte, quantidade de pessoas, local, prazo).",
+      "O lead demonstrou INTERESSE. Pare de prospectar. Responda objetivamente e avance para UMA pergunta curta de qualificação. Produtos e preços reais podem aparecer quando forem úteis, mas sem despejar catálogo.",
     duvida: leadAskedAboutOffer(input.leadResponse)
       ? "O lead perguntou sobre produto, preço ou funcionamento. Responda diretamente e com objetividade primeiro, usando o catálogo, depois faça UMA pergunta que avance a conversa."
       : "O lead fez uma pergunta que NÃO é sobre produto ou preço (pode ser apenas cortesia). Proibido citar planos, preços, velocidades ou condições. Responda em uma frase curta, vá ao motivo do contato e faça UMA pergunta sobre a operação dele.",
     objecao:
-      "O lead apresentou uma OBJEÇÃO. Não confronte, não diga que o seu é melhor. Valide a posição dele, tire a pressão ('a ideia nem seria trocar por trocar') e faça uma pergunta investigativa sobre a situação atual.",
+      "O lead apresentou uma OBJEÇÃO. Não confronte e não diga que o seu é melhor. Reconheça em uma frase, retire a pressão e explore a situação atual com UMA pergunta fácil. Se ele já tem a solução, descubra se atende bem antes de falar em troca.",
     informacao:
       "O lead trouxe informação sobre a operação dele. Use essa informação como base principal, mostre que entendeu e avance para o próximo passo lógico com UMA pergunta.",
   };
@@ -374,12 +423,14 @@ COMPORTAMENTO OBRIGATÓRIO: ${intentRules[intent]}
 
 Regras do follow-up:
 - Nunca ignore a resposta do lead para voltar ao pitch original.
+- Pergunte internamente qual é o próximo passo lógico da conversa e escreva somente esse passo.
 - Não reinicie com "Oi", "Olá", "Bom dia", "Boa tarde", "Boa noite" nem "tudo bem?".
 - Não agradeça a resposta e não presuma alinhamento, interesse ou combinação que não existiu.
-- Seja mais curto que o primeiro contato: normalmente de 200 a 500 caracteres.
+- Seja mais curto que o primeiro contato: normalmente de 120 a 450 caracteres, em 2 ou 3 blocos.
 ${input.previousMessage ? "- O lead já sabe quem você é; não repita a apresentação inteira." : "- O lead ainda não sabe quem você é: diga em uma frase curta seu nome, sua empresa e a área em que atua antes de entrar no assunto."}
 - Só cite produto, plano ou preço quando a intenção for interesse ou dúvida direta sobre isso; caso contrário, o objetivo continua sendo entender a operação do lead.
-- Termine com UMA pergunta que avance para o próximo passo.`;
+- Não repita o argumento nem a pergunta anterior com outras palavras. Mude para qualificação, estrutura, uso, satisfação, necessidade ou próxima etapa.
+- Termine com UMA pergunta que avance para o próximo passo e possa ser respondida em poucas palavras.`;
 }
 
 function buildPersonaSystem(input: ApproachInput): string {
@@ -410,11 +461,14 @@ ${typeRules}
 ═══ CHECKLIST FINAL (verifique antes de responder; se algo falhar, reescreva internamente) ═══
 - A mensagem poderia ser enviada para qualquer empresa do mesmo nicho? Se sim, refaça.
 - Existe uma característica específica desse lead e conexão clara com o que você vende?
+- O argumento usa um dado acionável ou está apenas citando nome, cidade, segmento ou avaliação?
 - Alguma informação foi inventada?
 - Parece escrita por uma pessoa e não por um robô?
 - Está tentando vender demais para o estágio da conversa?
 - Existe uma razão clara para o lead responder?
 - Existe apenas UMA pergunta?
+- A pergunta pode ser respondida em poucas palavras?
+- A mensagem tem de 2 a 4 blocos curtos separados por linha em branco?
 - O tamanho é proporcional ao contexto disponível?
 ${input.messageType === "follow_up" ? "- A mensagem realmente CONTINUA a conversa e considera a resposta do lead?" : "- A mensagem abre uma conversa em vez de despejar oferta?"}
 
@@ -432,6 +486,9 @@ Retorne APENAS JSON válido:
 
 // ---------------- Validação de qualidade ----------------
 const CLICHES = /(espero que esteja tudo bem|gostaria de apresentar|solu[cç][aã]o inovadora|nossa empresa [eé] especializada|sabemos (?:que|da import[aâ]ncia)|neste cen[aá]rio|venho por meio desta|estou entrando em contato para|agregar valor|solu[cç][aã]o personalizada|transformar (?:seus )?resultados|potencializar (?:seus )?resultados|mercado competitivo|alavancar|maximizar resultados|j[aá] pensou em como|poderia impactar|[eé] fundamental para o sucesso|crucial para o sucesso)/i;
+const GENERIC_ARGUMENTS = /(a internet [eé] importante para|conex[aã]o est[aá]vel [eé] fundamental|tecnologia [eé] essencial|boa conex[aã]o melhora|internet [eé] (?:essencial|fundamental) para (?:a|sua) opera[cç][aã]o|conex[aã]o r[aá]pida faz toda a diferen[cç]a|manter os clientes satisfeitos|experi[eê]ncia dos seus clientes)/i;
+const OUTPUT_LABELS = /^\s*(?:mensagem|mensagem sugerida|personaliza[cç][aã]o|gancho|objetivo|an[aá]lise do lead)\s*:/i;
+const LIST_LINE = /^\s*(?:[-*•]|\d+[.)])\s+/m;
 const MARKETING_TERMS = /(marketing|tr[aá]fego|an[uú]ncios?|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|cria[cç][aã]o de site|posicionamento digital|presen[cç]a digital|branding)/i;
 const OFFER_TERMS = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensalidade|desconto|or[cç]amento|proposta)\b/i;
 const MEETING_TERMS = /\b(?:reuni[aã]o|call|liga[cç][aã]o r[aá]pida|demonstra[cç][aã]o|agendar|agenda(?:mos)?\s+(?:um|uma)|5 minutinhos)\b/i;
@@ -447,6 +504,8 @@ function validateApproachMessage(message: string, input: ApproachInput): string 
   if (questionCount !== 1) return "question_count";
   if (!/\?\s*$/.test(text)) return "question_not_final";
   if (CLICHES.test(text)) return "cliche_language";
+  if (GENERIC_ARGUMENTS.test(text)) return "generic_argument";
+  if (OUTPUT_LABELS.test(text) || LIST_LINE.test(text)) return "invalid_output_format";
   if (EMPTY_PRAISE.test(text)) return "empty_praise";
   if (INVENTED_FACTS.test(text)) return "invented_facts";
   if (MEETING_TERMS.test(text)) return "meeting_request";
@@ -462,15 +521,33 @@ function validateApproachMessage(message: string, input: ApproachInput): string 
   if (input.messageType === "follow_up" && /\b(?:agrade[cç]o|obrigad[oa]\s+(?:pela|por)|estamos alinhados|como combinamos|conforme conversamos)\b/i.test(text)) {
     return "false_conversation_assumption";
   }
+  if (input.messageType === "follow_up" && !input.previousMessage) {
+    const sellerTokens = [input.companyProfile?.attendant_name, input.companyProfile?.company_name]
+      .map((value) => normalizeForMatch(value).trim()).filter((value) => value.length >= 3);
+    if (sellerTokens.length && !sellerTokens.some((token) => normalizeForMatch(text).includes(token))) {
+      return "missing_followup_presentation";
+    }
+  }
 
-  // Personalização mínima: precisa citar algo concreto do lead.
+  const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
+  if (blocks.length < 2 || blocks.length > 4 || blocks.some((block) => block.length > 340)) return "poor_visual_structure";
+  const finalQuestion = text.slice(text.lastIndexOf("\n") + 1).trim();
+  if (finalQuestion.length > 180 || /como (?:voc[eê]s?|a empresa) (?:avalia|tem avaliado|enxerga)/i.test(finalQuestion)) return "hard_question";
+
+  // Nome/cidade/segmento isolados não validam personalização; devem existir junto de um argumento operacional.
   const normalized = normalizeForMatch(text);
   const tokens = [input.lead?.company_name, input.lead?.city, input.lead?.category, input.lead?.neighborhood]
     .map((v) => normalizeForMatch(v).trim())
     .filter((v) => v.length >= 4);
-  if (tokens.length && !tokens.some((t) => normalized.includes(t))) return "missing_personalization";
+  const requiresLeadReference = input.messageType === "manual_first_contact" || !input.previousMessage || intent === "saudacao" || intent === "sem_resposta";
+  if (requiresLeadReference && tokens.length && !tokens.some((t) => normalized.includes(t))) return "missing_personalization";
+  const actionableTokens = actionableEvidenceTokens(input.enrichment);
+  const requiresActionableEvidence = input.messageType === "manual_first_contact" || intent === "saudacao" || intent === "sem_resposta";
+  if (requiresActionableEvidence && actionableTokens.length >= 2 && !actionableTokens.some((token) => normalized.includes(token))) {
+    return "missing_argument_personalization";
+  }
 
-  const maxChars = input.messageType === "follow_up" ? 900 : 1100;
+  const maxChars = input.messageType === "follow_up" ? 550 : 650;
   if (text.length > maxChars) return "too_long";
 
   return null;
@@ -481,6 +558,8 @@ const REWRITE_HINTS: Record<string, string> = {
   question_count: "A mensagem precisa ter EXATAMENTE uma interrogação, na última frase.",
   question_not_final: "A mensagem precisa terminar com a pergunta. Nada depois dela.",
   cliche_language: "Remova os clichês de prospecção e escreva como um vendedor humano real.",
+  generic_argument: "O argumento serviria para quase qualquer empresa do nicho. Use um dado acionável específico deste lead; se não houver, seja curto e faça uma pergunta honesta.",
+  invalid_output_format: "Retorne somente a mensagem, sem título, rótulo, lista, aspas ou explicação.",
   empty_praise: "Remova o elogio vazio. Só use um dado do lead se ele tiver função no argumento.",
   invented_facts: "Você afirmou algo sobre o lead que não foi comprovado. Transforme a hipótese em pergunta.",
   meeting_request: "Remova qualquer pedido de reunião, call, demonstração ou agenda.",
@@ -488,16 +567,23 @@ const REWRITE_HINTS: Record<string, string> = {
   premature_offer: "Remova planos, preços, condições e proposta. Neste estágio o objetivo é gerar resposta.",
   restarted_conversation: "Este é um follow-up: não reinicie com saudação.",
   false_conversation_assumption: "Não agradeça nem presuma alinhamento, interesse ou conversa que não aconteceu.",
+  missing_followup_presentation: "Como não há apresentação anterior registrada, apresente brevemente o vendedor e a empresa sem reiniciar com saudação.",
   missing_personalization: "A mensagem está genérica. Cite algo concreto e específico deste lead.",
+  missing_argument_personalization: "A mensagem só cita dados básicos. Use no argumento uma característica operacional ou observação específica disponível sobre este lead.",
+  poor_visual_structure: "Divida a mensagem em 2 a 4 blocos curtos, separados por uma linha em branco, com no máximo 1 ou 2 frases por bloco.",
+  hard_question: "Simplifique a pergunta final para que o lead consiga responder em poucas palavras.",
   too_long: "A mensagem está longa demais. Corte para o essencial.",
 };
 
 function buildRewritePrompt(message: string, reason: string, input: ApproachInput): string {
-  return `A mensagem abaixo falhou na revisão de qualidade.
+  return `${buildApproachPrompt(input)}
+
+═══ REESCRITA OBRIGATÓRIA ═══
+A mensagem abaixo falhou na revisão de qualidade.
 
 PROBLEMA: ${REWRITE_HINTS[reason] || reason}
 
-Reescreva mantendo TODAS as regras já dadas: ${input.messageType === "follow_up" ? "é um follow-up, continuação de conversa, sem saudação inicial" : "é um primeiro contato manual, objetivo é gerar resposta"}; nada inventado; linguagem humana; exatamente UMA pergunta, na última frase; ${input.businessModel !== "agencia" ? "sem marketing/presença digital; " : ""}sem pedir reunião.
+Reescreva usando novamente todo o perfil comercial, as evidências do lead e o contexto da conversa acima. ${input.messageType === "follow_up" ? "É um follow-up: avance a conversa sem reiniciar com saudação" : "É um primeiro contato manual cujo objetivo é gerar resposta"}. Não invente; use linguagem humana; faça exatamente UMA pergunta na última frase; ${input.businessModel !== "agencia" ? "não ofereça marketing ou presença digital; " : ""}não peça reunião.
 
 MENSAGEM ORIGINAL:
 ${message}
@@ -535,20 +621,19 @@ async function callOpenAI(opts: {
   apiKey: string;
   system: string;
   user: string;
-  temperature: number;
   maxTokens: number;
 }): Promise<{ ok: true; data: any } | { ok: false; status: number }> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${opts.apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "openai/gpt-6-astra",
       messages: [
         { role: "system", content: opts.system },
         { role: "user", content: opts.user },
       ],
-      temperature: opts.temperature,
-      max_tokens: opts.maxTokens,
+      reasoning_effort: "low",
+      max_completion_tokens: opts.maxTokens,
       response_format: { type: "json_object" },
     }),
   });
@@ -561,13 +646,12 @@ async function generateApproachMessage(
   apiKey: string,
   input: ApproachInput,
   feature: string,
-): Promise<{ parsed: any; rewriteReason: string | null; intent: LeadIntent } | { error: "rate_limit" | "no_credits" | "gateway"; status: number }> {
+): Promise<{ parsed: any; rewriteReason: string | null; intent: LeadIntent } | { error: "rate_limit" | "no_credits" | "gateway" | "quality"; status: number }> {
   const system = buildPersonaSystem(input);
   const first = await callOpenAI({
     apiKey,
     system,
     user: buildApproachPrompt(input),
-    temperature: 0.85,
     maxTokens: 1200,
   });
   if (!first.ok) {
@@ -575,25 +659,24 @@ async function generateApproachMessage(
     if (first.status === 402) return { error: "no_credits", status: 402 };
     return { error: "gateway", status: first.status };
   }
-  logAiUsage({ feature, model: "gpt-4o-mini", usage: first.data.usage });
+  logAiUsage({ feature, model: "openai/gpt-6-astra", usage: first.data.usage });
   const content = first.data.choices?.[0]?.message?.content;
   const parsed = JSON.parse(content || "{}");
 
-  // Revisão de qualidade: até 2 reescritas, revalidando a cada passagem.
+  // Revisão de qualidade: até 3 reescritas, revalidando a cada passagem.
   let rewriteReason = validateApproachMessage(parsed.mensagem || "", input);
   const reasonsUsed: string[] = [];
-  for (let attempt = 0; attempt < 2 && rewriteReason; attempt++) {
+  for (let attempt = 0; attempt < 3 && rewriteReason; attempt++) {
     reasonsUsed.push(rewriteReason);
     try {
       const fix = await callOpenAI({
         apiKey,
         system,
         user: buildRewritePrompt(parsed.mensagem || "", rewriteReason, input),
-        temperature: 0.6,
         maxTokens: 900,
       });
       if (!fix.ok) break;
-      logAiUsage({ feature: `${feature}-fix`, model: "gpt-4o-mini", usage: fix.data.usage });
+      logAiUsage({ feature: `${feature}-fix`, model: "openai/gpt-6-astra", usage: fix.data.usage });
       const fixed = JSON.parse(fix.data.choices?.[0]?.message?.content || "{}");
       if (!fixed?.mensagem) break;
       parsed.mensagem = fixed.mensagem;
@@ -606,6 +689,11 @@ async function generateApproachMessage(
   rewriteReason = reasonsUsed.length ? reasonsUsed.join(",") : null;
 
   parsed.mensagem = ensureSingleFinalQuestion(sanitizeMessage(parsed.mensagem || ""));
+  const finalValidation = validateApproachMessage(parsed.mensagem, input);
+  if (finalValidation) {
+    console.error("approach quality validation failed", finalValidation);
+    return { error: "quality", status: 422 };
+  }
   return { parsed, rewriteReason, intent: classifyLeadResponse(input.leadResponse) };
 }
 
@@ -619,8 +707,8 @@ serve(async (req) => {
     new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -713,10 +801,11 @@ serve(async (req) => {
       seed: crypto.randomUUID().slice(0, 8),
     };
 
-    const result = await generateApproachMessage(OPENAI_API_KEY, input, "approach-lead-manual");
+    const result = await generateApproachMessage(LOVABLE_API_KEY, input, "approach-lead-manual");
     if ("error" in result) {
       if (result.error === "rate_limit") return json({ error: "Limite de requisições excedido. Tente novamente em instantes." }, 429);
       if (result.error === "no_credits") return json({ error: "Créditos de IA esgotados." }, 402);
+      if (result.error === "quality") return json({ error: "A mensagem não atingiu o padrão de qualidade. Tente novamente mais tarde." }, 422);
       throw new Error(`AI gateway error: ${result.status}`);
     }
 

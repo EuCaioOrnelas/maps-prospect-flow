@@ -1,4 +1,4 @@
-- [ ] Refinar regras de personalização real e seleção de gancho
-- [ ] Refinar primeira abordagem curta e fácil de responder
-- [ ] Refinar continuidade e intenção dos follow-ups
-- [ ] Validar geração única, saída e ausência de botão regenerar
+- [x] Refinar regras de personalização real e seleção de gancho
+- [x] Refinar primeira abordagem curta e fácil de responder
+- [x] Refinar continuidade e intenção dos follow-ups
+- [x] Validar geração única, saída e ausência de botão regenerar
