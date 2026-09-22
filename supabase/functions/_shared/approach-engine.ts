@@ -427,7 +427,7 @@ const OFFER_TERMS = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensali
 const MEETING_TERMS = /\b(?:reuni[aã]o|call|liga[cç][aã]o r[aá]pida|demonstra[cç][aã]o|agendar|agenda(?:mos)?\s+(?:um|uma)|5 minutinhos)\b/i;
 const GREETING_START = /^\s*(?:oi|ol[aá]|bom dia|boa tarde|boa noite|tudo bem|tudo certo|e a[ií])\b/i;
 const EMPTY_PRAISE = /(parab[eé]ns pelo|excelente trabalho|[oó]timo trabalho|voc[eê]s s[aã]o incr[ií]veis)/i;
-const INVENTED_FACTS = /\b(?:vi que voc[eê]s (?:t[eê]m|possuem|usam|utilizam)\s+(?:v[aá]rios|muitos|diversos)|voc[eê]s (?:utilizam|usam|possuem)\s+(?:v[aá]rios|diversos|m[uú]ltiplos)\s+(?:sistemas|computadores|equipamentos)|sei que voc[eê]s (?:sofrem|enfrentam|t[eê]m problemas))/i;
+const INVENTED_FACTS = /\b(?:(?:vi|percebi|notei) que voc[eê]s (?:t[eê]m|tem|possuem|usam|utilizam|enfrentam)\s+(?:um|uma|v[aá]rios|v[aá]rias|muitos|muitas|diversos|grande|alto|bastante)|voc[eê]s (?:utilizam|usam|possuem)\s+(?:v[aá]rios|diversos|m[uú]ltiplos)\s+(?:sistemas|computadores|equipamentos)|sei que voc[eê]s (?:sofrem|enfrentam|t[eê]m problemas))/i;
 
 export function validateApproachMessage(message: string, input: ApproachInput): string | null {
   const text = String(message || "").trim();
