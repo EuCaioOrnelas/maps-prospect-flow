@@ -88,6 +88,7 @@ export const ApiPublicNavbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
+                  onClick={(e) => handleNavClick(e, link.to)}
                   className="rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:text-primary"
                 >
                   {link.label}
@@ -128,7 +129,7 @@ export const ApiPublicNavbar = () => {
                     key={link.to}
                     to={link.to}
                     className="border-b border-border/60 py-2.5 text-sm font-semibold text-foreground"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={(e) => { handleNavClick(e, link.to); setMobileOpen(false); }}
                   >
                     {link.label}
                   </Link>
