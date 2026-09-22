@@ -263,7 +263,21 @@ Deno.serve(async (req) => {
     // Chamado pelo cron (service role): mantém todos os Números de Atendimento
     // conectados o máximo possível — religa sessões caídas e reaplica o webhook.
     if (new URL(req.url).searchParams.get("keepalive") === "1") {
-      if (authHeader !== `Bearer ${SERVICE_KEY}`) return json({ error: "Unauthorized" }, 401);
+      // Autorizado por service role (chamada interna) ou pelo token de cron interno
+      // guardado em public.internal_cron_tokens (mesmo padrão de migrate-chat-encryption).
+      let keepaliveAuthorized = authHeader === `Bearer ${SERVICE_KEY}`;
+      if (!keepaliveAuthorized) {
+        const suppliedCronSecret = req.headers.get("x-cron-secret");
+        if (suppliedCronSecret) {
+          const { data: internalToken } = await admin
+            .from("internal_cron_tokens")
+            .select("token")
+            .eq("name", "evolution-keepalive")
+            .maybeSingle();
+          keepaliveAuthorized = Boolean(internalToken?.token && internalToken.token === suppliedCronSecret);
+        }
+      }
+      if (!keepaliveAuthorized) return json({ error: "Unauthorized" }, 401);
       const COLS = "id, user_id, owner_user_id, nickname, evolution_instance_name, evolution_token, evolution_state, evolution_disconnected_since, evolution_qr_alert_sent_at, last_connected_at, display_phone_number, status";
       const report: Record<string, string> = {};
 

@@ -47,15 +47,11 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const nowIso = new Date().toISOString();
+    // Claim atômico: marca pending -> processing com FOR UPDATE SKIP LOCKED e
+    // devolve apenas o que esta execução reivindicou. Duas execuções simultâneas
+    // nunca recebem a mesma linha.
     const { data: due, error: dueError } = await supabase
-      .from("chat_scheduled_messages")
-      .select("*")
-      .eq("status", "pending")
-      .lte("scheduled_at", nowIso)
-      .order("scheduled_at", { ascending: true })
-      .order("sequence", { ascending: true })
-      .limit(40);
+      .rpc("claim_chat_scheduled_messages", { _limit: 40 });
 
     if (dueError) throw dueError;
     if (!due || due.length === 0) {
