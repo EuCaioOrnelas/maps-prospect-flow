@@ -219,23 +219,13 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
   return MARKETING_TERMS.test(message || "");
 }
 
-const REPUTATION_HOOK_TERMS = /(reputa[cç][aã]o|avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?[0-5](?:[.,]\d)?|reviews?|estrelas?)/i;
-const CONNECTIVITY_OFFER_TERMS = /(internet|conectividade|banda larga|fibra|wi-?fi|telecom|\bmega\b|\bgb\b)/i;
-const UNSUPPORTED_OPERATION_CLAIMS = /(crescimento (?:da|das|do|dos)|bem posicionad[oa]|fluxo intens[oa]|grande fluxo|depende|depend[eê]ncia|operadoras? tradicionais|agendament|pagament|streaming|hor[aá]rios? de pico|sistemas? que funcionem|(?:demanda alta|alta demanda)|sem fidelidade|atendimento local|temos trabalhado|trabalhamos com academias|com certeza precisa|garant|sem interrup|internet r[aá]pida e confi[aá]vel)/i;
-
-/** Evita usar prova social do lead como gancho quando a oferta resolve conectividade operacional. */
-function messageUsesDisconnectedHook(message: string, profile: any): boolean {
-  const offer = `${profile?.company_niche || ""} ${profile?.company_products || ""}`;
-  return CONNECTIVITY_OFFER_TERMS.test(offer) && (REPUTATION_HOOK_TERMS.test(message || "") || UNSUPPORTED_OPERATION_CLAIMS.test(message || ""));
-}
-
-function buildSafeConnectivityApproach(profile: any, lead: any): string {
-  const attendant = String(profile?.attendant_name || "Responsável comercial").trim();
-  const sender = String(profile?.company_name || "nossa empresa").trim();
-  const company = String(lead?.company_name || "sua empresa").trim();
-  const category = String(lead?.category || "empresa").trim().toLowerCase();
-  const city = String(lead?.city || "sua região").trim();
-  return `Oi, tudo certo?\n\nEstava pesquisando empresas do segmento de ${category} em ${city} e encontrei a ${company}.\n\nSou ${attendant}, da ${sender}. Trabalho com planos de internet para empresas, uma estrutura importante para a continuidade das operações de negócios desse segmento.\n\nQueria entender como vocês avaliam a conectividade atual da ${company}, sem presumir que exista algum problema.\n\nPosso te explicar por aqui quais opções atendem empresas desse perfil?`;
+function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
+  const normalizedMessage = normalizeForMatch(message);
+  const offerWords = normalizeForMatch(`${profile?.company_products || ""} ${catalog}`)
+    .split(/\W+/)
+    .filter((word) => word.length >= 6 && !["empresa", "empresas", "servico", "servicos", "produto", "produtos"].includes(word));
+  return /\b(?:r\$|plano|planos|pre[cç]o|benef[ií]cios?|oferecemos?|trabalhamos com)\b/i.test(message || "")
+    || offerWords.some((word) => normalizedMessage.includes(word));
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -265,11 +255,9 @@ COM QUEM VOCÊ ESTÁ FALANDO
 COMO VOCÊ ESCREVE
 - Sempre em 1ª pessoa ("eu", "a gente", "nós aqui da ${empresa}"). Nunca descreva sua empresa em 3ª pessoa como se fosse anúncio.
 - Você leu a análise/diagnóstico deste lead antes de escrever: cite algo concreto dele (nome da empresa, cidade, segmento, ponto observado). Mensagem genérica é falha.
-- Escolha somente fatos do lead que tenham PONTE CAUSAL com o que você vende. Um dado verdadeiro, mas comercialmente desconectado, deve ser descartado.
-- Se você vende internet/conectividade, avaliações, reputação, presença digital e elogios genéricos NÃO são ganchos válidos. Relacione o contato à dependência operacional de conexão do segmento, como atendimento, sistemas, pagamentos, equipamentos conectados ou horários de pico, sem afirmar algo que não foi comprovado.
 - Tom humano de WhatsApp: curto, direto, sem jargão de marketing, sem promessa inventada.
 - Nunca invente números, prêmios, anos de mercado, clientes ou resultados que não estejam no seu perfil.
-- Ofereça SOMENTE o que está em "O que você vende de fato"/catálogo.`;
+- NÃO ofereça, apresente, explique, liste ou cite produtos, serviços, planos, preços, condições ou benefícios da empresa. O perfil e o catálogo servem somente para orientar o tema do gancho e impedir assuntos desconectados.`;
 }
 
 /** Mensagem sem nenhuma referência concreta ao lead = genérica. */
@@ -438,8 +426,6 @@ ${analiseSite ? `- Site: ${analiseSite}` : ""}
 ${analiseRedes ? `- Redes sociais: ${analiseRedes}` : ""}
 ${analiseConcorrencia ? `- Concorrência regional: ${analiseConcorrencia}` : ""}
 ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
-
-AVISO DE EVIDÊNCIA: este diagnóstico pode conter inferências automáticas não verificadas. Não transforme essas inferências em fatos sobre o lead. Considere fatos confirmados apenas os campos estruturados (nome, segmento, cidade, endereço e canais localizados). Se não houver evidência operacional, fale do padrão geral do segmento, nunca afirme como esta empresa opera.
 ` : "";
 
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
@@ -449,6 +435,7 @@ AVISO DE EVIDÊNCIA: este diagnóstico pode conter inferências automáticas nã
 
 ▸ OBJETIVO ÚNICO: gerar UMA RESPOSTA natural do empresário.
 ▸ NÃO é vender. NÃO é marcar reunião. NÃO é apresentar serviço.
+▸ A mensagem NUNCA pode citar ou oferecer produtos, serviços, planos, preços, condições ou benefícios. Essas informações servem somente para orientar o assunto internamente.
 ▸ A mensagem tem que parecer 100% humana, como se você tivesse acabado de olhar a operação dele.
 ▸ Sensação-alvo do leitor: "essa pessoa realmente olhou meu negócio", nunca "mais uma tentando me vender algo".
 
@@ -484,11 +471,9 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
 
 1) GANCHO PERSONALIZADO — logo após a saudação
-   • Baseado em algo REAL do lead que também tenha relação direta com o que a empresa prospectora vende: segmento, localização, operação observável, especialidade ou outro dado comercialmente relevante.
+   • Baseado em algo REAL do lead: escolha livremente entre avaliações Google, nº de reviews, especialidade, localização, diferencial, site, redes sociais, presença digital, reputação, horário, diagnóstico ou outro dado concreto. Adapte ao nicho e aos dados disponíveis; não fique preso à avaliação do Google.
    • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
    • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
-   • TESTE DA PONTE: complete mentalmente "esse dado importa para o que vendo porque...". Se não houver resposta concreta e honesta, descarte o dado. Para internet/conectividade, avaliações e reputação são sempre desconectadas; use a dependência operacional de sistemas, pagamentos, atendimento ou equipamentos do segmento, sem inventar fatos.
-   • EVIDÊNCIA OBRIGATÓRIA: não afirme crescimento, fluxo de pessoas, uso de sistemas, pagamentos, streaming, agendamentos, horários de pico, operadora atual, instabilidade ou dependência de concorrentes sem dado específico que comprove isso. Prefira "academias costumam depender de conexão" a "vocês dependem de conexão".
    • PROIBIDO repetir a saudação aqui. Também PROIBIDO começar o gancho com "Meu nome é" ou "Somos uma empresa" (isso é da identificação, mais adiante).
 
 2) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
@@ -498,8 +483,8 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Exemplos de fraseado (adaptar, nunca copiar literal):
        – "estava pesquisando empresas do segmento aqui em ${lead.city || "sua região"}"
        – "estou fazendo um levantamento sobre ${lead.category || "negócios locais"} da região"
-       – "costumo mapear negócios locais para entender necessidades ligadas ao que atendemos"
-       – "recentemente venho estudando como ${lead.category || "empresas desse setor"} estruturam essa parte da operação"
+       – "costumo mapear negócios locais pra entender como estão usando os canais digitais"
+       – "recentemente venho estudando como ${lead.category || "empresas desse setor"} estão captando clientes"
        – "durante uma pesquisa sobre empresas de ${lead.city || "sua cidade"}, a sua apareceu como referência"
        – "enquanto analisava alguns negócios do setor, encontrei o de vocês"
    • 1 a 2 frases. Nunca genérico demais.
@@ -566,7 +551,6 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
      NUNCA levante um ponto de atenção genérico (ex.: "reputação boa mas...") se ele não conversa com a solução que você entrega.
      Antes de escrever o insight, se pergunte: "esse ponto que vou levantar tem ligação natural com o que eu vendo?".
      Se a resposta for NÃO, troque o ângulo — escolha um ponto do diagnóstico do lead que se conecte com "${companyProfile?.company_products || "seu serviço"}".
-     Se nenhum dado coletado tiver essa conexão, NÃO force elogio nem diagnóstico: personalize com empresa + segmento + cidade e apresente a necessidade operacional como pergunta ou hipótese cautelosa.
    • ANCORAGEM: use os dados do "DIAGNÓSTICO DESTE LEAD" (pontos fracos, análise de site, redes, concorrência, demanda) e cruze com o produto da sua empresa.
      Exemplo mental: se você vende "sistema de delivery próprio" e o lead não tem site com pedido online → insight sobre canal de vendas direto.
      Se você vende "gestão de tráfego" e o lead tem baixa presença em redes → insight sobre captação previsível.
@@ -673,6 +657,7 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Parece uma conversa real iniciada por uma pessoa no WhatsApp — não uma carta comercial?
   ✓ Demonstra pesquisa real sobre a empresa?
   ✓ Gera curiosidade sem revelar a solução?
+  ✓ Não cita nem oferece produto, serviço, plano, preço, condição ou benefício da empresa?
   ✓ Tem transparência (quem, por quê)?
   ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
   ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
@@ -791,8 +776,8 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       ? "offering_mismatch"
       : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
         ? "role_confusion"
-        : messageUsesDisconnectedHook(parsed.mensagem || "", companyProfile)
-          ? "disconnected_hook"
+        : messageRevealsOffer(parsed.mensagem || "", companyProfile, productCatalog)
+          ? "revealed_offer"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
           : null;
@@ -805,14 +790,14 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
             model: "gpt-4o-mini",
             messages: [{ role: "system", content: personaSystem }, {
               role: "user",
-               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ofereceu algo fora do perfil ou transformou hipótese em fato.
+               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
 
 QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
 O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente somente fatos confirmados do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. Não transforme diagnóstico automático ou padrão do segmento em fato sobre este lead. Se não houver evidência conectada, explique genericamente que empresas do segmento costumam depender da solução, sem afirmar como a empresa do lead opera. ${CONNECTIVITY_OFFER_TERMS.test(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""}`) ? `Como a oferta é internet/conectividade, remova avaliações, reputação, crescimento, posicionamento, fluxo, demanda, horários de pico, operadora atual, instabilidade, agendamentos e rotinas não comprovadas. Use somente estes fatos: empresa "${lead.company_name || "lead"}", segmento "${lead.category || "não informado"}" e cidade "${lead.city || "não informada"}". Para criar a ponte, diga apenas que CONECTIVIDADE ESTÁVEL É RELEVANTE PARA EMPRESAS DESSE SEGMENTO; não especifique usos que não estejam comprovados.` : ""} ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem escreve e quem recebe. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição ou benefício da empresa. O perfil comercial serve apenas para orientar internamente o assunto da chamada de atenção. Preserve a curiosidade e peça somente autorização para explicar o ponto percebido. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
@@ -833,10 +818,6 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
       } catch (e) {
         console.error("model-fix falhou", String(e));
       }
-    }
-
-    if (CONNECTIVITY_OFFER_TERMS.test(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""}`) && messageUsesDisconnectedHook(parsed.mensagem || "", companyProfile)) {
-      parsed.mensagem = buildSafeConnectivityApproach(companyProfile, lead);
     }
 
     const finalMessage = ensureClosedQuestionCTA(sanitize(parsed.mensagem || ""));

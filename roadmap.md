@@ -14,4 +14,4 @@
 
 - [x] Persistir `company_business_model`, preencher a Bless como representante e remover o fallback silencioso do perfil.
 - [x] Ajustar abordagem manual e follow-up Meta para usar somente observações do lead conectadas ao produto da empresa prospectora.
-- [x] Validar geração real alinhada; persistência e reabertura da Gestão confirmadas.
+- [ ] Validar geração real alinhada; persistência e reabertura da Gestão confirmadas.
