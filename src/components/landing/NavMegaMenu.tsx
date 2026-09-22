@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import type { MenuColumn, MenuItem } from "./navMenuData";
 import { cn } from "@/lib/utils";
+import { scrollToSection } from "@/lib/scrollToSection";
 
 interface NavMegaMenuProps {
   columns: MenuColumn[];
