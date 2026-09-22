@@ -1228,7 +1228,7 @@ export function WianChat() {
               Enviar avaliação
             </Button>
             <p className="text-[11px] text-center text-muted-foreground">
-              Sua avaliação é anônima para o time de atendimento e usada só para melhorar o suporte.
+              Sua avaliação vai direto para a liderança da Wiize e é usada para melhorar o suporte.
             </p>
           </motion.div>
         )}
