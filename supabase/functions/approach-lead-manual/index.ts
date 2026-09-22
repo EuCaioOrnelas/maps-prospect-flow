@@ -221,7 +221,7 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
 
 const REPUTATION_HOOK_TERMS = /(reputa[cç][aã]o|avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?[0-5](?:[.,]\d)?|reviews?|estrelas?)/i;
 const CONNECTIVITY_OFFER_TERMS = /(internet|conectividade|banda larga|fibra|wi-?fi|telecom|\bmega\b|\bgb\b)/i;
-const UNSUPPORTED_OPERATION_CLAIMS = /(crescimento (?:da|das|do|dos)|bem posicionad[oa]|fluxo intens[oa]|grande fluxo|depende(?:m|ncia)? (?:da|das|de|dos)|operadoras? tradicionais|(?:gerenciar|gest[aã]o d[eo]s?) agendamentos?|agendamentos? on-?line|streaming de aulas?|hor[aá]rios? de pico|sistemas? que funcionem|(?:demanda alta|alta demanda)|sem fidelidade|atendimento local|temos trabalhado|trabalhamos com academias)/i;
+const UNSUPPORTED_OPERATION_CLAIMS = /(crescimento (?:da|das|do|dos)|bem posicionad[oa]|fluxo intens[oa]|grande fluxo|depende|depend[eê]ncia|operadoras? tradicionais|agendament|pagament|streaming|hor[aá]rios? de pico|sistemas? que funcionem|(?:demanda alta|alta demanda)|sem fidelidade|atendimento local|temos trabalhado|trabalhamos com academias|com certeza precisa|garant(?:e|em|imos)|internet r[aá]pida e confi[aá]vel)/i;
 
 /** Evita usar prova social do lead como gancho quando a oferta resolve conectividade operacional. */
 function messageUsesDisconnectedHook(message: string, profile: any): boolean {
