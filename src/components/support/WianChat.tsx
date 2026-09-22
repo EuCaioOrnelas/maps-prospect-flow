@@ -1176,30 +1176,24 @@ export function WianChat() {
         )}
 
         {phase === "nps" && (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-4">
-            <div>
-              <p className="text-sm font-semibold mb-1">Como foi o atendimento? 🙏</p>
-              <p className="text-xs text-muted-foreground">Sua resposta ajuda a gente a melhorar.</p>
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-4 space-y-4 shadow-sm">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Falta só um passo: avalie este atendimento ⭐</p>
+              <p className="text-xs text-muted-foreground leading-snug">
+                {wasEscalated
+                  ? "Seu chamado já está aberto e o time humano vai responder por e-mail. Aqui você avalia apenas como foi o atendimento do Wian até agora."
+                  : "Leva 10 segundos e é o que nos ajuda a melhorar o suporte da Wiize."}
+              </p>
             </div>
 
             <div>
-              <p className="text-sm font-medium mb-2">De 0 a 10, o quanto este atendimento te ajudou?</p>
-              <div className="flex flex-wrap gap-1.5">
-                {Array.from({ length: 11 }, (_, n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setNpsScore(n)}
-                    className={`w-8 h-8 text-xs rounded-md border transition-colors ${
-                      npsScore === n
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border hover:border-primary/50 hover:bg-muted"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
+              <p className="text-sm font-medium mb-2">Como você avalia este atendimento?</p>
+              <EmojiRating value={npsScore} onChange={setNpsScore} size="sm" />
+              {npsScore !== null && (
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Você marcou <span className="font-medium text-foreground">{EMOJI_RATING_OPTIONS.find((o) => o.value === npsScore)?.label}</span>. Obrigado! 🙏
+                </p>
+              )}
             </div>
 
             <div>
