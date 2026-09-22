@@ -335,7 +335,6 @@ const App = () => (
                 <Route path="/avaliacao/:token" element={<LightThemeWrapper><SupportRating /></LightThemeWrapper>} />
                 <Route path="/descadastro" element={<LightThemeWrapper><Descadastro /></LightThemeWrapper>} />
                 <Route path="/refund-policy" element={<LightThemeWrapper><RefundPolicy /></LightThemeWrapper>} />
-                <Route path="/inteligencia" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><InteligenciaWiize /></Suspense></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
                 <Route path="/form/:slug" element={<LightThemeWrapper><PublicForm /></LightThemeWrapper>} />
