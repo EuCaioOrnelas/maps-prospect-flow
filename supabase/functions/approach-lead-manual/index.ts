@@ -4,9 +4,9 @@
 //
 // Estrutura obrigatória (9 blocos, sem títulos no texto final):
 //   0. Saudação humanizada        — curta, natural, variada, adaptada ao ICP; NUNCA "bom dia/tarde/noite"
-//   1. Gancho personalizado       — 1ª frase após a saudação, baseada em dado real do lead
-//   2. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
-//   3. Identificação curta        — quem é / de onde
+//   1. Elogio personalizado       — gatilho factual antes da apresentação
+//   2. Identificação curta        — quem é / de onde
+//   3. Contexto da abordagem      — justifica NATURALMENTE por que essa empresa foi analisada
 //   4. Motivo do contato          — natural, espontâneo
 //   5. Insight consultivo         — percepção inteligente, linguagem cautelosa
 //   6. Curiosidade                — NÃO revelar a solução
@@ -219,10 +219,6 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
   return MARKETING_TERMS.test(message || "");
 }
 
-function messageOverusesGoogleRating(message: string, hasAlternativeSignals: boolean): boolean {
-  return hasAlternativeSignals && /(avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?\d|\d(?:[.,]\d)?\s*(?:de|\/)?\s*5|reviews?)/i.test(message || "");
-}
-
 function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
   const commercialDetail = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensalidade|desconto|condi[cç][aã]o|proposta|or[cç]amento|contrata[cç][aã]o)\b/i;
   const explicitPitch = /\b(?:quero te oferecer|gostaria de oferecer|temos para voc[eê]|posso montar uma proposta|fechar agora|contratar agora)\b/i;
@@ -295,8 +291,8 @@ function messageHasMultipleQuestions(message: string): boolean {
   return ((message || "").match(/\?/g) || []).length !== 1;
 }
 
-function messageUsesWeakPraise(message: string, hasOperationalSignals: boolean): boolean {
-  return hasOperationalSignals && /\b(?:boa|excelente|[oó]tima)\s+(?:reputa[cç][aã]o|avalia[cç][aã]o|presen[cç]a)|se destaca|refer[eê]ncia\s+(?:na|em|da)\s+regi[aã]o\b/i.test(message || "");
+function messageLacksPraiseHook(message: string): boolean {
+  return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
 }
 
 
@@ -483,20 +479,19 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • A saudação vai em UMA linha, seguida de \\n\\n. Nunca fica isolada — o próximo bloco (Gancho) vem logo depois.
    • Use a SEED (${uniqueSeed}) para variar a saudação — não repita sempre a mesma.
 
-1) IDENTIFICAÇÃO COMERCIAL CURTA — logo após a saudação
-   • Apresente imediatamente nome, empresa e área ampla de atuação: "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalho com [área ampla e verdadeira]."
-   • NÃO deixe o leitor receber uma análise sobre o negócio antes de saber quem está falando.
-   • Não cite catálogo, plano, velocidade, preço, condição ou proposta.
-
-2) GANCHO PERSONALIZADO
-   • Baseado em algo REAL do lead, nesta prioridade: observação do prospector ou diagnóstico; nicho/especialidade; presença pública forte comprovada pelo site ou redes; reputação/recomendações; contexto da região/cidade. Mencionar site, redes ou presença digital como observação factual é permitido, mas nunca transforme isso em oferta de marketing.
-   • Avaliação, nota e número de reviews do Google são o ÚLTIMO recurso e só podem aparecer quando nenhum dos sinais acima estiver disponível. Não invente reputação regional, recomendações ou força digital sem evidência nos dados.
-   • Se houver qualquer ponto operacional no diagnóstico, use-o obrigatoriamente e descarte elogios sobre reputação, destaque regional, presença ou avaliações.
+1) ELOGIO PERSONALIZADO — gatilho de atenção antes da apresentação
+   • Elogie algo REAL e comprovado do lead, variando conforme os dados disponíveis: reputação na região, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque concreto.
+   • O elogio deve soar como uma observação humana e específica, nunca bajulação genérica. Não invente reconhecimento regional, força digital ou recomendações.
+   • Não use sempre avaliação ou nota do Google. Escolha o destaque mais forte e natural para aquele lead.
    • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
    • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
    • PROIBIDO repetir a saudação ou a identificação aqui.
 
-3) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
+2) IDENTIFICAÇÃO COMERCIAL CURTA — logo após o elogio
+   • Apresente nome, empresa e área ampla de atuação: "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. Trabalho com [área ampla e verdadeira]."
+   • Não cite catálogo, plano, velocidade, preço, condição ou proposta.
+
+3) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após a apresentação
    • Explica de forma orgânica POR QUE essa empresa foi analisada, antes de qualquer diagnóstico.
    • NUNCA pule direto do gancho para insight/diagnóstico. O empresário precisa entender IMEDIATAMENTE por que recebeu a mensagem.
    • Deve soar verdadeiro, natural, conversacional — nunca como desculpa.
@@ -604,7 +599,7 @@ ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digi
 
 
 REGRA DE FLUXO (INEGOCIÁVEL):
-Saudação → Identificação comercial curta → Gancho → Contexto → Autoridade → Motivo → Insight → Interesse → Baixa pressão → CTA.
+Saudação → Elogio factual → Identificação comercial curta → Contexto → Autoridade → Motivo → Insight → Interesse → Baixa pressão → CTA.
 A saudação NUNCA fica isolada — sempre é seguida imediatamente pelo gancho no bloco seguinte.
 JAMAIS pular do gancho direto para o insight/diagnóstico. Sempre precisa existir a transição contextual.
 A leitura tem que fluir como uma conversa real no WhatsApp entre dois profissionais, nunca como um relatório de auditoria ou carta comercial.
@@ -672,7 +667,8 @@ AUTO-AVALIAÇÃO ANTES DE RESPONDER
 ═══════════════════════════════════════════
 Avalie mentalmente antes de me devolver o JSON:
   ✓ Começa com uma saudação curta, natural e variada (nunca "bom dia/tarde/noite", nunca gíria)?
-  ✓ A saudação está adaptada ao ICP e não fica isolada (é seguida pelo gancho)?
+  ✓ A saudação está adaptada ao ICP e é seguida por um elogio factual antes da apresentação?
+  ✓ O elogio varia conforme os dados entre reputação regional, presença forte, recomendações, avaliação ou outro destaque comprovado?
   ✓ Parece uma conversa real iniciada por uma pessoa no WhatsApp — não uma carta comercial?
   ✓ Demonstra pesquisa real sobre a empresa?
   ✓ Desperta interesse e deixa claro o assunto comercial, sem suspense vazio?
@@ -749,11 +745,6 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
     if (!content) throw new Error("Resposta vazia da IA");
 
     const parsed = JSON.parse(content);
-    const hasAlternativeHookSignals = Boolean(
-      pontosFortes.length || pontosFracos.length || analiseSite || analiseRedes || analiseConcorrencia
-      || analiseDemanda || lead.ai_diagnosis || lead.category || lead.city || hasSite || socialMedia.length
-    );
-
     // Sanitiza a saída: remove travessões, normaliza espaçamentos e capitaliza início de bloco/frase.
     const capFirst = (s: string) => s.replace(/^(\s*)([a-zà-ÿ])/, (_m, sp, ch) => sp + ch.toUpperCase());
     const sanitize = (s: string) => {
@@ -801,16 +792,14 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
         ? "role_confusion"
         : messageRevealsOffer(parsed.mensagem || "", companyProfile, productCatalog)
           ? "revealed_offer"
-        : messageOverusesGoogleRating(parsed.mensagem || "", hasAlternativeHookSignals)
-          ? "google_rating_overuse"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
           : messageHasVagueCommercialCTA(parsed.mensagem || "")
             ? "vague_commercial_cta"
             : messageHasMultipleQuestions(parsed.mensagem || "")
               ? "multiple_questions"
-              : messageUsesWeakPraise(parsed.mensagem || "", Boolean(pontosFracos.length || lead.ai_diagnosis))
-                ? "weak_praise"
+              : messageLacksPraiseHook(parsed.mensagem || "")
+                ? "missing_praise_hook"
                 : null;
     if (rewriteReason) {
       try {
@@ -828,7 +817,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e EXATAMENTE UMA pergunta, no final. Nada pode vir depois dela. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". Se há diagnóstico operacional, use-o e NÃO elogie reputação, destaque regional, presença ou avaliações. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
+ Reescreva como PRIMEIRO CONTATO de um vendedor consultivo, mantendo o tom humano, 90 a 160 palavras, blocos separados por linha em branco e EXATAMENTE UMA pergunta, no final. Nada pode vir depois dela. Preserve esta ordem: saudação curta; elogio factual ANTES da apresentação; nome, empresa e área ampla de atuação; contexto; conexão comercial; pergunta objetiva. O elogio deve variar conforme os dados disponíveis entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado. Não invente elogios e não use sempre avaliação. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Diga claramente, de forma ampla, que área a empresa remetente atende, para a intenção comercial fazer sentido. NÃO apresente catálogo, plano, velocidade, preço, condição, proposta ou orçamento. O CTA deve perguntar sobre a situação atual do lead ou convidá-lo a entender um ponto ESPECÍFICO; nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso poderia impactar" ou "o que acha de avaliarmos?". ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}

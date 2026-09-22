@@ -204,14 +204,11 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
   return MARKETING_TERMS.test(message || "");
 }
 
-function messageOverusesGoogleRating(message: string, hasAlternativeSignals: boolean): boolean {
-  return hasAlternativeSignals && /(avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?\d|\d(?:[.,]\d)?\s*(?:de|\/)?\s*5|reviews?)/i.test(message || "");
-}
-
 function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
   const commercialDetail = /\b(?:r\$|\d+\s*(?:mega|gb)\b|plano|planos|pre[cç]o|mensalidade|desconto|condi[cç][aã]o|proposta|or[cç]amento|contrata[cç][aã]o)\b/i;
   const explicitPitch = /\b(?:quero te oferecer|gostaria de oferecer|temos para voc[eê]|posso montar uma proposta|fechar agora|contratar agora)\b/i;
-  return commercialDetail.test(message || "") || explicitPitch.test(message || "");
+  const prematureBenefit = /\b(?:pode se beneficiar|internet de alta qualidade|melhorar(?:ia|ando)? a experi[eê]ncia|trazer (?:mais )?(?:resultado|efici[eê]ncia)|garantir uma conex[aã]o)\b/i;
+  return commercialDetail.test(message || "") || explicitPitch.test(message || "") || prematureBenefit.test(message || "");
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -281,12 +278,34 @@ function messageHasVagueCommercialCTA(message: string): boolean {
   return /\b(?:fiquei curioso para saber|gostaria de entender como isso poderia impactar|o que voc[eê] acha de avaliarmos|faz sentido(?:\s+para voc[eê])?|quer saber mais\??|gostaria de saber mais\??)\b/i.test(message || "");
 }
 
+function messageUsesDisconnectedCTA(message: string, profile: any): boolean {
+  const normalizedMessage = normalizeForMatch(message);
+  const sellerContext = normalizeForMatch(`${profile?.company_niche || ""} ${profile?.company_products || ""}`);
+  if (!/(internet|conectividade|telecom|banda larga|fibra)/.test(sellerContext)) return false;
+  const lastQuestion = normalizedMessage.split(/(?<=[.!])\s+|\n+/).filter(Boolean).findLast((part) => part.includes("?")) || "";
+  return /(agendamento|pagamento|captacao|marketing|redes sociais|site|sistema de gestao)/.test(lastQuestion)
+    && !/(internet|conexao|conectividade|rede|estabilidade|velocidade)/.test(lastQuestion);
+}
+
+function messageUsesCompoundCTA(message: string): boolean {
+  const normalizedMessage = normalizeForMatch(message);
+  const lastQuestion = normalizedMessage.split(/\n+/).filter(Boolean).findLast((part) => part.includes("?")) || "";
+  return /\b(?:ou|e)\s+(?:ja\s+)?(?:pensou|considerou|gostaria|quer|pretende|esta)\b/.test(lastQuestion);
+}
+
 function messageHasMultipleQuestions(message: string): boolean {
   return ((message || "").match(/\?/g) || []).length !== 1;
 }
 
-function messageUsesWeakPraise(message: string, hasOperationalSignals: boolean): boolean {
-  return hasOperationalSignals && /\b(?:boa|excelente|[oó]tima)\s+(?:reputa[cç][aã]o|avalia[cç][aã]o|presen[cç]a)|se destaca|refer[eê]ncia\s+(?:na|em|da)\s+regi[aã]o\b/i.test(message || "");
+function ensureSingleFinalQuestion(message: string): string {
+  const text = String(message || "").trim();
+  const lastQuestionMark = text.lastIndexOf("?");
+  if (lastQuestionMark < 0) return text;
+  return `${text.slice(0, lastQuestionMark).replace(/\?/g, ".")}${text.slice(lastQuestionMark)}`;
+}
+
+function messageLacksPraiseHook(message: string): boolean {
+  return !/\b(?:chamou minha aten[cç][aã]o|me chamou a aten[cç][aã]o|se destaca|destaque|boa|forte|excelente|[oó]tima|bem avaliad[oa]|recomenda[cç][oõ]es|reputa[cç][aã]o|presen[cç]a|avalia[cç][aã]o|avalia[cç][oõ]es|nota)\b/i.test(message || "");
 }
 
 function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
@@ -463,7 +482,7 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
 ${enrichment.custom_diagnosis ? `\n═══ OBSERVAÇÕES DO PROSPECTOR (diagnóstico adicional do usuário) ═══\n${enrichment.custom_diagnosis}` : ""}
 
-IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho. Se há observações do prospector, PRIORIZE essas informações pois são análises reais feitas pelo usuário. Avaliação e quantidade de reviews são o ÚLTIMO recurso, somente quando nenhum outro sinal real estiver disponível.
+IMPORTANTE: Antes da apresentação, use um ELOGIO factual como gatilho de atenção. Escolha e varie conforme os dados realmente disponíveis: reputação na região, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado. Não invente reconhecimento regional, força digital ou recomendações. Depois, conecte esse elogio ao contexto operacional e comercial pertinente.
 ` : "";
 
     // Generate a random seed to force unique messages even for similar diagnostics
@@ -511,38 +530,42 @@ ${nicheStrategy}
 ═══ VARIAÇÃO NATURAL (SEED: ${uniqueSeed}) ═══
 A mensagem deve parecer escrita à mão por um vendedor humano, de forma única para ESTE lead específico.
 - Use o NOME DA EMPRESA, a CIDADE, o NICHO e os dados do diagnóstico como diferenciadores naturais
-- Varie levemente o tom, a forma de agradecer e o próximo passo proposto
+- Varie o elogio factual escolhido e o próximo passo proposto
 - Mantenha humano, consultivo, nada robótico ou genérico
 
 ═══ ESTRUTURA OBRIGATÓRIA (abordagem humana após o template) ═══
 Escreva entre 90 e 160 palavras, com blocos curtos separados por \\n\\n, nesta ordem e sem títulos no texto final:
-1. ABERTURA NEUTRA: comece naturalmente, sem agradecer e sem interpretar o conteúdo da resposta anterior. Pode usar "Oi, tudo certo?" ou seguir direto para a apresentação.
-2. APRESENTAÇÃO COMERCIAL: apresente obrigatoriamente "${companyProfile?.attendant_name || "[nome]"}", "${companyProfile?.company_name || "[empresa]"}" e a área ampla em que atua.
-3. GANCHO PERSONALIZADO: use algo REAL do lead. Prioridade: observação do prospector ou diagnóstico; nicho/especialidade; presença pública comprovada; reputação/recomendações comprovadas; contexto regional. Avaliação do Google é o ÚLTIMO recurso.
-   Se houver qualquer ponto operacional no diagnóstico, use-o obrigatoriamente e descarte elogios sobre reputação, destaque regional, presença ou avaliações.
-4. CONEXÃO COMERCIAL: explique por que esse ponto é relevante para o tipo de operação do lead e conecte-o ao campo de atuação da empresa remetente. Não afirme que o lead tem um problema sem evidência.
+1. CONTINUAÇÃO NATURAL: NÃO use nova saudação. Comece com "O motivo do meu contato foi..." ou uma variação natural equivalente que anuncie por que você chamou, sem dizer "entender como podemos ajudar", sem agradecer e sem interpretar o conteúdo da resposta anterior.
+2. ELOGIO/GATILHO DE ATENÇÃO: antes da apresentação, elogie algo REAL e comprovado do lead. Varie entre reputação na região, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque existente nos dados. Não invente fatos e não use sempre avaliação.
+3. APRESENTAÇÃO COMERCIAL: apresente obrigatoriamente "${companyProfile?.attendant_name || "[nome]"}", "${companyProfile?.company_name || "[empresa]"}" e a área ampla em que atua.
+4. CONEXÃO COMERCIAL: explique por que esse destaque chamou sua atenção e conecte-o ao contexto operacional pertinente ao campo de atuação da empresa remetente. Não afirme que o lead tem um problema sem evidência.
 5. INTERESSE: indique que pode existir uma oportunidade concreta de melhoria, sem revelar catálogo, plano, preço, condição ou proposta.
 6. CTA OBJETIVO: termine perguntando sobre a situação atual do lead ou se ele quer entender o ponto ESPECÍFICO. A pergunta precisa dizer claramente qual é o assunto. NÃO peça call, reunião, agenda, proposta ou orçamento.
+   A pergunta deve tratar obrigatoriamente da área que a empresa remetente vende. Se vende internet, pergunte sobre conexão, estabilidade, rede ou estrutura atual; NUNCA pergunte apenas sobre agenda, pagamentos, marketing ou outro sistema que ela não vende.
+   Faça UMA pergunta simples, sem juntar duas alternativas com "ou". Exemplo de estrutura: "Hoje a conexão de vocês atende bem a operação nos horários de maior movimento?"
    A mensagem inteira deve ter EXATAMENTE UMA interrogação, somente nesta última frase. Nada pode vir depois dela.
 
 FLUXO INEGOCIÁVEL:
-Abertura neutra → Apresentação → Gancho real → Conexão comercial → Interesse específico → Pergunta objetiva.
+Motivo do contato, sem nova saudação → Elogio factual → Apresentação → Conexão comercial → Interesse específico → Pergunta objetiva.
 A única diferença para a mensagem manual é que esta acontece depois do template; não presuma o conteúdo da resposta.
 
 ═══ REGRAS CRÍTICAS ═══
 - ⛔ PROIBIDO cumprimentos temporais: "Bom dia", "Boa tarde", "Boa noite"
+- ⛔ PROIBIDO reiniciar com "Oi", "Olá" ou qualquer nova saudação; o lead já respondeu ao template
 - ⛔ PROIBIDO "Tudo bem?", "Como vai?", "Como está?" — o lead já respondeu, vá direto
 - ⛔ PROIBIDO agradecer a resposta ou afirmar interesse/alinhamento sem conhecer o texto respondido
 - ⛔ PROIBIDO omitir a apresentação: nome + empresa + autoridade contextual são obrigatórios
 - ⛔ PROIBIDO apresentar catálogo, plano, velocidade, preço, condição, proposta ou orçamento; é permitido nomear a área de atuação da empresa
+- ⛔ PROIBIDO antecipar benefícios ou vender a solução com frases como "pode se beneficiar", "internet de alta qualidade" ou "melhorar a experiência"
 - ⛔ PROIBIDO pedir call, reunião, demonstração, agenda ou horário
 - ⛔ PROIBIDO CTA vago: "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?", "o que acha de avaliarmos?"
+- ⛔ PROIBIDO "como podemos ajudar" ou "ajudar a melhorar" na abertura; isso antecipa uma oferta. Apenas explique o motivo do contato
 - ${companyProfile ? `Represente "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : "Mensagem genérica"}
 - ${companyProfile ? `Use internamente "${companyProfile.company_products}" apenas para escolher um insight conectado, mas NÃO cite nem ofereça isso na mensagem` : ""}
 - ${companyProfile ? `Use "${companyProfile.company_differential}" somente como contexto interno; NÃO transforme em argumento de venda` : ""}
 - Blocos CURTOS separados por \\n\\n, com 90 a 160 palavras e máximo absoluto de 180 palavras
-- NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
-- ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
+- O elogio abre a conversa e pode tratar de reputação, presença, recomendações ou avaliação; a conexão comercial seguinte deve ser pertinente ao nicho e ao que a empresa remetente vende
+- ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use um destaque factual do lead e conecte-o ao tipo de operação" : ""}
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
 Retorne APENAS JSON válido:
@@ -594,11 +617,6 @@ Retorne APENAS JSON válido:
     if (!content) throw new Error("Resposta vazia da IA");
 
     const parsed = JSON.parse(content);
-    const hasAlternativeHookSignals = Boolean(
-      enrichment.custom_diagnosis || pontosFortes.length || pontosFracos.length || analiseSite || analiseRedes
-      || analiseConcorrencia || analiseDemanda || nicheAnalysisType || lead.category || lead.city || hasSite || socialMedia.length
-    );
-
     // Revisão final: se a mensagem ofereceu algo fora do modelo ou trocou os papéis, reescreve UMA vez.
     const rewriteReason = messageViolatesModel(parsed.mensagem || "", businessModel)
       ? "offering_mismatch"
@@ -606,8 +624,6 @@ Retorne APENAS JSON válido:
         ? "role_confusion"
         : messageRevealsOffer(parsed.mensagem || "", companyProfile, productCatalog)
           ? "revealed_offer"
-        : messageOverusesGoogleRating(parsed.mensagem || "", hasAlternativeHookSignals)
-          ? "google_rating_overuse"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
         : messageLacksSenderPresentation(parsed.mensagem || "", companyProfile)
@@ -616,11 +632,15 @@ Retorne APENAS JSON válido:
             ? "false_conversation_assumption"
             : messageHasVagueCommercialCTA(parsed.mensagem || "")
               ? "vague_commercial_cta"
-              : messageHasMultipleQuestions(parsed.mensagem || "")
-                ? "multiple_questions"
-                : messageUsesWeakPraise(parsed.mensagem || "", Boolean(pontosFracos.length || lead.ai_diagnosis))
-                  ? "weak_praise"
-                  : null;
+              : messageUsesDisconnectedCTA(parsed.mensagem || "", companyProfile)
+                ? "disconnected_cta"
+                : messageUsesCompoundCTA(parsed.mensagem || "")
+                  ? "compound_cta"
+                  : messageHasMultipleQuestions(parsed.mensagem || "")
+                    ? "multiple_questions"
+                    : messageLacksPraiseHook(parsed.mensagem || "")
+                      ? "missing_praise_hook"
+                      : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -637,7 +657,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
- Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia", então NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Use 90 a 160 palavras em blocos curtos: (1) abertura neutra; (2) nome, empresa e área ampla de atuação; (3) gancho concreto do lead; (4) conexão desse dado com o campo em que o remetente atua; (5) oportunidade específica sem apresentar solução; (6) pergunta objetiva sobre a situação atual do lead ou sobre o ponto levantado. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. NÃO peça call, reunião, agenda ou horário. Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. Se há diagnóstico operacional, use-o e NÃO elogie reputação, destaque regional, presença ou avaliações. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
+ Reescreva como a PRIMEIRA ABORDAGEM HUMANA depois de um template Meta. A resposta anterior pode ter sido apenas "bom dia". NÃO use "Oi", "Olá", "tudo bem?" nem outra saudação; NÃO agradeça, NÃO diga que estão alinhados, NÃO presuma interesse e NÃO mencione conversa anterior. Comece naturalmente por "O motivo do meu contato foi..." ou equivalente, sem dizer "entender como podemos ajudar". Use 90 a 160 palavras em blocos curtos: (1) motivo do contato; (2) elogio factual ANTES da apresentação, escolhendo conforme os dados entre reputação regional, presença digital forte, ótimas recomendações, avaliação do Google, especialidade ou outro destaque comprovado; (3) nome, empresa e área ampla de atuação; (4) conexão do destaque com o contexto operacional e com o campo em que o remetente atua; (5) oportunidade específica sem apresentar solução; (6) pergunta objetiva. Não invente elogios e não use sempre avaliação do Google. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). É permitido dizer a área de atuação; NÃO apresente catálogo, plano, velocidade, preço, condição, benefício, proposta ou orçamento. Não diga que o lead "pode se beneficiar", não prometa melhoria e não venda "internet de alta qualidade". NÃO peça call, reunião, agenda ou horário. O CTA deve tratar do que o remetente realmente vende; se vende internet, faça UMA pergunta simples sobre conexão, estabilidade, rede ou estrutura atual, nunca apenas sobre agenda, pagamentos, marketing ou sistemas e nunca junte duas perguntas com "ou". Nunca use "fiquei curioso", "quer saber mais?", "faz sentido?", "como isso impactaria?" ou "o que acha de avaliarmos?". Use EXATAMENTE UMA interrogação, na última frase, e não escreva nada depois dela. ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como elogio factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
@@ -659,6 +679,8 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
         console.error("model-fix falhou", String(e));
       }
     }
+
+    parsed.mensagem = ensureSingleFinalQuestion(parsed.mensagem || "");
 
     if (lead_id && !internalMode) {
       // Store the message on the lead
