@@ -62,7 +62,6 @@ const SupportRating = lazyWithRetry(() => import("./pages/SupportRating"), "Supp
 const Descadastro = lazyWithRetry(() => import("./pages/Descadastro"), "Descadastro");
 const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"), "RefundPolicy");
 const SecurityFAQ = lazyWithRetry(() => import("./pages/SecurityFAQ"), "SecurityFAQ");
-const InteligenciaWiize = lazyWithRetry(() => import("./pages/InteligenciaWiize"), "InteligenciaWiize");
 const SendingGuidelines = lazyWithRetry(() => import("./pages/SendingGuidelines"), "SendingGuidelines");
 const HelpCenter = lazyWithRetry(() => import("./pages/HelpCenter"), "HelpCenter");
 const HelpCenterFAQ = lazyWithRetry(() => import("./pages/HelpCenterFAQ"), "HelpCenterFAQ");
