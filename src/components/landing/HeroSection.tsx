@@ -83,7 +83,7 @@ export const HeroSection = ({
    titleLine1 = "Tudo para vender B2B",
    titleLine2 = "",
    titleHighlight = "Em um só lugar",
-   description = "Plataforma de inteligência comercial que entende empresas, conversas e histórico de vendas para mostrar ao seu time quais oportunidades priorizar e qual o próximo passo.",
+   description = "Infraestrutura comercial para captar, prospectar, atender, gerenciar e vender, com IA e automação conectando toda a operação em uma única plataforma.",
   descriptionClassName,
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
