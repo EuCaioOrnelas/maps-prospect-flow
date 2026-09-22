@@ -1,16 +1,29 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Instagram, Youtube, ArrowUpRight } from "lucide-react";
+import { scrollToSection } from "@/lib/scrollToSection";
 import reclameAquiLogo from "@/assets/reclame-aqui-logo.png";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const linkClass =
     "text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
   const socialClass =
-    "inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+    "inline-flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+  // Seções da landing: navega para "/" quando necessário e rola até a seção,
+  // mesmo com seções lazy/deferred (o helper aguarda a montagem).
+  const handleSectionClick = (id: string) => {
+    if (location.pathname !== "/") {
+      navigate("/");
+    }
+    // Timeout longo: as seções da landing são lazy e montam aos poucos.
+    scrollToSection(id, 20000);
+  };
 
   return (
     <footer className="w-full overflow-hidden border-t border-border bg-card">
@@ -49,8 +62,24 @@ export const Footer = () => {
             <nav aria-label="Produto">
               <h2 className="mb-5 text-sm font-semibold text-foreground">Produto</h2>
               <ul className="space-y-3.5">
-                <li><Link to="/#recursos" className={linkClass}>Recursos</Link></li>
-                <li><Link to="/#pricing" className={linkClass}>Planos</Link></li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleSectionClick("recursos")}
+                    className={`${linkClass} cursor-pointer`}
+                  >
+                    Recursos
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleSectionClick("pricing")}
+                    className={`${linkClass} cursor-pointer`}
+                  >
+                    Planos
+                  </button>
+                </li>
                 <li><Link to="/signup/escolher-plano" className={linkClass}>Teste grátis</Link></li>
                 <li><Link to="/login" className={linkClass}>Entrar</Link></li>
               </ul>
@@ -61,7 +90,6 @@ export const Footer = () => {
               <ul className="space-y-3.5">
                 <li><Link to="/contato" className={linkClass}>Contato</Link></li>
                 <li><Link to="/ajuda" className={linkClass}>Central de ajuda</Link></li>
-                <li><Link to="/diretrizes-de-envio" className={linkClass}>Diretrizes de envio</Link></li>
                 <li><Link to="/seguranca-faq" className={linkClass}>Segurança</Link></li>
               </ul>
             </nav>
