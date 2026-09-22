@@ -115,7 +115,6 @@ export const Footer = () => {
                       Reclamações e demandas
                     </span>
                   </span>
-                  <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true" />
                 </a>
               </div>
             </div>
