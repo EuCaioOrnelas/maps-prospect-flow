@@ -206,12 +206,22 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
 
 const REPUTATION_HOOK_TERMS = /(reputa[cç][aã]o|avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?[0-5](?:[.,]\d)?|reviews?|estrelas?)/i;
 const CONNECTIVITY_OFFER_TERMS = /(internet|conectividade|banda larga|fibra|wi-?fi|telecom|\bmega\b|\bgb\b)/i;
-const UNSUPPORTED_OPERATION_CLAIMS = /(crescimento (?:da|das|do|dos)|bem posicionad[oa]|fluxo intens[oa]|grande fluxo|depende(?:m|ncia)? (?:da|das|de|dos)|operadoras? tradicionais|(?:gerenciar|gest[aã]o d[eo]s?) agendamentos?|agendamentos? on-?line|streaming de aulas?|hor[aá]rios? de pico|sistemas? que funcionem|(?:demanda alta|alta demanda))/i;
+const UNSUPPORTED_OPERATION_CLAIMS = /(crescimento (?:da|das|do|dos)|bem posicionad[oa]|fluxo intens[oa]|grande fluxo|depende(?:m|ncia)? (?:da|das|de|dos)|operadoras? tradicionais|(?:gerenciar|gest[aã]o d[eo]s?) agendamentos?|agendamentos? on-?line|streaming de aulas?|hor[aá]rios? de pico|sistemas? que funcionem|(?:demanda alta|alta demanda)|sem fidelidade|atendimento local|temos trabalhado|trabalhamos com academias)/i;
 
 /** Evita usar prova social do lead como gancho quando a oferta resolve conectividade operacional. */
 function messageUsesDisconnectedHook(message: string, profile: any): boolean {
   const offer = `${profile?.company_niche || ""} ${profile?.company_products || ""}`;
   return CONNECTIVITY_OFFER_TERMS.test(offer) && (REPUTATION_HOOK_TERMS.test(message || "") || UNSUPPORTED_OPERATION_CLAIMS.test(message || ""));
+}
+
+function buildSafeConnectivityFollowup(profile: any, lead: any): string {
+  const attendant = String(profile?.attendant_name || "Responsável comercial").trim();
+  const sender = String(profile?.company_name || "nossa empresa").trim();
+  const company = String(lead?.company_name || "sua empresa").trim();
+  const category = String(lead?.category || "empresa").trim().toLowerCase();
+  const city = String(lead?.city || "sua região").trim();
+  const products = String(profile?.company_products || "nossos planos de internet").trim();
+  return `Obrigado pelo retorno! Vi que a ${company} atua como ${category} em ${city}. Para empresas desse segmento, uma conexão estável pode contribuir para a continuidade da operação.\n\nSou ${attendant}, da ${sender}, e trabalho com planos de internet para empresas.\n\nHoje temos estas opções cadastradas: ${products}\n\nNa conectividade da ${company}, a prioridade de vocês hoje seria avaliar estabilidade ou velocidade?`;
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -606,6 +616,10 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
       } catch (e) {
         console.error("model-fix falhou", String(e));
       }
+    }
+
+    if (CONNECTIVITY_OFFER_TERMS.test(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""}`) && messageUsesDisconnectedHook(parsed.mensagem || "", companyProfile)) {
+      parsed.mensagem = buildSafeConnectivityFollowup(companyProfile, lead);
     }
 
     if (lead_id && !internalMode) {
