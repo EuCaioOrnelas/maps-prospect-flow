@@ -197,11 +197,15 @@ ${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insin
 `;
 }
 
-const MARKETING_TERMS = /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
+const MARKETING_TERMS = /(marketing|tr[aá]fego|an[uú]ncios?|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
 
 function messageViolatesModel(message: string, model: BusinessModel): boolean {
   if (model === "agencia") return false;
   return MARKETING_TERMS.test(message || "");
+}
+
+function messageOverusesGoogleRating(message: string, hasAlternativeSignals: boolean): boolean {
+  return hasAlternativeSignals && /(avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?\d|\d(?:[.,]\d)?\s*(?:de|\/)?\s*5|reviews?)/i.test(message || "");
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -427,7 +431,7 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 ${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
 ${enrichment.custom_diagnosis ? `\n═══ OBSERVAÇÕES DO PROSPECTOR (diagnóstico adicional do usuário) ═══\n${enrichment.custom_diagnosis}` : ""}
 
-IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho. Se há observações do prospector, PRIORIZE essas informações pois são análises reais feitas pelo usuário.
+IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho. Se há observações do prospector, PRIORIZE essas informações pois são análises reais feitas pelo usuário. Avaliação e quantidade de reviews são o ÚLTIMO recurso, somente quando nenhum outro sinal real estiver disponível.
 ` : "";
 
     // Generate a random seed to force unique messages even for similar diagnostics
@@ -477,7 +481,7 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - Mantenha humano, consultivo, nada robótico ou genérico
 
 ═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos curtos, separados por \\n\\n) ═══
-1. Agradecimento curto pelo retorno + uma chamada de atenção personalizada. Escolha livremente entre os dados reais disponíveis do lead — segmento, cidade, especialidade, site, redes sociais, reputação, diagnóstico ou outra informação concreta — usando o que melhor combina com o nicho e com o contexto desta conversa; não fique preso à avaliação do Google.
+1. Agradecimento curto pelo retorno + uma chamada de atenção personalizada. Escolha nesta ordem: observação do prospector ou diagnóstico; característica do nicho/especialidade; presença pública forte comprovada pelo site ou redes; reputação/recomendações; contexto da região/cidade. Mencionar site, redes ou presença digital como observação factual é permitido, mas nunca transforme isso em oferta de marketing. Avaliação, nota e número de reviews do Google são o ÚLTIMO recurso e só podem aparecer se nenhum desses outros sinais reais existir. Não invente reputação regional, recomendações ou força digital sem evidência nos dados.
 2. Apresentação rápida (nome + empresa + o que faz em 1 linha, sem rodeios)
 3. Insight/valor real conectado à dor ou oportunidade detectada no diagnóstico — algo que mostre que ele NÃO está falando com um robô genérico
 4. Próximo passo claro e leve: uma pergunta qualificadora OU convite para uma call rápida de 10-15 min OU oferta de enviar um material/proposta
@@ -544,12 +548,18 @@ Retorne APENAS JSON válido:
     if (!content) throw new Error("Resposta vazia da IA");
 
     const parsed = JSON.parse(content);
+    const hasAlternativeHookSignals = Boolean(
+      enrichment.custom_diagnosis || pontosFortes.length || pontosFracos.length || analiseSite || analiseRedes
+      || analiseConcorrencia || analiseDemanda || nicheAnalysisType || lead.category || lead.city || hasSite || socialMedia.length
+    );
 
     // Revisão final: se a mensagem ofereceu algo fora do modelo ou trocou os papéis, reescreve UMA vez.
     const rewriteReason = messageViolatesModel(parsed.mensagem || "", businessModel)
       ? "offering_mismatch"
       : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
         ? "role_confusion"
+        : messageOverusesGoogleRating(parsed.mensagem || "", hasAlternativeHookSignals)
+          ? "google_rating_overuse"
         : messageLacksPersonalization(parsed.mensagem || "", lead)
           ? "missing_personalization"
           : null;
@@ -569,7 +579,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho e estrutura, em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+ Reescreva mantendo o mesmo tom, tamanho e estrutura, em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${rewriteReason === "google_rating_overuse" ? "Troque obrigatoriamente o gancho de avaliação, nota ou reviews por diagnóstico, nicho, especialidade, presença pública comprovada, reputação/recomendações comprovadas ou contexto regional. Não mencione avaliação, nota nem quantidade de reviews." : ""} ${businessModel !== "agencia" ? "Não ofereça marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online. Uma presença pública forte pode ser citada apenas como observação factual quando estiver comprovada nos dados." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
