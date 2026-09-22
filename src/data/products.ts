@@ -82,7 +82,7 @@ export const PRODUCTS: ProductConfig[] = [
     heroTitle: "Encontre empresas",
     heroHighlight: "Venda com eficiência",
     heroDescription:
-      "A IA da Wiize analisa concorrência regional, demanda do mercado, redes sociais e sites das empresas, identifica dores e necessidades reais, sugere soluções, monta a oferta e escreve uma abordagem personalizada para cada lead.",
+      "Encontre empresas com potencial, analise seu mercado e necessidades com IA e gere uma abordagem personalizada para cada oportunidade.",
     seoTitle: "Prospecção com IA: oportunidades com diagnóstico pronto",
     seoDescription:
       "A IA analisa concorrência regional, demanda, redes sociais e sites, diagnostica dores e necessidades, monta a oferta e cria a abordagem personalizada para cada lead.",
