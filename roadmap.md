@@ -1,1 +1,1 @@
-- [ ] Corrigir abordagem manual e follow-up comercial conforme plano aprovado
+- [x] Corrigir abordagem manual e follow-up comercial conforme plano aprovado
