@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Cookie, Shield, Info, SlidersHorizontal } from "lucide-react";
+import { Cookie, Shield, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ALL_GRANTED,
   ConsentPrefs,
-  getConsent,
   hasConsentDecision,
   saveConsent,
 } from "@/lib/consent";
@@ -44,8 +43,6 @@ const CookiePanel = (props: CookiePanelProps) => {
 
   const [visible, setVisible] = useState(false);
   const [render, setRender] = useState(false);
-  const [customizing, setCustomizing] = useState(false);
-  const [preferences, setPreferences] = useState<ConsentPrefs>(getConsent());
 
   useEffect(() => {
     if (!hasConsentDecision()) {
