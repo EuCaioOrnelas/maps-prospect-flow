@@ -550,7 +550,9 @@ Retorne APENAS JSON válido:
       ? "offering_mismatch"
       : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
         ? "role_confusion"
-        : null;
+        : messageLacksPersonalization(parsed.mensagem || "", lead)
+          ? "missing_personalization"
+          : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -558,7 +560,7 @@ Retorne APENAS JSON válido:
           headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "gpt-4o-mini",
-            messages: [{
+            messages: [{ role: "system", content: personaSystem }, {
               role: "user",
                content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
 
