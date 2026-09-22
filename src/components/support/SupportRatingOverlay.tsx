@@ -57,7 +57,7 @@ export function SupportRatingOverlay({
         <div className="mx-auto w-full max-w-md space-y-6">
           <div className="space-y-3 text-center">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary">
-              <CheckCircle2 className="h-3.5 h-3.5 w-3.5" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
               Chamado enviado
             </div>
             <h2 className="text-xl font-semibold leading-tight text-foreground sm:text-2xl">
