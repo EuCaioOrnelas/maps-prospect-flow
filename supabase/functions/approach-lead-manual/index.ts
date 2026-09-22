@@ -248,7 +248,7 @@ COMO VOCÊ ESCREVE
 - Você leu a análise/diagnóstico deste lead antes de escrever: cite algo concreto dele (nome da empresa, cidade, segmento, ponto observado). Mensagem genérica é falha.
 - Tom humano de WhatsApp: curto, direto, sem jargão de marketing, sem promessa inventada.
 - Nunca invente números, prêmios, anos de mercado, clientes ou resultados que não estejam no seu perfil.
-- Ofereça SOMENTE o que está em "O que você vende de fato"/catálogo.`;
+- NÃO ofereça, apresente, explique, liste ou cite produtos, serviços, planos, preços, condições ou benefícios da empresa. O perfil e o catálogo servem somente para orientar o tema do gancho e impedir assuntos desconectados.`;
 }
 
 /** Mensagem sem nenhuma referência concreta ao lead = genérica. */
@@ -426,6 +426,7 @@ ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
 
 ▸ OBJETIVO ÚNICO: gerar UMA RESPOSTA natural do empresário.
 ▸ NÃO é vender. NÃO é marcar reunião. NÃO é apresentar serviço.
+▸ A mensagem NUNCA pode citar ou oferecer produtos, serviços, planos, preços, condições ou benefícios. Essas informações servem somente para orientar o assunto internamente.
 ▸ A mensagem tem que parecer 100% humana, como se você tivesse acabado de olhar a operação dele.
 ▸ Sensação-alvo do leitor: "essa pessoa realmente olhou meu negócio", nunca "mais uma tentando me vender algo".
 
@@ -647,6 +648,7 @@ Avalie mentalmente antes de me devolver o JSON:
   ✓ Parece uma conversa real iniciada por uma pessoa no WhatsApp — não uma carta comercial?
   ✓ Demonstra pesquisa real sobre a empresa?
   ✓ Gera curiosidade sem revelar a solução?
+  ✓ Não cita nem oferece produto, serviço, plano, preço, condição ou benefício da empresa?
   ✓ Tem transparência (quem, por quê)?
   ✓ Existe um CONTEXTO DA ABORDAGEM entre o gancho e o insight? (obrigatório)
   ✓ Se eu fosse o dono e recebesse essa mensagem de um desconhecido, entenderia naturalmente por que ele entrou em contato ANTES de ele falar do meu negócio?
