@@ -205,6 +205,21 @@ function formatOperationalEvidence(enrichment: Record<string, any>): string {
   return [...new Set(values)].slice(0, 20).join("; ");
 }
 
+const PERSONALIZATION_STOP_WORDS = new Set([
+  "empresa", "empresas", "servico", "servicos", "produto", "produtos", "cliente", "clientes", "atendimento",
+  "negocio", "operacao", "trabalho", "trabalha", "oferece", "cidade", "regiao", "brasil", "site", "online",
+]);
+
+function actionableEvidenceTokens(enrichment: Record<string, any>): string[] {
+  const source = [
+    formatOperationalEvidence(enrichment),
+    ...(Array.isArray(enrichment?.pontos_fortes) ? enrichment.pontos_fortes : []),
+    enrichment?.custom_diagnosis,
+  ].filter(Boolean).join(" ");
+  return [...new Set(normalizeForMatch(source).split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 5 && !PERSONALIZATION_STOP_WORDS.has(token)))].slice(0, 40);
+}
+
 // ---------------- Entrada única do motor ----------------
 type MessageType = "manual_first_contact" | "follow_up";
 
@@ -506,6 +521,13 @@ function validateApproachMessage(message: string, input: ApproachInput): string 
   if (input.messageType === "follow_up" && /\b(?:agrade[cç]o|obrigad[oa]\s+(?:pela|por)|estamos alinhados|como combinamos|conforme conversamos)\b/i.test(text)) {
     return "false_conversation_assumption";
   }
+  if (input.messageType === "follow_up" && !input.previousMessage) {
+    const sellerTokens = [input.companyProfile?.attendant_name, input.companyProfile?.company_name]
+      .map((value) => normalizeForMatch(value).trim()).filter((value) => value.length >= 3);
+    if (sellerTokens.length && !sellerTokens.some((token) => normalizeForMatch(text).includes(token))) {
+      return "missing_followup_presentation";
+    }
+  }
 
   const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
   if (blocks.length < 2 || blocks.length > 4 || blocks.some((block) => block.length > 340)) return "poor_visual_structure";
@@ -518,6 +540,10 @@ function validateApproachMessage(message: string, input: ApproachInput): string 
     .map((v) => normalizeForMatch(v).trim())
     .filter((v) => v.length >= 4);
   if (tokens.length && !tokens.some((t) => normalized.includes(t))) return "missing_personalization";
+  const actionableTokens = actionableEvidenceTokens(input.enrichment);
+  if (actionableTokens.length >= 2 && !actionableTokens.some((token) => normalized.includes(token))) {
+    return "missing_argument_personalization";
+  }
 
   const maxChars = input.messageType === "follow_up" ? 550 : 650;
   if (text.length > maxChars) return "too_long";
@@ -539,7 +565,9 @@ const REWRITE_HINTS: Record<string, string> = {
   premature_offer: "Remova planos, preços, condições e proposta. Neste estágio o objetivo é gerar resposta.",
   restarted_conversation: "Este é um follow-up: não reinicie com saudação.",
   false_conversation_assumption: "Não agradeça nem presuma alinhamento, interesse ou conversa que não aconteceu.",
+  missing_followup_presentation: "Como não há apresentação anterior registrada, apresente brevemente o vendedor e a empresa sem reiniciar com saudação.",
   missing_personalization: "A mensagem está genérica. Cite algo concreto e específico deste lead.",
+  missing_argument_personalization: "A mensagem só cita dados básicos. Use no argumento uma característica operacional ou observação específica disponível sobre este lead.",
   poor_visual_structure: "Divida a mensagem em 2 a 4 blocos curtos, separados por uma linha em branco, com no máximo 1 ou 2 frases por bloco.",
   hard_question: "Simplifique a pergunta final para que o lead consiga responder em poucas palavras.",
   too_long: "A mensagem está longa demais. Corte para o essencial.",
