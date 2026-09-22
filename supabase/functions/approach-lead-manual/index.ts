@@ -221,11 +221,12 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
 
 const REPUTATION_HOOK_TERMS = /(reputa[cç][aã]o|avalia[cç][aã]o|avalia[cç][oõ]es|nota\s*(?:de\s*)?[0-5](?:[.,]\d)?|reviews?|estrelas?)/i;
 const CONNECTIVITY_OFFER_TERMS = /(internet|conectividade|banda larga|fibra|wi-?fi|telecom|\bmega\b|\bgb\b)/i;
+const UNSUPPORTED_OPERATION_CLAIMS = /(crescimento (?:da|das|do|dos)|fluxo intens[oa]|grande fluxo|depende(?:m|ncia)? (?:da|das|de|dos)|operadoras? tradicionais|agendamentos? on-?line|streaming de aulas?|hor[aá]rios? de pico|sistemas? que funcionem|demanda alta)/i;
 
 /** Evita usar prova social do lead como gancho quando a oferta resolve conectividade operacional. */
 function messageUsesDisconnectedHook(message: string, profile: any): boolean {
   const offer = `${profile?.company_niche || ""} ${profile?.company_products || ""}`;
-  return CONNECTIVITY_OFFER_TERMS.test(offer) && REPUTATION_HOOK_TERMS.test(message || "");
+  return CONNECTIVITY_OFFER_TERMS.test(offer) && (REPUTATION_HOOK_TERMS.test(message || "") || UNSUPPORTED_OPERATION_CLAIMS.test(message || ""));
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -428,6 +429,8 @@ ${analiseSite ? `- Site: ${analiseSite}` : ""}
 ${analiseRedes ? `- Redes sociais: ${analiseRedes}` : ""}
 ${analiseConcorrencia ? `- Concorrência regional: ${analiseConcorrencia}` : ""}
 ${analiseDemanda ? `- Demanda regional: ${analiseDemanda}` : ""}
+
+AVISO DE EVIDÊNCIA: este diagnóstico pode conter inferências automáticas não verificadas. Não transforme essas inferências em fatos sobre o lead. Considere fatos confirmados apenas os campos estruturados (nome, segmento, cidade, endereço e canais localizados). Se não houver evidência operacional, fale do padrão geral do segmento, nunca afirme como esta empresa opera.
 ` : "";
 
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
@@ -476,6 +479,7 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    • Precisa gerar interesse IMEDIATO E ter alguma ponte natural com o tema do insight que virá depois (relacionado a "${companyProfile?.company_products || "seu serviço"}"). Não use um dado só porque é bonito — use um dado que abra caminho.
    • PROIBIDO gancho puramente elogioso e desconectado (ex.: "vi que vocês têm ótima nota") se ele não vai amarrar com o insight/serviço. Elogio isolado soa como bajulação de vendedor.
    • TESTE DA PONTE: complete mentalmente "esse dado importa para o que vendo porque...". Se não houver resposta concreta e honesta, descarte o dado. Para internet/conectividade, avaliações e reputação são sempre desconectadas; use a dependência operacional de sistemas, pagamentos, atendimento ou equipamentos do segmento, sem inventar fatos.
+   • EVIDÊNCIA OBRIGATÓRIA: não afirme crescimento, fluxo de pessoas, uso de sistemas, pagamentos, streaming, agendamentos, horários de pico, operadora atual, instabilidade ou dependência de concorrentes sem dado específico que comprove isso. Prefira "academias costumam depender de conexão" a "vocês dependem de conexão".
    • PROIBIDO repetir a saudação aqui. Também PROIBIDO começar o gancho com "Meu nome é" ou "Somos uma empresa" (isso é da identificação, mais adiante).
 
 2) CONTEXTO DA ABORDAGEM — OBRIGATÓRIO, logo após o gancho
@@ -792,14 +796,14 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
             model: "gpt-4o-mini",
             messages: [{ role: "system", content: personaSystem }, {
               role: "user",
-               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
+               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ofereceu algo fora do perfil ou transformou hipótese em fato.
 
 QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
 O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. Todo fato usado como gancho deve ter conexão direta e explicável com a oferta. Se não houver evidência conectada, use segmento + cidade e formule a necessidade operacional como hipótese cautelosa, sem inventar fatos. ${CONNECTIVITY_OFFER_TERMS.test(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""}`) ? "Como a oferta é internet/conectividade, remova avaliações, reputação, reviews e elogios genéricos; use continuidade da operação, sistemas, pagamentos, atendimento, equipamentos conectados ou demanda em horários de pico, sempre sem afirmar dados não comprovados." : ""} ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente somente fatos confirmados do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. Não transforme diagnóstico automático ou padrão do segmento em fato sobre este lead. Se não houver evidência conectada, explique genericamente que empresas do segmento costumam depender da solução, sem afirmar como a empresa do lead opera. ${CONNECTIVITY_OFFER_TERMS.test(`${companyProfile?.company_niche || ""} ${companyProfile?.company_products || ""}`) ? "Como a oferta é internet/conectividade, remova avaliações, reputação, crescimento, fluxo, horários de pico, operadora atual, instabilidade e rotinas não comprovadas. Use somente nome, segmento e cidade confirmados; necessidades operacionais devem ser descritas como padrão geral do segmento, nunca como fato do lead." : ""} ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
