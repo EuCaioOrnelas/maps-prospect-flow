@@ -39,7 +39,7 @@ const Privacy = () => {
             Política de Privacidade
           </h1>
 
-          <div className="prose prose-invert max-w-none space-y-4 sm:space-y-6 text-muted-foreground text-sm sm:text-base">
+          <div className="prose max-w-none space-y-4 text-sm text-muted-foreground prose-strong:text-foreground sm:space-y-6 sm:text-base">
             <p className="text-xs sm:text-sm text-muted-foreground">
               Última atualização: 22 de setembro de 2026 · Versão 3.0
             </p>
