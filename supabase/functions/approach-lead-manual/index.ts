@@ -169,6 +169,22 @@ function buildCommercialAngle(profile: any, model: BusinessModel): string {
   return BUSINESS_MODEL_STRATEGY[model];
 }
 
+function isConnectivitySeller(profile: any): boolean {
+  const offer = normalizeForMatch(
+    `${profile?.company_niche || ""} ${profile?.company_products || ""}`,
+  );
+  return /(internet|fibra optica|banda larga|conectividade|telecom)/.test(
+    offer,
+  );
+}
+
+function messageInventsConnectivityContext(message: string, profile: any): boolean {
+  if (!isConnectivitySeller(profile)) return false;
+  return /(avalia[cç][aã]o|reputa[cç][aã]o|agendamento|pagamento|streaming|hor[aá]rio de pico|alta demanda|grandes operadoras|concorr[eê]ncia|interrup[cç][aã]o|queda(?:s)? de internet|lentid[aã]o|sistema(?:s)? espec[ií]fico)/i.test(
+    message || "",
+  );
+}
+
 function normalizeBusinessModel(raw: unknown): BusinessModel | null {
   const v = String(raw || "")
     .trim()
@@ -805,6 +821,11 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       businessModel,
     )
       ? "offering_mismatch"
+      : messageInventsConnectivityContext(
+            parsed.mensagem || "",
+            companyProfile,
+          )
+        ? "unsupported_connectivity_context"
       : messageConfusesBusinessRoles(
             parsed.mensagem || "",
             lead,
@@ -843,7 +864,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${buildCommercialAngle(companyProfile, businessModel)}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem escreve e quem recebe. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição ou benefício da empresa. O perfil comercial serve apenas para orientar internamente o assunto da chamada de atenção. Preserve a curiosidade e peça somente autorização para explicar o ponto percebido. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva nos 8 blocos definidos: saudação; pesquisa com nome/segmento/cidade; apresentação e contexto profissional; motivo; percepção cautelosa; curiosidade; baixa pressão; CTA perguntando se gostaria de entender melhor. Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite ${lead.company_name || "o nome da empresa"}${lead.city ? `, em ${lead.city}` : ""}${lead.category ? `, do segmento ${lead.category}` : ""}. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição ou benefício. ${isConnectivitySeller(companyProfile) ? "Como o remetente vende internet, NÃO mencione avaliação, reputação, agendamentos, pagamentos, streaming, horários de pico, alta demanda, concorrência, grandes operadoras, interrupções ou qualquer sistema. Limite a percepção à importância potencial da conectividade para a continuidade da operação, sem dizer que o lead já possui um problema." : ""} ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}

@@ -154,6 +154,22 @@ function buildCommercialAngle(profile: any, model: BusinessModel): string {
   return BUSINESS_MODEL_STRATEGY[model];
 }
 
+function isConnectivitySeller(profile: any): boolean {
+  const offer = normalizeForMatch(
+    `${profile?.company_niche || ""} ${profile?.company_products || ""}`,
+  );
+  return /(internet|fibra optica|banda larga|conectividade|telecom)/.test(
+    offer,
+  );
+}
+
+function messageInventsConnectivityContext(message: string, profile: any): boolean {
+  if (!isConnectivitySeller(profile)) return false;
+  return /(avalia[cç][aã]o|reputa[cç][aã]o|agendamento|pagamento|streaming|hor[aá]rio de pico|alta demanda|grandes operadoras|concorr[eê]ncia|interrup[cç][aã]o|queda(?:s)? de internet|lentid[aã]o|sistema(?:s)? espec[ií]fico)/i.test(
+    message || "",
+  );
+}
+
 function normalizeBusinessModel(raw: unknown): BusinessModel | null {
   const v = String(raw || "")
     .trim()
@@ -689,6 +705,11 @@ Retorne APENAS JSON válido:
       businessModel,
     )
       ? "offering_mismatch"
+      : messageInventsConnectivityContext(
+            parsed.mensagem || "",
+            companyProfile,
+          )
+        ? "unsupported_connectivity_context"
       : messageConfusesBusinessRoles(
             parsed.mensagem || "",
             lead,
@@ -721,7 +742,7 @@ O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
 ESTRATÉGIA CORRETA: ${buildCommercialAngle(companyProfile, businessModel)}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva em exatamente 3 parágrafos: (1) agradecimento + nome e empresa; (2) fato real do lead + percepção cautelosa conectada à oferta; (3) pergunta curta sobre o impacto desse ponto. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Não invente processos, problemas ou necessidades. Não apresente plano, preço, catálogo ou proposta. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva em exatamente 3 parágrafos: (1) "Obrigado pela resposta! Eu sou [nome], da [empresa]."; (2) observação sobre o nome, segmento e cidade do lead + percepção cautelosa conectada à oferta; (3) pergunta curta sobre esse ponto. Cite explicitamente ${lead.company_name || "o nome da empresa"}${lead.city ? `, em ${lead.city}` : ""}${lead.category ? `, do segmento ${lead.category}` : ""}. Não invente processos, problemas ou necessidades. Não apresente plano, preço, catálogo ou proposta. ${isConnectivitySeller(companyProfile) ? "Como o remetente vende internet, NÃO mencione avaliação, reputação, agendamentos, pagamentos, streaming, horários de pico, alta demanda, concorrência, grandes operadoras, interrupções ou qualquer sistema; diga apenas que, pelo tipo de negócio, a conectividade pode ser um ponto importante para a continuidade da operação e pergunte como esse tema é tratado hoje." : ""} ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
