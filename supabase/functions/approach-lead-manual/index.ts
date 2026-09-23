@@ -178,7 +178,10 @@ function isConnectivitySeller(profile: any): boolean {
   );
 }
 
-function messageInventsConnectivityContext(message: string, profile: any): boolean {
+function messageInventsConnectivityContext(
+  message: string,
+  profile: any,
+): boolean {
   if (!isConnectivitySeller(profile)) return false;
   return /(avalia[cç][aã]o|reputa[cç][aã]o|agendamento|pagamento|streaming|hor[aá]rio de pico|alta demanda|grandes operadoras|concorr[eê]ncia|interrup[cç][aã]o|queda(?:s)? de internet|lentid[aã]o|sistema(?:s)? espec[ií]fico)/i.test(
     message || "",
@@ -821,26 +824,23 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
       businessModel,
     )
       ? "offering_mismatch"
-      : messageInventsConnectivityContext(
-            parsed.mensagem || "",
-            companyProfile,
-          )
+      : messageInventsConnectivityContext(parsed.mensagem || "", companyProfile)
         ? "unsupported_connectivity_context"
-      : messageConfusesBusinessRoles(
-            parsed.mensagem || "",
-            lead,
-            companyProfile,
-          )
-        ? "role_confusion"
-        : messageRevealsOffer(
+        : messageConfusesBusinessRoles(
               parsed.mensagem || "",
+              lead,
               companyProfile,
-              productCatalog,
             )
-          ? "revealed_offer"
-          : messageLacksPersonalization(parsed.mensagem || "", lead)
-            ? "missing_personalization"
-            : null;
+          ? "role_confusion"
+          : messageRevealsOffer(
+                parsed.mensagem || "",
+                companyProfile,
+                productCatalog,
+              )
+            ? "revealed_offer"
+            : messageLacksPersonalization(parsed.mensagem || "", lead)
+              ? "missing_personalization"
+              : null;
     if (rewriteReason) {
       try {
         const fixRes = await fetch(
