@@ -53,14 +53,16 @@ async function logAiUsage(p: {
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 /** Telefone BR válido (fixo ou celular), com ou sem DDI 55. */
 function isValidBRPhone(raw: unknown): boolean {
   let d = String(raw ?? "").replace(/\D/g, "");
   if (!d) return false;
-  if (d.startsWith("55") && (d.length === 12 || d.length === 13)) d = d.slice(2);
+  if (d.startsWith("55") && (d.length === 12 || d.length === 13))
+    d = d.slice(2);
   if (d.length !== 10 && d.length !== 11) return false;
   const ddd = Number(d.slice(0, 2));
   if (ddd < 11 || ddd > 99) return false;
@@ -75,7 +77,9 @@ function hasContactNumber(lead: any): boolean {
   if (isValidBRPhone(lead?.phone)) return true;
   const list = lead?.phone_numbers;
   if (Array.isArray(list)) {
-    return list.some((p: any) => isValidBRPhone(typeof p === "string" ? p : p?.number ?? p?.phone));
+    return list.some((p: any) =>
+      isValidBRPhone(typeof p === "string" ? p : (p?.number ?? p?.phone)),
+    );
   }
   return false;
 }
@@ -140,8 +144,50 @@ const BUSINESS_MODEL_STRATEGY: Record<BusinessModel, string> = {
     "Use apenas os produtos/serviços declarados no perfil. Gancho = região, tipo de negócio e necessidade prática, sem inventar serviço nenhum.",
 };
 
+function buildCommercialAngle(profile: any, model: BusinessModel): string {
+  const offer = normalizeForMatch(
+    `${profile?.company_niche || ""} ${profile?.company_products || ""}`,
+  );
+  if (/(internet|fibra optica|banda larga|conectividade|telecom)/.test(offer)) {
+    return "CONECTIVIDADE B2B: relacione o tipo de operação do lead à importância de uma conexão estável, continuidade do atendimento, comunicação e ferramentas digitais. Não afirme que há lentidão, quedas, alta demanda, streaming, horários de pico ou sistemas específicos sem evidência. Neste follow-up, explore primeiro o impacto da conectividade; não apresente plano, preço ou catálogo.";
+  }
+  return BUSINESS_MODEL_STRATEGY[model];
+}
+
+function isConnectivitySeller(profile: any): boolean {
+  const offer = normalizeForMatch(
+    `${profile?.company_niche || ""} ${profile?.company_products || ""}`,
+  );
+  return /(internet|fibra optica|banda larga|conectividade|telecom)/.test(
+    offer,
+  );
+}
+
+function messageInventsConnectivityContext(
+  message: string,
+  profile: any,
+): boolean {
+  if (!isConnectivitySeller(profile)) return false;
+  return /(avalia[cç][aã]o|reputa[cç][aã]o|agendamento|pagamento|streaming|hor[aá]rio de pico|alta demanda|grandes operadoras|concorr[eê]ncia|interrup[cç][aã]o|queda(?:s)? de internet|lentid[aã]o|sistema(?:s)? espec[ií]fico)/i.test(
+    message || "",
+  );
+}
+
+function buildSafeConnectivityFollowUp(profile: any, lead: any): string {
+  const sender = String(
+    profile?.attendant_name || "o responsável comercial",
+  ).trim();
+  const company = String(profile?.company_name || "nossa empresa").trim();
+  const leadName = String(lead?.company_name || "a empresa").trim();
+  const category = String(lead?.category || "negócio").trim();
+  const location = lead?.city ? `, em ${lead.city}` : "";
+  return `Obrigado pela resposta! Eu sou ${sender}, da ${company}.\n\nNotei que a ${leadName}${location} atua no segmento de ${category}. Pelo tipo de operação, a conectividade pode ser um ponto importante para manter as atividades do dia a dia funcionando com continuidade.\n\nComo vocês tratam essa parte da operação atualmente?`;
+}
+
 function normalizeBusinessModel(raw: unknown): BusinessModel | null {
-  const v = String(raw || "").trim().toLowerCase();
+  const v = String(raw || "")
+    .trim()
+    .toLowerCase();
   if (!v) return null;
   if (v in BUSINESS_MODEL_LABELS) return v as BusinessModel;
   return null;
@@ -149,13 +195,40 @@ function normalizeBusinessModel(raw: unknown): BusinessModel | null {
 
 function inferBusinessModel(text: string): BusinessModel {
   const t = (text || "").toLowerCase();
-  if (/(distribuidor|distribuidora|distribui[cç][aã]o|atacad|atacarejo|abastec)/.test(t)) return "distribuidor";
-  if (/(ind[uú]stria|industrial|f[aá]brica|fabricante|fabrica[cç][aã]o|manufatur|confec[cç])/.test(t)) return "industria";
-  if (/(representa[cç][aã]o comercial|representante comercial)/.test(t)) return "representante";
-  if (/(software|sistema|saas|aplicativo|erp|crm|plataforma|tecnologia da informa)/.test(t)) return "software";
-  if (/(marketing|ag[eê]ncia|tr[aá]fego pago|social media|seo|gest[aã]o de redes|crea[cç][aã]o de sites?)/.test(t)) return "agencia";
-  if (/(revenda|loja|varejo|com[eé]rcio|e-?commerce|papelaria|mercado)/.test(t)) return "revenda";
-  if (/(servi[cç]o|consultoria|assessoria|contabil|advoc|limpeza|facilities|manuten[cç][aã]o|instala[cç][aã]o|terceiriza|treinamento|mentoria)/.test(t)) return "servico";
+  if (
+    /(distribuidor|distribuidora|distribui[cç][aã]o|atacad|atacarejo|abastec)/.test(
+      t,
+    )
+  )
+    return "distribuidor";
+  if (
+    /(ind[uú]stria|industrial|f[aá]brica|fabricante|fabrica[cç][aã]o|manufatur|confec[cç])/.test(
+      t,
+    )
+  )
+    return "industria";
+  if (/(representa[cç][aã]o comercial|representante comercial)/.test(t))
+    return "representante";
+  if (
+    /(software|sistema|saas|aplicativo|erp|crm|plataforma|tecnologia da informa)/.test(
+      t,
+    )
+  )
+    return "software";
+  if (
+    /(marketing|ag[eê]ncia|tr[aá]fego pago|social media|seo|gest[aã]o de redes|crea[cç][aã]o de sites?)/.test(
+      t,
+    )
+  )
+    return "agencia";
+  if (/(revenda|loja|varejo|com[eé]rcio|e-?commerce|papelaria|mercado)/.test(t))
+    return "revenda";
+  if (
+    /(servi[cç]o|consultoria|assessoria|contabil|advoc|limpeza|facilities|manuten[cç][aã]o|instala[cç][aã]o|terceiriza|treinamento|mentoria)/.test(
+      t,
+    )
+  )
+    return "servico";
   return "outro";
 }
 
@@ -179,8 +252,14 @@ function formatProductCatalog(services: any): string {
   return items.length ? items.join("\n") : "";
 }
 
-function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any, catalog: string): string {
+function buildBusinessModelBlock(
+  profile: any,
+  model: BusinessModel,
+  lead: any,
+  catalog: string,
+): string {
   const blockedMarketing = model !== "agencia";
+  const commercialAngle = buildCommercialAngle(profile, model);
   return `
 ═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
 - Como a empresa atua: ${BUSINESS_MODEL_LABELS[model]}
@@ -190,14 +269,15 @@ ${catalog ? `- Catálogo declarado:\n${catalog}` : ""}
 - Relação com este lead (${lead?.company_name || "lead"}${lead?.category ? `, ${lead.category}` : ""}): o lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que ela vende" : "um CLIENTE COMPRADOR dos produtos dela"}.
 
 ESTRATÉGIA OBRIGATÓRIA PARA ESTE MODELO:
-${BUSINESS_MODEL_STRATEGY[model]}
+${commercialAngle}
 
 ${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insinuar marketing, divulgação, presença digital, redes sociais, tráfego pago, anúncios, site, SEO, engajamento, conversão online, "fortalecer a marca" ou "atrair mais clientes pela internet". Quem escreve NÃO vende nada disso. Se o insight que você pensou for sobre esses temas, DESCARTE e escolha outro ligado ao que a empresa realmente vende.` : ""}
 ⛔ PROIBIDO tratar o lead como se ele fosse cliente de um serviço que a empresa não presta. A mensagem deve soar como alguém que ${model === "distribuidor" ? "abastece o negócio dele com produtos" : model === "industria" ? "fabrica e fornece o produto dele" : model === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}.
 `;
 }
 
-const MARKETING_TERMS = /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
+const MARKETING_TERMS =
+  /(marketing|presen[cç]a digital|redes sociais|rede social|tr[aá]fego|an[uú]ncios?|instagram|seo|engajamento|convers[aã]o|divulga[cç][aã]o|divulgar|criar um site|criação de site|posicionamento digital|branding)/i;
 
 function messageViolatesModel(message: string, model: BusinessModel): boolean {
   if (model === "agencia") return false;
@@ -205,12 +285,21 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
 }
 
 function normalizeForMatch(value: unknown): string {
-  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 /** Persona: o modelo escreve COMO o responsável da empresa, nunca como assistente de IA. */
-function buildPersonaSystem(profile: any, model: BusinessModel, catalog: string, lead: any): string {
-  const nome = String(profile?.attendant_name || "").trim() || "o responsável comercial";
+function buildPersonaSystem(
+  profile: any,
+  model: BusinessModel,
+  catalog: string,
+  lead: any,
+): string {
+  const nome =
+    String(profile?.attendant_name || "").trim() || "o responsável comercial";
   const empresa = String(profile?.company_name || "").trim() || "a empresa";
   return `Você NÃO é um assistente de IA. Você É ${nome}, responsável comercial da ${empresa}, escrevendo pessoalmente pelo WhatsApp.
 
@@ -242,7 +331,9 @@ function messageLacksPersonalization(message: string, lead: any): boolean {
   if (!m.trim()) return true;
   const tokens: string[] = [];
   const push = (v: unknown) => {
-    const s = String(v ?? "").trim().toLowerCase();
+    const s = String(v ?? "")
+      .trim()
+      .toLowerCase();
     if (s.length >= 4) tokens.push(s);
   };
   push(lead?.company_name);
@@ -253,49 +344,69 @@ function messageLacksPersonalization(message: string, lead: any): boolean {
   return !tokens.some((t) => m.includes(t));
 }
 
-function messageConfusesBusinessRoles(message: string, lead: any, profile: any): boolean {
+function messageConfusesBusinessRoles(
+  message: string,
+  lead: any,
+  profile: any,
+): boolean {
   const normalized = normalizeForMatch(message);
-  const leadCategory = normalizeForMatch(lead?.category).split(/\W+/).filter((word) => word.length >= 5);
+  const leadCategory = normalizeForMatch(lead?.category)
+    .split(/\W+/)
+    .filter((word) => word.length >= 5);
   const sellerOffer = normalizeForMatch(profile?.company_products);
-  return leadCategory.some((word) =>
-    !sellerOffer.includes(word) && new RegExp(`(?:nos|nossa empresa|a gente)\\s+(?:vende|oferece|fornece|fabrica|distribui)[^.!?]{0,70}\\b${word}\\b`).test(normalized)
+  return leadCategory.some(
+    (word) =>
+      !sellerOffer.includes(word) &&
+      new RegExp(
+        `(?:nos|nossa empresa|a gente)\\s+(?:vende|oferece|fornece|fabrica|distribui)[^.!?]{0,70}\\b${word}\\b`,
+      ).test(normalized),
   );
 }
 
-
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS")
+    return new Response(null, { headers: corsHeaders });
 
   try {
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY not configured");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    )!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const token = authHeader.replace("Bearer ", "");
 
     // Modo interno (Wiize API V1): service role + id da conta API no header
     const internalUserId = req.headers.get("x-wiize-api-user");
-    const internalMode = !!internalUserId && token === SUPABASE_SERVICE_ROLE_KEY;
+    const internalMode =
+      !!internalUserId && token === SUPABASE_SERVICE_ROLE_KEY;
 
     let user: { id: string } | null = null;
     if (internalMode) {
       user = { id: internalUserId! };
     } else {
-      const { data: { user: authUser }, error: authErr } = await supabase.auth.getUser(token);
+      const {
+        data: { user: authUser },
+        error: authErr,
+      } = await supabase.auth.getUser(token);
       if (authErr || !authUser) {
-        return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Usuário não autenticado" }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
       user = authUser;
     }
@@ -309,9 +420,13 @@ serve(async (req) => {
       lead = body.lead;
     } else {
       if (!lead_id) {
-        return new Response(JSON.stringify({ error: "lead_id é obrigatório" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "lead_id é obrigatório" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
 
       // Fetch the lead
@@ -324,21 +439,25 @@ serve(async (req) => {
 
       if (leadErr || !leadRow) {
         return new Response(JSON.stringify({ error: "Lead não encontrado" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       lead = leadRow;
     }
-
 
     // Prospecção Web entrega somente análise e diagnóstico, nunca abordagem.
     if (lead?.source === "web") {
       return new Response(
         JSON.stringify({
           error: "web_source_no_message",
-          message: "Oportunidades da Prospecção Web não geram mensagem de abordagem.",
+          message:
+            "Oportunidades da Prospecção Web não geram mensagem de abordagem.",
         }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -349,11 +468,12 @@ serve(async (req) => {
           error: "no_contact_number",
           message: "Número não encontrado para esta empresa.",
         }),
-        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
-
-
 
     // Fetch the company profile for personalization
     const { data: companyProfile } = await supabase
@@ -362,14 +482,23 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .single();
 
-    const socialMedia = Array.isArray(lead.social_media) ? lead.social_media : [];
+    const socialMedia = Array.isArray(lead.social_media)
+      ? lead.social_media
+      : [];
     const hasSite = !!lead.website && lead.website !== "-";
 
     // Extract diagnostic data if available
-    const enrichment = lead.enrichment_data && typeof lead.enrichment_data === "object" ? lead.enrichment_data as Record<string, any> : {};
+    const enrichment =
+      lead.enrichment_data && typeof lead.enrichment_data === "object"
+        ? (lead.enrichment_data as Record<string, any>)
+        : {};
     const hasDiagnostic = !!lead.ai_diagnosis || !!lead.ai_score;
-    const pontosFortes = Array.isArray(enrichment.pontos_fortes) ? enrichment.pontos_fortes : [];
-    const pontosFracos = Array.isArray(enrichment.pontos_fracos) ? enrichment.pontos_fracos : [];
+    const pontosFortes = Array.isArray(enrichment.pontos_fortes)
+      ? enrichment.pontos_fortes
+      : [];
+    const pontosFracos = Array.isArray(enrichment.pontos_fracos)
+      ? enrichment.pontos_fracos
+      : [];
     const analiseSite = enrichment.analise_site || "";
     const analiseRedes = enrichment.analise_redes_sociais || "";
     const analiseConcorrencia = enrichment.analise_concorrencia_regional || "";
@@ -386,15 +515,26 @@ serve(async (req) => {
     const businessModel = resolveBusinessModel(companyProfile);
     const productCatalog = formatProductCatalog(companyServices);
 
-    if (!companyProfile || (!String(companyProfile.company_products || "").trim() && !productCatalog)) {
-      return new Response(JSON.stringify({
-        error: "missing_company_profile",
-        message: "Complete os produtos ou serviços da sua empresa antes de gerar a abordagem.",
-      }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (
+      !companyProfile ||
+      (!String(companyProfile.company_products || "").trim() && !productCatalog)
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: "missing_company_profile",
+          message:
+            "Complete os produtos ou serviços da sua empresa antes de gerar a abordagem.",
+        }),
+        {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Build company context
-    const companyContext = companyProfile ? `
+    const companyContext = companyProfile
+      ? `
 ⚠️ INSTRUÇÃO PRIMÁRIA — PERFIL DA EMPRESA PROSPECTORA:
 - Empresa: ${companyProfile.company_name}
 - Atendente: ${companyProfile.attendant_name}
@@ -407,11 +547,12 @@ ${productCatalog ? `- Catálogo declarado:\n${productCatalog}` : ""}
 - Público-alvo: ${companyProfile.company_target_audience}
 
 REGRA ABSOLUTA: A mensagem DEVE girar em torno de "${companyProfile.company_products}". NÃO fale de serviços que a empresa NÃO oferece. Se a empresa distribui bebidas, fale APENAS de abastecimento de bebidas. Se vende internet, fale APENAS de internet. Se vende marketing, fale de marketing. NUNCA desvie do que está descrito acima.
-` : "";
-
+`
+      : "";
 
     // Build diagnostic context if available
-    const diagnosticContext = hasDiagnostic ? `
+    const diagnosticContext = hasDiagnostic
+      ? `
 ═══ DIAGNÓSTICO JÁ REALIZADO DESTE LEAD (use como base) ═══
 - Score: ${lead.ai_score || "N/A"}/100
 - Nível: ${lead.opportunity_level || "N/A"}
@@ -428,15 +569,26 @@ ${nicheAnalysisType ? `- Tipo de análise aplicada: ${nicheAnalysisType}` : ""}
 ${enrichment.custom_diagnosis ? `\n═══ OBSERVAÇÕES DO PROSPECTOR (diagnóstico adicional do usuário) ═══\n${enrichment.custom_diagnosis}` : ""}
 
 IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se não há pontos fracos (nicho específico), use a REGIÃO e o TIPO DE NEGÓCIO como gancho. Se há observações do prospector, PRIORIZE essas informações pois são análises reais feitas pelo usuário.
-` : "";
+`
+      : "";
 
     // Generate a random seed to force unique messages even for similar diagnostics
     const uniqueSeed = crypto.randomUUID().slice(0, 8);
 
     // Estratégia de abordagem definida pelo MODELO DE NEGÓCIO real (não por palavra-chave solta)
-    const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
-    const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
-    const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
+    const businessModelBlock = buildBusinessModelBlock(
+      companyProfile,
+      businessModel,
+      lead,
+      productCatalog,
+    );
+    const nicheStrategy = buildCommercialAngle(companyProfile, businessModel);
+    const personaSystem = buildPersonaSystem(
+      companyProfile,
+      businessModel,
+      productCatalog,
+      lead,
+    );
 
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
 
@@ -451,7 +603,7 @@ Por isso:
 - ❌ NÃO use frases como "tudo bem te chamar?", "posso te apresentar?", "pode te explicar?"
 - ✅ AGRADEÇA o retorno (de forma natural, em 1 linha) e já entregue VALOR
 - ✅ Fale como quem já foi autorizado: direto, consultivo, mostrando que entendeu o negócio dele
-- ✅ Conduza para o PRÓXIMO PASSO real (uma pergunta qualificadora, agendar uma call rápida, mandar material, etc.)
+- ✅ Conduza para o PRÓXIMO PASSO real com uma única pergunta qualificadora sobre a operação; não agende call nem envie proposta/material nesta mensagem
 
 ${companyContext}
 ${businessModelBlock}
@@ -476,11 +628,10 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - Varie levemente o tom, a forma de agradecer e o próximo passo proposto
 - Mantenha humano, consultivo, nada robótico ou genérico
 
-═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos curtos, separados por \\n\\n) ═══
-1. Agradecimento curto pelo retorno + uma chamada de atenção personalizada. Escolha livremente entre os dados reais disponíveis do lead — segmento, cidade, especialidade, site, redes sociais, reputação, diagnóstico ou outra informação concreta — usando o que melhor combina com o nicho e com o contexto desta conversa; não fique preso à avaliação do Google.
-2. Apresentação rápida (nome + empresa + o que faz em 1 linha, sem rodeios)
-3. Insight/valor real conectado à dor ou oportunidade detectada no diagnóstico — algo que mostre que ele NÃO está falando com um robô genérico
-4. Próximo passo claro e leve: uma pergunta qualificadora OU convite para uma call rápida de 10-15 min OU oferta de enviar um material/proposta
+═══ ESTRUTURA OBRIGATÓRIA (3 parágrafos curtos, separados por \\n\\n) ═══
+1. "Obrigado pela resposta!" + apresentação direta com nome e empresa.
+2. Chamada de atenção personalizada + percepção consultiva. Escolha um fato real do lead que tenha relação natural com o que a empresa remetente vende. Ritmo desejado, sem copiar: "Notei que [empresa] tem [fato real relevante]. Porém, percebo que [área ligada à oferta] pode ser um ponto a explorar." Para agência, reputação e presença digital podem ser relevantes; para internet, conecte o tipo de operação à importância da conectividade; para representante/distribuidor, conecte ao abastecimento, mix ou reposição; para software/serviços, conecte à rotina operacional. Sem evidência de problema, use linguagem cautelosa.
+3. Uma pergunta curta que continue a conversa sobre o impacto desse ponto na operação do lead. Não pedir nova permissão, não marcar reunião e não apresentar plano, preço ou catálogo neste momento.
 
 ═══ REGRAS CRÍTICAS ═══
 - ⛔ PROIBIDO cumprimentos temporais: "Bom dia", "Boa tarde", "Boa noite"
@@ -490,8 +641,10 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - ${companyProfile ? `Represente "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : "Mensagem genérica"}
 - ${companyProfile ? `SOMENTE fale sobre "${companyProfile.company_products}" — NUNCA mencione serviços que a empresa NÃO vende` : ""}
 - ${companyProfile ? `Use "${companyProfile.company_differential}" como argumento natural` : ""}
-- Máx 4 parágrafos CURTOS separados por \\n\\n
-- NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
+- Exatamente 3 parágrafos CURTOS separados por \\n\\n
+- A chamada de atenção e a percepção devem formar uma ponte causal com a oferta real. Avaliação/reputação só entram quando forem úteis ao ângulo comercial; para internet, uma boa nota isolada não prova necessidade de conectividade.
+- Não invente uso de streaming, sistema de agendamento, horário de pico, alta demanda, falhas de conexão ou qualquer processo interno não presente nos dados.
+- Não apresente plano, preço, catálogo ou proposta no follow-up; primeiro aprofunde a necessidade com uma pergunta.
 - ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
@@ -526,70 +679,113 @@ Retorne APENAS JSON válido:
     if (!aiRes.ok) {
       const status = aiRes.status;
       if (status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em instantes." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            error:
+              "Limite de requisições excedido. Tente novamente em instantes.",
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
       if (status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Créditos de IA esgotados." }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
       throw new Error(`AI gateway error: ${status}`);
     }
 
     const aiData = await aiRes.json();
-    logAiUsage({ feature: 'approach-lead', model: 'gpt-4o-mini', usage: aiData.usage });
+    logAiUsage({
+      feature: "approach-lead",
+      model: "gpt-4o-mini",
+      usage: aiData.usage,
+    });
     const content = aiData.choices?.[0]?.message?.content;
     if (!content) throw new Error("Resposta vazia da IA");
 
     const parsed = JSON.parse(content);
 
     // Revisão final: se a mensagem ofereceu algo fora do modelo ou trocou os papéis, reescreve UMA vez.
-    const rewriteReason = messageViolatesModel(parsed.mensagem || "", businessModel)
+    const rewriteReason = messageViolatesModel(
+      parsed.mensagem || "",
+      businessModel,
+    )
       ? "offering_mismatch"
-      : messageConfusesBusinessRoles(parsed.mensagem || "", lead, companyProfile)
-        ? "role_confusion"
-        : messageLacksPersonalization(parsed.mensagem || "", lead)
-          ? "missing_personalization"
-          : null;
+      : messageInventsConnectivityContext(parsed.mensagem || "", companyProfile)
+        ? "unsupported_connectivity_context"
+        : messageConfusesBusinessRoles(
+              parsed.mensagem || "",
+              lead,
+              companyProfile,
+            )
+          ? "role_confusion"
+          : messageLacksPersonalization(parsed.mensagem || "", lead)
+            ? "missing_personalization"
+            : null;
     if (rewriteReason) {
       try {
-        const fixRes = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "system", content: personaSystem }, {
-              role: "user",
-               content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
+        const fixRes = await fetch(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${OPENAI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: [
+                { role: "system", content: personaSystem },
+                {
+                  role: "user",
+                  content: `A mensagem abaixo confundiu o que a empresa remetente vende com o negócio do cliente potencial, ou ofereceu algo fora do perfil.
 
 QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
 O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
-ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+ESTRATÉGIA CORRETA: ${buildCommercialAngle(companyProfile, businessModel)}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho e estrutura, em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva em exatamente 3 parágrafos: (1) "Obrigado pela resposta! Eu sou [nome], da [empresa]."; (2) observação sobre o nome, segmento e cidade do lead + percepção cautelosa conectada à oferta; (3) pergunta curta sobre esse ponto. Cite explicitamente ${lead.company_name || "o nome da empresa"}${lead.city ? `, em ${lead.city}` : ""}${lead.category ? `, do segmento ${lead.category}` : ""}. Não invente processos, problemas ou necessidades. Não apresente plano, preço, catálogo ou proposta. ${isConnectivitySeller(companyProfile) ? "Como o remetente vende internet, NÃO mencione avaliação, reputação, agendamentos, pagamentos, streaming, horários de pico, alta demanda, concorrência, grandes operadoras, interrupções ou qualquer sistema; diga apenas que, pelo tipo de negócio, a conectividade pode ser um ponto importante para a continuidade da operação e pergunte como esse tema é tratado hoje." : ""} ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}
 
 Retorne APENAS JSON: {"mensagem": "..."}`,
-            }],
-            temperature: 0.5,
-            max_tokens: 800,
-            response_format: { type: "json_object" },
-          }),
-        });
+                },
+              ],
+              temperature: 0.5,
+              max_tokens: 800,
+              response_format: { type: "json_object" },
+            }),
+          },
+        );
         if (fixRes.ok) {
           const fixData = await fixRes.json();
-          logAiUsage({ feature: 'approach-lead-model-fix', model: 'gpt-4o-mini', usage: fixData.usage });
-          const fixed = JSON.parse(fixData.choices?.[0]?.message?.content || "{}");
+          logAiUsage({
+            feature: "approach-lead-model-fix",
+            model: "gpt-4o-mini",
+            usage: fixData.usage,
+          });
+          const fixed = JSON.parse(
+            fixData.choices?.[0]?.message?.content || "{}",
+          );
           if (fixed?.mensagem) parsed.mensagem = fixed.mensagem;
         }
       } catch (e) {
         console.error("model-fix falhou", String(e));
       }
+    }
+
+    if (isConnectivitySeller(companyProfile)) {
+      parsed.mensagem = buildSafeConnectivityFollowUp(companyProfile, lead);
     }
 
     if (lead_id && !internalMode) {
@@ -599,7 +795,9 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
         .update({
           ai_approach_message: parsed.mensagem || "",
           enrichment_data: {
-            ...(typeof lead.enrichment_data === 'object' && lead.enrichment_data ? lead.enrichment_data : {}),
+            ...(typeof lead.enrichment_data === "object" && lead.enrichment_data
+              ? lead.enrichment_data
+              : {}),
             approach_analysis: {
               analise_nicho: parsed.analise_nicho || "",
               analise_cidade: parsed.analise_cidade || "",
@@ -627,13 +825,18 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
         estrategia: parsed.estrategia || "",
         produto_sugerido: parsed.produto_sugerido || "",
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     console.error("Approach error:", err);
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Erro interno" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        error: err instanceof Error ? err.message : "Erro interno",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
