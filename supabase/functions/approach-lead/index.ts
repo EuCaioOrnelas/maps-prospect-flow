@@ -460,7 +460,7 @@ Por isso:
 - ❌ NÃO use frases como "tudo bem te chamar?", "posso te apresentar?", "pode te explicar?"
 - ✅ AGRADEÇA o retorno (de forma natural, em 1 linha) e já entregue VALOR
 - ✅ Fale como quem já foi autorizado: direto, consultivo, mostrando que entendeu o negócio dele
-- ✅ Conduza para o PRÓXIMO PASSO real (uma pergunta qualificadora, agendar uma call rápida, mandar material, etc.)
+- ✅ Conduza para o PRÓXIMO PASSO real com uma única pergunta qualificadora sobre a operação; não agende call nem envie proposta/material nesta mensagem
 
 ${companyContext}
 ${businessModelBlock}

@@ -474,6 +474,8 @@ Use exatamente o ritmo abaixo, adaptando cada frase ao perfil comercial e ao lea
 7. Baixa pressão em um parágrafo: admita que pode estar enganado e que está apenas compartilhando uma percepção.
 8. CTA em um parágrafo: pergunta simples oferecendo explicar melhor o ponto pelo WhatsApp.
 
+Esta sequência de 8 blocos prevalece sobre qualquer exemplo de fraseado abaixo. Os detalhes seguintes servem apenas para orientar o conteúdo de cada bloco, sem alterar a ordem, juntar etapas ou transformar autoridade em oferta.
+
 ÂNGULO COMERCIAL OBRIGATÓRIO PARA ESTE PERFIL:
 ${commercialAngle}
 
