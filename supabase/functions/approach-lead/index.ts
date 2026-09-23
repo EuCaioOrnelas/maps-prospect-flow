@@ -140,6 +140,14 @@ const BUSINESS_MODEL_STRATEGY: Record<BusinessModel, string> = {
     "Use apenas os produtos/serviços declarados no perfil. Gancho = região, tipo de negócio e necessidade prática, sem inventar serviço nenhum.",
 };
 
+function buildCommercialAngle(profile: any, model: BusinessModel): string {
+  const offer = normalizeForMatch(`${profile?.company_niche || ""} ${profile?.company_products || ""}`);
+  if (/(internet|fibra optica|banda larga|conectividade|telecom)/.test(offer)) {
+    return "CONECTIVIDADE B2B: relacione o tipo de operação do lead à importância de uma conexão estável, continuidade do atendimento, comunicação e ferramentas digitais. Não afirme que há lentidão, quedas, alta demanda, streaming, horários de pico ou sistemas específicos sem evidência. Neste follow-up, explore primeiro o impacto da conectividade; não apresente plano, preço ou catálogo.";
+  }
+  return BUSINESS_MODEL_STRATEGY[model];
+}
+
 function normalizeBusinessModel(raw: unknown): BusinessModel | null {
   const v = String(raw || "").trim().toLowerCase();
   if (!v) return null;
@@ -181,6 +189,7 @@ function formatProductCatalog(services: any): string {
 
 function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any, catalog: string): string {
   const blockedMarketing = model !== "agencia";
+  const commercialAngle = buildCommercialAngle(profile, model);
   return `
 ═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
 - Como a empresa atua: ${BUSINESS_MODEL_LABELS[model]}
@@ -190,7 +199,7 @@ ${catalog ? `- Catálogo declarado:\n${catalog}` : ""}
 - Relação com este lead (${lead?.company_name || "lead"}${lead?.category ? `, ${lead.category}` : ""}): o lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que ela vende" : "um CLIENTE COMPRADOR dos produtos dela"}.
 
 ESTRATÉGIA OBRIGATÓRIA PARA ESTE MODELO:
-${BUSINESS_MODEL_STRATEGY[model]}
+${commercialAngle}
 
 ${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insinuar marketing, divulgação, presença digital, redes sociais, tráfego pago, anúncios, site, SEO, engajamento, conversão online, "fortalecer a marca" ou "atrair mais clientes pela internet". Quem escreve NÃO vende nada disso. Se o insight que você pensou for sobre esses temas, DESCARTE e escolha outro ligado ao que a empresa realmente vende.` : ""}
 ⛔ PROIBIDO tratar o lead como se ele fosse cliente de um serviço que a empresa não presta. A mensagem deve soar como alguém que ${model === "distribuidor" ? "abastece o negócio dele com produtos" : model === "industria" ? "fabrica e fornece o produto dele" : model === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}.
@@ -435,7 +444,7 @@ IMPORTANTE: Use os PONTOS FRACOS do diagnóstico como GANCHO da mensagem. Se nã
 
     // Estratégia de abordagem definida pelo MODELO DE NEGÓCIO real (não por palavra-chave solta)
     const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
-    const nicheStrategy = BUSINESS_MODEL_STRATEGY[businessModel];
+    const nicheStrategy = buildCommercialAngle(companyProfile, businessModel);
     const personaSystem = buildPersonaSystem(companyProfile, businessModel, productCatalog, lead);
 
     const prompt = `Você é um especialista em vendas B2B e prospecção comercial. Crie uma MENSAGEM DE FOLLOW-UP personalizada para WhatsApp.
@@ -476,11 +485,10 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - Varie levemente o tom, a forma de agradecer e o próximo passo proposto
 - Mantenha humano, consultivo, nada robótico ou genérico
 
-═══ ESTRUTURA OBRIGATÓRIA (4 parágrafos curtos, separados por \\n\\n) ═══
-1. Agradecimento curto pelo retorno + uma chamada de atenção personalizada. Escolha livremente entre os dados reais disponíveis do lead — segmento, cidade, especialidade, site, redes sociais, reputação, diagnóstico ou outra informação concreta — usando o que melhor combina com o nicho e com o contexto desta conversa; não fique preso à avaliação do Google.
-2. Apresentação rápida (nome + empresa + o que faz em 1 linha, sem rodeios)
-3. Insight/valor real conectado à dor ou oportunidade detectada no diagnóstico — algo que mostre que ele NÃO está falando com um robô genérico
-4. Próximo passo claro e leve: uma pergunta qualificadora OU convite para uma call rápida de 10-15 min OU oferta de enviar um material/proposta
+═══ ESTRUTURA OBRIGATÓRIA (3 parágrafos curtos, separados por \\n\\n) ═══
+1. "Obrigado pela resposta!" + apresentação direta com nome e empresa.
+2. Chamada de atenção personalizada + percepção consultiva. Escolha um fato real do lead que tenha relação natural com o que a empresa remetente vende. Ritmo desejado, sem copiar: "Notei que [empresa] tem [fato real relevante]. Porém, percebo que [área ligada à oferta] pode ser um ponto a explorar." Para agência, reputação e presença digital podem ser relevantes; para internet, conecte o tipo de operação à importância da conectividade; para representante/distribuidor, conecte ao abastecimento, mix ou reposição; para software/serviços, conecte à rotina operacional. Sem evidência de problema, use linguagem cautelosa.
+3. Uma pergunta curta que continue a conversa sobre o impacto desse ponto na operação do lead. Não pedir nova permissão, não marcar reunião e não apresentar plano, preço ou catálogo neste momento.
 
 ═══ REGRAS CRÍTICAS ═══
 - ⛔ PROIBIDO cumprimentos temporais: "Bom dia", "Boa tarde", "Boa noite"
@@ -490,8 +498,10 @@ A mensagem deve parecer escrita à mão por um vendedor humano, de forma única 
 - ${companyProfile ? `Represente "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : "Mensagem genérica"}
 - ${companyProfile ? `SOMENTE fale sobre "${companyProfile.company_products}" — NUNCA mencione serviços que a empresa NÃO vende` : ""}
 - ${companyProfile ? `Use "${companyProfile.company_differential}" como argumento natural` : ""}
-- Máx 4 parágrafos CURTOS separados por \\n\\n
-- NÃO mencione dados irrelevantes ao nicho (ex: não fale de avaliações se vende internet)
+- Exatamente 3 parágrafos CURTOS separados por \\n\\n
+- A chamada de atenção e a percepção devem formar uma ponte causal com a oferta real. Avaliação/reputação só entram quando forem úteis ao ângulo comercial; para internet, uma boa nota isolada não prova necessidade de conectividade.
+- Não invente uso de streaming, sistema de agendamento, horário de pico, alta demanda, falhas de conexão ou qualquer processo interno não presente nos dados.
+- Não apresente plano, preço, catálogo ou proposta no follow-up; primeiro aprofunde a necessidade com uma pergunta.
 - ${pontosFracos.length === 0 && hasDiagnostic ? "O diagnóstico não identificou pontos fracos específicos — use região e tipo de negócio como gancho" : ""}
 - ${companyProfile ? `Assine como "${companyProfile.attendant_name}" da "${companyProfile.company_name}"` : ""}
 
@@ -566,10 +576,10 @@ Retorne APENAS JSON válido:
 
 QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
 O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
-ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+ESTRATÉGIA CORRETA: ${buildCommercialAngle(companyProfile, businessModel)}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
-Reescreva mantendo o mesmo tom, tamanho e estrutura, em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem vende e quem compra. Ofereça somente o que consta em O QUE VENDE DE FATO. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
+Reescreva em exatamente 3 parágrafos: (1) agradecimento + nome e empresa; (2) fato real do lead + percepção cautelosa conectada à oferta; (3) pergunta curta sobre o impacto desse ponto. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Não invente processos, problemas ou necessidades. Não apresente plano, preço, catálogo ou proposta. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
 
 MENSAGEM ORIGINAL:
 ${parsed.mensagem}

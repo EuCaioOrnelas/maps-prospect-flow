@@ -155,6 +155,14 @@ const BUSINESS_MODEL_STRATEGY: Record<BusinessModel, string> = {
     "Use apenas os produtos/serviços declarados no perfil. Gancho = região, tipo de negócio e necessidade prática, sem inventar serviço nenhum.",
 };
 
+function buildCommercialAngle(profile: any, model: BusinessModel): string {
+  const offer = normalizeForMatch(`${profile?.company_niche || ""} ${profile?.company_products || ""}`);
+  if (/(internet|fibra optica|banda larga|conectividade|telecom)/.test(offer)) {
+    return "CONECTIVIDADE B2B: a percepção deve tratar da importância da conexão para a continuidade da operação, comunicação, atendimento e ferramentas digitais do tipo de negócio do lead. Não afirme que há lentidão, quedas, alta demanda, streaming, horários de pico ou sistemas específicos sem evidência. Não cite plano, velocidade ou preço; apenas desperte curiosidade sobre conectividade.";
+  }
+  return BUSINESS_MODEL_STRATEGY[model];
+}
+
 function normalizeBusinessModel(raw: unknown): BusinessModel | null {
   const v = String(raw || "").trim().toLowerCase();
   if (!v) return null;
@@ -196,6 +204,7 @@ function formatProductCatalog(services: any): string {
 
 function buildBusinessModelBlock(profile: any, model: BusinessModel, lead: any, catalog: string): string {
   const blockedMarketing = model !== "agencia";
+  const commercialAngle = buildCommercialAngle(profile, model);
   return `
 ═══ MODELO DE NEGÓCIO DE QUEM ESTÁ PROSPECTANDO (LEIA ANTES DE ESCREVER) ═══
 - Como a empresa atua: ${BUSINESS_MODEL_LABELS[model]}
@@ -205,7 +214,7 @@ ${catalog ? `- Catálogo declarado:\n${catalog}` : ""}
 - Relação com este lead (${lead?.company_name || "lead"}${lead?.category ? `, ${lead.category}` : ""}): o lead é ${model === "agencia" || model === "servico" || model === "software" ? "uma empresa que pode CONTRATAR o que ela vende" : "um CLIENTE COMPRADOR dos produtos dela"}.
 
 ESTRATÉGIA OBRIGATÓRIA PARA ESTE MODELO:
-${BUSINESS_MODEL_STRATEGY[model]}
+${commercialAngle}
 
 ${blockedMarketing ? `⛔ TRAVA ABSOLUTA: é PROIBIDO oferecer, sugerir ou insinuar marketing, divulgação, presença digital, redes sociais, tráfego pago, anúncios, site, SEO, engajamento, conversão online, "fortalecer a marca" ou "atrair mais clientes pela internet". Quem escreve NÃO vende nada disso. Se o insight que você pensou for sobre esses temas, DESCARTE e escolha outro ligado ao que a empresa realmente vende.` : ""}
 ⛔ PROIBIDO tratar o lead como se ele fosse cliente de um serviço que a empresa não presta. A mensagem deve soar como alguém que ${model === "distribuidor" ? "abastece o negócio dele com produtos" : model === "industria" ? "fabrica e fornece o produto dele" : model === "representante" ? "representa marcas e abastece o negócio dele" : "entrega exatamente o que está no perfil"}.
@@ -220,12 +229,9 @@ function messageViolatesModel(message: string, model: BusinessModel): boolean {
 }
 
 function messageRevealsOffer(message: string, profile: any, catalog: string): boolean {
-  const normalizedMessage = normalizeForMatch(message);
-  const offerWords = normalizeForMatch(`${profile?.company_products || ""} ${catalog}`)
-    .split(/\W+/)
-    .filter((word) => word.length >= 6 && !["empresa", "empresas", "servico", "servicos", "produto", "produtos"].includes(word));
-  return /\b(?:r\$|plano|planos|pre[cç]o|benef[ií]cios?|oferecemos?|trabalhamos com)\b/i.test(message || "")
-    || offerWords.some((word) => normalizedMessage.includes(word));
+  void profile;
+  void catalog;
+  return /\b(?:r\$\s*\d|plano(?:s)?\s+(?:de|com|por)|pre[cç]o(?:s)?|mensalidade|contrate|adquira|compre|oferecemos|temos\s+(?:o|a|um|uma)\s+plano|por\s+apenas\s+r\$)\b/i.test(message || "");
 }
 
 function normalizeForMatch(value: unknown): string {
@@ -399,6 +405,7 @@ serve(async (req) => {
       }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const businessModelBlock = buildBusinessModelBlock(companyProfile, businessModel, lead, productCatalog);
+    const commercialAngle = buildCommercialAngle(companyProfile, businessModel);
 
     const companyContext = companyProfile ? `
 ⚠️ PERFIL DA EMPRESA QUE ESTÁ PROSPECTANDO:
@@ -457,6 +464,19 @@ Tudo deste bloco descreve QUEM RECEBE a mensagem. Use como matéria-prima do gan
 ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto final)
 ═══════════════════════════════════════════
 
+Use exatamente o ritmo abaixo, adaptando cada frase ao perfil comercial e ao lead. Não copie nomes nem conteúdo do exemplo:
+1. Saudação curta em um parágrafo próprio: "Oi, tudo certo?"
+2. Observação de pesquisa em um parágrafo: diga que estava olhando empresas do segmento na cidade e que a empresa chamou atenção. Só acrescente um fato específico quando ele for real e útil ao tema.
+3. Apresentação e autoridade contextual em um parágrafo: "Sou [atendente], da [empresa]. Costumo acompanhar como negócios do setor estão organizando [área coerente com a oferta]." Para internet use conectividade/continuidade operacional; representante ou distribuidor use abastecimento/reposição; software use processos/controle; agência use presença digital/captação; demais serviços use a área operacional atendida.
+4. Motivo do contato em um parágrafo curto: compartilhar uma percepção.
+5. Percepção consultiva em um parágrafo, com linguagem cautelosa. Relacione o tipo de operação do lead ao tema que a empresa remetente domina, sem afirmar problema não comprovado e sem apresentar a solução.
+6. Curiosidade em um parágrafo: pergunte se o responsável já pensou sobre esse ponto.
+7. Baixa pressão em um parágrafo: admita que pode estar enganado e que está apenas compartilhando uma percepção.
+8. CTA em um parágrafo: pergunta simples oferecendo explicar melhor o ponto pelo WhatsApp.
+
+ÂNGULO COMERCIAL OBRIGATÓRIO PARA ESTE PERFIL:
+${commercialAngle}
+
 0) SAUDAÇÃO HUMANIZADA — PRIMEIRA LINHA, OBRIGATÓRIA
    • Toda mensagem DEVE começar com uma saudação curta, natural, conversacional — como um humano abriria uma conversa no WhatsApp.
    • Escolha UMA das opções abaixo (ou variação equivalente natural), evitando repetição entre mensagens diferentes:
@@ -498,16 +518,16 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
        (c) Contexto de autoridade — UMA frase curta que justifique NATURALMENTE por que essa pessoa entende do assunto que vai comentar em seguida.
     • Exemplo estrutural (adaptar ao MODELO DE NEGÓCIO, nunca copiar literal):
        "Sou ${companyProfile?.attendant_name || "[nome]"}, da ${companyProfile?.company_name || "[empresa]"}. ${businessModel === "distribuidor" || businessModel === "representante"
-         ? `Trabalhamos abastecendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}.`
+          ? `Costumo acompanhar como ${lead.category || "negócios da região"} organizam essa parte da operação.`
          : businessModel === "industria"
-         ? `Fabricamos ${companyProfile?.company_products || "nossos produtos"} e fornecemos direto para ${lead.category || "negócios como o seu"}.`
+          ? `Costumo acompanhar como ${lead.category || "negócios como o seu"} organizam seus processos de fornecimento.`
          : businessModel === "revenda"
-         ? `Trabalhamos com ${companyProfile?.company_products || "esses produtos"} com pronta entrega para ${lead.category || "negócios da região"}.`
+          ? `Costumo acompanhar como ${lead.category || "negócios da região"} organizam compras e reposição.`
          : businessModel === "software"
-         ? `Trabalhamos com ${companyProfile?.company_products || "nosso sistema"} dentro da operação de ${lead.category || "negócios como o seu"}.`
+          ? `Costumo acompanhar como ${lead.category || "negócios como o seu"} organizam seus processos e controles.`
          : businessModel === "agencia"
          ? `Trabalhamos diariamente com empresas do setor ${lead.category || "..."} ajudando a fortalecer os canais próprios de venda.`
-         : `Atendemos ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos serviços"}.`}"
+          : `Costumo acompanhar como ${lead.category || "negócios da região"} organizam essa área da operação.`}"
    • O objetivo do contexto de autoridade NÃO é impressionar nem vender — é apenas explicar por que faz sentido essa pessoa estar comentando sobre aquele tema.
    • A autoridade deve parecer INCIDENTAL, nunca propaganda. O leitor deve pensar: "faz sentido essa pessoa entender desse assunto."
 
@@ -521,7 +541,7 @@ ESTRUTURA OBRIGATÓRIA (nesta ordem, SEM títulos, SEM numeração no texto fina
    Frases modelo (adaptar ao ICP "${lead.category || "N/A"}" E ao modelo de negócio, nunca copiar):
 ${businessModel === "agencia" ? `     – "Trabalho analisando estratégias digitais de ${lead.category || "negócios locais"}."
      – "Faço parte de uma equipe especializada em presença digital para negócios locais."
-     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."` : `     – "Atendo ${lead.category || "negócios da região"} com ${companyProfile?.company_products || "nossos produtos"}."
+     – "Costumo acompanhar como ${lead.category || "empresas desse segmento"} utilizam seus canais digitais."` : `     – "Costumo acompanhar como ${lead.category || "negócios da região"} organizam essa parte da operação."
      – "Costumo acompanhar como ${lead.category || "negócios desse segmento"} organizam ${businessModel === "distribuidor" || businessModel === "industria" || businessModel === "revenda" || businessModel === "representante" ? "o abastecimento e a reposição de produtos" : "essa parte da operação"}."
      – "Trabalho direto com ${lead.category || "negócios como o seu"} aqui na região."`}
 
@@ -794,7 +814,7 @@ Retorne APENAS JSON válido, sem markdown, sem comentários, exatamente neste fo
 
 QUEM ENVIA: ${BUSINESS_MODEL_LABELS[businessModel]} — ${BUSINESS_MODEL_ROLES[businessModel]}
 O QUE VENDE DE FATO: ${companyProfile?.company_products || "conforme perfil"}
-ESTRATÉGIA CORRETA: ${BUSINESS_MODEL_STRATEGY[businessModel]}
+ESTRATÉGIA CORRETA: ${buildCommercialAngle(companyProfile, businessModel)}
 CLIENTE POTENCIAL: ${lead.company_name || "lead"}, do segmento ${lead.category || "não informado"}. Estes dados servem somente para personalizar; eles NÃO são o que o remetente vende.
 
 Reescreva mantendo o mesmo tom, tamanho, estrutura de blocos separados por linha em branco e o CTA em forma de pergunta fechada terminada em "?". Escreva em 1ª pessoa, como ${companyProfile?.attendant_name || "o responsável"} da ${companyProfile?.company_name || "empresa"}. Cite explicitamente algo concreto do lead (nome da empresa${lead.city ? `, cidade ${lead.city}` : ""}${lead.category ? `, segmento ${lead.category}` : ""}). Deixe inequívoco quem escreve e quem recebe. NÃO revele, cite, ofereça ou explique produto, serviço, plano, preço, condição ou benefício da empresa. O perfil comercial serve apenas para orientar internamente o assunto da chamada de atenção. Preserve a curiosidade e peça somente autorização para explicar o ponto percebido. ${businessModel !== "agencia" ? "Remova qualquer menção a marketing, divulgação, redes sociais, site, tráfego, anúncios, engajamento ou conversão online." : ""}
