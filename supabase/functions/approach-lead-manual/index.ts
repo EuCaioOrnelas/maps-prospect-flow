@@ -189,7 +189,9 @@ function messageInventsConnectivityContext(
 }
 
 function buildSafeConnectivityManual(profile: any, lead: any): string {
-  const sender = String(profile?.attendant_name || "o responsável comercial").trim();
+  const sender = String(
+    profile?.attendant_name || "o responsável comercial",
+  ).trim();
   const company = String(profile?.company_name || "nossa empresa").trim();
   const leadName = String(lead?.company_name || "a empresa").trim();
   const category = String(lead?.category || "negócio").trim();
