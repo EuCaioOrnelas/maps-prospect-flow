@@ -173,6 +173,15 @@ function messageInventsConnectivityContext(
   );
 }
 
+function buildSafeConnectivityFollowUp(profile: any, lead: any): string {
+  const sender = String(profile?.attendant_name || "o responsável comercial").trim();
+  const company = String(profile?.company_name || "nossa empresa").trim();
+  const leadName = String(lead?.company_name || "a empresa").trim();
+  const category = String(lead?.category || "negócio").trim();
+  const location = lead?.city ? `, em ${lead.city}` : "";
+  return `Obrigado pela resposta! Eu sou ${sender}, da ${company}.\n\nNotei que a ${leadName}${location} atua no segmento de ${category}. Pelo tipo de operação, a conectividade pode ser um ponto importante para manter as atividades do dia a dia funcionando com continuidade.\n\nComo vocês tratam essa parte da operação atualmente?`;
+}
+
 function normalizeBusinessModel(raw: unknown): BusinessModel | null {
   const v = String(raw || "")
     .trim()
@@ -771,6 +780,13 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
       } catch (e) {
         console.error("model-fix falhou", String(e));
       }
+    }
+
+    if (
+      isConnectivitySeller(companyProfile) &&
+      messageInventsConnectivityContext(parsed.mensagem || "", companyProfile)
+    ) {
+      parsed.mensagem = buildSafeConnectivityFollowUp(companyProfile, lead);
     }
 
     if (lead_id && !internalMode) {

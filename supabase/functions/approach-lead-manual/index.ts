@@ -188,6 +188,15 @@ function messageInventsConnectivityContext(
   );
 }
 
+function buildSafeConnectivityManual(profile: any, lead: any): string {
+  const sender = String(profile?.attendant_name || "o responsável comercial").trim();
+  const company = String(profile?.company_name || "nossa empresa").trim();
+  const leadName = String(lead?.company_name || "a empresa").trim();
+  const category = String(lead?.category || "negócio").trim();
+  const location = lead?.city ? ` em ${lead.city}` : " na região";
+  return `Oi, tudo certo?\n\nEstava dando uma olhada em empresas do segmento de ${category}${location}, e a ${leadName} chamou minha atenção.\n\nSou ${sender}, da ${company}. Costumo acompanhar como negócios do setor estão organizando a conectividade e a continuidade das operações.\n\nAchei que fazia sentido te chamar rapidinho para compartilhar uma percepção.\n\nPelo tipo de operação da ${leadName}, a conectividade pode ser um ponto importante para manter as atividades do dia a dia funcionando com continuidade. Talvez exista algum aspecto dessa área que valha observar com mais atenção.\n\nFiquei curioso para saber se você já pensou sobre isso.\n\nPosso estar enganado, talvez não seja o momento, mas estou apenas compartilhando uma percepção.\n\nVocê gostaria que eu explicasse melhor esse ponto por aqui?`;
+}
+
 function normalizeBusinessModel(raw: unknown): BusinessModel | null {
   const v = String(raw || "")
     .trim()
@@ -893,6 +902,13 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
       } catch (e) {
         console.error("model-fix falhou", String(e));
       }
+    }
+
+    if (
+      isConnectivitySeller(companyProfile) &&
+      messageInventsConnectivityContext(parsed.mensagem || "", companyProfile)
+    ) {
+      parsed.mensagem = buildSafeConnectivityManual(companyProfile, lead);
     }
 
     const finalMessage = ensureClosedQuestionCTA(
