@@ -906,10 +906,7 @@ Retorne APENAS JSON: {"mensagem": "..."}`,
       }
     }
 
-    if (
-      isConnectivitySeller(companyProfile) &&
-      messageInventsConnectivityContext(parsed.mensagem || "", companyProfile)
-    ) {
+    if (isConnectivitySeller(companyProfile)) {
       parsed.mensagem = buildSafeConnectivityManual(companyProfile, lead);
     }
 
