@@ -705,7 +705,226 @@ async function cancelExport(session: Session, body: any, req: Request): Promise<
   return json({ ok: true, request_id: requestId, status: "cancelled" });
 }
 
-// __PART7__
+// -------------------------------------------------------------
+// Handler principal
+// -------------------------------------------------------------
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  try {
+    const session = await getSession(req);
+    if (!session) return json({ error: "Não autenticado." }, 401);
+
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+    const action = typeof body?.action === "string" ? body.action : "";
+    if (!action) return json({ error: "Ação obrigatória." }, 400);
+
+    // Rate limit por usuário + ação
+    const allowed = await checkRateLimit(session.userId, `integration-export:${action}`, 20, 60);
+    if (!allowed) return json({ error: "Muitas tentativas. Aguarde um minuto." }, 429);
+
+    switch (action) {
+      // --- Abertos a qualquer membro owner/admin (leitura de estado) ---
+      case "overview": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem acessar." }, 403);
+        const overview = await buildOverview(session.ownerId);
+        const state = await getState(session.ownerId);
+        return json({ ok: true, overview, state });
+      }
+
+      case "get_state": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem acessar." }, 403);
+        const state = await getState(session.ownerId);
+        return json({ ok: true, state });
+      }
+
+      case "list": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem acessar." }, 403);
+        const { data, error } = await admin
+          .from("integration_export_requests")
+          .select("id, status, scope, record_counts, file_size, checksum, confirmation_method, error_message, expires_at, completed_at, created_at")
+          .eq("owner_user_id", session.ownerId)
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (error) return json({ error: "Falha ao listar exportações." }, 500);
+        return json({ ok: true, exports: data || [] });
+      }
+
+      case "history": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem acessar." }, 403);
+        const requestId = typeof body?.request_id === "string" ? body.request_id : null;
+        let query = admin
+          .from("integration_export_audit_logs")
+          .select("id, request_id, action, status, ip, user_agent, scope, record_count, error_message, auth_method, email_sent, created_at")
+          .eq("owner_user_id", session.ownerId)
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (requestId) query = query.eq("request_id", requestId);
+        const { data, error } = await query;
+        if (error) return json({ error: "Falha ao carregar auditoria." }, 500);
+        return json({ ok: true, logs: data || [] });
+      }
+
+      // --- Definir/trocar Senha de Integração ---
+      case "set_password":
+      case "change_password": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem alterar a Senha de Integração." }, 403);
+        const newPassword = typeof body?.new_password === "string" ? body.new_password : "";
+        const problems = passwordProblems(newPassword);
+        if (problems.length > 0) {
+          return json({ error: `Senha não atende aos requisitos: ${problems.join(", ")}.` }, 400);
+        }
+
+        const current = await getSettingsRow(session.ownerId);
+
+        // Ao trocar, exige a senha atual (autenticação multicamada)
+        if (current?.password_hash && action === "change_password") {
+          const pwCheck = await requirePassword(session, body?.current_password);
+          if (pwCheck.error) return pwCheck.error;
+        }
+
+        const hash = await hashPassword(newPassword);
+        const nowIso = new Date().toISOString();
+        if (current) {
+          await admin
+            .from("integration_settings")
+            .update({ password_hash: hash, password_set_at: nowIso, failed_attempts: 0, locked_until: null, updated_by: session.userId, updated_at: nowIso })
+            .eq("owner_user_id", session.ownerId);
+        } else {
+          await admin
+            .from("integration_settings")
+            .insert({ owner_user_id: session.ownerId, password_hash: hash, password_set_at: nowIso, updated_by: session.userId });
+        }
+
+        // Troca de senha revoga tokens de confirmação pendentes
+        await admin
+          .from("integration_export_tokens")
+          .update({ used_at: new Date().toISOString() })
+          .eq("owner_user_id", session.ownerId)
+          .is("used_at", null);
+
+        await audit({
+          ownerId: session.ownerId, userId: session.userId,
+          action: action === "set_password" ? "set_password" : "change_password",
+          status: "ok", authMethod: "session", ip: clientIp(req), userAgent: req.headers.get("user_agent") || "",
+        });
+        return json({ ok: true, password_set: true });
+      }
+
+      // --- Fluxo protegido pela Senha de Integração ---
+      case "request_export":
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem solicitar exportações." }, 403);
+        return await requestExport(session, body, req);
+
+      case "confirm_export":
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem confirmar exportações." }, 403);
+        return await confirmExport(session, body, req);
+
+      case "status": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem acessar." }, 403);
+        const requestId = typeof body?.request_id === "string" ? body.request_id : "";
+        if (!requestId) return json({ error: "request_id obrigatório." }, 400);
+        const { data } = await admin
+          .from("integration_export_requests")
+          .select("id, status, record_counts, file_size, checksum, manifest, error_message, expires_at, completed_at, created_at")
+          .eq("id", requestId)
+          .eq("owner_user_id", session.ownerId)
+          .maybeSingle();
+        if (!data) return json({ error: "Exportação não encontrada." }, 404);
+        return json({ ok: true, export: data });
+      }
+
+      case "download":
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem baixar exportações." }, 403);
+        return await downloadExport(session, body, req);
+
+      case "cancel":
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem cancelar exportações." }, 403);
+        return await cancelExport(session, body, req);
+
+      // --- Configuração de exportação (preset / entidades) ---
+      case "save_config": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem alterar a configuração." }, 403);
+        const preset = typeof body?.preset === "string" ? body.preset : "wiize_pay_minimo";
+        const entityConfig = body?.entity_config && typeof body.entity_config === "object" ? body.entity_config : {};
+        const { error } = await admin.from("integration_export_configs").upsert({
+          owner_user_id: session.ownerId,
+          preset,
+          entity_config: entityConfig,
+          updated_by: session.userId,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "owner_user_id" });
+        if (error) return json({ error: "Não foi possível salvar a configuração." }, 500);
+        await audit({
+          ownerId: session.ownerId, userId: session.userId, action: "save_config",
+          status: "ok", scope: entityConfig, ip: clientIp(req), userAgent: req.headers.get("user_agent") || "",
+        });
+        return json({ ok: true });
+      }
+
+      case "get_config": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem acessar." }, 403);
+        const { data } = await admin
+          .from("integration_export_configs")
+          .select("preset, entity_config, updated_at")
+          .eq("owner_user_id", session.ownerId)
+          .maybeSingle();
+        return json({ ok: true, config: data || { preset: "wiize_pay_minimo", entity_config: {} } });
+      }
+
+      // --- Conexão Wiize Pay: apenas preparação / revogação ---
+      case "connection_status": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem acessar." }, 403);
+        const { data } = await admin
+          .from("integration_connections")
+          .select("provider, status, scopes, last_sync_at, sync_status, revoked_at, created_at, updated_at")
+          .eq("owner_user_id", session.ownerId)
+          .maybeSingle();
+        return json({
+          ok: true,
+          connection: data || null,
+          ready_for_wiize_pay: true,
+          note:
+            "READY_FOR_WIIZE_PAY: a conexão real será estabelecida apenas quando o Wiize Pay estiver disponível, via OAuth 2.0 com escopos delegados. Nenhuma credencial ou acesso direto ao banco é compartilhado.",
+        });
+      }
+
+      case "revoke_connection": {
+        if (!isPrivileged(session)) return json({ error: "Apenas o proprietário ou administradores podem revogar a conexão." }, 403);
+        const pwCheck = await requirePassword(session, body?.integration_password);
+        if (pwCheck.error) return pwCheck.error;
+
+        const nowIso = new Date().toISOString();
+        await admin.from("integration_connections").upsert({
+          owner_user_id: session.ownerId,
+          provider: "wiize_pay",
+          status: "revoked",
+          revoked_at: nowIso,
+          updated_at: nowIso,
+        }, { onConflict: "owner_user_id" });
+
+        await audit({
+          ownerId: session.ownerId, userId: session.userId, action: "revoke_connection",
+          status: "revoked", authMethod: "password", ip: clientIp(req), userAgent: req.headers.get("user_agent") || "",
+        });
+        return json({ ok: true, status: "revoked" });
+      }
+
+      default:
+        return json({ error: `Ação desconhecida: ${action}` }, 400);
+    }
+  } catch (e) {
+    console.error("[integration-export] unhandled error:", e);
+    return json({ error: "Erro interno ao processar a solicitação." }, 500);
+  }
+});
+
 
 
 
