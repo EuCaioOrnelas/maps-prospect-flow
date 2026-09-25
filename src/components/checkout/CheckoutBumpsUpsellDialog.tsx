@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, ArrowRight, X, Minus, Plus, Check, Zap } from "lucide-react";
+import { Sparkles, ArrowRight, Minus, Plus, Check, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
@@ -118,15 +118,6 @@ export function CheckoutBumpsUpsellDialog({
       <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/50 bg-card max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="relative bg-gradient-to-br from-emerald-500/12 via-emerald-500/5 to-transparent px-6 pt-6 pb-5 border-b border-border/40">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="absolute top-3 right-3 h-8 w-8 rounded-[9px] hover:bg-muted flex items-center justify-center transition-colors"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4 text-muted-foreground" />
-          </button>
-
           <div className="flex items-start gap-3">
             <div className="h-11 w-11 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
               <Sparkles className="h-5 w-5 text-emerald-600" strokeWidth={2.2} />

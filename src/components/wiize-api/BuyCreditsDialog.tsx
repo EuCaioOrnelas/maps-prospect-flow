@@ -751,16 +751,22 @@ function NewCardSection(props: {
   onError: (msg: string) => void;
   onBack: () => void;
 }) {
+  // Estes parâmetros pertencem à sessão do Elements. Mantê-los estáveis evita
+  // updates/remontagens do iframe enquanto o usuário digita ou marca "salvar".
+  const elementsOptions = useMemo(
+    () => ({
+      mode: "payment" as const,
+      amount: Math.max(Math.round(props.amount * 100), 100),
+      currency: "brl",
+      appearance: { variables: { borderRadius: "10px" } },
+    }),
+    [props.amount],
+  );
+
   return (
     <Elements
       stripe={stripePromise}
-      options={{
-        mode: "payment",
-        amount: Math.max(Math.round(props.amount * 100), 100),
-        currency: "brl",
-        setupFutureUsage: props.saveCard ? "off_session" : undefined,
-        appearance: { variables: { borderRadius: "10px" } },
-      }}
+      options={elementsOptions}
     >
       <NewCardInner {...props} />
     </Elements>
