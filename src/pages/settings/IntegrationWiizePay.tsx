@@ -76,7 +76,7 @@ export default function IntegrationWiizePay() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState<any>(null);
 
-  const isPrivileged = accountInfo?.role === "owner" || accountInfo?.role === "admin";
+  const isPrivileged = accountRole === "owner" || accountRole === "admin";
 
   // Estado geral
   const [overview, setOverview] = useState<any>(null);
