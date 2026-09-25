@@ -114,7 +114,7 @@ export function CheckoutBumpsUpsellDialog({
   if (bumps.length === 0) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/50 bg-card max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="relative bg-gradient-to-br from-emerald-500/12 via-emerald-500/5 to-transparent px-6 pt-6 pb-5 border-b border-border/40">

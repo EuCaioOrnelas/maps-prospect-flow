@@ -1,7 +1,7 @@
 // Reusable Stripe Elements card form — handles tokenization on submit.
 // Parent passes onPaymentMethod(pmId) which is then sent to a backend edge function.
 
-import { useState, useImperativeHandle, forwardRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useMemo } from "react";
 import {
   CardNumberElement,
   CardExpiryElement,
@@ -14,6 +14,8 @@ import type {
   StripeCardExpiryElementChangeEvent,
   StripeCardNumberElementChangeEvent,
   StripeCardNumberElementOptions,
+  StripeCardExpiryElementOptions,
+  StripeCardCvcElementOptions,
 } from "@stripe/stripe-js";
 import { Label } from "@/components/ui/label";
 import { CreditCard, Calendar, Lock, User, Hash } from "lucide-react";
@@ -59,19 +61,31 @@ function toTitleCase(value: string) {
     .replace(/(^|[\s'-])([\p{L}])/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
 }
 
-const elementOptions: StripeCardNumberElementOptions = {
+const elementStyle: StripeCardNumberElementOptions["style"] = {
+  base: {
+    fontSize: "15px",
+    color: "hsl(var(--foreground))",
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+    "::placeholder": { color: "transparent" },
+    iconColor: "hsl(var(--primary))",
+  },
+  invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
+};
+
+const cardNumberOptions: StripeCardNumberElementOptions = {
   placeholder: "",
   showIcon: true,
-  style: {
-    base: {
-      fontSize: "15px",
-      color: "hsl(var(--foreground))",
-      fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
-      "::placeholder": { color: "transparent" },
-      iconColor: "hsl(var(--primary))",
-    },
-    invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
-  },
+  style: elementStyle,
+};
+
+const cardExpiryOptions: StripeCardExpiryElementOptions = {
+  placeholder: "",
+  style: elementStyle,
+};
+
+const cardCvcOptions: StripeCardCvcElementOptions = {
+  placeholder: "",
+  style: elementStyle,
 };
 
 export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
@@ -81,23 +95,24 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
     const [error, setError] = useState<string | null>(null);
     const [focusedField, setFocusedField] = useState<"number" | "expiry" | "cvc" | null>(null);
 
-    const focusElement = (field: "number" | "expiry" | "cvc") => {
-      if (disabled || !elements) return;
-      const element = field === "number"
-        ? elements.getElement(CardNumberElement)
-        : field === "expiry"
-          ? elements.getElement(CardExpiryElement)
-          : elements.getElement(CardCvcElement);
-      element?.focus();
-    };
-
     const handleFieldChange = (
       event: StripeCardNumberElementChangeEvent | StripeCardExpiryElementChangeEvent | StripeCardCvcElementChangeEvent,
     ) => {
       setError(event.error?.message || null);
     };
 
-    const sharedOptions = { ...elementOptions, disabled: !!disabled };
+    const numberOptions = useMemo<StripeCardNumberElementOptions>(
+      () => ({ ...cardNumberOptions, disabled: !!disabled }),
+      [disabled],
+    );
+    const expiryOptions = useMemo<StripeCardExpiryElementOptions>(
+      () => ({ ...cardExpiryOptions, disabled: !!disabled }),
+      [disabled],
+    );
+    const cvcOptions = useMemo<StripeCardCvcElementOptions>(
+      () => ({ ...cardCvcOptions, disabled: !!disabled }),
+      [disabled],
+    );
 
     useImperativeHandle(ref, () => ({
       createPaymentMethod: async (billingDetails) => {
@@ -145,23 +160,18 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           <Label className="text-xs font-medium flex items-center gap-1.5">
             <Hash className="h-3 w-3 text-muted-foreground" /> Número do cartão
           </Label>
-          <div
-            className={`flex min-h-11 w-full cursor-text items-center rounded-[var(--radius-input)] border bg-background px-3 py-2 transition-colors ${
+          <CardNumberElement
+            options={numberOptions}
+            className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
               focusedField === "number" ? "border-ring ring-1 ring-ring" : "border-input"
             } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
-            onClick={() => focusElement("number")}
-          >
-            <CardNumberElement
-              options={sharedOptions}
-              className="w-full py-0.5"
-              onChange={(event) => {
-                handleFieldChange(event);
-                onCardChange?.({ brand: event.brand, complete: event.complete, empty: event.empty });
-              }}
-              onFocus={() => setFocusedField("number")}
-              onBlur={() => setFocusedField(null)}
-            />
-          </div>
+            onChange={(event) => {
+              handleFieldChange(event);
+              onCardChange?.({ brand: event.brand, complete: event.complete, empty: event.empty });
+            }}
+            onFocus={() => setFocusedField("number")}
+            onBlur={() => setFocusedField(null)}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -169,48 +179,38 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
-            <div
-              className={`flex min-h-11 w-full cursor-text items-center rounded-[var(--radius-input)] border bg-background px-3 py-2 transition-colors ${
+            <CardExpiryElement
+              options={expiryOptions}
+              className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
                 focusedField === "expiry" ? "border-ring ring-1 ring-ring" : "border-input"
               } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
-              onClick={() => focusElement("expiry")}
-            >
-              <CardExpiryElement
-                options={sharedOptions}
-                className="w-full py-0.5"
-                onChange={(event) => {
-                  handleFieldChange(event);
-                  onExpiryChange?.({ complete: event.complete, empty: event.empty });
-                }}
-                onFocus={() => setFocusedField("expiry")}
-                onBlur={() => setFocusedField(null)}
-              />
-            </div>
+              onChange={(event) => {
+                handleFieldChange(event);
+                onExpiryChange?.({ complete: event.complete, empty: event.empty });
+              }}
+              onFocus={() => setFocusedField("expiry")}
+              onBlur={() => setFocusedField(null)}
+            />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Lock className="h-3 w-3 text-muted-foreground" /> CVV
             </Label>
-            <div
-              className={`flex min-h-11 w-full cursor-text items-center rounded-[var(--radius-input)] border bg-background px-3 py-2 transition-colors ${
+            <CardCvcElement
+              options={cvcOptions}
+              className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
                 focusedField === "cvc" ? "border-ring ring-1 ring-ring" : "border-input"
               } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
-              onClick={() => focusElement("cvc")}
-            >
-              <CardCvcElement
-                options={sharedOptions}
-                className="w-full py-0.5"
-                onChange={handleFieldChange}
-                onFocus={() => {
-                  setFocusedField("cvc");
-                  onCvcFocus?.();
-                }}
-                onBlur={() => {
-                  setFocusedField(null);
-                  onCvcBlur?.();
-                }}
-              />
-            </div>
+              onChange={handleFieldChange}
+              onFocus={() => {
+                setFocusedField("cvc");
+                onCvcFocus?.();
+              }}
+              onBlur={() => {
+                setFocusedField(null);
+                onCvcBlur?.();
+              }}
+            />
           </div>
         </div>
 
