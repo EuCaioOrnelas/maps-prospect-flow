@@ -196,7 +196,8 @@ interface Session {
   role: string;
   email: string;
   name: string;
-  anon: ReturnType<typeof createClient>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  anon: any;
 }
 
 async function getSession(req: Request): Promise<Session | null> {
