@@ -494,7 +494,6 @@ async function requestExport(session: Session, body: any, req: Request): Promise
       if (sameScope && existing.status === "pending") {
         return json({ ok: true, request_id: existing.id, status: existing.status, reused: true, email_sent_to: maskEmail(session.email) });
       }
-ec
       return json({ error: "Esta chave de idempotência já foi usada com um escopo diferente. Gere uma nova chave." }, 409);
     }
   }
