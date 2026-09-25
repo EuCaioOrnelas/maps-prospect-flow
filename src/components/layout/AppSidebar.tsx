@@ -35,6 +35,7 @@ import {
   RotateCcw,
   CalendarDays,
   Globe,
+  Plug,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { MetaIcon } from "@/components/meta/MetaIcon";
