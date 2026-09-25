@@ -187,4 +187,154 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-// __PART2__
+// -------------------------------------------------------------
+// Autenticação de sessão e permissões
+// -------------------------------------------------------------
+interface Session {
+  userId: string;
+  ownerId: string;
+  role: string;
+  email: string;
+  name: string;
+  anon: ReturnType<typeof createClient>;
+}
+
+async function getSession(req: Request): Promise<Session | null> {
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.replace("Bearer ", "").trim();
+  if (!token) return null;
+
+  const anon = createClient(SUPABASE_URL, ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false },
+  });
+
+  const { data: userData, error } = await anon.auth.getUser();
+  if (error || !userData?.user) return null;
+  const user = userData.user;
+
+  const adminClient = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("account_role, parent_owner_id, email, name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const role = profile?.account_role || "owner";
+  const ownerId = profile?.parent_owner_id || user.id;
+
+  return {
+    userId: user.id,
+    ownerId,
+    role,
+    email: profile?.email || user.email || "",
+    name: profile?.name || "",
+    anon,
+  };
+}
+
+function isPrivileged(session: Session): boolean {
+  return ["owner", "admin"].includes(session.role);
+}
+
+async function checkRateLimit(identifier: string, endpoint: string, max = 10, windowSec = 60): Promise<boolean> {
+  try {
+    const { data, error } = await admin.rpc("check_rate_limit", {
+      p_identifier: identifier,
+      p_endpoint: endpoint,
+      p_max_requests: max,
+      p_window_seconds: windowSec,
+    });
+    if (error) return true; // falha aberta apenas para o rate limit (não é controle de segurança primário)
+    return data !== false;
+  } catch {
+    return true;
+  }
+}
+
+// -------------------------------------------------------------
+// Auditoria (nunca registra senha/token/secret/conteúdo sensível)
+// -------------------------------------------------------------
+async function audit(params: {
+  ownerId: string; userId?: string; requestId?: string; action: string;
+  ip?: string; userAgent?: string; scope?: unknown; status?: string;
+  errorMessage?: string; authMethod?: string; emailSent?: boolean;
+}) {
+  const ipRaw = (params.ip || "").split(",")[0].trim();
+  const { error } = await admin.from("integration_export_audit_logs").insert({
+    owner_user_id: params.ownerId,
+    user_id: params.userId || null,
+    request_id: params.requestId || null,
+    action: params.action,
+    method: "integration-export",
+    ip: ipRaw || null,
+    user_agent: (params.userAgent || "").slice(0, 500) || null,
+    scope: params.scope ? params.scope : null,
+    status: params.status || null,
+    error_message: params.errorMessage ? params.errorMessage.slice(0, 500) : null,
+    auth_method: params.authMethod || null,
+    email_sent: params.emailSent ?? null,
+  });
+  if (error) console.error("[integration-export] audit insert failed:", error.message);
+}
+
+function maskEmail(email: string): string {
+  if (!email || !email.includes("@")) return "e-mail cadastrado";
+  const [local, domain] = email.split("@");
+  const visible = local.slice(0, 2);
+  return `${visible}${"*".repeat(Math.max(local.length - 2, 2))}@${domain}`;
+}
+
+// -------------------------------------------------------------
+// Senha de Integração
+// -------------------------------------------------------------
+const PASSWORD_MIN_LENGTH = 10;
+
+function passwordProblems(pw: string): string[] {
+  const problems: string[] = [];
+  if (pw.length < PASSWORD_MIN_LENGTH) problems.push(`mínimo de ${PASSWORD_MIN_LENGTH} caracteres`);
+  if (!/[A-Z]/.test(pw)) problems.push("ao menos uma letra maiúscula");
+  if (!/[a-z]/.test(pw)) problems.push("ao menos uma letra minúscula");
+  if (!/[0-9]/.test(pw)) problems.push("ao menos um número");
+  if (!/[^A-Za-z0-9]/.test(pw)) problems.push("ao menos um caractere especial");
+  return problems;
+}
+
+async function getState(ownerId: string) {
+  const [{ data: settings }, { data: conn }] = await Promise.all([
+    admin
+      .from("integration_settings")
+      .select("id, password_set_at, failed_attempts, locked_until, updated_at")
+      .eq("owner_user_id", ownerId)
+      .maybeSingle(),
+    admin
+      .from("integration_connections")
+      .select("provider, status, scopes, updated_at")
+      .eq("owner_user_id", ownerId)
+      .maybeSingle(),
+  ]);
+
+  const now = Date.now();
+  const locked = !!settings?.locked_until && new Date(settings.locked_until).getTime() > now;
+
+  return {
+    password_set: !!settings?.password_set_at,
+    password_set_at: settings?.password_set_at || null,
+    failed_attempts: settings?.failed_attempts || 0,
+    locked,
+    locked_until: locked ? settings.locked_until : null,
+    connection: conn || { provider: "wiize_pay", status: "pending", ready_for_wiize_pay: true },
+  };
+}
+
+async function getSettingsRow(ownerId: string) {
+  const { data } = await admin
+    .from("integration_settings")
+    .select("id, password_hash, password_set_at, failed_attempts, locked_until")
+    .eq("owner_user_id", ownerId)
+    .maybeSingle();
+  return data;
+}
+
+// __PART3__
+
