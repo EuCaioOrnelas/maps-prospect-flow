@@ -408,6 +408,60 @@ async function sendConfirmationEmail(opts: {
   }
 }
 
-// __PART4__
+// -------------------------------------------------------------
+// Ações protegidas por Senha de Integração
+// -------------------------------------------------------------
+const LOCK_BASE_MINUTES = 15;
+
+async function verifyIntegrationPassword(ownerId: string, password: string): Promise<
+  { ok: true } | { ok: false; error: string; lockedUntil?: string }
+> {
+  const row = await getSettingsRow(ownerId);
+  if (!row?.password_hash) return { ok: false, error: "Senha de Integração ainda não foi definida." };
+
+  const now = Date.now();
+  if (row.locked_until && new Date(row.locked_until).getTime() > now) {
+    return { ok: false, error: "Conta temporariamente bloqueada por tentativas inválidas. Tente novamente mais tarde.", lockedUntil: row.locked_until };
+  }
+
+  const ok = await verifyPassword(password, row.password_hash);
+  if (ok) {
+    await admin
+      .from("integration_settings")
+      .update({ failed_attempts: 0, locked_until: null })
+      .eq("owner_user_id", ownerId);
+    return { ok: true };
+  }
+
+  const attempts = (row.failed_attempts || 0) + 1;
+  const lockMin = attempts >= 5 ? LOCK_BASE_MINUTES * Math.min(attempts - 4, 4) : 0;
+  await admin
+    .from("integration_settings")
+    .update({
+      failed_attempts: attempts,
+      locked_until: lockMin > 0 ? new Date(now + lockMin * 60000).toISOString() : null,
+    })
+    .eq("owner_user_id", ownerId);
+
+  return {
+    ok: false,
+    error:
+      attempts >= 5
+        ? `Senha incorreta. Conta bloqueada por ${lockMin} minutos após ${attempts} tentativas inválidas.`
+        : `Senha incorreta (${attempts} de 5 tentativas antes do bloqueio).`,
+  };
+}
+
+async function requirePassword(session: Session, password: unknown) {
+  if (typeof password !== "string" || !password) {
+    return { error: json({ error: "Senha de Integração obrigatória." }, 400) };
+  }
+  const result = await verifyIntegrationPassword(session.ownerId, password);
+  if (!result.ok) return { error: json({ error: result.error, locked_until: result.lockedUntil || null }, 401) };
+  return {};
+}
+
+// __PART5__
+
 
 
