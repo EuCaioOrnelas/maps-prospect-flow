@@ -72,7 +72,7 @@ function formatDate(iso?: string | null) {
 export default function IntegrationWiizePay() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { info: accountInfo, loading: roleLoading } = useAccountRole();
+  const { role: accountRole, loading: roleLoading } = useAccountRole();
   const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState<any>(null);
 
