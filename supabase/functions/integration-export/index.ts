@@ -461,7 +461,178 @@ async function requirePassword(session: Session, password: unknown) {
   return {};
 }
 
-// __PART5__
+// -------------------------------------------------------------
+// Fluxo de exportação: solicitar → confirmar por e-mail → processar
+// -------------------------------------------------------------
+const TOKEN_TTL_MINUTES = 30;
+
+async function requestExport(session: Session, body: any, req: Request): Promise<Response> {
+  const pwCheck = await requirePassword(session, body?.integration_password);
+  if (pwCheck.error) return pwCheck.error;
+
+  const state = await getState(session.ownerId);
+  if (state.locked) return json({ error: "Conta temporariamente bloqueada." }, 423);
+
+  const scope = body?.scope && typeof body.scope === "object" ? body.scope : {};
+  const entities = Object.keys(ENTITY_DEFS).filter((k) => scope[k] !== false);
+  if (entities.length === 0) return json({ error: "Selecione ao menos uma entidade para exportar." }, 400);
+
+  const idempotencyKey = typeof body?.idempotency_key === "string" ? body.idempotency_key : null;
+  const effectiveScope: Record<string, boolean> = {};
+  for (const k of entities) effectiveScope[k] = true;
+
+  // Idempotência: mesma chave + mesmo escopo → retorna a solicitação existente
+  if (idempotencyKey) {
+    const { data: existing } = await admin
+      .from("integration_export_requests")
+      .select("id, status, created_at, scope, confirmation_method")
+      .eq("owner_user_id", session.ownerId)
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+    if (existing) {
+      const sameScope = JSON.stringify(existing.scope || {}) === JSON.stringify(effectiveScope);
+      if (sameScope && existing.status === "pending") {
+        return json({ ok: true, request_id: existing.id, status: existing.status, reused: true, email_sent_to: maskEmail(session.email) });
+      }
+ec
+      return json({ error: "Esta chave de idempotência já foi usada com um escopo diferente. Gere uma nova chave." }, 409);
+    }
+  }
+
+  const { data: request, error: reqError } = await admin
+    .from("integration_export_requests")
+    .insert({
+      owner_user_id: session.ownerId,
+      created_by: session.userId,
+      idempotency_key: idempotencyKey,
+      status: "pending",
+      scope: effectiveScope,
+      confirmation_method: "email_code",
+    })
+    .select("id")
+    .single();
+  if (reqError || !request) {
+    console.error("[integration-export] request insert failed:", reqError?.message);
+    return json({ error: "Não foi possível registrar a solicitação de exportação." }, 500);
+  }
+
+  // Token de confirmação: hash-only no banco, uso único, 30 min
+  const rawToken = toHex(crypto.getRandomValues(new Uint8Array(32)));
+  const tokenHash = await sha256Hex(rawToken);
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_MINUTES * 60000).toISOString();
+  const { error: tokenError } = await admin.from("integration_export_tokens").insert({
+    owner_user_id: session.ownerId,
+    request_id: request.id,
+    token_hash: tokenHash,
+    purpose: "confirm_export",
+    expires_at: expiresAt,
+    created_by: session.userId,
+  });
+  if (tokenError) {
+    console.error("[integration-export] token insert failed:", tokenError.message);
+    await admin.from("integration_export_requests").update({ status: "failed", error_message: "falha ao gerar token" }).eq("id", request.id);
+    return json({ error: "Não foi possível gerar o token de confirmação." }, 500);
+  }
+
+  const origin = req.headers.get("origin") || "https://wiize.com.br";
+  const confirmUrl = `${origin}/configuracoes/integracoes/wiize-pay?confirm=${rawToken}&request=${request.id}`;
+  const emailSent = await sendConfirmationEmail({
+    to: session.email, name: session.name, confirmUrl, requestId: request.id, expiresInMinutes: TOKEN_TTL_MINUTES,
+  });
+
+  await audit({
+    ownerId: session.ownerId, userId: session.userId, requestId: request.id,
+    action: "request_export", ip: clientIp(req), userAgent: req.headers.get("user_agent") || "",
+    scope: effectiveScope, status: "pending", authMethod: "password", emailSent,
+  });
+
+  if (!emailSent) {
+    return json({ ok: true, request_id: request.id, status: "pending", email_sent: false, warning: "E-mail de confirmação não pôde ser enviado. Verifique a configuração de e-mail do sistema." });
+  }
+
+  return json({
+    ok: true,
+    request_id: request.id,
+    status: "pending",
+    email_sent: true,
+    email_sent_to: maskEmail(session.email),
+    token_expires_at: expiresAt,
+  });
+}
+
+async function confirmExport(session: Session, body: any, req: Request): Promise<Response> {
+  const rawToken = typeof body?.token === "string" ? body.token.trim() : "";
+  const requestId = typeof body?.request_id === "string" ? body.request_id : "";
+  if (!rawToken || !requestId) return json({ error: "Token e solicitação são obrigatórios." }, 400);
+
+  const tokenHash = await sha256Hex(rawToken);
+  const { data: tokenRow } = await admin
+    .from("integration_export_tokens")
+    .select("id, owner_user_id, request_id, expires_at, used_at")
+    .eq("token_hash", tokenHash)
+    .eq("request_id", requestId)
+    .maybeSingle();
+
+  if (!tokenRow || tokenRow.owner_user_id !== session.ownerId) {
+    await audit({ ownerId: session.ownerId, userId: session.userId, requestId, action: "confirm_export", status: "invalid_token", errorMessage: "token inválido", authMethod: "email_token", ip: clientIp(req), userAgent: req.headers.get("user_agent") || "" });
+    return json({ error: "Token de confirmação inválido." }, 401);
+  }
+  if (tokenRow.used_at) return json({ error: "Este token já foi utilizado. Solicite uma nova exportação." }, 410);
+  if (new Date(tokenRow.expires_at).getTime() < Date.now()) return json({ error: "Token expirado. Solicite uma nova exportação." }, 410);
+
+  const { data: requestRow } = await admin
+    .from("integration_export_requests")
+    .select("id, status, scope")
+    .eq("id", requestId)
+    .eq("owner_user_id", session.ownerId)
+    .maybeSingle();
+  if (!requestRow) return json({ error: "Solicitação de exportação não encontrada." }, 404);
+  if (requestRow.status !== "pending") return json({ error: `Solicitação não está mais pendente (status atual: ${requestRow.status}).` }, 409);
+
+  // Uso único: marca o token imediatamente
+  const { error: useError } = await admin
+    .from("integration_export_tokens")
+    .update({ used_at: new Date().toISOString() })
+    .eq("id", tokenRow.id)
+    .is("used_at", null);
+  if (useError) return json({ error: "Não foi possível validar o token. Tente novamente." }, 500);
+
+  const { error: updError } = await admin
+    .from("integration_export_requests")
+    .update({ status: "authorized", updated_at: new Date().toISOString() })
+    .eq("id", requestId)
+    .eq("status", "pending");
+  if (updError) return json({ error: "Não foi possível autorizar a exportação." }, 500);
+
+  // Dispara o processador de forma assíncrona (best-effort; o cron também cobre)
+  try {
+    const { data: cronRow } = await admin
+      .from("internal_cron_tokens")
+      .select("token")
+      .eq("name", "integration-export-processor")
+      .maybeSingle();
+    if (cronRow?.token) {
+      fetch(`${SUPABASE_URL}/functions/v1/integration-export-processor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-cron-secret": cronRow.token },
+        body: JSON.stringify({ request_id: requestId }),
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.error("[integration-export] processor trigger failed:", e);
+  }
+
+  await audit({
+    ownerId: session.ownerId, userId: session.userId, requestId,
+    action: "confirm_export", status: "authorized", authMethod: "email_token",
+    ip: clientIp(req), userAgent: req.headers.get("user_agent") || "",
+  });
+
+  return json({ ok: true, request_id: requestId, status: "authorized" });
+}
+
+// __PART6__
+
 
 
 
