@@ -31,18 +31,31 @@ Deno.serve(async (req) => {
     const helpful = nps_score == null ? null : Math.max(0, Math.min(10, Number(nps_score)));
     const recommend = nps_recommend == null ? null : Math.max(0, Math.min(10, Number(nps_recommend)));
 
+    const commentText = (nps_comment || "").toString().slice(0, 2000) || null;
     const { error: insErr } = await sb.from("support_ratings").insert({
       ticket_id: ticket.id,
       nps_score: helpful,
       nps_recommend: recommend,
-      nps_comment: (nps_comment || "").toString().slice(0, 2000) || null,
-      resolved_by: "customer",
+      nps_comment: commentText,
+      resolved_by: "human",
     });
     if (insErr) throw insErr;
+
+    // Mostra a avaliação no histórico do ticket para a equipe.
+    const msg = `⭐ **Avaliação do atendimento (por e-mail):** ${helpful ?? "-"}/10\n📣 **Chance de indicar a Wiize:** ${recommend ?? "-"}/10${commentText ? `\n\n💬 ${commentText}` : ""}`;
+    await sb.from("support_messages").insert({ ticket_id: ticket.id, role: "user", content: msg });
+    await sb.from("support_ticket_history").insert({
+      ticket_id: ticket.id,
+      author_name: ticket.name || ticket.email || "Cliente",
+      action_type: "rating",
+      content: `Cliente avaliou o atendimento: ${helpful ?? "-"}/10 (indicação ${recommend ?? "-"}/10)`,
+      attachments: [],
+    }).then(({ error }) => { if (error) console.warn("[support-rating-submit] history insert", error.message); });
 
     await sb.from("support_tickets")
       .update({ phase: "rated", rating_token: null })
       .eq("id", ticket.id);
+    console.log("[support-rating-submit] saved", { ticketId: ticket.id, helpful, recommend });
 
     return new Response(JSON.stringify({
       ok: true,

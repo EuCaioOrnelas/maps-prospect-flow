@@ -83,7 +83,7 @@ export default function SupportRating() {
       <SEO title="Avaliar atendimento Wiize" description="Conta pra gente como foi seu atendimento na Wiize." />
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="mb-6"><Logo size="md" /></div>
-        <Card className="w-full max-w-2xl p-6 sm:p-8">
+        <Card className="w-full max-w-5xl p-6 sm:p-8">
           {loading ? (
             <div className="py-16 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></div>
           ) : done ? (
@@ -109,34 +109,27 @@ export default function SupportRating() {
                 {ticket.category ? <> (<span>{ticket.category}</span>)</> : null} ajuda muito o time.
               </p>
 
-              <div className="space-y-6">
-                <div>
-                  <p className="font-medium">Como você avalia o atendimento que recebeu?</p>
-                  <EmojiRating value={helpful} onChange={setHelpful} className="mt-3" />
-                  {helpful !== null && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Você marcou <span className="font-medium text-foreground">{EMOJI_RATING_OPTIONS.find((o) => o.value === helpful)?.label}</span>. Obrigado! 🙏
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium">De 0 a 10, você indicaria a Wiize para um amigo ou parceiro?</p>
-                  <Scale value={recommend} onChange={setRecommend} />
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>Não indicaria</span><span>Com certeza indicaria</span>
+              <div className="space-y-5">
+                <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+                  <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+                    <p className="mb-3 text-sm font-medium text-foreground">1. Como você avalia o atendimento que recebeu?</p>
+                    <EmojiRating value={helpful} onChange={setHelpful} size="lg" />
+                    {helpful !== null && (
+                      <p className="mt-3 text-center text-xs text-muted-foreground">
+                        Você marcou <span className="font-medium text-foreground">{EMOJI_RATING_OPTIONS.find((o) => o.value === helpful)?.label}</span>. Obrigado! 🙏
+                      </p>
+                    )}
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+                    <p className="mb-3 text-sm font-medium text-foreground">2. De 0 a 10, qual a chance de indicar a Wiize para um amigo?</p>
+                    <Scale value={recommend} onChange={setRecommend} />
+                    <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                      <span>Nada provável</span><span>Muito provável</span>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <p className="font-medium mb-2">Quer deixar um comentário? <span className="text-xs text-muted-foreground">(opcional)</span></p>
-                  <Textarea
-                    rows={4}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="O que poderíamos melhorar?"
-                  />
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button size="lg" className="w-full" disabled={submitting} onClick={submit}>
+                {error && <p className="text-sm text-destructive text-center">{error}</p>}
+                <Button size="lg" className="w-full" disabled={submitting || helpful == null || recommend == null} onClick={submit}>
                   {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Enviar avaliação
                 </Button>
