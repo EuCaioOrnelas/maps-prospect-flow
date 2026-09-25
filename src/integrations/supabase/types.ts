@@ -5081,6 +5081,275 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_connections: {
+        Row: {
+          created_at: string
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          owner_user_id: string
+          provider: string
+          revoked_at: string | null
+          scopes: Json | null
+          status: string
+          sync_cursor: string | null
+          sync_status: string | null
+          sync_version: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          owner_user_id?: string
+          provider?: string
+          revoked_at?: string | null
+          scopes?: Json | null
+          status?: string
+          sync_cursor?: string | null
+          sync_status?: string | null
+          sync_version?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          owner_user_id?: string
+          provider?: string
+          revoked_at?: string | null
+          scopes?: Json | null
+          status?: string
+          sync_cursor?: string | null
+          sync_status?: string | null
+          sync_version?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integration_export_audit_logs: {
+        Row: {
+          action: string
+          auth_method: string | null
+          created_at: string
+          email_sent: boolean | null
+          error_message: string | null
+          id: string
+          ip: unknown
+          method: string | null
+          owner_user_id: string
+          record_count: number | null
+          request_id: string | null
+          scope: Json | null
+          status: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          auth_method?: string | null
+          created_at?: string
+          email_sent?: boolean | null
+          error_message?: string | null
+          id?: string
+          ip?: unknown
+          method?: string | null
+          owner_user_id?: string
+          record_count?: number | null
+          request_id?: string | null
+          scope?: Json | null
+          status?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          auth_method?: string | null
+          created_at?: string
+          email_sent?: boolean | null
+          error_message?: string | null
+          id?: string
+          ip?: unknown
+          method?: string | null
+          owner_user_id?: string
+          record_count?: number | null
+          request_id?: string | null
+          scope?: Json | null
+          status?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      integration_export_configs: {
+        Row: {
+          created_at: string
+          entity_config: Json
+          id: string
+          owner_user_id: string
+          preset: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_config?: Json
+          id?: string
+          owner_user_id?: string
+          preset?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_config?: Json
+          id?: string
+          owner_user_id?: string
+          preset?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      integration_export_requests: {
+        Row: {
+          checksum: string | null
+          completed_at: string | null
+          confirmation_method: string | null
+          created_at: string
+          created_by: string
+          error_message: string | null
+          expires_at: string
+          file_path: string | null
+          file_size: number | null
+          id: string
+          idempotency_key: string | null
+          manifest: Json | null
+          owner_user_id: string
+          record_counts: Json | null
+          scope: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          checksum?: string | null
+          completed_at?: string | null
+          confirmation_method?: string | null
+          created_at?: string
+          created_by: string
+          error_message?: string | null
+          expires_at?: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          idempotency_key?: string | null
+          manifest?: Json | null
+          owner_user_id?: string
+          record_counts?: Json | null
+          scope?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          checksum?: string | null
+          completed_at?: string | null
+          confirmation_method?: string | null
+          created_at?: string
+          created_by?: string
+          error_message?: string | null
+          expires_at?: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          idempotency_key?: string | null
+          manifest?: Json | null
+          owner_user_id?: string
+          record_counts?: Json | null
+          scope?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integration_export_tokens: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          owner_user_id: string
+          purpose: string
+          request_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          owner_user_id?: string
+          purpose?: string
+          request_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          owner_user_id?: string
+          purpose?: string
+          request_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_export_tokens_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "integration_export_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_settings: {
+        Row: {
+          failed_attempts: number
+          id: string
+          locked_until: string | null
+          owner_user_id: string
+          password_hash: string | null
+          password_set_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          failed_attempts?: number
+          id?: string
+          locked_until?: string | null
+          owner_user_id?: string
+          password_hash?: string | null
+          password_set_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          failed_attempts?: number
+          id?: string
+          locked_until?: string | null
+          owner_user_id?: string
+          password_hash?: string | null
+          password_set_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       intel_audit: {
         Row: {
           confidence: number | null

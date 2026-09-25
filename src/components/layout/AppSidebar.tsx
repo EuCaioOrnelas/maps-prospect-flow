@@ -35,6 +35,7 @@ import {
   RotateCcw,
   CalendarDays,
   Globe,
+  Plug,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { MetaIcon } from "@/components/meta/MetaIcon";
@@ -87,6 +88,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const { role: accountRole } = useAccountRole();
   const canRole = (perm: AccountPermission) => roleHasPermission(accountRole, perm);
   const canSeeUsers = (isAdmin || accountRole === "owner" || accountRole === "admin") && canRole("usuarios");
+  const canSeeIntegrations = accountRole === "owner" || accountRole === "admin";
   const can = (key: FeatureKey) =>
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
@@ -610,6 +612,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 tooltip="Central de Ajuda"
               />
             </li>
+
+            {/* Integrações — visível apenas para Owner/Admin */}
+            {canSeeIntegrations && (
+              <li>
+                <SidebarNavItem
+                  title="Integrações"
+                  icon={Plug}
+                  url="/configuracoes/integracoes/wiize-pay"
+                  isActive={currentPath === "/configuracoes/integracoes/wiize-pay"}
+                  isExpanded={isExpanded}
+                  tooltip="Integrações e exportação"
+                />
+              </li>
+            )}
 
             {/* Profile */}
             <li>
