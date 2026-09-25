@@ -630,7 +630,83 @@ async function confirmExport(session: Session, body: any, req: Request): Promise
   return json({ ok: true, request_id: requestId, status: "authorized" });
 }
 
-// __PART6__
+// -------------------------------------------------------------
+// Download, cancelamento e demais ações
+// -------------------------------------------------------------
+function clientIp(req: Request): string {
+  return (
+    req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    ""
+  );
+}
+
+async function downloadExport(session: Session, body: any, req: Request): Promise<Response> {
+  const requestId = typeof body?.request_id === "string" ? body.request_id : "";
+  if (!requestId) return json({ error: "request_id obrigatório." }, 400);
+
+  const { data: requestRow } = await admin
+    .from("integration_export_requests")
+    .select("id, status, file_path, expires_at, checksum, file_size")
+    .eq("id", requestId)
+    .eq("owner_user_id", session.ownerId)
+    .maybeSingle();
+
+  if (!requestRow) return json({ error: "Exportação não encontrada." }, 404);
+  if (requestRow.status !== "completed") return json({ error: `Exportação não está pronta (status: ${requestRow.status}).` }, 409);
+  if (new Date(requestRow.expires_at).getTime() < Date.now()) return json({ error: "Esta exportação expirou. Solicite uma nova." }, 410);
+  if (!requestRow.file_path) return json({ error: "Arquivo não disponível." }, 404);
+
+  const { data: signed, error } = await admin.storage
+    .from(BUCKET)
+    .createSignedUrl(requestRow.file_path, 3600, { download: true });
+  if (error || !signed) return json({ error: "Não foi possível gerar o link de download." }, 500);
+
+  await audit({
+    ownerId: session.ownerId, userId: session.userId, requestId,
+    action: "download", status: "ok", ip: clientIp(req), userAgent: req.headers.get("user_agent") || "",
+  });
+
+  return json({
+    ok: true,
+    url: signed.signedUrl,
+    expires_in_seconds: 3600,
+    checksum: requestRow.checksum,
+    file_size: requestRow.file_size,
+    note: "Link assinado de uso legítimo apenas para a conta solicitante. Não compartilhe.",
+  });
+}
+
+async function cancelExport(session: Session, body: any, req: Request): Promise<Response> {
+  const requestId = typeof body?.request_id === "string" ? body.request_id : "";
+  if (!requestId) return json({ error: "request_id obrigatório." }, 400);
+
+  const { data: requestRow } = await admin
+    .from("integration_export_requests")
+    .select("id, status")
+    .eq("id", requestId)
+    .eq("owner_user_id", session.ownerId)
+    .maybeSingle();
+  if (!requestRow) return json({ error: "Exportação não encontrada." }, 404);
+  if (!["pending", "authorized"].includes(requestRow.status)) {
+    return json({ error: `Não é possível cancelar uma exportação com status ${requestRow.status}.` }, 409);
+  }
+
+  const { error } = await admin
+    .from("integration_export_requests")
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("id", requestId);
+  if (error) return json({ error: "Não foi possível cancelar." }, 500);
+
+  await audit({
+    ownerId: session.ownerId, userId: session.userId, requestId,
+    action: "cancel", status: "cancelled", ip: clientIp(req), userAgent: req.headers.get("user_agent") || "",
+  });
+  return json({ ok: true, request_id: requestId, status: "cancelled" });
+}
+
+// __PART7__
+
 
 
 
