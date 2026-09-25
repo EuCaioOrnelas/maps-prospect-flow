@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     if (type === "nps") {
       const helpful = npsScore == null ? null : Math.max(0, Math.min(10, Number(npsScore)));
       const recommend = npsRecommend == null ? null : Math.max(0, Math.min(10, Number(npsRecommend)));
-      await sb.from("support_ratings").insert({
+      const { error: insErr } = await sb.from("support_ratings").insert({
         ticket_id: ticket.id,
         stars: null,
         nps_score: helpful,
@@ -82,6 +82,15 @@ Deno.serve(async (req) => {
         nps_comment: typeof npsComment === "string" ? npsComment.slice(0, 2000) || null : null,
         resolved_by: wasEscalated ? "human" : "ai",
       });
+      if (insErr) throw insErr;
+
+      // Registra a avaliação dentro do ticket para a equipe ver no histórico.
+      const msg = `⭐ **Avaliação do atendimento:** ${helpful ?? "-"}/10\n📣 **Chance de indicar a Wiize:** ${recommend ?? "-"}/10`;
+      await sb.from("support_messages").insert({ ticket_id: ticket.id, role: "user", content: msg });
+      if (!wasEscalated) {
+        await sb.from("support_tickets").update({ phase: "rated" }).eq("id", ticket.id);
+      }
+      console.log("[support-feedback-submit] nps saved", { ticketId: ticket.id, helpful, recommend, wasEscalated });
     }
 
     return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });

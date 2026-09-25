@@ -28,15 +28,22 @@ export function SupportRatingOverlay({
   ticketNumber,
 }: SupportRatingOverlayProps) {
   const sentRef = useRef(false);
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
 
   // Envio automático assim que as duas respostas obrigatórias forem dadas.
+  // A marcação de "enviado" só acontece quando o envio dispara de fato; se o
+  // usuário trocar a nota antes, o timer é reiniciado e o envio não se perde.
   useEffect(() => {
     if (sentRef.current || submitting) return;
     if (score === null || recommend === null) return;
-    sentRef.current = true;
-    const t = setTimeout(() => onSubmit(), 700);
+    const t = setTimeout(() => {
+      if (sentRef.current) return;
+      sentRef.current = true;
+      onSubmitRef.current();
+    }, 700);
     return () => clearTimeout(t);
-  }, [score, recommend, submitting, onSubmit]);
+  }, [score, recommend, submitting]);
 
   const complete = score !== null && recommend !== null;
   const selected = EMOJI_RATING_OPTIONS.find((o) => o.value === score);
