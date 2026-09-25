@@ -48,7 +48,12 @@ const PUBLIC_PATTERNS: RegExp[] = [
   /^\/404$/,
 ];
 
+// Páginas com campos de cartão: o aviso fixo no rodapé pode cobrir os campos
+// (principalmente no celular) e impedir o clique. Nunca exibir nelas.
+const CARD_PATHS: RegExp[] = [/^\/signup\/cartao-trial/, /^\/checkout/];
+
 export const isPublicConsentPath = (pathname: string) =>
+  !CARD_PATHS.some((r) => r.test(pathname)) &&
   PUBLIC_PATTERNS.some((r) => r.test(pathname));
 
 export const CookieConsent = () => {
