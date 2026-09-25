@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/Logo";
 import { Loader2, CheckCircle2, Star } from "lucide-react";
 import { SEO } from "@/components/SEO";
