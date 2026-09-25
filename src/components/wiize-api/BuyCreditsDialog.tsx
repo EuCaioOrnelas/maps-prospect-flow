@@ -753,7 +753,6 @@ function NewCardSection(props: {
 }) {
   return (
     <Elements
-      key={`${props.amount}-${props.saveCard}`}
       stripe={stripePromise}
       options={{
         mode: "payment",
