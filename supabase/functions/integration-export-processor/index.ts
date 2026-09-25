@@ -176,7 +176,7 @@ async function fetchEntityRows(
       .order(def.order, { ascending: true })
       .range(from, to);
     if (error) throw new Error(`${def.table}: ${error.message}`);
-    const chunk = (data || []) as Record<string, unknown>[];
+    const chunk = (data || []) as unknown as Record<string, unknown>[];
     rows.push(...chunk.map((r) => pickFields(r, fields)));
     if (chunk.length < PAGE_SIZE) break;
     if (to >= MAX_ROWS_PER_ENTITY - 1) {
@@ -190,7 +190,8 @@ async function fetchEntityRows(
 // -------------------------------------------------------------
 // Processa uma solicitação
 // -------------------------------------------------------------
-async function processRequest(admin: ReturnType<typeof createClient>, req: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function processRequest(admin: any, req: any) {
   const requestId: string = req.id;
   const owner: string = req.owner_user_id;
   const scope: string[] = (req.scope?.entities || []) as string[];
@@ -327,7 +328,8 @@ async function processRequest(admin: ReturnType<typeof createClient>, req: any) 
 // -------------------------------------------------------------
 // Expira solicitações pendentes antigas / pacotes vencidos
 // -------------------------------------------------------------
-async function expireStale(admin: ReturnType<typeof createClient>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function expireStale(admin: any) {
   const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
   await admin
     .from("integration_export_requests")
