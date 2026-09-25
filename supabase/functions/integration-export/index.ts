@@ -336,5 +336,78 @@ async function getSettingsRow(ownerId: string) {
   return data;
 }
 
-// __PART3__
+// -------------------------------------------------------------
+// Visão geral (contagens por entidade)
+// -------------------------------------------------------------
+async function buildOverview(ownerId: string) {
+  const nowIso = new Date().toISOString();
+  const entities: Record<string, { count: number; label: string }> = {};
+
+  for (const [key, def] of Object.entries(ENTITY_DEFS)) {
+    let query = admin.from(def.table).select("id", { count: "exact", head: true }).eq("owner_user_id", ownerId);
+    if (def.extraFilter) {
+      for (const [col, val] of Object.entries(def.extraFilter)) query = query.eq(col, val as string);
+    }
+    const { count } = await query;
+    entities[key] = { count: count || 0, label: def.label };
+  }
+
+  return {
+    format: "wiize-crm-export",
+    schema_version: "1.0",
+    destination: "READY_FOR_WIIZE_PAY",
+    generated_at: nowIso,
+    entities,
+    note:
+      "Nenhum dado é enviado ao Wiize Pay nesta etapa. A conexão de destino só será ativada quando o Wiize Pay estiver disponível (OAuth 2.0 / autorização delegada).",
+  };
+}
+
+// -------------------------------------------------------------
+// E-mail de confirmação
+// -------------------------------------------------------------
+async function sendConfirmationEmail(opts: {
+  to: string; name: string; confirmUrl: string; requestId: string; expiresInMinutes: number;
+}): Promise<boolean> {
+  if (!RESEND_API_KEY) {
+    console.error("[integration-export] RESEND_API_KEY ausente — e-mail não enviado");
+    return false;
+  }
+  const html = `
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1a1a2e">
+    <h2 style="color:#0f3460;margin-bottom:8px">Confirmação de exportação de dados</h2>
+    <p>Olá${opts.name ? `, ${opts.name}` : ""},</p>
+    <p>Recebemos uma solicitação para <strong>exportar os dados do seu CRM Wiize</strong> para preparação da integração com o Wiize Pay.</p>
+    <p>Para autorizar esta operação, confirme no botão abaixo. O link expira em <strong>${opts.expiresInMinutes} minutos</strong> e pode ser usado <strong>apenas uma vez</strong>.</p>
+    <p style="margin:24px 0">
+      <a href="${opts.confirmUrl}" style="background:#0f3460;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold">Autorizar exportação</a>
+    </p>
+    <p style="font-size:13px;color:#555">Solicitação: <code>${opts.requestId}</code></p>
+    <p style="font-size:13px;color:#555">Se você não solicitou esta exportação, ignore este e-mail e considere trocar sua Senha de Integração em Configurações → Integrações.</p>
+    <p style="font-size:12px;color:#999">Wiize — este é um e-mail automático de segurança.</p>
+  </div>`;
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: [opts.to],
+        subject: "Confirme a exportação dos seus dados — Wiize",
+        html,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error("[integration-export] e-mail error:", e);
+    return false;
+  }
+}
+
+// __PART4__
+
 
