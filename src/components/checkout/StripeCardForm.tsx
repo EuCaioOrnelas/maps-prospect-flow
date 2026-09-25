@@ -1,7 +1,7 @@
 // Reusable Stripe Elements card form — handles tokenization on submit.
 // Parent passes onPaymentMethod(pmId) which is then sent to a backend edge function.
 
-import { useState, useImperativeHandle, forwardRef, useMemo } from "react";
+import { useState, useImperativeHandle, forwardRef } from "react";
 import {
   CardNumberElement,
   CardExpiryElement,
@@ -101,19 +101,6 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
       setError(event.error?.message || null);
     };
 
-    const numberOptions = useMemo<StripeCardNumberElementOptions>(
-      () => ({ ...cardNumberOptions, disabled: !!disabled }),
-      [disabled],
-    );
-    const expiryOptions = useMemo<StripeCardExpiryElementOptions>(
-      () => ({ ...cardExpiryOptions, disabled: !!disabled }),
-      [disabled],
-    );
-    const cvcOptions = useMemo<StripeCardCvcElementOptions>(
-      () => ({ ...cardCvcOptions, disabled: !!disabled }),
-      [disabled],
-    );
-
     useImperativeHandle(ref, () => ({
       createPaymentMethod: async (billingDetails) => {
         setError(null);
@@ -161,10 +148,10 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             <Hash className="h-3 w-3 text-muted-foreground" /> Número do cartão
           </Label>
           <CardNumberElement
-            options={numberOptions}
+            options={cardNumberOptions}
             className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
               focusedField === "number" ? "border-ring ring-1 ring-ring" : "border-input"
-            } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+            }`}
             onChange={(event) => {
               handleFieldChange(event);
               onCardChange?.({ brand: event.brand, complete: event.complete, empty: event.empty });
@@ -180,10 +167,10 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
             <CardExpiryElement
-              options={expiryOptions}
+              options={cardExpiryOptions}
               className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
                 focusedField === "expiry" ? "border-ring ring-1 ring-ring" : "border-input"
-              } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+              }`}
               onChange={(event) => {
                 handleFieldChange(event);
                 onExpiryChange?.({ complete: event.complete, empty: event.empty });
@@ -197,10 +184,10 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               <Lock className="h-3 w-3 text-muted-foreground" /> CVV
             </Label>
             <CardCvcElement
-              options={cvcOptions}
+              options={cardCvcOptions}
               className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
                 focusedField === "cvc" ? "border-ring ring-1 ring-ring" : "border-input"
-              } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+              }`}
               onChange={handleFieldChange}
               onFocus={() => {
                 setFocusedField("cvc");

@@ -17,3 +17,4 @@
 - [ ] Validar geração real alinhada; persistência e reabertura da Gestão confirmadas.
 
 - [x] Auditar e corrigir os campos Stripe do checkout e do trial, reproduzindo clique, foco e digitação em computador e celular.
+- [x] Eliminar remontagens e bloqueios intermitentes dos campos Stripe e adicionar testes de regressão.
