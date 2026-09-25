@@ -15,6 +15,11 @@ export default defineConfig(({ mode }) => ({
     react(),
     componentTagger(),
     VitePWA({
+      // Service worker desativado de forma segura: o "selfDestroying" publica um
+      // sw.js que remove o cache antigo e se desinstala nos navegadores dos
+      // clientes. Evita que versões antigas do site (ex.: formulário do cartão)
+      // fiquem presas no navegador até o cache expirar.
+      selfDestroying: true,
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt"],
       manifest: {
