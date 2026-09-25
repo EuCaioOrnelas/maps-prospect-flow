@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight, Minus, Plus, Check, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -126,10 +126,12 @@ export function CheckoutBumpsUpsellDialog({
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                 {copy.eyebrow}
               </p>
-              <h2 className="text-lg sm:text-xl font-display font-bold text-foreground leading-tight mt-0.5">
+              <DialogTitle className="text-lg sm:text-xl font-display font-bold text-foreground leading-tight mt-0.5">
                 {copy.title}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1.5 leading-snug">{copy.subtitle}</p>
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-1.5 leading-snug">
+                {copy.subtitle}
+              </DialogDescription>
             </div>
           </div>
         </div>
