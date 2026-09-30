@@ -9,15 +9,19 @@ export interface PasswordRule {
   test: (v: string) => boolean;
 }
 
-export const PASSWORD_RULES: PasswordRule[] = [
-  { label: "Mínimo de 8 caracteres", test: (v) => v.length >= 8 },
+/** Regras parametrizáveis pelo tamanho mínimo (padrão 8; Senha de Integração exige 10 no servidor). */
+export const passwordRules = (min = 8): PasswordRule[] => [
+  { label: `Mínimo de ${min} caracteres`, test: (v) => v.length >= min },
   { label: "Uma letra maiúscula", test: (v) => /[A-Z]/.test(v) },
   { label: "Uma letra minúscula", test: (v) => /[a-z]/.test(v) },
   { label: "Um número", test: (v) => /\d/.test(v) },
   { label: "Um caractere especial", test: (v) => /[^A-Za-z0-9]/.test(v) },
 ];
 
-export const isStrongPassword = (v: string) => PASSWORD_RULES.every((r) => r.test(v));
+export const PASSWORD_RULES: PasswordRule[] = passwordRules(8);
+
+export const isStrongPassword = (v: string, min = 8) =>
+  passwordRules(min).every((r) => r.test(v));
 
 interface Props {
   id?: string;
