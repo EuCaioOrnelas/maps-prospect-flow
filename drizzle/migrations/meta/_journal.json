@@ -211,6 +211,13 @@
       "when": 1790773644327,
       "tag": "0029_wiize_pay_sales_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790776360024,
+      "tag": "0030_wiize_pay_customer_sync",
+      "breakpoints": true
     }
   ]
 }

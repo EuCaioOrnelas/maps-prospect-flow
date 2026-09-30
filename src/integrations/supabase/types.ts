@@ -13637,6 +13637,59 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_pay_customer_sync_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          last_error: string | null
+          lead_id: string
+          next_attempt_at: string
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          lead_id: string
+          next_attempt_at?: string
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          lead_id?: string
+          next_attempt_at?: string
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wiize_pay_customer_sync_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wiize_pay_sync_config: {
+        Row: {
+          cron_secret: string
+          id: number
+        }
+        Insert: {
+          cron_secret?: string
+          id?: number
+        }
+        Update: {
+          cron_secret?: string
+          id?: number
+        }
+        Relationships: []
+      }
       wiize_pay_webhook_events: {
         Row: {
           charge_request_id: string | null
@@ -14282,6 +14335,7 @@ export type Database = {
         }
         Returns: Json
       }
+      wiize_pay_wake_customer_sync: { Args: never; Returns: undefined }
     }
     Enums: {
       account_member_status: "active" | "inactive"
