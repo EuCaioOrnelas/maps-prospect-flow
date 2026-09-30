@@ -1513,7 +1513,7 @@ export function WianChat() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground">Suporte Wiize</p>
-                    <p className="text-[11px] text-muted-foreground">Dúvidas sobre a plataforma, campanhas, CRM, agentes e integrações</p>
+                    <p className="text-[11px] text-muted-foreground">Nossa plataforma de inteligência comercial: campanhas, CRM, agentes e integrações</p>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                 </button>
@@ -1522,16 +1522,16 @@ export function WianChat() {
                     const cat = TRIAGE_TREE.find((c) => c.id === "wiizepay");
                     if (cat) pickCategory(cat);
                   }}
-                  className="flex w-full items-center gap-3.5 rounded-xl border-2 border-primary/40 bg-primary/10 px-4 py-4 text-left transition-colors hover:border-primary hover:bg-primary/15"
+                  className="flex w-full items-center gap-3.5 rounded-xl border border-border/60 bg-card px-4 py-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <CreditCard className="h-5 w-5" strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground">Suporte Wiize Pay</p>
-                    <p className="text-[11px] text-muted-foreground">Cobranças, PIX, boleto, cartão e débito em conta</p>
+                    <p className="text-[11px] text-muted-foreground">Nossa plataforma de pagamentos: cobranças, PIX, boleto, cartão e débito em conta</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
                 </button>
               </div>
             ) : phase === "triage-submenu" && activeCategory
@@ -1582,7 +1582,7 @@ export function WianChat() {
                 })}
                 </>
               )}
-            {phase === "triage-menu" && (
+            {menuStep !== "root" && phase === "triage-menu" && (
               <button
                 onClick={openTicketDirect}
                 className="w-full text-left px-5 py-3 hover:bg-muted/50 transition-colors flex items-center gap-3.5 border-t border-border/60 bg-muted/20"
