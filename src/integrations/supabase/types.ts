@@ -5081,9 +5081,39 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_connection_secrets: {
+        Row: {
+          access_expires_at: string | null
+          access_token_enc: string | null
+          owner_user_id: string
+          provider: string
+          refresh_token_enc: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_expires_at?: string | null
+          access_token_enc?: string | null
+          owner_user_id: string
+          provider?: string
+          refresh_token_enc?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_expires_at?: string | null
+          access_token_enc?: string | null
+          owner_user_id?: string
+          provider?: string
+          refresh_token_enc?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integration_connections: {
         Row: {
+          connected_at: string | null
+          connected_by: string | null
           created_at: string
+          external_account_label: string | null
           id: string
           last_error: string | null
           last_sync_at: string | null
@@ -5098,7 +5128,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          connected_at?: string | null
+          connected_by?: string | null
           created_at?: string
+          external_account_label?: string | null
           id?: string
           last_error?: string | null
           last_sync_at?: string | null
@@ -5113,7 +5146,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          connected_at?: string | null
+          connected_by?: string | null
           created_at?: string
+          external_account_label?: string | null
           id?: string
           last_error?: string | null
           last_sync_at?: string | null
@@ -5316,6 +5352,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      integration_oauth_states: {
+        Row: {
+          code_verifier_enc: string
+          created_at: string
+          expires_at: string
+          id: string
+          owner_user_id: string
+          provider: string
+          state_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_verifier_enc: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          owner_user_id: string
+          provider?: string
+          state_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_verifier_enc?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          owner_user_id?: string
+          provider?: string
+          state_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       integration_settings: {
         Row: {

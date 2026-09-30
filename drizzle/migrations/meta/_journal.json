@@ -183,6 +183,13 @@
       "when": 1790355822314,
       "tag": "0025_integration_export_module",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790765308367,
+      "tag": "0026_wiize_pay_connection_oauth",
+      "breakpoints": true
     }
   ]
 }
