@@ -143,8 +143,27 @@ export default function CRMSales() {
     });
   }, [sales, typeFilter, statusFilter, responsibleFilter, search, dateFrom, dateTo, user?.id]);
 
-  // KPIs seguem os filtros ativos (inclusive por responsável)
-  const metrics = useMemo(() => computeSalesMetrics(filtered), [filtered]);
+  // KPIs seguem os filtros ativos. Com Wiize Pay, vendas cuja cobrança foi
+  // cancelada, estornada ou falhou deixam de contar como receita.
+  const DEAD = ["cancelled", "refunded", "error"];
+  const metrics = useMemo(
+    () => computeSalesMetrics(filtered.filter((s) => !DEAD.includes(chargeByDeal[s.id]?.status ?? ""))),
+    [filtered, chargeByDeal]
+  );
+  const wpTotals = useMemo(() => {
+    const t = { paid: 0, pending: 0, overdue: 0, count: 0 };
+    for (const s of filtered) {
+      const c = chargeByDeal[s.id];
+      if (!c) continue;
+      const amount = s.sale_type === "one_time" ? Number(s.value || 0) : Number(s.value || 0) * Number(s.contract_months || 1);
+      t.count++;
+      if (c.status === "paid") t.paid += amount;
+      else if (c.status === "overdue") t.overdue += amount;
+      else if (c.status === "sent" || c.status === "awaiting_payment") t.pending += amount;
+    }
+    return t;
+  }, [filtered, chargeByDeal]);
+  const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
   const handleDownload = async (path: string) => {
     const url = await getAttachmentUrl(path);
@@ -264,6 +283,22 @@ export default function CRMSales() {
               projected12mo={metrics.projected12mo}
               nextExpiration={metrics.nextExpiration}
             />
+
+            {wp?.connected && wpTotals.count > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { label: "Recebido no Wiize Pay", value: wpTotals.paid, tone: "text-primary" },
+                  { label: "Pagamento pendente", value: wpTotals.pending, tone: "text-foreground" },
+                  { label: "Vencido", value: wpTotals.overdue, tone: "text-destructive" },
+                ].map((k) => (
+                  <Card key={k.label} className="p-4 rounded-2xl border-border/40 bg-card">
+                    <p className="text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">{k.label}</p>
+                    <p className={`mt-2 text-[20px] font-bold tabular-nums ${k.tone}`}>{fmtBRL(k.value)}</p>
+                  </Card>
+                ))}
+              </div>
+            )}
+
 
             {/* Expirando em breve */}
             {metrics.expiringSoon.length > 0 && (
