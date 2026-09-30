@@ -41,9 +41,20 @@ const CONTRACT_OPTIONS = [
   { value: "18", label: "18 meses" },
   { value: "24", label: "24 meses" },
   { value: "36", label: "36 meses" },
+  { value: "48", label: "48 meses" },
+  { value: "60", label: "60 meses" },
 ];
+/** Limite aceito pela API do Wiize Pay (installments_or_months ≤ 60). */
 const MAX_CONTRACT_MONTHS = 60;
+/** Wiize Pay parcela em até 21x. */
+const MAX_INSTALLMENTS = 21;
 const isPresetMonths = (m: string) => CONTRACT_OPTIONS.some((o) => o.value === m);
+const WIZARD_STEPS = [
+  { n: 1, label: "Cliente", Icon: UserIcon },
+  { n: 2, label: "Contrato", Icon: FileSignature },
+  { n: 3, label: "Serviço", Icon: Layers3 },
+  { n: 4, label: "Cobrança", Icon: Receipt },
+] as const;
 
 export function RegisterSaleDialog({
   open,
@@ -97,6 +108,7 @@ export function RegisterSaleDialog({
   const [savedSaleId, setSavedSaleId] = useState<string | null>(null);
   const [paymentLink, setPaymentLink] = useState<{ url: string; expiresAt: string | null } | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [step, setStep] = useState(1);
 
   useEffect(() => {
     if (!open) return;
@@ -144,6 +156,7 @@ export function RegisterSaleDialog({
     setSavedSaleId(null);
     setPaymentLink(null);
     setIdempotencyKey(crypto.randomUUID());
+    setStep(1);
   }, [open, sale, initialValue, initialTitle, initialDescription, leadName, leadId]);
 
   useEffect(() => {
@@ -164,6 +177,24 @@ export function RegisterSaleDialog({
       if (billingType !== "one_time") return [method];
       return current.includes(method) ? current.filter((item) => item !== method) : [...current, method];
     });
+  };
+
+  const parsedValue = Number(value.replace(/\./g, "").replace(",", "."));
+  /** Valida a etapa atual do fluxo Wiize Pay antes de avançar. */
+  const goNext = () => {
+    if (step === 1 && ![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
+    if (step === 2) {
+      if (!startDate) return toast.error("Informe a data de início");
+      const m = Number(months);
+      if (billingType === "recurring" && (!Number.isInteger(m) || m < 1 || m > MAX_CONTRACT_MONTHS)) {
+        return toast.error(`Informe um tempo de contrato entre 1 e ${MAX_CONTRACT_MONTHS} meses`);
+      }
+    }
+    if (step === 3) {
+      if (!title.trim()) return toast.error("Informe o nome do serviço");
+      if (!parsedValue || parsedValue <= 0) return toast.error("Informe um valor válido");
+    }
+    setStep((s) => Math.min(4, s + 1));
   };
 
   const handleSubmit = async () => {
@@ -300,307 +331,313 @@ export function RegisterSaleDialog({
   };
 
 
+  const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const inputCls = cn(compact && "h-8 text-xs");
+  const locked = !!savedSaleId;
+  /** Fora do Wiize Pay mostra tudo; com Wiize Pay, só a etapa atual. */
+  const showStep = (s: number) => !wiizePayActive || (!paymentLink && step === s);
+
+  const titleField = (
+    <div className="space-y-1.5">
+      <Label htmlFor="sale-title" className="flex items-center gap-1.5">
+        <Tag className="w-3.5 h-3.5 text-primary" /> {wiizePayActive ? "Nome do serviço *" : "Título da venda *"}
+      </Label>
+      <Input id="sale-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Plano Growth Anual - João da Silva" maxLength={120} className={inputCls} disabled={locked} />
+    </div>
+  );
+
+  const descriptionField = (
+    <div className="space-y-1.5">
+      <Label htmlFor="sale-desc" className="flex items-center gap-1.5">
+        <AlignLeft className="w-3.5 h-3.5 text-primary" /> Descrição (opcional)
+      </Label>
+      <Textarea id="sale-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Detalhes do acordo, escopo, condições especiais..." rows={compact ? 2 : 3} maxLength={500} className={cn(compact && "min-h-16 text-xs")} disabled={locked} />
+    </div>
+  );
+
+  const valueField = (
+    <div className="space-y-1.5">
+      <Label htmlFor="sale-value" className="flex items-center gap-1.5">
+        <DollarSign className="w-3.5 h-3.5 text-primary" />
+        {saleType === "recurring" ? "Valor mensal (R$) *" : "Valor total (R$) *"}
+      </Label>
+      <Input id="sale-value" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0,00" className={inputCls} disabled={locked} />
+    </div>
+  );
+
+  const monthsField = (
+    <div className="space-y-1.5">
+      <Label className="flex items-center gap-1.5">
+        <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
+      </Label>
+      <div className="flex gap-2">
+        <Select
+          value={customMonths ? "custom" : months}
+          onValueChange={(v) => {
+            if (v === "custom") { setCustomMonths(true); return; }
+            setCustomMonths(false);
+            setMonths(v);
+          }}
+          disabled={locked}
+        >
+          <SelectTrigger className={cn(customMonths ? "w-40 shrink-0" : "w-full", inputCls)}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {CONTRACT_OPTIONS.map((opt) => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+            <SelectItem value="custom">Outro prazo…</SelectItem>
+          </SelectContent>
+        </Select>
+        {customMonths && (
+          <div className="relative flex-1">
+            <Input aria-label="Quantidade de meses do contrato" type="number" inputMode="numeric" min={1} max={MAX_CONTRACT_MONTHS} value={months} onChange={(e) => setMonths(e.target.value.replace(/\D/g, "").slice(0, 2))} className={cn("pr-14", inputCls)} autoFocus disabled={locked} />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">meses</span>
+          </div>
+        )}
+      </div>
+      {startDate && Number(months) >= 1 && (
+        <p className="text-xs text-muted-foreground">
+          Termina em {(() => { const d = new Date(startDate + "T12:00"); d.setMonth(d.getMonth() + Number(months)); return d.toLocaleDateString("pt-BR"); })()}
+          {wiizePayActive && ` · até ${MAX_CONTRACT_MONTHS} meses no Wiize Pay`}
+        </p>
+      )}
+    </div>
+  );
+
+  const startField = (
+    <div className="space-y-1.5">
+      <Label htmlFor="sale-start" className="flex items-center gap-1.5">
+        <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
+      </Label>
+      <Input id="sale-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputCls} disabled={locked} />
+    </div>
+  );
+
+  const contractFileField = (
+    <FileSlot label="Contrato" icon={<FileSignature className="w-3.5 h-3.5 text-primary" />} file={contractFile} onChange={setContractFile} compact={compact} />
+  );
+
+  const optionCls = (active: boolean) => cn(
+    "flex min-h-12 items-center gap-3 rounded-lg border px-3 text-left transition-colors",
+    active ? "border-foreground/25 bg-muted/60 text-foreground" : "border-border text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+    locked && "cursor-not-allowed opacity-70",
+  );
+
+  const wiizePaySection = wiizePayActive && (
+    <section className="space-y-4" aria-label="Cobrança Wiize Pay">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+          <ShieldCheck className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="font-semibold text-foreground">Cobrança Wiize Pay</h4>
+            <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Conectado</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Os dados do cartão ficam somente no ambiente seguro do Wiize Pay.</p>
+        </div>
+      </div>
+
+      <ol className="grid grid-cols-4 gap-1.5" aria-label="Etapas no Wiize Pay">
+        {WIZARD_STEPS.map(({ n, label, Icon }) => {
+          const done = !!paymentLink || n < step;
+          const current = !paymentLink && n === step;
+          return (
+            <li key={n}>
+              <button
+                type="button"
+                disabled={!done || !!paymentLink || locked}
+                onClick={() => setStep(n)}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-xs transition-colors",
+                  current ? "border-foreground/25 bg-muted/60 text-foreground" : done ? "border-border text-foreground hover:bg-muted/30" : "border-border text-muted-foreground",
+                )}
+              >
+                <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold", done ? "bg-foreground text-background" : "bg-muted text-foreground")}>
+                  {done ? <CheckCircle2 className="h-3 w-3" /> : n}
+                </span>
+                <Icon className="hidden h-3.5 w-3.5 shrink-0 sm:block" />
+                <span className="truncate font-medium">{label}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+
+      {paymentLink && (
+        <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+          <div className="flex items-center gap-2 font-medium text-foreground"><CheckCircle2 className="h-5 w-5 text-primary" /> Venda e cobrança criadas</div>
+          <p className="text-xs text-muted-foreground">A situação (aguardando, paga, vencida…) é atualizada sozinha quando o Wiize Pay avisar.</p>
+          <WiizePayLinkShare url={paymentLink.url} expiresAt={paymentLink.expiresAt} title={title} />
+        </div>
+      )}
+    </section>
+  );
+
+  const stepCliente = (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-sm">
+        <p className="text-xs text-muted-foreground">Cliente</p>
+        <p className="font-medium text-foreground">{leadName || "Cliente selecionado"}</p>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="wp-customer-document">CPF ou CNPJ do cliente *</Label>
+        <Input id="wp-customer-document" inputMode="numeric" value={customerDocument} onChange={(event) => setCustomerDocument(formatDocument(event.target.value))} placeholder="00.000.000/0000-00" disabled={locked} />
+      </div>
+    </div>
+  );
+
+  const stepContrato = (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Tipo de cobrança *</Label>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {([
+            ["one_time", "À vista", "Uma cobrança", DollarSign],
+            ["installment", "Parcelada", `Até ${MAX_INSTALLMENTS}x`, Layers3],
+            ["recurring", "Recorrente", "Cobrança mensal", Repeat],
+          ] as const).map(([key, label, hint, Icon]) => (
+            <button key={key} type="button" aria-pressed={billingType === key} className={cn(optionCls(billingType === key), "py-2")} onClick={() => setBillingType(key)} disabled={locked}>
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{label}</span><span className="block text-xs text-muted-foreground">{hint}</span></span>
+              <span className={cn("h-2 w-2 shrink-0 rounded-full", billingType === key ? "bg-foreground" : "bg-transparent")} />
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+        {startField}
+        {billingType === "recurring" && monthsField}
+      </div>
+      {contractFileField}
+    </div>
+  );
+
+  const stepServico = (
+    <div className="space-y-4">
+      {titleField}
+      {descriptionField}
+      <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+        {valueField}
+        {billingType === "installment" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="wp-installments">Quantidade de parcelas *</Label>
+            <Select value={String(installments)} onValueChange={(next) => setInstallments(Number(next))} disabled={locked}>
+              <SelectTrigger id="wp-installments"><SelectValue /></SelectTrigger>
+              <SelectContent>{Array.from({ length: MAX_INSTALLMENTS - 1 }, (_, index) => index + 2).map((count) => <SelectItem key={count} value={String(count)}>{count}x</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const stepCobranca = (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="wp-first-due">Primeiro vencimento *</Label>
+        <Input id="wp-first-due" type="date" min={new Date().toISOString().slice(0, 10)} value={dueDate} onChange={(event) => setDueDate(event.target.value)} disabled={locked} />
+      </div>
+      <div className="space-y-2">
+        <Label>Formas de pagamento *</Label>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {([
+            ["pix", "PIX", QrCode],
+            ["boleto", "Boleto", Landmark],
+            ["credit_card", "Crédito", CreditCard],
+            ["debit", "Débito em conta", Wallet],
+          ] as const).map(([key, label, Icon]) => (
+            <label key={key} className={cn(optionCls(chargeMethods.includes(key)), "cursor-pointer")}>
+              <Checkbox checked={chargeMethods.includes(key)} onCheckedChange={() => toggleChargeMethod(key)} disabled={locked} />
+              <Icon className="h-4 w-4" /><span className="text-sm font-medium">{label}</span>
+            </label>
+          ))}
+        </div>
+        {billingType !== "one_time" && <p className="text-xs text-muted-foreground">Cobranças parceladas e recorrentes aceitam uma forma de pagamento.</p>}
+      </div>
+      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+        <p className="text-xs text-muted-foreground">Resumo</p>
+        <p className="font-semibold text-foreground">
+          {billingType === "installment" && parsedValue > 0
+            ? `${installments}x de ${brl(parsedValue / installments)}`
+            : billingType === "recurring"
+              ? `${months} cobranças mensais de ${brl(parsedValue || 0)}`
+              : `${brl(parsedValue || 0)} à vista`}
+        </p>
+        {title && <p className="text-xs text-muted-foreground">{title}{leadName ? ` · ${leadName}` : ""}</p>}
+      </div>
+      {chargeError && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><strong>A venda já foi salva.</strong> {chargeError} Corrija a conexão, se necessário, e tente criar a cobrança novamente.</div>}
+    </div>
+  );
+
   const formBody = (
     <>
       <div className={cn(compact ? "space-y-2.5 py-1" : "space-y-4 py-2")}>
-        <div className="space-y-1.5">
-          <Label htmlFor="sale-title" className="flex items-center gap-1.5">
-            <Tag className="w-3.5 h-3.5 text-primary" /> Título da venda *
-          </Label>
-          <Input
-            id="sale-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Plano Growth Anual - João da Silva"
-            maxLength={120}
-            className={cn(compact && "h-8 text-xs")}
-          />
-        </div>
+        {wiizePayActive ? (
+          <>
+            {wiizePaySection}
+            {showStep(1) && stepCliente}
+            {showStep(2) && stepContrato}
+            {showStep(3) && stepServico}
+            {showStep(4) && stepCobranca}
+          </>
+        ) : (
+          <>
+            {titleField}
+            {descriptionField}
 
-        <div className="space-y-1.5">
-          <Label htmlFor="sale-desc" className="flex items-center gap-1.5">
-            <AlignLeft className="w-3.5 h-3.5 text-primary" /> Descrição (opcional)
-          </Label>
-          <Textarea
-            id="sale-desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Detalhes do acordo, escopo, condições especiais..."
-            rows={compact ? 2 : 3}
-            maxLength={500}
-            className={cn(compact && "min-h-16 text-xs")}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1.5">
-            <Repeat className="w-3.5 h-3.5 text-primary" /> Tipo de venda *
-          </Label>
-          <ToggleGroup
-            type="single"
-            value={saleType}
-            onValueChange={(v) => {
-              if (!v) return;
-              setSaleType(v as SaleType);
-              if (wiizePayActive) setBillingType(v === "recurring" ? "recurring" : "one_time");
-            }}
-            className={cn(
-              "inline-flex justify-start rounded-full border border-border bg-muted/40 p-1 shadow-inner shadow-background/40",
-              compact && "grid w-full grid-cols-2 gap-1"
-            )}
-          >
-            <ToggleGroupItem
-              value="recurring"
-              className={cn(
-                "h-8 rounded-full px-4 text-sm text-muted-foreground hover:bg-background/70 hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm",
-                compact && "w-full px-2 text-[11px]"
-              )}
-            >
-              Recorrente
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="one_time"
-              className={cn(
-                "h-8 rounded-full px-4 text-sm text-muted-foreground hover:bg-background/70 hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm",
-                compact && "w-full px-2 text-[11px]"
-              )}
-            >
-              Venda única
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-
-        <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-          <div className="space-y-1.5">
-            <Label htmlFor="sale-value" className="flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-primary" />
-              {saleType === "recurring" ? "Valor mensal (R$) *" : "Valor total (R$) *"}
-            </Label>
-            <Input
-              id="sale-value"
-              inputMode="decimal"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="0,00"
-              className={cn(compact && "h-8 text-xs")}
-            />
-          </div>
-
-          {saleType === "recurring" && (
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5">
-                <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
+                <Repeat className="w-3.5 h-3.5 text-primary" /> Tipo de venda *
               </Label>
-              <div className="flex gap-2">
-                <Select
-                  value={customMonths ? "custom" : months}
-                  onValueChange={(v) => {
-                    if (v === "custom") { setCustomMonths(true); return; }
-                    setCustomMonths(false);
-                    setMonths(v);
-                  }}
-                >
-                  <SelectTrigger className={cn(customMonths ? "w-40 shrink-0" : "w-full", compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
+              <ToggleGroup
+                type="single"
+                value={saleType}
+                onValueChange={(v) => { if (v) setSaleType(v as SaleType); }}
+                className={cn(
+                  "inline-flex justify-start rounded-full border border-border bg-muted/40 p-1 shadow-inner shadow-background/40",
+                  compact && "grid w-full grid-cols-2 gap-1"
+                )}
+              >
+                {([["recurring", "Recorrente"], ["one_time", "Venda única"]] as const).map(([v, l]) => (
+                  <ToggleGroupItem key={v} value={v} className={cn(
+                    "h-8 rounded-full px-4 text-sm text-muted-foreground hover:bg-background/70 hover:text-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm",
+                    compact && "w-full px-2 text-[11px]"
+                  )}>{l}</ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+
+            <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+              {valueField}
+              {saleType === "recurring" && monthsField}
+            </div>
+
+            <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+              {startField}
+              {!wiizePayChecking && <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
+                </Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CONTRACT_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                    <SelectItem value="custom">Outro prazo…</SelectItem>
+                    {PAYMENT_METHODS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {customMonths && (
-                  <div className="relative flex-1">
-                    <Input
-                      aria-label="Quantidade de meses do contrato"
-                      type="number"
-                      inputMode="numeric"
-                      min={1}
-                      max={MAX_CONTRACT_MONTHS}
-                      value={months}
-                      onChange={(e) => setMonths(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                      className={cn("pr-14", compact && "h-8 text-xs")}
-                      autoFocus
-                    />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">meses</span>
-                  </div>
-                )}
-              </div>
-              {startDate && Number(months) >= 1 && (
-                <p className="text-xs text-muted-foreground">
-                  Termina em {(() => { const d = new Date(startDate + "T12:00"); d.setMonth(d.getMonth() + Number(months)); return d.toLocaleDateString("pt-BR"); })()}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-          <div className="space-y-1.5">
-            <Label htmlFor="sale-start" className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
-            </Label>
-            <Input
-              id="sale-start"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className={cn(compact && "h-8 text-xs")}
-            />
-          </div>
-          {!wiizePayActive && !wiizePayChecking && <div className="space-y-1.5">
-            <Label className="flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
-            </Label>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {PAYMENT_METHODS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>}
-        </div>
-
-        {wiizePayChecking && (
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Verificando a conexão com o Wiize Pay…
-          </div>
-        )}
-
-        {wiizePayActive && (
-          <section className="space-y-4 border-t border-border pt-4" aria-label="Cobrança Wiize Pay">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="font-semibold text-foreground">Cobrança Wiize Pay</h4>
-                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Conectado</span>
-                </div>
-                <p className="text-xs text-muted-foreground">Segue o mesmo fluxo do Wiize Pay. Os dados do cartão ficam somente no ambiente seguro do Wiize Pay.</p>
-              </div>
+              </div>}
             </div>
 
-            <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Etapas no Wiize Pay">
-              {([
-                ["1", "Cliente", UserIcon],
-                ["2", "Contrato", FileSignature],
-                ["3", "Serviço", Layers3],
-                ["4", "Cobrança", Receipt],
-              ] as const).map(([n, label, Icon]) => (
-                <li key={n} className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-xs", paymentLink ? "border-primary/40 bg-primary/5 text-foreground" : "border-border text-muted-foreground")}>
-                  <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold", paymentLink ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}>
-                    {paymentLink ? <CheckCircle2 className="h-3 w-3" /> : n}
-                  </span>
-                  <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="font-medium">{label}</span>
-                </li>
-              ))}
-            </ol>
-
-            {paymentLink ? (
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
-                <div className="flex items-center gap-2 font-medium text-foreground"><CheckCircle2 className="h-5 w-5 text-primary" /> Venda e cobrança criadas</div>
-                <WiizePayLinkShare url={paymentLink.url} expiresAt={paymentLink.expiresAt} title={title} />
+            {wiizePayChecking ? (
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Verificando a conexão com o Wiize Pay…
               </div>
             ) : (
-              <>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  {([
-                    ["one_time", "À vista", "Uma cobrança", DollarSign],
-                    ["installment", "Parcelada", "Valor total dividido", Layers3],
-                    ["recurring", "Recorrente", "Cobrança mensal", Repeat],
-                  ] as const).map(([key, label, hint, Icon]) => (
-                    <Button key={key} type="button" variant={billingType === key ? "default" : "outline"} className="h-auto min-h-16 justify-start gap-2 px-3 py-2 text-left" onClick={() => setBillingType(key)} disabled={!!savedSaleId}>
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span><span className="block text-sm font-medium">{label}</span><span className="block text-xs opacity-80">{hint}</span></span>
-                    </Button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="wp-customer-document">CPF ou CNPJ do cliente *</Label>
-                    <Input id="wp-customer-document" inputMode="numeric" value={customerDocument} onChange={(event) => setCustomerDocument(formatDocument(event.target.value))} placeholder="00.000.000/0000-00" disabled={!!savedSaleId} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="wp-first-due">Primeiro vencimento *</Label>
-                    <Input id="wp-first-due" type="date" min={new Date().toISOString().slice(0, 10)} value={dueDate} onChange={(event) => setDueDate(event.target.value)} disabled={!!savedSaleId} />
-                  </div>
-                </div>
-
-                {billingType === "installment" && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="wp-installments">Quantidade de parcelas *</Label>
-                    <Select value={String(installments)} onValueChange={(next) => setInstallments(Number(next))} disabled={!!savedSaleId}>
-                      <SelectTrigger id="wp-installments"><SelectValue /></SelectTrigger>
-                      <SelectContent>{Array.from({ length: 23 }, (_, index) => index + 2).map((count) => <SelectItem key={count} value={String(count)}>{count}x</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Formas de pagamento *</Label>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {([
-                      ["pix", "PIX", QrCode],
-                      ["boleto", "Boleto", Landmark],
-                      ["credit_card", "Crédito", CreditCard],
-                    ] as const).map(([key, label, Icon]) => (
-                      <label key={key} className={cn("flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 transition-colors", chargeMethods.includes(key) ? "border-primary bg-primary/5" : "border-border", savedSaleId && "cursor-not-allowed opacity-70")}>
-                        <Checkbox checked={chargeMethods.includes(key)} onCheckedChange={() => toggleChargeMethod(key)} disabled={!!savedSaleId} />
-                        <Icon className="h-4 w-4 text-primary" /><span className="text-sm font-medium">{label}</span>
-                      </label>
-                    ))}
-                    <div
-                      className="flex min-h-12 cursor-not-allowed items-center gap-3 rounded-lg border border-dashed border-border px-3 opacity-70"
-                      title="O Wiize Pay ainda não aceita débito em conta corrente pela integração."
-                    >
-                      <Checkbox checked={false} disabled aria-label="Débito em conta corrente (em breve)" />
-                      <Wallet className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-muted-foreground">Débito em conta</span>
-                      <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Em breve</span>
-                    </div>
-                  </div>
-                  {billingType !== "one_time" && <p className="text-xs text-muted-foreground">Cobranças parceladas e recorrentes aceitam uma forma de pagamento.</p>}
-                </div>
-
-                <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
-                  <p className="text-xs text-muted-foreground">Resumo</p>
-                  <p className="font-semibold text-foreground">
-                    {billingType === "installment" && Number(value.replace(/\./g, "").replace(",", ".")) > 0
-                      ? `${installments}x de ${(Number(value.replace(/\./g, "").replace(",", ".")) / installments).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
-                      : billingType === "recurring"
-                        ? `${months} cobranças mensais de ${Number(value.replace(/\./g, "").replace(",", ".") || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
-                        : `${Number(value.replace(/\./g, "").replace(",", ".") || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} à vista`}
-                  </p>
-                </div>
-                {chargeError && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><strong>A venda já foi salva.</strong> {chargeError} Corrija a conexão, se necessário, e tente criar a cobrança novamente.</div>}
-              </>
+              <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+                <FileSlot label="Comprovante" icon={<Receipt className="w-3.5 h-3.5 text-primary" />} file={receiptFile} onChange={setReceiptFile} compact={compact} />
+                {contractFileField}
+              </div>
             )}
-          </section>
+          </>
         )}
-
-        <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-          {!wiizePayActive && !wiizePayChecking && (
-            <FileSlot
-              label="Comprovante"
-              icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
-              file={receiptFile}
-              onChange={setReceiptFile}
-              compact={compact}
-            />
-          )}
-          <FileSlot
-            label="Contrato"
-            icon={<FileSignature className="w-3.5 h-3.5 text-primary" />}
-            file={contractFile}
-            onChange={setContractFile}
-            compact={compact}
-          />
-        </div>
 
         {isEdit && (
           <>
@@ -672,7 +709,15 @@ export function RegisterSaleDialog({
       }} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {paymentLink ? "Concluir" : savedSaleId ? "Fechar" : "Cancelar"}
       </Button>
-      {!paymentLink && <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
+      {wiizePayActive && !paymentLink && step > 1 && !locked && (
+        <Button variant="ghost" size="sm" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
+          Voltar
+        </Button>
+      )}
+      {wiizePayActive && !paymentLink && step < 4 && (
+        <Button size="sm" onClick={goNext} className={cn(compact && "h-8 px-2 text-xs")}>Próximo</Button>
+      )}
+      {!paymentLink && !wiizePayChecking && (!wiizePayActive || step === 4) && <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         {isEdit ? "Salvar alterações" : savedSaleId ? "Tentar cobrança novamente" : wiizePayActive ? "Criar venda e cobrança" : "Registrar venda"}
       </Button>}

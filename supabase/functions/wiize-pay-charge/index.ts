@@ -112,21 +112,23 @@ const mapStatus = (s: unknown) => {
   const v = String(s || "").toLowerCase();
   if (["paid", "succeeded", "received", "confirmed"].includes(v)) return "paid";
   if (["cancelled", "canceled", "voided"].includes(v)) return "cancelled";
-  if (["pending", "awaiting_payment", "open", "overdue"].includes(v)) return "awaiting_payment";
+  if (v === "overdue") return "overdue";
+  if (v === "refunded") return "refunded";
+  if (["pending", "awaiting_payment", "open"].includes(v)) return "awaiting_payment";
   if (["failed", "error"].includes(v)) return "error";
   return "sent";
 };
 
-const METHODS = ["pix", "boleto", "credit_card"] as const;
+const METHODS = ["pix", "boleto", "credit_card", "debit"] as const;
 const BILLING = ["one_time", "installment", "recurring"] as const;
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("preview"), deal_id: z.string().uuid() }),
   z.object({
     action: z.literal("create"), deal_id: z.string().uuid(), idempotency_key: z.string().min(8).max(100),
-    payment_methods: z.array(z.enum(METHODS)).min(1).max(3),
+    payment_methods: z.array(z.enum(METHODS)).min(1).max(4),
     due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     billing_type: z.enum(BILLING).optional(),
-    installments: z.number().int().min(2).max(24).optional(),
+    installments: z.number().int().min(2).max(21).optional(),
     customer_document: z.string().max(20).optional(),
   }),
   z.object({ action: z.literal("status"), id: z.string().uuid() }),
@@ -154,7 +156,7 @@ async function buildSnapshot(ownerId: string, dealId: string, opts: BuildOpts = 
   const valueCents = Math.round(Number(deal.value) * 100);
   let amountCents = valueCents, n = 1, totalCents = valueCents;
   if (type === "recurring") { n = Math.max(1, Math.min(60, deal.contract_months || 1)); totalCents = valueCents * n; }
-  if (type === "installment") { n = Math.max(2, Math.min(24, opts.installments || 2)); amountCents = Math.round(valueCents / n); totalCents = valueCents; }
+  if (type === "installment") { n = Math.max(2, Math.min(21, opts.installments || 2)); amountCents = Math.round(valueCents / n); totalCents = valueCents; }
   const document = onlyDigits(opts.document ?? (lead as any).document) || null;
   const d: Record<string, unknown> = {
     id: deal.id, title: (deal.title || "Venda").slice(0, 160), type,
