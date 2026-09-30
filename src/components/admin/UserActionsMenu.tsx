@@ -1,3 +1,4 @@
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
