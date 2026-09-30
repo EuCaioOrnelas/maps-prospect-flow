@@ -1581,7 +1581,7 @@ export function WianChat() {
                   );
                 })}
                 </>
-              )}
+              ))}
             {phase === "triage-menu" && (
               <button
                 onClick={openTicketDirect}
