@@ -40,6 +40,9 @@ import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
 import { RenewSaleDialog } from "@/components/crm/RenewSaleDialog";
+import { WiizePaySaleBilling } from "@/components/crm/WiizePaySaleBilling";
+import { WiizePayChargeDialog } from "@/components/crm/WiizePayChargeDialog";
+import { useAllWiizePayCharges, type WiizePayCharge } from "@/hooks/useWiizePayCharges";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useAccountRole } from "@/hooks/useAccountRole";
 import { canChangeSaleResponsible } from "@/lib/salesPermissions";
@@ -72,7 +75,14 @@ export default function CRMSales() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sales, deleteSale, updateSale, getAttachmentUrl } = useSales();
+  const { sales, deleteSale, updateSale, getAttachmentUrl, fetchSales } = useSales();
+  const { data: wp } = useAllWiizePayCharges();
+  const chargeByDeal = useMemo(() => {
+    const m: Record<string, WiizePayCharge> = {};
+    for (const c of wp?.charges ?? []) if (!m[c.deal_id]) m[c.deal_id] = c; // lista vem da mais nova
+    return m;
+  }, [wp]);
+  const [newSaleCharge, setNewSaleCharge] = useState<{ id: string; lead_id: string } | null>(null);
   const { members } = useAccountMembers();
   const { role } = useAccountRole();
   const memberById = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, m])), [members]);
@@ -231,7 +241,11 @@ export default function CRMSales() {
                     leadName={leadName}
                     initialValue={initialValue}
                     initialTitle={initialTitle}
-                    onCreated={() => navigate("/crm/vendas")}
+                    onCreated={(created) => {
+                      // Com Wiize Pay conectado, a venda nova segue direto para a cobrança.
+                      if (created?.id && leadId && wp?.connected && wp.can_charge) setNewSaleCharge({ id: created.id, lead_id: leadId });
+                      navigate("/crm/vendas");
+                    }}
                   />
                 ) : (
                   <div className="py-12 text-center">
@@ -445,6 +459,8 @@ export default function CRMSales() {
                                 <Badge variant="outline" className="gap-1">
                                   <Repeat className="w-3 h-3" /> Recorrente
                                 </Badge>
+                              ) : (s as { billing_type?: string | null }).billing_type === "installment" ? (
+                                <Badge variant="outline">Parcelada {(s as { installments?: number | null }).installments ? `${(s as { installments?: number | null }).installments}x` : ""}</Badge>
                               ) : (
                                 <Badge variant="outline">Única</Badge>
                               )}
@@ -462,9 +478,12 @@ export default function CRMSales() {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <Badge variant="outline" className={st.tone}>
-                                {st.label}
-                              </Badge>
+                              <div className="flex flex-col items-start gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                <Badge variant="outline" className={st.tone}>
+                                  {st.label}
+                                </Badge>
+                                <WiizePaySaleBilling sale={s} charge={chargeByDeal[s.id]} meta={wp} phone={s.lead?.phone} compact />
+                              </div>
                             </td>
                             <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                               {(() => {
@@ -611,6 +630,16 @@ export default function CRMSales() {
           saleResponsibleUserId: editingSale?.responsible_user_id,
         })}
       />
+
+      {newSaleCharge && (
+        <WiizePayChargeDialog
+          open
+          fromNewSale
+          onOpenChange={(o) => { if (!o) { setNewSaleCharge(null); fetchSales(); } }}
+          leadId={newSaleCharge.lead_id}
+          dealId={newSaleCharge.id}
+        />
+      )}
 
       <RenewSaleDialog
         open={!!renewingSale}

@@ -20,7 +20,7 @@ interface RegisterSaleDialogProps {
   initialValue?: number;
   initialTitle?: string;
   initialDescription?: string;
-  onCreated?: () => void;
+  onCreated?: (created?: { id: string }) => void;
   embedded?: boolean;
   embeddedLayout?: "compact" | "page";
   /** Quando informado, o dialog entra em modo edição da venda. */
@@ -190,7 +190,7 @@ export function RegisterSaleDialog({
       await Promise.all(uploads);
 
       toast.success("Venda registrada com sucesso!");
-      onCreated?.();
+      onCreated?.(created ? { id: (created as { id: string }).id } : undefined);
       onOpenChange(false);
     } catch (err) {
       console.error(err);

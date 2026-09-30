@@ -1,0 +1,1 @@
+- Wiize Pay nas vendas: venda criada depois de integration_connections.connected_at é cobrada pelo Wiize Pay (lead_deals.billing_provider='wiize_pay'); anteriores ficam 'Controle interno' — por que: preserva o histórico e evita cobrar vendas antigas.
