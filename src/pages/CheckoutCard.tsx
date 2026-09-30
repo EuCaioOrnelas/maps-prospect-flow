@@ -34,7 +34,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
-import { stripePromise } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { ResilientElements } from "@/components/checkout/ResilientElements";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
@@ -276,7 +276,7 @@ function CheckoutCardInner() {
 
       // 3DS / SCA: se Stripe pediu confirmação, dispara confirmCardPayment no browser
       if (data?.requiresAction && data?.clientSecret) {
-        const stripe = await stripePromise;
+        const stripe = await getStripe();
         if (!stripe) throw new Error("Stripe não inicializado");
         const result = await stripe.confirmCardPayment(data.clientSecret);
         if (result.error) {
