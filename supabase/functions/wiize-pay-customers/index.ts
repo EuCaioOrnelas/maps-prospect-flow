@@ -3,7 +3,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const ENC_KEY = Deno.env.get("WIIZE_PAY_TOKEN_ENC_KEY") || "";
-const API_BASE = (Deno.env.get("WIIZE_PAY_API_BASE_URL") || "").replace(/\/+$/, "");
+// Aceita a base com ou sem "/v1" no final: as rotas abaixo sempre acrescentam "/v1/<recurso>".
+const API_BASE = (Deno.env.get("WIIZE_PAY_API_BASE_URL") || "").replace(/\/+$/, "").replace(/\/v1$/i, "");
 const TOKEN_URL = Deno.env.get("WIIZE_PAY_TOKEN_URL") || "";
 const CLIENT_ID = Deno.env.get("WIIZE_PAY_CLIENT_ID") || "";
 const CLIENT_SECRET = Deno.env.get("WIIZE_PAY_CLIENT_SECRET") || "";
