@@ -102,6 +102,7 @@ const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEdito
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
 const ChatSettings = lazyWithRetry(() => import("./pages/ChatSettings"), "ChatSettings");
 const IntegrationWiizePay = lazyWithRetry(() => import("./pages/settings/IntegrationWiizePay"), "IntegrationWiizePay");
+const WiizePayCallback = lazyWithRetry(() => import("./pages/settings/WiizePayCallback"), "WiizePayCallback");
 const ChatQuickReplies = lazyWithRetry(() => import("./pages/ChatQuickReplies"), "ChatQuickReplies");
 const ChatAutoReply = lazyWithRetry(() => import("./pages/ChatAutoReply"), "ChatAutoReply");
 const ChatPrivacy = lazyWithRetry(() => import("./pages/ChatPrivacy"), "ChatPrivacy");
@@ -387,6 +388,7 @@ const App = () => (
                 <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes" element={<ProtectedRoute><ChatSettings /></ProtectedRoute>} />
                 <Route path="/configuracoes/integracoes/wiize-pay" element={<ProtectedRoute><IntegrationWiizePay /></ProtectedRoute>} />
+                <Route path="/configuracoes/integracoes/wiize-pay/callback" element={<ProtectedRoute><WiizePayCallback /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/mensagens-rapidas" element={<ProtectedRoute><ChatQuickReplies /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/resposta-automatica" element={<ProtectedRoute><ChatAutoReply /></ProtectedRoute>} />
                 <Route path="/chat/configuracoes/privacidade" element={<ProtectedRoute><ChatPrivacy /></ProtectedRoute>} />
