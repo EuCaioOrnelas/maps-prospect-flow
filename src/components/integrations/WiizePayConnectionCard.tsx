@@ -41,7 +41,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
     try {
       const { data } = await supabase.functions.invoke("integration-export", { body: { action: "overview" } });
       setPasswordSet(!!data?.state?.password_set);
-    } catch { /* mantém o valor anterior */ }
+    } catch { setPasswordSet((p) => p ?? true); }
   }, []);
   useEffect(() => { load(); }, [load]);
   // Ao voltar para esta aba (depois de autorizar na outra), atualiza o status.
