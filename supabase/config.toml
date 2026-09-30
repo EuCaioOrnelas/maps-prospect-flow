@@ -173,3 +173,6 @@ verify_jwt = false
 
 [functions.forms-public]
 verify_jwt = false
+
+[functions.wiize-pay-webhook]
+verify_jwt = false

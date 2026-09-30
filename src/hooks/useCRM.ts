@@ -1,3 +1,4 @@
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -314,7 +315,6 @@ export const useCRM = () => {
         tags: lead.tags || [],
         estimated_value: lead.estimated_value || 0,
         contact_id: lead.contact_id,
-        conversation_id: lead.conversation_id,
       })
       .select()
       .single();
@@ -335,9 +335,11 @@ export const useCRM = () => {
   const updateLead = async (id: string, updates: Partial<Lead>) => {
     if (!user) return null;
 
+    // conversation_id não existe na tabela leads; campos agregados também não são gravados
+    const { conversation_id: _ignored, ...dbUpdates } = updates;
     const { data, error } = await supabase
       .from('leads')
-      .update(updates)
+      .update(dbUpdates as TablesUpdate<'leads'>)
       .eq('id', id)
       .select()
       .single();

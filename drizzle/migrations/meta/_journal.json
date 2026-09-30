@@ -197,6 +197,13 @@
       "when": 1790766235825,
       "tag": "0027_wiize_pay_charge_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790766677028,
+      "tag": "0028_wiize_pay_webhook_events",
+      "breakpoints": true
     }
   ]
 }

@@ -250,7 +250,7 @@ export default function MetaNumeros() {
   const handleSaveEdit = async () => {
     if (!editingConn) return;
     try {
-      const updates: Record<string, any> = { nickname: editNickname || null };
+      const updates: { nickname: string | null; responsible_user_id?: string | null; access_token?: string } = { nickname: editNickname || null };
       if (canChangeResponsible) {
         updates.responsible_user_id = editResponsibles[0] ?? null;
       }

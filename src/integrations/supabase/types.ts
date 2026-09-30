@@ -13576,8 +13576,10 @@ export type Database = {
           external_id: string | null
           id: string
           idempotency_key: string
+          last_event_at: string | null
           lead_id: string
           owner_user_id: string
+          paid_at: string | null
           snapshot: Json
           status: string
           updated_at: string
@@ -13592,8 +13594,10 @@ export type Database = {
           external_id?: string | null
           id?: string
           idempotency_key: string
+          last_event_at?: string | null
           lead_id: string
           owner_user_id: string
+          paid_at?: string | null
           snapshot: Json
           status?: string
           updated_at?: string
@@ -13608,11 +13612,49 @@ export type Database = {
           external_id?: string | null
           id?: string
           idempotency_key?: string
+          last_event_at?: string | null
           lead_id?: string
           owner_user_id?: string
+          paid_at?: string | null
           snapshot?: Json
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      wiize_pay_webhook_events: {
+        Row: {
+          charge_request_id: string | null
+          error_message: string | null
+          event_id: string
+          event_type: string
+          id: string
+          nonce: string
+          owner_user_id: string | null
+          received_at: string
+          status: string
+        }
+        Insert: {
+          charge_request_id?: string | null
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          nonce: string
+          owner_user_id?: string | null
+          received_at?: string
+          status?: string
+        }
+        Update: {
+          charge_request_id?: string | null
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          nonce?: string
+          owner_user_id?: string | null
+          received_at?: string
+          status?: string
         }
         Relationships: []
       }

@@ -1,3 +1,4 @@
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -375,7 +376,7 @@ export default function AdminSupportTickets() {
   const updateStatus = async (status: string) => {
     if (!selected) return;
     const applyLocalUpdate = async () => {
-      const update: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+      const update: TablesUpdate<"support_tickets"> = { status, updated_at: new Date().toISOString() };
       if (status === "resolved" || status === "closed") {
         update.resolved_at = new Date().toISOString();
         update.resolved_by = "human";
