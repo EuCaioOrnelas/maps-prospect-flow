@@ -178,12 +178,16 @@ async function fetchEntityRows(
   let truncated = false;
   for (let from = 0; from < MAX_ROWS_PER_ENTITY; from += PAGE_SIZE) {
     const to = Math.min(from + PAGE_SIZE - 1, MAX_ROWS_PER_ENTITY - 1);
-    const { data, error } = await admin
-      .from(def.table)
-      .select(fields.join(","))
-      .eq("owner_user_id", owner)
-      .order(def.order, { ascending: true })
-      .range(from, to);
+  let query = admin
+    .from(def.table)
+    .select(fields.join(","))
+    .eq("owner_user_id", owner);
+  for (const [col, val] of Object.entries(def.eqFilter || {})) {
+    query = query.eq(col, val);
+  }
+  const { data, error } = await query
+    .order(def.order, { ascending: true })
+    .range(from, to);
     if (error) throw new Error(`${def.table}: ${error.message}`);
     const chunk = (data || []) as unknown as Record<string, unknown>[];
     rows.push(...chunk.map((r) => pickFields(r, fields)));
