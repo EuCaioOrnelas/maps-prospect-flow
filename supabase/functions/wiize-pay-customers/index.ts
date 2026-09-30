@@ -46,7 +46,7 @@ async function audit(ownerId: string, userId: string, action: string, status: st
 }
 async function rateLimit(id: string, endpoint: string, max = 20) {
   const { data } = await admin.rpc("check_rate_limit", { p_identifier: id, p_endpoint: endpoint, p_max_requests: max, p_window_seconds: 60 });
-  return data !== false;
+  return (data as { allowed?: boolean } | null)?.allowed !== false;
 }
 /** Access token válido (renova com refresh_token quando faltar < 60 s). */
 async function getAccessToken(ownerId: string, force = false): Promise<string | null> {
@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
   const userId = u.user.id;
   const { data: prof } = await admin.from("profiles").select("account_role, parent_owner_id").eq("id", userId).maybeSingle();
   const ownerId: string = (prof as any)?.parent_owner_id || userId;
-  const role: string = (prof as any)?.account_role || "owner";
+  const role: string = prof ? ((prof as any).account_role || "owner") : "none"; // sem perfil = sem permissão
 
   const { data: conn } = await admin.from("integration_connections").select("status").eq("owner_user_id", ownerId).maybeSingle();
   if (conn?.status !== "active") return json({ error: "not_connected" }, 409);

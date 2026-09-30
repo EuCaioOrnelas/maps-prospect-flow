@@ -72,7 +72,7 @@ async function audit(ownerId: string, userId: string, action: string, status: st
 }
 async function rateLimit(id: string, endpoint: string, max = 20) {
   const { data } = await admin.rpc("check_rate_limit", { p_identifier: id, p_endpoint: endpoint, p_max_requests: max, p_window_seconds: 60 });
-  return data !== false;
+  return (data as { allowed?: boolean } | null)?.allowed !== false;
 }
 
 /** Access token válido (renova com refresh_token quando faltar < 60 s). */
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
   const userId = u.user.id;
   const { data: prof } = await admin.from("profiles").select("account_role, parent_owner_id").eq("id", userId).maybeSingle();
   const ownerId: string = (prof as any)?.parent_owner_id || userId;
-  const role: string = (prof as any)?.account_role || "owner";
+  const role: string = prof ? ((prof as any).account_role || "owner") : "none"; // sem perfil = sem permissão
   const privileged = role === "owner" || role === "admin";
 
   let raw: unknown;
@@ -315,7 +315,7 @@ Deno.serve(async (req) => {
       const checkoutUrl = safeCheckoutUrl(out.checkout_url);
       if (!resp.ok || typeof out.id !== "string" || !checkoutUrl) {
         const msg = providerMessage(out, resp.status);
-        console.error(`wiize-pay create failed [${resp.status}]: ${JSON.stringify(out).slice(0, 400)}`);
+        console.error(`wiize-pay create failed [${resp.status}]: ${JSON.stringify(out).slice(0, 400).replace(/wpat_[A-Za-z0-9_-]+/g, "***")}`);
         await admin.from("wiize_pay_charge_requests").update({ status: "error", checksum, error_message: msg, updated_at: new Date().toISOString() }).eq("id", row.id);
         await audit(ownerId, userId, "wiize_pay_charge_create", "error", req, msg);
         return json({ error: "wiize_pay_error", status: resp.status, message: msg }, 502);

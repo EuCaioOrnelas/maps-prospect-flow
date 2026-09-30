@@ -103,7 +103,7 @@ async function audit(ownerId: string, userId: string | null, action: string, sta
 
 async function rateLimit(id: string, endpoint: string, max = 10) {
   const { data } = await admin.rpc("check_rate_limit", { p_identifier: id, p_endpoint: endpoint, p_max_requests: max, p_window_seconds: 60 });
-  return data !== false;
+  return (data as { allowed?: boolean } | null)?.allowed !== false;
 }
 
 // Endereço de retorno SEMPRE igual no início e no fim (senão a troca do código falha).
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
   const userId = u.user.id;
   const { data: prof } = await admin.from("profiles").select("account_role, parent_owner_id").eq("id", userId).maybeSingle();
   const ownerId: string = (prof as any)?.parent_owner_id || userId;
-  const role: string = (prof as any)?.account_role || "owner";
+  const role: string = prof ? ((prof as any).account_role || "owner") : "none"; // sem perfil = sem permissão
   const privileged = role === "owner" || role === "admin";
 
   let body: any = {};
