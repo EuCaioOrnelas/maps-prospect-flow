@@ -353,7 +353,7 @@ export function RegisterSaleDialog({
         </div>
 
         <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-          {!wiizePayActive && <div className="space-y-1.5">
+          <div className="space-y-1.5">
             <Label htmlFor="sale-value" className="flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-primary" />
               {saleType === "recurring" ? "Valor mensal (R$) *" : "Valor total (R$) *"}
@@ -386,7 +386,7 @@ export function RegisterSaleDialog({
         </div>
 
         <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-          <div className="space-y-1.5">
+          {!wiizePayActive && <div className="space-y-1.5">
             <Label htmlFor="sale-start" className="flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-primary" /> Data de início *
             </Label>
