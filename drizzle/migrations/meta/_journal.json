@@ -218,6 +218,13 @@
       "when": 1790776360024,
       "tag": "0030_wiize_pay_customer_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790778985525,
+      "tag": "0031_wiize_pay_charge_overdue_refunded",
+      "breakpoints": true
     }
   ]
 }
