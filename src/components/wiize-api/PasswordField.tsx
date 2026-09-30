@@ -49,11 +49,13 @@ export function PasswordField({
   showStrength = false,
   required = true,
   rightSlot,
+  minLength = 8,
 }: Props) {
   const [visible, setVisible] = useState(false);
+  const rules = useMemo(() => passwordRules(minLength), [minLength]);
 
-  const passed = useMemo(() => PASSWORD_RULES.filter((r) => r.test(value)).length, [value]);
-  const ratio = passed / PASSWORD_RULES.length;
+  const passed = useMemo(() => rules.filter((r) => r.test(value)).length, [value, rules]);
+  const ratio = passed / rules.length;
   const strengthLabel = ratio === 1 ? "Forte" : ratio >= 0.6 ? "Média" : "Fraca";
   const strengthColor = ratio === 1 ? "bg-primary" : ratio >= 0.6 ? "bg-amber-500" : "bg-destructive";
 
