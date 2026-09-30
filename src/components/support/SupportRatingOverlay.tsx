@@ -15,6 +15,7 @@ interface SupportRatingOverlayProps {
   submitting: boolean;
   wasEscalated: boolean;
   ticketNumber?: string | null;
+  error?: string | null;
 }
 
 export function SupportRatingOverlay({
@@ -26,16 +27,15 @@ export function SupportRatingOverlay({
   submitting,
   wasEscalated,
   ticketNumber,
+  error,
 }: SupportRatingOverlayProps) {
   const sentRef = useRef(false);
   const onSubmitRef = useRef(onSubmit);
   onSubmitRef.current = onSubmit;
 
   // Envio automático assim que as duas respostas obrigatórias forem dadas.
-  // A marcação de "enviado" só acontece quando o envio dispara de fato; se o
-  // usuário trocar a nota antes, o timer é reiniciado e o envio não se perde.
   useEffect(() => {
-    if (sentRef.current || submitting) return;
+    if (sentRef.current || submitting || error) return;
     if (score === null || recommend === null) return;
     const t = setTimeout(() => {
       if (sentRef.current) return;
@@ -43,7 +43,9 @@ export function SupportRatingOverlay({
       onSubmitRef.current();
     }, 700);
     return () => clearTimeout(t);
-  }, [score, recommend, submitting]);
+  }, [score, recommend, submitting, error]);
+
+  const retry = () => { sentRef.current = true; onSubmitRef.current(); };
 
   const complete = score !== null && recommend !== null;
   const selected = EMOJI_RATING_OPTIONS.find((o) => o.value === score);
@@ -127,7 +129,14 @@ export function SupportRatingOverlay({
 
       <div className="border-t border-border bg-background px-5 py-3 sm:px-8">
         <div className="mx-auto flex max-w-5xl items-center justify-center gap-2 text-xs text-muted-foreground">
-          {submitting || complete ? (
+          {error && !submitting ? (
+            <div className="flex flex-col items-center gap-2 text-destructive sm:flex-row">
+              <span>{error}</span>
+              <button type="button" onClick={retry} className="rounded-md border border-destructive/40 px-3 py-1 font-medium hover:bg-destructive/10">
+                Tentar novamente
+              </button>
+            </div>
+          ) : submitting || complete ? (
             <>
               <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
               Registrando sua avaliação…

@@ -86,6 +86,7 @@ type TriageContext = {
 
 const STORAGE_KEY = "wian_chat_v4";
 const FORM_KEY = "wian_form_draft_v1";
+const PENDING_NPS_KEY = "wian_pending_nps_v1";
 const VISITOR_SESSION_KEY = "wian_visitor_session_v1";
 const RESPONSE_DELAY_MS = 10000; // aguarda 10s após a última mensagem do user (reseta a cada nova mensagem); "digitando" aparece durante a espera
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
@@ -1040,6 +1041,7 @@ export function WianChat() {
             submitting={npsSubmitting}
             wasEscalated={wasEscalated}
             ticketNumber={ticketNumber}
+            error={npsError}
           />
         )}
       </AnimatePresence>
