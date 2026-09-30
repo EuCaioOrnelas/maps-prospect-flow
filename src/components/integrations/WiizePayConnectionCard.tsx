@@ -10,7 +10,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 interface ConnStatus {
   configured: boolean;
   can_manage: boolean;
-  connection: { status: string; connected_at: string | null; external_account_label: string | null } | null;
+  connection: { status: string; connected_at: string | null; external_account_label: string | null; scopes?: string[] | null } | null;
 }
 
 async function call(body: Record<string, unknown>) {
@@ -122,6 +122,9 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
   };
 
   const active = st?.connection?.status === "active";
+  const scopes = st?.connection?.scopes ?? [];
+  /** Conexões antigas não têm a permissão de enviar clientes e cobranças: precisa reconectar. */
+  const needsReconnect = active && !scopes.includes("charges.write") && !scopes.includes("customers.write");
   const [syncing, setSyncing] = useState(false);
   const syncCustomers = async () => {
     setSyncing(true);
@@ -132,6 +135,8 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
       if (data?.error) throw new Error(data.error);
       if (data.reason === "wiize_pay_route_unavailable") {
         toast.error(`O Wiize Pay ainda não está recebendo clientes. Publique a versão mais recente do Wiize Pay; os ${data.queued} clientes ficam guardados e serão enviados automaticamente.`, { duration: 10000 });
+      } else if (data.reason === "reconnect_required") {
+        toast.error(`Sua conexão foi feita antes da permissão de enviar clientes e cobranças. Clique em Desconectar e conecte de novo; os ${data.queued} clientes ficam guardados e são enviados em seguida.`, { duration: 12000 });
       } else if (data.reason === "token_unavailable") {
         toast.error("A conexão com o Wiize Pay expirou. Reconecte a conta; os clientes ficam guardados para envio.");
       } else if (data.failed) toast.error(`${data.sent} clientes enviados. ${data.failed} tiveram problema e serão reenviados automaticamente.`);
@@ -177,6 +182,11 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
                 ? "A conexão será liberada assim que o Wiize Pay ativar o acesso seguro."
                 : "Você será levado ao Wiize Pay para autorizar. A conexão fica ativa até você desconectar."}
           </p>
+          {needsReconnect && (
+            <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              Esta conexão foi feita antes da permissão de enviar clientes e cobranças. Clique em <strong>Desconectar</strong> e conecte de novo para liberar. Seus clientes ficam guardados e são enviados em seguida.
+            </p>
+          )}
         </div>
         {st?.can_manage && (
           active ? (

@@ -3,7 +3,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const ENC_KEY = Deno.env.get("WIIZE_PAY_TOKEN_ENC_KEY") || "";
-const API_BASE = (Deno.env.get("WIIZE_PAY_API_BASE_URL") || "").replace(/\/+$/, "");
+// Aceita a base com ou sem "/v1" no final: as rotas abaixo sempre acrescentam "/v1/<recurso>".
+const API_BASE = (Deno.env.get("WIIZE_PAY_API_BASE_URL") || "").replace(/\/+$/, "").replace(/\/v1$/i, "");
 const TOKEN_URL = Deno.env.get("WIIZE_PAY_TOKEN_URL") || "";
 const CLIENT_ID = Deno.env.get("WIIZE_PAY_CLIENT_ID") || "";
 const CLIENT_SECRET = Deno.env.get("WIIZE_PAY_CLIENT_SECRET") || "";
@@ -256,7 +257,14 @@ Deno.serve(async (req) => {
       if (page.length < 1000) break;
       from += 1000;
     }
+    // Conexões feitas antes da permissão de cobrança não podem enviar clientes: pede para reconectar.
+    const { data: conn } = await admin.from("integration_connections").select("scopes").eq("owner_user_id", ownerId).maybeSingle();
+    const scopes: string[] = Array.isArray(conn?.scopes) ? conn!.scopes as string[] : [];
+    if (!scopes.includes("charges.write") && !scopes.includes("customers.write")) {
+      return json({ ok: false, queued, sent: 0, failed: 0, pending: queued, reason: "reconnect_required" });
+    }
     const r = await processOwner(ownerId, deadline);
+    if (r.error === "http_401") r.error = "reconnect_required";
     await audit(ownerId, userId, "wiize_pay_customers_sync_all", r.failed ? "partial" : "ok", req);
     const { count: pending } = await admin.from("wiize_pay_customer_sync_queue").select("lead_id", { count: "exact", head: true }).eq("owner_user_id", ownerId);
     // Se sobrou (muitos clientes), o processamento continua em segundo plano.
