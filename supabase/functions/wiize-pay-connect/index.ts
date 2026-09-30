@@ -36,7 +36,7 @@ const ALLOWED_ORIGINS = [
   "https://id-preview--ae163b9e-4bf7-4640-8610-ba24e81d17c4.lovable.app",
   "http://localhost:8080",
 ];
-const SCOPES = ["crm.read", "contacts.read", "companies.read", "deals.read", "sales.read", "products.read"];
+const SCOPES = ["crm.read", "contacts.read", "companies.read", "deals.read", "sales.read", "products.read", "charges.write"];
 const CALLBACK_PATH = "/configuracoes/integracoes/wiize-pay/callback";
 
 function safeUiTheme(value: unknown) {
