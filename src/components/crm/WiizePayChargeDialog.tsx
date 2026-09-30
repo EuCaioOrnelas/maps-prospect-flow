@@ -158,7 +158,7 @@ export function WiizePayChargeDialog({ open, onOpenChange, leadId, dealId, fromN
                   <Label>Tipo de cobrança</Label>
                   <div className="grid grid-cols-3 gap-2">
                     {TYPES.map((t) => {
-                      const disabled = t.key === "recurring" ? recurringDisabled : t.key !== "recurring" && snap.deal.type === "recurring";
+                      const disabled = t.key === "recurring" ? recurringDisabled : snap.deal.type === "recurring";
                       return (
                         <button key={t.key} type="button" disabled={disabled} onClick={() => setType(t.key)}
                           className={`rounded-lg border p-2.5 text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${type === t.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
