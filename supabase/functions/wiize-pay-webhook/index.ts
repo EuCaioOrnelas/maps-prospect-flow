@@ -92,6 +92,22 @@ Deno.serve(async (req) => {
   if (conn?.status !== "active") return fail("connection_inactive");
   // cobrança paga não volta para outro estado, exceto estorno
   if (ch.status === "paid" && ev.type !== "charge.refunded") return fail("already_paid");
+  // cobrança cancelada/estornada não "revive" por aviso comum
+  if (["cancelled", "refunded"].includes(ch.status) && ev.type !== "charge.paid") return fail("final_status");
+  // valor pago precisa bater com o que o Wiize enviou (parcela ou total)
+  if (ev.type === "charge.paid" && typeof ev.data.amount_cents === "number") {
+    const d = (ch.snapshot as { deal?: { amount_cents?: number; total_cents?: number } } | null)?.deal;
+    const allowed = [d?.amount_cents, d?.total_cents].filter((n): n is number => typeof n === "number");
+    if (allowed.length && !allowed.includes(ev.data.amount_cents)) {
+      await admin.from("lead_activities").insert({
+        lead_id: ch.lead_id, owner_user_id: ch.owner_user_id, user_id: ch.created_by,
+        activity_type: "wiize_pay_payment",
+        description: "Aviso de pagamento com valor diferente do cobrado — conferir no Wiize Pay",
+        metadata: { charge_request_id: ch.id, received_cents: ev.data.amount_cents, expected_cents: allowed },
+      });
+      return fail("amount_mismatch");
+    }
+  }
 
   const now = new Date().toISOString();
   const newStatus = STATUS[ev.type];

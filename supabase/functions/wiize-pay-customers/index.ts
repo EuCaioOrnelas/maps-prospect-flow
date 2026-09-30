@@ -84,6 +84,13 @@ async function getAccessToken(ownerId: string, force = false): Promise<string | 
 // actions: process_queue (gatilho interno, x-cron-secret) | sync_all (botão) | status
 // =============================================================
 const BATCH = 100;
+/** Comparação em tempo constante (não revela o segredo pelo tempo de resposta). */
+function safeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let r = 0;
+  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
+}
 const MAX_ATTEMPTS = 8;
 const clean = (v: unknown, max = 255) => {
   if (v === null || v === undefined) return undefined;
@@ -198,14 +205,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   if (!API_BASE.startsWith("https://") || !ENC_KEY) return json({ error: "not_configured" }, 503);
-  const body = await req.json().catch(() => ({}));
+  const rawText = await req.text().catch(() => "");
+  if (rawText.length > 2048) return json({ error: "payload_too_large" }, 413);
+  let body: any = {};
+  try { body = rawText ? JSON.parse(rawText) : {}; } catch { return json({ error: "invalid_json" }, 400); }
   const action = String(body?.action || "");
   const deadline = Date.now() + 45_000;
 
   if (action === "process_queue") {
     const supplied = req.headers.get("x-cron-secret") || "";
     const { data: cfg } = await admin.from("wiize_pay_sync_config").select("cron_secret").eq("id", 1).maybeSingle();
-    if (!supplied || !cfg?.cron_secret || supplied !== cfg.cron_secret) return json({ error: "unauthorized" }, 401);
+    if (!supplied || !cfg?.cron_secret || !safeEqual(supplied, String(cfg.cron_secret))) return json({ error: "unauthorized" }, 401);
     const { data: owners } = await admin.from("wiize_pay_customer_sync_queue").select("owner_user_id")
       .lte("next_attempt_at", new Date().toISOString()).limit(1000);
     const unique = [...new Set((owners || []).map((o: any) => o.owner_user_id))];
