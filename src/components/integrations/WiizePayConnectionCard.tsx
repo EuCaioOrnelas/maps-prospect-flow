@@ -32,18 +32,39 @@ export function WiizePayConnectionCard() {
     try { setSt(await call({ action: "status" })); } catch { setSt(null); } finally { setLoaded(true); }
   }, []);
   useEffect(() => { load(); }, [load]);
+  // Ao voltar para esta aba (depois de autorizar na outra), atualiza o status.
+  useEffect(() => {
+    const onFocus = () => { if (document.visibilityState === "visible") load(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => { window.removeEventListener("focus", onFocus); document.removeEventListener("visibilitychange", onFocus); };
+  }, [load]);
 
   const connect = async () => {
     setBusy(true);
+    // Dentro de um quadro (prévia), o navegador bloqueia a troca da página inteira
+    // depois de uma espera. Por isso a nova aba é aberta JÁ no clique e só recebe o
+    // endereço depois. Fora de quadro, a própria aba segue para o Wiize Pay.
+    const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
+    const tab = inFrame ? window.open("", "_blank") : null;
     try {
       const uiTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
       const r = await call({ action: "start", origin: window.location.origin, ui_theme: uiTheme });
       const url = new URL(r.authorize_url);
       if (url.protocol !== "https:") throw new Error("invalid_url");
-      // Sai do quadro de prévia do Lovable. Sem isso, o domínio público pode recusar
-      // ser carregado dentro do iframe quando o Wiize Pay retorna ao Wiize.
-      window.open(url.toString(), "_top");
+      if (tab && !tab.closed) {
+        tab.location.href = url.toString();
+        toast.info("Continue a autorização na nova aba do Wiize Pay.");
+        setBusy(false);
+      } else if (inFrame) {
+        // Bloqueador de pop-up: tenta sair do quadro direto.
+        window.open(url.toString(), "_top", "noopener");
+        setBusy(false);
+      } else {
+        window.location.assign(url.toString());
+      }
     } catch (e) {
+      if (tab && !tab.closed) tab.close();
       toast.error((e as Error).message === "not_configured"
         ? "O Wiize Pay ainda não liberou a conexão. Tente mais tarde."
         : "Não foi possível iniciar a conexão.");

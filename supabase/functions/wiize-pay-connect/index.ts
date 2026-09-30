@@ -106,9 +106,14 @@ async function rateLimit(id: string, endpoint: string, max = 10) {
   return data !== false;
 }
 
+// Endereço de retorno SEMPRE igual no início e no fim (senão a troca do código falha).
+// wiize.com.br redireciona para www.wiize.com.br, então usamos www como padrão.
+// Prévias e localhost não estão cadastrados no Wiize Pay → retornam pelo site no ar.
+const REDIRECT_ORIGINS = ["https://www.wiize.com.br", "https://wiize-lb2.lovable.app"];
 function safeOrigin(o: unknown) {
   const s = typeof o === "string" ? o : "";
-  return ALLOWED_ORIGINS.includes(s) ? s : ALLOWED_ORIGINS[0];
+  if (!ALLOWED_ORIGINS.includes(s)) return REDIRECT_ORIGINS[0];
+  return REDIRECT_ORIGINS.includes(s) ? s : REDIRECT_ORIGINS[0];
 }
 
 Deno.serve(async (req) => {
