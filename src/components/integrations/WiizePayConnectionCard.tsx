@@ -23,13 +23,23 @@ const BENEFITS = [
   { icon: ShieldCheck, title: "Acesso seguro", text: "Você autoriza no Wiize Pay; sua senha não passa pelo Wiize." },
 ];
 
-export function WiizePayConnectionCard() {
+export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: () => void } = {}) {
   const [st, setSt] = useState<ConnStatus | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [passwordSet, setPasswordSet] = useState<boolean | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [savingPass, setSavingPass] = useState(false);
+  const [passError, setPassError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try { setSt(await call({ action: "status" })); } catch { setSt(null); } finally { setLoaded(true); }
+    try {
+      const { data } = await supabase.functions.invoke("integration-export", { body: { action: "overview" } });
+      setPasswordSet(!!data?.state?.password_set);
+    } catch { /* mantém o valor anterior */ }
   }, []);
   useEffect(() => { load(); }, [load]);
   // Ao voltar para esta aba (depois de autorizar na outra), atualiza o status.
@@ -40,7 +50,32 @@ export function WiizePayConnectionCard() {
     return () => { window.removeEventListener("focus", onFocus); document.removeEventListener("visibilitychange", onFocus); };
   }, [load]);
 
-  const connect = async () => {
+  const onConnectClick = () => {
+    if (passwordSet === false) { setPassError(null); setSetupOpen(true); return; }
+    connect();
+  };
+
+  const saveAndContinue = async () => {
+    setPassError(null);
+    if (!isStrongPassword(newPass)) { setPassError("A senha ainda não atende a todos os requisitos."); return; }
+    if (newPass !== confirmPass) { setPassError("As duas senhas não são iguais."); return; }
+    // Abre a aba já neste clique (necessário na prévia); connect() reaproveita.
+    setSavingPass(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("integration-export", { body: { action: "set_password", new_password: newPass } });
+      if (error || data?.error) throw new Error(data?.error || "save_failed");
+      setPasswordSet(true);
+      setNewPass(""); setConfirmPass("");
+      setSetupOpen(false);
+      onPasswordSaved?.();
+      toast.success("Senha de Integração criada.");
+      await connect(true);
+    } catch (e) {
+      setPassError((e as Error).message === "save_failed" ? "Não foi possível salvar a senha. Tente novamente." : (e as Error).message);
+    } finally { setSavingPass(false); }
+  };
+
+  const connect = async (afterSetup = false) => {
     setBusy(true);
     // Dentro de um quadro (prévia), o navegador bloqueia a troca da página inteira
     // depois de uma espera. Por isso a nova aba é aberta JÁ no clique e só recebe o
