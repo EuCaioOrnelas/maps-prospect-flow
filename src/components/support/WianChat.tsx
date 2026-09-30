@@ -258,7 +258,11 @@ export function WianChat() {
       localStorage.removeItem(FORM_KEY);
     } catch {}
   }
-  const [ticketId, setTicketId] = useState<string | null>(initial?.ticketId ?? null);
+  const [ticketId, setTicketIdState] = useState<string | null>(initial?.ticketId ?? null);
+  // Ref sempre atualizada: evita enviar a avaliação com um ticketId antigo/vazio.
+  const ticketIdRef = useRef<string | null>(initial?.ticketId ?? null);
+  const setTicketId = useCallback((v: string | null) => { ticketIdRef.current = v; setTicketIdState(v); }, []);
+  const [npsError, setNpsError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>(
     initial?.messages?.length ? initial.messages : [GREETING_MSG]
   );
@@ -787,19 +791,30 @@ export function WianChat() {
     }
   };
 
+  // Avaliação é obrigatória: só finaliza depois de gravar no chamado.
+  // Tenta 3 vezes; se falhar, mantém a tela de avaliação aberta com botão
+  // "Tentar novamente" e guarda a nota para reenviar na próxima abertura.
   const submitNps = useCallback(async () => {
     const finalPhase: Phase = wasEscalated ? "done-escalated" : "done-resolved";
-    if (npsScore === null && npsRecommend === null) {
-      setPhase(finalPhase);
-      return;
-    }
+    if (npsScore === null || npsRecommend === null) return;
     setNpsSubmitting(true);
+    setNpsError(null);
+    const tid = ticketIdRef.current;
+    const body = { ticketId: tid, visitorSession: visitorSessionRef.current, type: "nps", npsScore, npsRecommend, wasEscalated };
     try {
-      if (ticketId) {
-        const { error } = await supabase.functions.invoke("support-feedback-submit", {
-          body: { ticketId, visitorSession: visitorSessionRef.current, type: "nps", npsScore, npsRecommend, wasEscalated },
-        });
-        if (error) throw error;
+      if (tid) {
+        let lastErr: any = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const { error } = await supabase.functions.invoke("support-feedback-submit", { body });
+          if (!error) { lastErr = null; break; }
+          lastErr = error;
+          await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+        }
+        if (lastErr) {
+          try { localStorage.setItem(PENDING_NPS_KEY, JSON.stringify(body)); } catch {}
+          throw lastErr;
+        }
+        try { localStorage.removeItem(PENDING_NPS_KEY); } catch {}
       }
       toast({ title: "Obrigado pelo feedback! 🙌" });
       setMessages((prev) => [
@@ -808,12 +823,26 @@ export function WianChat() {
       ]);
       setPhase(finalPhase);
     } catch (e: any) {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
-      setPhase(finalPhase);
+      console.error("[WianChat] falha ao registrar avaliação", e);
+      setNpsError("Não conseguimos registrar sua avaliação. Verifique sua internet e toque em tentar novamente.");
     } finally {
       setNpsSubmitting(false);
     }
-  }, [wasEscalated, npsScore, npsRecommend, ticketId, toast]);
+  }, [wasEscalated, npsScore, npsRecommend, toast]);
+
+  // Reenvia avaliação que ficou pendente numa sessão anterior.
+  useEffect(() => {
+    let raw: string | null = null;
+    try { raw = localStorage.getItem(PENDING_NPS_KEY); } catch {}
+    if (!raw) return;
+    (async () => {
+      try {
+        const body = JSON.parse(raw!);
+        const { error } = await supabase.functions.invoke("support-feedback-submit", { body });
+        if (!error) localStorage.removeItem(PENDING_NPS_KEY);
+      } catch {}
+    })();
+  }, []);
 
 
   const submitEscalation = async () => {
