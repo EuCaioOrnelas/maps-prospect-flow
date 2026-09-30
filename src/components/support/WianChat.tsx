@@ -1109,7 +1109,7 @@ export function WianChat() {
         {phase === "triage-menu" && !loading && (
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
             <button
-              onClick={() => setMenuOpen(true)}
+              onClick={() => { setMenuOpen(true); setMenuStep("root"); }}
               className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
             >
               <List className="w-4 h-4" />
@@ -1124,7 +1124,7 @@ export function WianChat() {
           <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
             <div className="flex justify-start">
               <button
-                onClick={() => setMenuOpen(true)}
+                onClick={() => { setMenuOpen(true); setMenuStep("submenu"); }}
                 className="group flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-card border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 hover:border-primary/50 transition-all shadow-sm"
               >
                 <List className="w-4 h-4" />
