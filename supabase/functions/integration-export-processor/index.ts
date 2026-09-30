@@ -194,7 +194,12 @@ async function fetchEntityRows(
 async function processRequest(admin: any, req: any) {
   const requestId: string = req.id;
   const owner: string = req.owner_user_id;
-  const scope: string[] = (req.scope?.entities || []) as string[];
+  // Aceita os dois formatos de escopo: { entities: [...] } e o mapa
+  // plano gravado por integration-export ({ leads: true, vendas: true, ... }).
+  const rawScope = (req.scope || {}) as Record<string, unknown>;
+  const scope: string[] = Array.isArray(rawScope.entities)
+    ? (rawScope.entities as string[])
+    : Object.keys(rawScope).filter((k) => rawScope[k] === true);
 
   await admin
     .from("integration_export_requests")
