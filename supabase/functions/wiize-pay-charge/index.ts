@@ -169,6 +169,28 @@ async function buildSnapshot(ownerId: string, dealId: string, opts: BuildOpts = 
   return { snapshot: { schema_version: "1.0", source: "wiize_crm", deal: d, customer }, deal, lead };
 }
 
+/** Cria/atualiza o cliente no Wiize Pay antes da cobrança. Não bloqueia: a cobrança também vincula o cliente. */
+async function pushCustomer(token: string, lead: any, document: string) {
+  const name = cut(lead.company_name, 200) || cut(lead.contact_name, 200) || validEmail(lead.email) || "Cliente";
+  const c: Record<string, string> = { id: lead.id, name, document };
+  if (lead.company_name && lead.contact_name) c.trade_name = String(cut(lead.contact_name, 200));
+  const email = validEmail(lead.email); if (email) c.email = email.toLowerCase();
+  const phone = cut(onlyDigits(lead.phone), 30); if (phone) c.phone = phone;
+  const city = cut(lead.city, 120); if (city) c.city = city;
+  try {
+    const r = await fetch(`${API_BASE}/v1/customers`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ customers: [c] }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!r.ok) console.warn(`wiize-pay customer pre-sync [${r.status}]`);
+    await r.text().catch(() => "");
+  } catch (e) {
+    console.warn("wiize-pay customer pre-sync failed", e instanceof Error ? e.name : "x");
+  }
+}
+
 async function postCharge(token: string, rowId: string, snapshot: Record<string, unknown>) {
   const raw = JSON.stringify({ external_reference: rowId, ...snapshot });
   const checksum = await sha256hex(raw);
@@ -283,6 +305,9 @@ Deno.serve(async (req) => {
         await audit(ownerId, userId, "wiize_pay_charge_create", "error", req, "token_unavailable");
         return json({ error: "token_unavailable", message: "A conexão com o Wiize Pay expirou. Reconecte em Integrações." }, 409);
       }
+      // Fluxo Wiize Pay: 1) cliente  2) serviço/contrato  3) cobrança.
+      // O cliente vai antes (com CPF/CNPJ) para a cobrança ser vinculada ao cadastro certo no Wiize Pay.
+      await pushCustomer(token, b.lead, docFinal);
       const { resp, out, checksum } = await postCharge(token, row.id, snapshot);
       const checkoutUrl = safeCheckoutUrl(out.checkout_url);
       if (!resp.ok || typeof out.id !== "string" || !checkoutUrl) {

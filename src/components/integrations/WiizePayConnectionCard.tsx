@@ -130,7 +130,11 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
       if (error) throw new Error(error.message);
       if (data?.error === "rate_limited") { toast.error("Aguarde um minuto antes de sincronizar de novo."); return; }
       if (data?.error) throw new Error(data.error);
-      if (data.failed) toast.error(`${data.sent} clientes enviados. O restante será reenviado automaticamente.`);
+      if (data.reason === "wiize_pay_route_unavailable") {
+        toast.error(`O Wiize Pay ainda não está recebendo clientes. Publique a versão mais recente do Wiize Pay; os ${data.queued} clientes ficam guardados e serão enviados automaticamente.`, { duration: 10000 });
+      } else if (data.reason === "token_unavailable") {
+        toast.error("A conexão com o Wiize Pay expirou. Reconecte a conta; os clientes ficam guardados para envio.");
+      } else if (data.failed) toast.error(`${data.sent} clientes enviados. ${data.failed} tiveram problema e serão reenviados automaticamente.`);
       else if (data.pending > 0) toast.success(`${data.sent} clientes enviados. Os outros ${data.pending} continuam sendo enviados em segundo plano.`);
       else toast.success(`${data.sent} clientes enviados ao Wiize Pay.`);
     } catch { toast.error("Não foi possível sincronizar agora. Vamos tentar de novo automaticamente."); }

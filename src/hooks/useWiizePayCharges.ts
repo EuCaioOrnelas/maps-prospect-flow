@@ -45,11 +45,25 @@ async function call<T>(body: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
+/** Último status de conexão conhecido: a tela de venda já abre no modo certo, sem esperar a rede. */
+const META_KEY = "wiize-pay-meta-v1";
+function readMeta(): WiizePayListMeta | undefined {
+  try { const raw = localStorage.getItem(META_KEY); return raw ? JSON.parse(raw) : undefined; } catch { return undefined; }
+}
+function saveMeta<T extends WiizePayListMeta>(r: T): T {
+  try {
+    localStorage.setItem(META_KEY, JSON.stringify({ connected: r.connected, connected_at: r.connected_at, api_configured: r.api_configured, can_charge: r.can_charge }));
+  } catch { /* noop */ }
+  return r;
+}
+const placeholder = () => { const m = readMeta(); return m ? { charges: [] as WiizePayCharge[], ...m } : undefined; };
+
 export function useWiizePayCharges(leadId: string) {
   return useQuery({
     queryKey: ["wiize-pay-charges", leadId],
-    queryFn: () => call<{ charges: WiizePayCharge[] } & WiizePayListMeta>({ action: "list_for_lead", lead_id: leadId }),
-    staleTime: 15_000,
+    queryFn: () => call<{ charges: WiizePayCharge[] } & WiizePayListMeta>({ action: "list_for_lead", lead_id: leadId }).then(saveMeta),
+    staleTime: 60_000,
+    placeholderData: placeholder,
     enabled: !!leadId,
   });
 }
@@ -58,8 +72,9 @@ export function useWiizePayCharges(leadId: string) {
 export function useAllWiizePayCharges() {
   return useQuery({
     queryKey: ["wiize-pay-charges", "all"],
-    queryFn: () => call<{ charges: WiizePayCharge[] } & WiizePayListMeta>({ action: "list_all" }),
-    staleTime: 15_000,
+    queryFn: () => call<{ charges: WiizePayCharge[] } & WiizePayListMeta>({ action: "list_all" }).then(saveMeta),
+    staleTime: 60_000,
+    placeholderData: placeholder,
   });
 }
 

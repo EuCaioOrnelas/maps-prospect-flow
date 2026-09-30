@@ -75,7 +75,8 @@ export default function CRMSales() {
   const navigate = useNavigate();
   const location = useLocation();
   const { sales, deleteSale, updateSale, getAttachmentUrl, fetchSales } = useSales();
-  const { data: wp } = useAllWiizePayCharges();
+  const { data: wpData, isError: wpError } = useAllWiizePayCharges();
+  const wp = wpData ?? (wpError ? null : undefined);
   const chargeByDeal = useMemo(() => {
     const m: Record<string, WiizePayCharge> = {};
     for (const c of wp?.charges ?? []) if (!m[c.deal_id]) m[c.deal_id] = c; // lista vem da mais nova

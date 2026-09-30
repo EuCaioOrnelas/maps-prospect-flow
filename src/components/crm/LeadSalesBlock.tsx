@@ -46,7 +46,8 @@ export function LeadSalesBlock({
   const [internalDialogOpen, setInternalDialogOpen] = useState(false);
   const dialogOpen = registerOpen ?? internalDialogOpen;
   const setDialogOpen = onRegisterOpenChange ?? setInternalDialogOpen;
-  const { data: wp } = useWiizePayCharges(leadId);
+  const { data: wpData, isError: wpError } = useWiizePayCharges(leadId);
+  const wp = wpData ?? (wpError ? null : undefined);
   const latestCharge = (dealId: string) => wp?.charges.find((c) => c.deal_id === dealId);
 
   const handleDownload = async (path: string) => {
