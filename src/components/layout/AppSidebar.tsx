@@ -16,8 +16,6 @@ import {
   AlertTriangle,
   Bell,
   Bot,
-  HelpCircle,
-  Lightbulb,
   LayoutDashboard,
   DollarSign,
   Mail,
@@ -588,30 +586,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 />
               </li>
             )}
-
-            {/* Sugestões */}
-            <li>
-              <SidebarNavItem
-                title="Sugestões"
-                icon={Lightbulb}
-                url="/sugestoes"
-                isActive={currentPath === "/sugestoes"}
-                isExpanded={isExpanded}
-                tooltip="Sugestões de Melhorias"
-              />
-            </li>
-
-            {/* Ajuda */}
-            <li>
-              <SidebarNavItem
-                title="Ajuda"
-                icon={HelpCircle}
-                url="/ajuda"
-                isActive={currentPath === "/ajuda" || currentPath === "/ajuda/faq"}
-                isExpanded={isExpanded}
-                tooltip="Central de Ajuda"
-              />
-            </li>
 
             {/* Integrações — visível apenas para Owner/Admin */}
             {canSeeIntegrations && (
