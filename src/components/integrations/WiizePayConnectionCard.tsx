@@ -53,7 +53,6 @@ export function WiizePayConnectionCard() {
       const url = new URL(r.authorize_url);
       if (url.protocol !== "https:") throw new Error("invalid_url");
       if (tab && !tab.closed) {
-        tab.opener = null;
         tab.location.href = url.toString();
         toast.info("Continue a autorização na nova aba do Wiize Pay.");
         setBusy(false);
