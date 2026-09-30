@@ -18,3 +18,8 @@
 
 - [x] Auditar e corrigir os campos Stripe do checkout e do trial, reproduzindo clique, foco e digitação em computador e celular.
 - [x] Eliminar remontagens e bloqueios intermitentes dos campos Stripe e adicionar testes de regressão.
+- [ ] Unificar cadastro da venda e criação da cobrança Wiize Pay em uma única tela, sem repetir dados.
+- [ ] Preservar o fluxo interno quando desconectado e as vendas anteriores à conexão.
+- [ ] Remover janelas sobrepostas no card do contato e na página Vendas e Receita.
+- [ ] Validar visual e funcionamento do novo fluxo em computador e celular.
+- [ ] Corrigir a preferência de tema no fluxo de autorização; bloqueado até o projeto Wiize Pay aceitar `ui_theme`.
