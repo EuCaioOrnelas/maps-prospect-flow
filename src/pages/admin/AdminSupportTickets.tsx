@@ -902,6 +902,11 @@ export default function AdminSupportTickets() {
                   <TableCell>
                     <div className="flex items-center gap-1.5 mb-0.5">
                       {t.ticket_number && <span className="font-mono text-[11px] text-primary">{t.ticket_number}</span>}
+                      {t.category === "Wiize Pay" && (
+                        <Badge variant="outline" className="gap-1 text-[9px] py-0 px-1 h-4 bg-primary/10 text-primary border-primary/30">
+                          <CreditCard className="h-2.5 w-2.5" />Wiize Pay
+                        </Badge>
+                      )}
                       {t.is_manual && <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 bg-accent text-accent-foreground border-border">Manual</Badge>}
                     </div>
                     <div className="font-medium text-sm">{t.name || "—"}</div>
@@ -969,6 +974,11 @@ export default function AdminSupportTickets() {
               {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
               {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{STATUS_LABELS[selected.status] || selected.status}</Badge>}
               {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
+              {selected?.category === "Wiize Pay" && (
+                <Badge variant="outline" className="gap-1 bg-primary/10 text-primary border-primary/30">
+                  <CreditCard className="h-3 w-3" />Wiize Pay
+                </Badge>
+              )}
               {selected?.phase && <Badge variant="outline" className="text-[10px]">{selected.phase}</Badge>}
               {typeof selected?.frustration_score === "number" && selected.frustration_score >= 40 && (
                 <Badge variant="outline" className={`gap-1 ${selected.frustration_score >= 60 ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-warning/10 text-warning border-warning/30"}`}>
