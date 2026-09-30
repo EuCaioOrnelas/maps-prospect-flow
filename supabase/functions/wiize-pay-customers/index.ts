@@ -46,7 +46,7 @@ async function audit(ownerId: string, userId: string, action: string, status: st
 }
 async function rateLimit(id: string, endpoint: string, max = 20) {
   const { data } = await admin.rpc("check_rate_limit", { p_identifier: id, p_endpoint: endpoint, p_max_requests: max, p_window_seconds: 60 });
-  return data !== false;
+  return (data as { allowed?: boolean } | null)?.allowed !== false;
 }
 /** Access token válido (renova com refresh_token quando faltar < 60 s). */
 async function getAccessToken(ownerId: string, force = false): Promise<string | null> {
@@ -84,6 +84,13 @@ async function getAccessToken(ownerId: string, force = false): Promise<string | 
 // actions: process_queue (gatilho interno, x-cron-secret) | sync_all (botão) | status
 // =============================================================
 const BATCH = 100;
+/** Comparação em tempo constante (não revela o segredo pelo tempo de resposta). */
+function safeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let r = 0;
+  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
+}
 const MAX_ATTEMPTS = 8;
 const clean = (v: unknown, max = 255) => {
   if (v === null || v === undefined) return undefined;
@@ -198,14 +205,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   if (!API_BASE.startsWith("https://") || !ENC_KEY) return json({ error: "not_configured" }, 503);
-  const body = await req.json().catch(() => ({}));
+  const rawText = await req.text().catch(() => "");
+  if (rawText.length > 2048) return json({ error: "payload_too_large" }, 413);
+  let body: any = {};
+  try { body = rawText ? JSON.parse(rawText) : {}; } catch { return json({ error: "invalid_json" }, 400); }
   const action = String(body?.action || "");
   const deadline = Date.now() + 45_000;
 
   if (action === "process_queue") {
     const supplied = req.headers.get("x-cron-secret") || "";
     const { data: cfg } = await admin.from("wiize_pay_sync_config").select("cron_secret").eq("id", 1).maybeSingle();
-    if (!supplied || !cfg?.cron_secret || supplied !== cfg.cron_secret) return json({ error: "unauthorized" }, 401);
+    if (!supplied || !cfg?.cron_secret || !safeEqual(supplied, String(cfg.cron_secret))) return json({ error: "unauthorized" }, 401);
     const { data: owners } = await admin.from("wiize_pay_customer_sync_queue").select("owner_user_id")
       .lte("next_attempt_at", new Date().toISOString()).limit(1000);
     const unique = [...new Set((owners || []).map((o: any) => o.owner_user_id))];
@@ -229,7 +239,7 @@ Deno.serve(async (req) => {
   const userId = u.user.id;
   const { data: prof } = await admin.from("profiles").select("account_role, parent_owner_id").eq("id", userId).maybeSingle();
   const ownerId: string = (prof as any)?.parent_owner_id || userId;
-  const role: string = (prof as any)?.account_role || "owner";
+  const role: string = prof ? ((prof as any).account_role || "owner") : "none"; // sem perfil = sem permissão
 
   const { data: conn } = await admin.from("integration_connections").select("status").eq("owner_user_id", ownerId).maybeSingle();
   if (conn?.status !== "active") return json({ error: "not_connected" }, 409);
