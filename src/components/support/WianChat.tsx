@@ -1487,12 +1487,16 @@ export function WianChat() {
         <DialogContent className="bg-background border-border max-w-md p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
             <DialogTitle className="text-base">
-              {phase === "triage-submenu" && activeCategory
+              {menuStep === "root"
+                ? "Suporte Wiize"
+                : phase === "triage-submenu" && activeCategory
                 ? activeCategory.label
                 : "Como podemos te ajudar?"}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              {phase === "triage-submenu" && activeCategory
+              {menuStep === "root"
+                ? "Escolha o time certo para o seu problema."
+                : phase === "triage-submenu" && activeCategory
                 ? activeCategory.subcategoryLabel || "Selecione o problema mais próximo."
                 : "Escolha a área para iniciar o atendimento."}
             </DialogDescription>
