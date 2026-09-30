@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PasswordField, isStrongPassword } from "@/components/wiize-api/PasswordField";
+import { WiizePayConnectionCard } from "@/components/integrations/WiizePayConnectionCard";
 import {
   ArrowLeft, ShieldCheck, Download, RefreshCw, Lock, MailCheck, Ban,
   Plug, Clock, FileJson, TriangleAlert, CheckCircle2,
@@ -360,30 +361,7 @@ export default function IntegrationWiizePay() {
 
                 {/* ---------------- Visão geral ---------------- */}
                 <TabsContent value="visao-geral" className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2">
-                            <Plug className="h-4 w-4" /> Wiize Pay
-                          </CardTitle>
-                          <CardDescription>Conexão de destino para seus dados exportados.</CardDescription>
-                        </div>
-                        <Badge className="bg-violet-100 text-violet-800">READY_FOR_WIIZE_PAY</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-2">
-                      <p>
-                        <span className="font-medium">Status:</span>{" "}
-                        {state?.connection?.status === "revoked" ? "Revogada" : "Aguardando o Wiize Pay"}
-                      </p>
-                      <p className="text-muted-foreground">
-                        A integração real será ativada quando o Wiize Pay estiver disponível, por meio de autorização
-                        segura (OAuth 2.0) — sem compartilhar senhas e sem acesso direto ao seu banco de dados.
-                        Exportar hoje não envia nada automaticamente.
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <WiizePayConnectionCard />
 
                   <Card>
                     <CardHeader>
