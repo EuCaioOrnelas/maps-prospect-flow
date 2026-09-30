@@ -6,7 +6,6 @@ import { Plus, FileText, Download, Trash2, CalendarClock, Repeat, DollarSign } f
 import { useSales, type Sale } from "@/hooks/useSales";
 import { SalesKPIs } from "./SalesKPIs";
 import { RegisterSaleDialog } from "./RegisterSaleDialog";
-import { WiizePayChargeDialog } from "./WiizePayChargeDialog";
 import { useWiizePayCharges } from "@/hooks/useWiizePayCharges";
 import { WiizePaySaleBilling } from "./WiizePaySaleBilling";
 import { toast } from "sonner";
@@ -47,7 +46,6 @@ export function LeadSalesBlock({
   const [internalDialogOpen, setInternalDialogOpen] = useState(false);
   const dialogOpen = registerOpen ?? internalDialogOpen;
   const setDialogOpen = onRegisterOpenChange ?? setInternalDialogOpen;
-  const [chargeDealId, setChargeDealId] = useState<string | null>(null);
   const { data: wp } = useWiizePayCharges(leadId);
   const latestCharge = (dealId: string) => wp?.charges.find((c) => c.deal_id === dealId);
 
@@ -74,11 +72,10 @@ export function LeadSalesBlock({
         leadName={leadName}
         initialValue={initialValue}
         initialTitle={initialTitle}
-        onCreated={(created) => {
+        wiizePay={wp}
+        onCreated={() => {
           fetchSales();
           onSaleCreated?.();
-          // Com Wiize Pay conectado, a venda nova segue direto para a cobrança.
-          if (created?.id && wp?.connected && wp.can_charge) setChargeDealId(created.id);
         }}
       />
     );
@@ -183,15 +180,6 @@ export function LeadSalesBlock({
             );
           })}
         </div>
-      )}
-      {chargeDealId && (
-        <WiizePayChargeDialog
-          open
-          fromNewSale
-          onOpenChange={(o) => { if (!o) { setChargeDealId(null); fetchSales(); } }}
-          leadId={leadId}
-          dealId={chargeDealId}
-        />
       )}
     </div>
   );

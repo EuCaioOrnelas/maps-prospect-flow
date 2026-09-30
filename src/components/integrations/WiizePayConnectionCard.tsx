@@ -5,6 +5,7 @@ import { Plug, Loader2, CheckCircle2, ShieldCheck, Receipt, Link2, ArrowRight } 
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PasswordField, isStrongPassword } from "@/components/wiize-api/PasswordField";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ConnStatus {
   configured: boolean;
@@ -26,6 +27,7 @@ const BENEFITS = [
 ];
 
 export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: () => void } = {}) {
+  const { resolvedTheme } = useTheme();
   const [st, setSt] = useState<ConnStatus | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -88,8 +90,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
     const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
     const tab = preTab !== undefined ? preTab : (inFrame ? window.open("", "_blank") : null);
     try {
-      const uiTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
-      const r = await call({ action: "start", origin: window.location.origin, ui_theme: uiTheme });
+      const r = await call({ action: "start", origin: window.location.origin, ui_theme: resolvedTheme });
       const url = new URL(r.authorize_url);
       if (url.protocol !== "https:") throw new Error("invalid_url");
       if (tab && !tab.closed) {
