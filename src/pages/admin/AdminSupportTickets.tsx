@@ -902,6 +902,11 @@ export default function AdminSupportTickets() {
                   <TableCell>
                     <div className="flex items-center gap-1.5 mb-0.5">
                       {t.ticket_number && <span className="font-mono text-[11px] text-primary">{t.ticket_number}</span>}
+                      {t.category === "Wiize Pay" && (
+                        <Badge variant="outline" className="gap-1 text-[9px] py-0 px-1 h-4 bg-primary/10 text-primary border-primary/30">
+                          <CreditCard className="h-2.5 w-2.5" />Wiize Pay
+                        </Badge>
+                      )}
                       {t.is_manual && <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 bg-accent text-accent-foreground border-border">Manual</Badge>}
                     </div>
                     <div className="font-medium text-sm">{t.name || "—"}</div>
