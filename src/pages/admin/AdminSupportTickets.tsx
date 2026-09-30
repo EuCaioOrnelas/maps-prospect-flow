@@ -974,6 +974,11 @@ export default function AdminSupportTickets() {
               {selected?.ticket_number || `Ticket #${selected?.id.slice(0, 8)}`}
               {selected && <Badge variant="outline" className={STATUS_COLORS[selected.status] || ""}>{STATUS_LABELS[selected.status] || selected.status}</Badge>}
               {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
+              {selected?.category === "Wiize Pay" && (
+                <Badge variant="outline" className="gap-1 bg-primary/10 text-primary border-primary/30">
+                  <CreditCard className="h-3 w-3" />Wiize Pay
+                </Badge>
+              )}
               {selected?.phase && <Badge variant="outline" className="text-[10px]">{selected.phase}</Badge>}
               {typeof selected?.frustration_score === "number" && selected.frustration_score >= 40 && (
                 <Badge variant="outline" className={`gap-1 ${selected.frustration_score >= 60 ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-warning/10 text-warning border-warning/30"}`}>
