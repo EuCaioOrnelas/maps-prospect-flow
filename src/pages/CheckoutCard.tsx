@@ -33,7 +33,7 @@ import { formatCep, cepDigits, isCepComplete, lookupCep } from "@/lib/cepLookup"
 import { motion, AnimatePresence } from "framer-motion";
 import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
-import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { getStripe } from "@/lib/stripe";
 import { ResilientElements } from "@/components/checkout/ResilientElements";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
