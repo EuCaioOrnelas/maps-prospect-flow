@@ -1502,7 +1502,39 @@ export function WianChat() {
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[min(85vh,720px)] overflow-y-auto py-1">
-            {phase === "triage-submenu" && activeCategory
+            {menuStep === "root" ? (
+              <div className="px-4 py-3 space-y-3">
+                <button
+                  onClick={() => setMenuStep("menu")}
+                  className="flex w-full items-center gap-3.5 rounded-xl border border-border/60 bg-card px-4 py-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Headphones className="h-5 w-5" strokeWidth={2} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">Suporte Wiize</p>
+                    <p className="text-[11px] text-muted-foreground">Dúvidas sobre a plataforma, campanhas, CRM, agentes e integrações</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+                </button>
+                <button
+                  onClick={() => {
+                    const cat = TRIAGE_TREE.find((c) => c.id === "wiizepay");
+                    if (cat) pickCategory(cat);
+                  }}
+                  className="flex w-full items-center gap-3.5 rounded-xl border-2 border-primary/40 bg-primary/10 px-4 py-4 text-left transition-colors hover:border-primary hover:bg-primary/15"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <CreditCard className="h-5 w-5" strokeWidth={2} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">Suporte Wiize Pay</p>
+                    <p className="text-[11px] text-muted-foreground">Cobranças, PIX, boleto, cartão e débito em conta</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
+                </button>
+              </div>
+            ) : phase === "triage-submenu" && activeCategory
               ? (
                 <>
                   {activeCategory.problems.map((p) => (
