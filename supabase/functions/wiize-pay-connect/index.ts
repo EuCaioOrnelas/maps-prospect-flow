@@ -39,6 +39,10 @@ const ALLOWED_ORIGINS = [
 const SCOPES = ["crm.read", "contacts.read", "companies.read", "deals.read", "sales.read", "products.read"];
 const CALLBACK_PATH = "/configuracoes/integracoes/wiize-pay/callback";
 
+function safeUiTheme(value: unknown) {
+  return value === "dark" ? "dark" : "light";
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -169,6 +173,8 @@ Deno.serve(async (req) => {
       url.searchParams.set("state", state);
       url.searchParams.set("code_challenge", challenge);
       url.searchParams.set("code_challenge_method", "S256");
+      // Preferência apenas visual. Não contém dados pessoais nem altera a segurança OAuth.
+      url.searchParams.set("ui_theme", safeUiTheme(body.ui_theme));
       await audit(ownerId, userId, "wiize_pay_connect_start", "ok", req);
       return json({ authorize_url: url.toString() });
     }
