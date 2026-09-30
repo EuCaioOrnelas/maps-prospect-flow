@@ -1,7 +1,8 @@
 // Reusable Stripe Elements card form — handles tokenization on submit.
 // Parent passes onPaymentMethod(pmId) which is then sent to a backend edge function.
 
-import { useState, useImperativeHandle, forwardRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useEffect, useMemo, useRef } from "react";
+import { useStripeReload } from "./ResilientElements";
 import {
   CardNumberElement,
   CardExpiryElement,
@@ -18,7 +19,7 @@ import type {
   StripeCardCvcElementOptions,
 } from "@stripe/stripe-js";
 import { Label } from "@/components/ui/label";
-import { CreditCard, Calendar, Lock, User, Hash } from "lucide-react";
+import { Calendar, Lock, User, Hash, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export interface StripeCardFormHandle {
@@ -61,15 +62,42 @@ function toTitleCase(value: string) {
     .replace(/(^|[\s'-])([\p{L}])/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
 }
 
+// O campo do Stripe roda dentro de um iframe e NÃO entende variáveis CSS
+// (hsl(var(--x))). Convertemos o tema atual em cores reais.
+function themeColor(varName: string, fallback: string) {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const probe = document.createElement("span");
+    probe.style.color = `hsl(var(${varName}))`;
+    probe.style.display = "none";
+    document.body.appendChild(probe);
+    const rgb = getComputedStyle(probe).color; // sempre "rgb(r, g, b)"
+    probe.remove();
+    return /^rgba?\(/.test(rgb) ? rgb : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function buildStyle(): StripeCardNumberElementOptions["style"] {
+  const fg = themeColor("--foreground", "#0f172a");
+  const primary = themeColor("--primary", "#16a34a");
+  const danger = themeColor("--destructive", "#dc2626");
+  return {
+    base: { fontSize: "15px", color: fg, fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif', "::placeholder": { color: "transparent" }, iconColor: primary },
+    invalid: { color: danger, iconColor: danger },
+  };
+}
+
 const elementStyle: StripeCardNumberElementOptions["style"] = {
   base: {
     fontSize: "15px",
-    color: "hsl(var(--foreground))",
+    color: "#0f172a",
     fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
     "::placeholder": { color: "transparent" },
-    iconColor: "hsl(var(--primary))",
+    iconColor: "#16a34a",
   },
-  invalid: { color: "hsl(var(--destructive))", iconColor: "hsl(var(--destructive))" },
+  invalid: { color: "#dc2626", iconColor: "#dc2626" },
 };
 
 const cardNumberOptions: StripeCardNumberElementOptions = {
@@ -94,6 +122,63 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
     const elements = useElements();
     const [error, setError] = useState<string | null>(null);
     const [focusedField, setFocusedField] = useState<"number" | "expiry" | "cvc" | null>(null);
+    const { reload, attempt } = useStripeReload();
+    const [readyCount, setReadyCount] = useState(0);
+    const [stuck, setStuck] = useState(false);
+    const markReady = () => setReadyCount((c) => c + 1);
+    const style = useMemo(() => buildStyle(), []);
+    const numberOpts = useMemo(() => ({ ...cardNumberOptions, style }), [style]);
+    const expiryOpts = useMemo(() => ({ ...cardExpiryOptions, style }), [style]);
+    const cvcOpts = useMemo(() => ({ ...cardCvcOptions, style }), [style]);
+    const autoReloads = useRef(0);
+
+    // Vigia: se os 3 campos não ficarem prontos em 10s, recria os campos
+    // sozinho (até 2 vezes) e depois mostra o botão para o cliente.
+    useEffect(() => {
+      setStuck(false);
+      const t = window.setTimeout(() => {
+        if (readyCount >= 3) return;
+        if (autoReloads.current < 2) {
+          autoReloads.current += 1;
+          console.warn("[card] campos não ficaram prontos, recriando…");
+          reload();
+        } else setStuck(true);
+      }, 10000);
+      return () => window.clearTimeout(t);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [attempt, readyCount >= 3]);
+
+    // Proteção contra travas de clique: janelas (ofertas, avisos) às vezes
+    // deixam a página inteira sem aceitar clique ao fechar. Se não houver
+    // nenhuma janela aberta, devolvemos o clique à página.
+    useEffect(() => {
+      const fix = () => {
+        const openModal = document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]');
+        if (openModal) return;
+        [document.body, document.documentElement].forEach((el) => {
+          if (el.style.pointerEvents === "none") el.style.pointerEvents = "";
+        });
+        document.querySelectorAll<HTMLElement>("[data-card-field]").forEach((el) => {
+          let n: HTMLElement | null = el;
+          while (n && n !== document.body) {
+            if (n.hasAttribute("inert")) n.removeAttribute("inert");
+            n = n.parentElement;
+          }
+        });
+      };
+      fix();
+      const id = window.setInterval(fix, 1000);
+      return () => window.clearInterval(id);
+    }, []);
+
+    // A caixa inteira aceita clique (não só a linha de texto do meio).
+    const focusField = (kind: "number" | "expiry" | "cvc") => {
+      const el =
+        kind === "number" ? elements?.getElement(CardNumberElement) :
+        kind === "expiry" ? elements?.getElement(CardExpiryElement) :
+        elements?.getElement(CardCvcElement);
+      el?.focus();
+    };
 
     const handleFieldChange = (
       event: StripeCardNumberElementChangeEvent | StripeCardExpiryElementChangeEvent | StripeCardCvcElementChangeEvent,
@@ -147,9 +232,11 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
           <Label className="text-xs font-medium flex items-center gap-1.5">
             <Hash className="h-3 w-3 text-muted-foreground" /> Número do cartão
           </Label>
-          <CardNumberElement
-            options={cardNumberOptions}
-            className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
+          <div data-card-field="number" className="relative z-[1] pointer-events-auto" onMouseDown={(e) => { if (e.target === e.currentTarget || !(e.target as HTMLElement).closest("iframe")) { e.preventDefault(); focusField("number"); } }}>
+<CardNumberElement
+            options={numberOpts}
+            onReady={markReady}
+            className={`pointer-events-auto min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
               focusedField === "number" ? "border-ring ring-1 ring-ring" : "border-input"
             }`}
             onChange={(event) => {
@@ -159,6 +246,7 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             onFocus={() => setFocusedField("number")}
             onBlur={() => setFocusedField(null)}
           />
+</div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -166,9 +254,11 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Calendar className="h-3 w-3 text-muted-foreground" /> Validade
             </Label>
-            <CardExpiryElement
-              options={cardExpiryOptions}
-              className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
+            <div data-card-field="expiry" className="relative z-[1] pointer-events-auto" onMouseDown={(e) => { if (e.target === e.currentTarget || !(e.target as HTMLElement).closest("iframe")) { e.preventDefault(); focusField("expiry"); } }}>
+<CardExpiryElement
+              options={expiryOpts}
+            onReady={markReady}
+              className={`pointer-events-auto min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
                 focusedField === "expiry" ? "border-ring ring-1 ring-ring" : "border-input"
               }`}
               onChange={(event) => {
@@ -178,14 +268,17 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
               onFocus={() => setFocusedField("expiry")}
               onBlur={() => setFocusedField(null)}
             />
+</div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-medium flex items-center gap-1.5">
               <Lock className="h-3 w-3 text-muted-foreground" /> CVV
             </Label>
-            <CardCvcElement
-              options={cardCvcOptions}
-              className={`min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
+            <div data-card-field="cvc" className="relative z-[1] pointer-events-auto" onMouseDown={(e) => { if (e.target === e.currentTarget || !(e.target as HTMLElement).closest("iframe")) { e.preventDefault(); focusField("cvc"); } }}>
+<CardCvcElement
+              options={cvcOpts}
+            onReady={markReady}
+              className={`pointer-events-auto min-h-11 w-full cursor-text rounded-[var(--radius-input)] border bg-background px-3 py-3 transition-colors ${
                 focusedField === "cvc" ? "border-ring ring-1 ring-ring" : "border-input"
               }`}
               onChange={handleFieldChange}
@@ -198,10 +291,20 @@ export const StripeCardForm = forwardRef<StripeCardFormHandle, Props>(
                 onCvcBlur?.();
               }}
             />
+</div>
           </div>
         </div>
 
         {error && <p className="text-xs text-destructive">{error}</p>}
+        {stuck && (
+          <button
+            type="button"
+            onClick={() => { autoReloads.current = 0; reload(); }}
+            className="flex w-full items-center justify-center gap-2 rounded-md border border-input bg-muted/40 px-3 py-2 text-xs font-medium text-foreground hover:bg-muted"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Os campos do cartão não carregaram — toque para recarregar
+          </button>
+        )}
       </div>
     );
   },

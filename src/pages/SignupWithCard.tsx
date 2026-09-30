@@ -35,8 +35,8 @@ import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
 import { cn } from "@/lib/utils";
 import { formatCep, cepDigits, isCepComplete, lookupCep } from "@/lib/cepLookup";
-import { Elements, useStripe } from "@stripe/react-stripe-js";
-import { stripePromise } from "@/lib/stripe";
+import { useStripe } from "@stripe/react-stripe-js";
+import { ResilientElements } from "@/components/checkout/ResilientElements";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { useRef } from "react";
 import { getPartnerReferralMetadata } from "@/hooks/usePartnerTracking";
@@ -120,9 +120,9 @@ function fmtPhone(v: string) {
 
 export default function SignupWithCardPage() {
   return (
-    <Elements stripe={stripePromise}>
+    <ResilientElements>
       <SignupWithCardInner />
-    </Elements>
+    </ResilientElements>
   );
 }
 
