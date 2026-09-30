@@ -154,6 +154,7 @@ export function RegisterSaleDialog({
 
   const handleSubmit = async () => {
     if (!title.trim()) return toast.error("Informe um título para a venda");
+    if (!isEdit && !leadId) return toast.error("Selecione um cliente para registrar a venda");
     const numValue = Number(value.replace(/\./g, "").replace(",", "."));
     if (!numValue || numValue <= 0) return toast.error("Informe um valor válido");
     if (wiizePayActive && !savedSaleId) {
@@ -206,7 +207,7 @@ export function RegisterSaleDialog({
       }
 
       const created = savedSaleId ? null : await createSale({
-        lead_id: leadId!,
+        lead_id: leadId,
         title: title.trim(),
         description: description.trim() || undefined,
         value: numValue,
@@ -256,13 +257,13 @@ export function RegisterSaleDialog({
           if (charge.checkout_url) {
             setPaymentLink({ url: charge.checkout_url, expiresAt: charge.checkout_expires_at ?? null });
             toast.success("Venda e cobrança criadas com sucesso!");
-            onCreated?.({ id: newSaleId });
             return;
           }
           toast.success("Venda e cobrança registradas com sucesso!");
         } catch (chargeFailure) {
           const message = (chargeFailure as Error).message || "Não foi possível criar a cobrança.";
           setChargeError(message);
+          setIdempotencyKey(crypto.randomUUID());
           toast.error("A venda foi salva, mas a cobrança não foi criada.");
           return;
         }
@@ -582,8 +583,11 @@ export function RegisterSaleDialog({
 
   const footer = (
     <div className={cn("flex justify-end gap-2 pt-2 border-t border-border/60", embedded && "shrink-0")}> 
-      <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
-        {savedSaleId ? "Fechar" : "Cancelar"}
+      <Button variant="outline" size="sm" onClick={() => {
+        if (savedSaleId) onCreated?.({ id: savedSaleId });
+        onOpenChange(false);
+      }} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
+        {paymentLink ? "Concluir" : savedSaleId ? "Fechar" : "Cancelar"}
       </Button>
       {!paymentLink && <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
