@@ -204,6 +204,13 @@
       "when": 1790766677028,
       "tag": "0028_wiize_pay_webhook_events",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790773644327,
+      "tag": "0029_wiize_pay_sales_billing",
+      "breakpoints": true
     }
   ]
 }

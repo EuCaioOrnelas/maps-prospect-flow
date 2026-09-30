@@ -6057,6 +6057,8 @@ export type Database = {
       }
       lead_deals: {
         Row: {
+          billing_provider: string
+          billing_type: string | null
           closed_at: string
           contract_months: number
           contract_type: string
@@ -6065,6 +6067,7 @@ export type Database = {
           description: string | null
           expiration_date: string | null
           id: string
+          installments: number | null
           lead_id: string
           notes: string | null
           notice_15d_sent_at: string | null
@@ -6084,8 +6087,11 @@ export type Database = {
           updated_at: string
           user_id: string
           value: number
+          wiize_pay_charge_id: string | null
         }
         Insert: {
+          billing_provider?: string
+          billing_type?: string | null
           closed_at?: string
           contract_months?: number
           contract_type?: string
@@ -6094,6 +6100,7 @@ export type Database = {
           description?: string | null
           expiration_date?: string | null
           id?: string
+          installments?: number | null
           lead_id: string
           notes?: string | null
           notice_15d_sent_at?: string | null
@@ -6113,8 +6120,11 @@ export type Database = {
           updated_at?: string
           user_id: string
           value: number
+          wiize_pay_charge_id?: string | null
         }
         Update: {
+          billing_provider?: string
+          billing_type?: string | null
           closed_at?: string
           contract_months?: number
           contract_type?: string
@@ -6123,6 +6133,7 @@ export type Database = {
           description?: string | null
           expiration_date?: string | null
           id?: string
+          installments?: number | null
           lead_id?: string
           notes?: string | null
           notice_15d_sent_at?: string | null
@@ -6142,6 +6153,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           value?: number
+          wiize_pay_charge_id?: string | null
         }
         Relationships: [
           {
@@ -6305,6 +6317,7 @@ export type Database = {
           contact_name: string | null
           created_at: string
           created_by_user_id: string | null
+          document: string | null
           domain: string | null
           drive_folder_id: string | null
           drive_folder_url: string | null
@@ -6371,6 +6384,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by_user_id?: string | null
+          document?: string | null
           domain?: string | null
           drive_folder_id?: string | null
           drive_folder_url?: string | null
@@ -6437,6 +6451,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           created_by_user_id?: string | null
+          document?: string | null
           domain?: string | null
           drive_folder_id?: string | null
           drive_folder_url?: string | null
