@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Refinar visual da conexão e dados disponíveis da página Wiize Pay e limpar os controles de seleção.
+- [x] Mover Ajuda e Sugestões do menu lateral e móvel para cartões no perfil.
+
 - [x] Auditar páginas públicas de Segurança, Termos, Privacidade e Cookies
 - [x] Auditar FAQ principal e FAQs públicas
 - [x] Auditar Wian e textos das novas funcionalidades

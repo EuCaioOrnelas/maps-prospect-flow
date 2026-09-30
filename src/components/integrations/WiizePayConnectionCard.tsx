@@ -138,24 +138,30 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
-      <div className="p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${active ? "bg-primary" : "bg-primary/10"}`}>
-          {active ? <CheckCircle2 className="h-6 w-6 text-primary-foreground" /> : <Plug className="h-6 w-6 text-primary" />}
+    <div className="rounded-md border border-border/60 bg-card overflow-hidden">
+      <div className="px-5 py-4 sm:px-6 border-b border-border/60 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Plug className="h-4 w-4 text-primary" /> CONEXÃO PRINCIPAL</div>
+        {!loaded ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : active ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"><span className="h-2 w-2 rounded-full bg-primary" /> Ativa</span>
+        ) : <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><span className="h-2 w-2 rounded-full bg-muted-foreground/50" /> Inativa</span>}
+      </div>
+      <div className="p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center gap-5">
+        <div className={`w-11 h-11 rounded-md flex items-center justify-center shrink-0 ${active ? "bg-primary/10" : "bg-muted"}`}>
+          {active ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Plug className="h-5 w-5 text-muted-foreground" />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="text-lg font-semibold text-foreground">Conta Wiize Pay</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">Conta Wiize Pay</h2>
             {!loaded ? null : active ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-xs font-medium text-primary">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> Conectado
+              <span className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                Conectado
               </span>
             ) : !st?.configured ? (
-              <span className="rounded-full bg-muted border border-border px-2.5 py-0.5 text-xs font-medium text-muted-foreground" title="READY_FOR_WIIZE_PAY">
+              <span className="rounded-sm bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground" title="READY_FOR_WIIZE_PAY">
                 Em breve
               </span>
             ) : (
-              <span className="rounded-full bg-muted border border-border px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="rounded-sm bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                 Não conectado
               </span>
             )}
@@ -170,16 +176,16 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
         </div>
         {st?.can_manage && (
           active ? (
-            <div className="flex gap-2 shrink-0">
-            <Button onClick={syncCustomers} disabled={syncing || busy} className="gap-2">
-              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Sincronizar clientes
+             <div className="flex flex-wrap gap-2 lg:justify-end">
+             <Button onClick={syncCustomers} disabled={syncing || busy} className="gap-2">
+               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Sincronizar clientes
             </Button>
             <Button variant="outline" onClick={disconnect} disabled={busy} className="shrink-0">
               {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Desconectar
             </Button>
             </div>
           ) : (
-            <Button onClick={onConnectClick} disabled={busy || !st?.configured || passwordSet === null} className="shrink-0 gap-2 h-11 px-5 shadow-sm">
+             <Button onClick={onConnectClick} disabled={busy || !st?.configured || passwordSet === null} className="gap-2 h-10 px-5">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Conectar Wiize Pay
               {!busy && <ArrowRight className="h-4 w-4" />}
@@ -187,10 +193,10 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
           )
         )}
       </div>
-      <div className="grid sm:grid-cols-3 border-t border-border bg-muted/30">
+      <div className="grid sm:grid-cols-3 border-t border-border/60 bg-muted/20">
         {BENEFITS.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="p-5 flex gap-3 border-b sm:border-b-0 sm:border-r last:border-0 border-border">
-            <Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+           <div key={title} className="p-4 sm:p-5 flex gap-3 border-b sm:border-b-0 sm:border-r last:border-0 border-border/60">
+             <Icon className="h-4 w-4 text-primary shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-foreground">{title}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{text}</p>

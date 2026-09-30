@@ -55,6 +55,9 @@ import {
   DollarSign,
   Plus,
   Trash2,
+  HelpCircle,
+  Lightbulb,
+  ArrowUpRight,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -1313,7 +1316,30 @@ const Profile = () => {
           {/* Theme Toggle */}
           <ThemeToggle />
 
-          {/* Tour guiado — apenas owner. Subusuários compartilham a conta. */}
+           <section aria-labelledby="profile-resources-title" className="space-y-3">
+             <div>
+               <h2 id="profile-resources-title" className="font-display text-base font-semibold text-foreground">Ajuda e sugestões</h2>
+               <p className="text-xs text-muted-foreground mt-1">Encontre respostas ou compartilhe suas ideias.</p>
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+               <Card className="border-border/60 shadow-none">
+                 <CardContent className="flex flex-col gap-4 p-5">
+                   <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10"><HelpCircle className="h-4 w-4 text-primary" /></div>
+                   <div><h3 className="text-sm font-semibold text-foreground">Central de Ajuda</h3><p className="text-xs text-muted-foreground mt-1">Respostas e orientações para sua conta.</p></div>
+                   <Button asChild variant="outline" size="sm" className="w-fit gap-2"><Link to="/ajuda">Acessar ajuda <ArrowUpRight className="h-4 w-4" /></Link></Button>
+                 </CardContent>
+               </Card>
+               <Card className="border-border/60 shadow-none">
+                 <CardContent className="flex flex-col gap-4 p-5">
+                   <div className="flex h-9 w-9 items-center justify-center rounded-md bg-info/10"><Lightbulb className="h-4 w-4 text-info" /></div>
+                   <div><h3 className="text-sm font-semibold text-foreground">Sugestões</h3><p className="text-xs text-muted-foreground mt-1">Compartilhe melhorias para a Wiize.</p></div>
+                   <Button asChild variant="outline" size="sm" className="w-fit gap-2"><Link to="/sugestoes">Enviar sugestão <ArrowUpRight className="h-4 w-4" /></Link></Button>
+                 </CardContent>
+               </Card>
+             </div>
+           </section>
+
+           {/* Tour guiado — apenas owner. Subusuários compartilham a conta. */}
           {!isSubUser && (
             <Card className="border-border/50 shadow-none">
               <CardHeader className="pb-4">

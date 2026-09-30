@@ -9,6 +9,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,7 +17,7 @@ import { PasswordField, isStrongPassword } from "@/components/wiize-api/Password
 import { WiizePayConnectionCard } from "@/components/integrations/WiizePayConnectionCard";
 import {
   ArrowLeft, ShieldCheck, Download, RefreshCw, Lock, MailCheck, Ban,
-  Plug, Clock, FileJson, TriangleAlert, CheckCircle2,
+  Plug, Clock, FileJson, TriangleAlert, CheckCircle2, Users, Receipt, FileText, Activity, StickyNote, Paperclip, ListTodo, ClipboardCheck, Package, Layers3, Database,
 } from "lucide-react";
 
 // ---------------------------------------------------------------
@@ -36,6 +37,12 @@ const ENTITY_LABELS: Record<string, string> = {
   respostas_formulario: "Respostas de formulários",
   produtos: "Produtos e serviços",
   etapas_e_configuracoes: "Etapas do funil e configurações",
+};
+
+const ENTITY_ICONS: Record<string, typeof Users> = {
+  leads: Users, vendas: Receipt, contratos: FileText, atividades: Activity,
+  notas: StickyNote, anexos: Paperclip, formularios: ListTodo,
+  respostas_formulario: ClipboardCheck, produtos: Package, etapas_e_configuracoes: Layers3,
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -318,34 +325,19 @@ export default function IntegrationWiizePay() {
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <div className="lg:hidden"><AppHeader profile={profile} /></div>
           <div className="flex-1 overflow-auto">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
               <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2 mb-6 -ml-2 text-muted-foreground">
                 <ArrowLeft size={16} /> Voltar
               </Button>
 
-              <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 mb-8">
-                <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shrink-0">
-                    <Plug className="h-7 w-7 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Integrações</p>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Wiize Pay</h1>
-                    <p className="text-muted-foreground mt-1">
-                      Conecte sua conta, gere cobranças direto do CRM e exporte seus dados com segurança.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
-                      <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Conexão criptografada
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
-                      <Lock className="h-3.5 w-3.5 text-primary" /> Sem senha compartilhada
-                    </span>
-                  </div>
-                </div>
-              </div>
+               <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 pb-6 border-b border-border/60">
+                 <div>
+                   <p className="text-xs font-semibold uppercase text-primary mb-2">Configurações / Integrações</p>
+                   <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground">Wiize Pay</h1>
+                   <p className="text-sm text-muted-foreground mt-2 max-w-xl">Conexão, cobranças e exportações em um só lugar.</p>
+                 </div>
+                 <span className="inline-flex items-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Autorização segura</span>
+               </header>
 
               {confirmResult && (
                 <Alert className={confirmResult.ok ? "border-primary/30 bg-primary/5 mb-4" : "border-destructive/30 bg-destructive/5 mb-4"}>
@@ -364,65 +356,45 @@ export default function IntegrationWiizePay() {
               )}
 
               <Tabs defaultValue="visao-geral">
-                <TabsList className="mb-6 h-auto w-full sm:w-auto grid grid-cols-2 sm:inline-flex gap-1 rounded-xl bg-muted p-1">
-                  <TabsTrigger value="visao-geral" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Visão geral</TabsTrigger>
-                  <TabsTrigger value="exportar" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Exportar</TabsTrigger>
-                  <TabsTrigger value="historico" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Histórico</TabsTrigger>
-                  <TabsTrigger value="seguranca" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Segurança</TabsTrigger>
+                 <TabsList className="mb-7 h-auto w-full sm:w-auto grid grid-cols-2 sm:inline-flex gap-1 rounded-md border border-border/60 bg-muted/40 p-1">
+                   <TabsTrigger value="visao-geral" className="rounded-sm px-4 py-2 text-xs data-[state=active]:bg-background">Visão geral</TabsTrigger>
+                   <TabsTrigger value="exportar" className="rounded-sm px-4 py-2 text-xs data-[state=active]:bg-background">Exportar</TabsTrigger>
+                   <TabsTrigger value="historico" className="rounded-sm px-4 py-2 text-xs data-[state=active]:bg-background">Histórico</TabsTrigger>
+                   <TabsTrigger value="seguranca" className="rounded-sm px-4 py-2 text-xs data-[state=active]:bg-background">Segurança</TabsTrigger>
                 </TabsList>
 
                 {/* ---------------- Visão geral ---------------- */}
-                <TabsContent value="visao-geral" className="space-y-4">
+                 <TabsContent value="visao-geral" className="space-y-8">
                   <WiizePayConnectionCard onPasswordSaved={loadAll} />
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4" /> Segurança da sua conta
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-2">
-                      <div className="flex flex-wrap items-center gap-1">
-                        <span className="font-medium">Senha de Integração:</span>{" "}
-                        {state?.password_set ? (
-                          <Badge className={`${STATUS_COLORS.completed} ml-1`}>Definida</Badge>
-                        ) : (
-                          <Badge className={`${STATUS_COLORS.pending} ml-1`}>Não definida</Badge>
-                        )}
-                      </div>
-                      {state?.locked && (
-                        <p className="text-destructive">
-                          Conta temporariamente bloqueada por tentativas inválidas até {formatDate(state.locked_until)}.
-                        </p>
-                      )}
-                      {!state?.password_set && (
-                        <p className="text-muted-foreground">
-                          Defina a Senha de Integração na aba <strong>Segurança</strong> para habilitar exportações.
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
+                   <section className="flex flex-wrap items-center justify-between gap-3 border-y border-border/60 py-4">
+                     <div className="flex items-center gap-3">
+                       <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted"><Lock className="h-4 w-4 text-muted-foreground" /></span>
+                       <div><h2 className="text-sm font-medium text-foreground">Senha de Integração</h2><p className="text-xs text-muted-foreground">Protege exportações e ações sensíveis.</p></div>
+                     </div>
+                     <Badge className={state?.password_set ? STATUS_COLORS.completed : STATUS_COLORS.pending}>{state?.password_set ? "Definida" : "Não definida"}</Badge>
+                     {state?.locked && <p className="w-full text-xs text-destructive">Conta temporariamente bloqueada até {formatDate(state.locked_until)}.</p>}
+                   </section>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Dados disponíveis para exportação</CardTitle>
-                      <CardDescription>Contagem atual por entidade do seu CRM.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                   <section>
+                     <div className="flex items-center gap-3 mb-5">
+                       <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10"><Database className="h-4 w-4 text-primary" /></span>
+                       <div><h2 className="font-display text-lg font-semibold text-foreground">Dados disponíveis</h2><p className="text-xs text-muted-foreground">Registros disponíveis para exportação nesta conta</p></div>
+                     </div>
                       {loading ? (
                         <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
                       ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                          {Object.entries(ENTITY_LABELS).map(([key, label]) => (
-                            <div key={key} className="rounded-xl border border-border bg-muted/40 p-4 transition-colors hover:border-primary/40">
-                              <p className="text-2xl font-bold text-foreground tabular-nums">{(entities[key]?.count ?? 0).toLocaleString("pt-BR")}</p>
-                              <p className="text-xs text-muted-foreground">{label}</p>
-                            </div>
-                          ))}
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60">
+                           {Object.entries(ENTITY_LABELS).map(([key, label]) => {
+                             const Icon = ENTITY_ICONS[key] || Database;
+                             return <div key={key} className="flex items-center gap-3 bg-card p-4 min-w-0">
+                               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted/60"><Icon className="h-4 w-4 text-muted-foreground" /></span>
+                               <div className="min-w-0 flex-1"><p className="text-xs text-muted-foreground leading-snug">{label}</p><p className="text-xl font-semibold text-foreground tabular-nums leading-tight mt-1">{(entities[key]?.count ?? 0).toLocaleString("pt-BR")}</p></div>
+                             </div>;
+                           })}
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
+                   </section>
                 </TabsContent>
 
                 {/* ---------------- Exportar ---------------- */}
@@ -457,21 +429,16 @@ export default function IntegrationWiizePay() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {Object.entries(ENTITY_LABELS).map(([key, label]) => (
-                          <label key={key} className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${selectedEntities[key] ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/50"}`}>
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 accent-primary"
-                              checked={!!selectedEntities[key]}
-                              onChange={(e) => setSelectedEntities((p) => ({ ...p, [key]: e.target.checked }))}
-                            />
-                            <span className="text-sm">{label}</span>
-                            <span className="ml-auto text-xs text-muted-foreground">
-                              {entities[key]?.count ?? 0}
-                            </span>
-                          </label>
-                        ))}
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60">
+                         {Object.entries(ENTITY_LABELS).map(([key, label]) => {
+                           const Icon = ENTITY_ICONS[key] || Database;
+                           return <label key={key} className="flex items-center gap-3 bg-card px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors min-w-0">
+                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted/60"><Icon className="h-4 w-4 text-muted-foreground" /></span>
+                             <span className="min-w-0 flex-1 text-sm text-foreground">{label}</span>
+                             <span className="text-xs text-muted-foreground tabular-nums">{entities[key]?.count ?? 0}</span>
+                             <Checkbox aria-label={`Incluir ${label}`} checked={!!selectedEntities[key]} onCheckedChange={(checked) => setSelectedEntities((p) => ({ ...p, [key]: checked === true }))} />
+                           </label>;
+                         })}
                       </div>
 
                       <div className="space-y-2">
