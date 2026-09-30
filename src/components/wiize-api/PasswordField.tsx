@@ -9,15 +9,19 @@ export interface PasswordRule {
   test: (v: string) => boolean;
 }
 
-export const PASSWORD_RULES: PasswordRule[] = [
-  { label: "Mínimo de 8 caracteres", test: (v) => v.length >= 8 },
+/** Regras parametrizáveis pelo tamanho mínimo (padrão 8; Senha de Integração exige 10 no servidor). */
+export const passwordRules = (min = 8): PasswordRule[] => [
+  { label: `Mínimo de ${min} caracteres`, test: (v) => v.length >= min },
   { label: "Uma letra maiúscula", test: (v) => /[A-Z]/.test(v) },
   { label: "Uma letra minúscula", test: (v) => /[a-z]/.test(v) },
   { label: "Um número", test: (v) => /\d/.test(v) },
   { label: "Um caractere especial", test: (v) => /[^A-Za-z0-9]/.test(v) },
 ];
 
-export const isStrongPassword = (v: string) => PASSWORD_RULES.every((r) => r.test(v));
+export const PASSWORD_RULES: PasswordRule[] = passwordRules(8);
+
+export const isStrongPassword = (v: string, min = 8) =>
+  passwordRules(min).every((r) => r.test(v));
 
 interface Props {
   id?: string;
@@ -30,6 +34,8 @@ interface Props {
   showStrength?: boolean;
   required?: boolean;
   rightSlot?: React.ReactNode;
+  /** Tamanho mínimo exigido (padrão 8; use 10 para a Senha de Integração). */
+  minLength?: number;
 }
 
 /** Campo de senha com mostrar/ocultar e recomendações de segurança. */
@@ -43,11 +49,13 @@ export function PasswordField({
   showStrength = false,
   required = true,
   rightSlot,
+  minLength = 8,
 }: Props) {
   const [visible, setVisible] = useState(false);
+  const rules = useMemo(() => passwordRules(minLength), [minLength]);
 
-  const passed = useMemo(() => PASSWORD_RULES.filter((r) => r.test(value)).length, [value]);
-  const ratio = passed / PASSWORD_RULES.length;
+  const passed = useMemo(() => rules.filter((r) => r.test(value)).length, [value, rules]);
+  const ratio = passed / rules.length;
   const strengthLabel = ratio === 1 ? "Forte" : ratio >= 0.6 ? "Média" : "Fraca";
   const strengthColor = ratio === 1 ? "bg-primary" : ratio >= 0.6 ? "bg-amber-500" : "bg-destructive";
 
@@ -92,7 +100,7 @@ export function PasswordField({
             )}
           </div>
           <ul className="grid gap-1">
-            {PASSWORD_RULES.map((rule) => {
+            {rules.map((rule) => {
               const ok = rule.test(value);
               return (
                 <li

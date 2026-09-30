@@ -35,9 +35,18 @@ function json(body: unknown, status = 200) {
 // -------------------------------------------------------------
 // Entidades exportáveis (mesmas chaves usadas em integration-export)
 // -------------------------------------------------------------
-type EntityDef = { table: string; order: string; fields: string[] };
+type EntityDef = { table: string; order: string; fields: string[]; eqFilter?: Record<string, string> };
 
 const ENTITIES: Record<string, EntityDef> = {
+  contratos: {
+    table: "lead_deals",
+    order: "created_at",
+    eqFilter: { sale_type: "recurring" },
+    fields: [
+      "id", "lead_id", "title", "value", "contract_months", "status",
+      "start_date", "expiration_date", "responsible_user_id", "created_at", "updated_at",
+    ],
+  },
   leads: {
     table: "leads",
     order: "created_at",
@@ -169,12 +178,16 @@ async function fetchEntityRows(
   let truncated = false;
   for (let from = 0; from < MAX_ROWS_PER_ENTITY; from += PAGE_SIZE) {
     const to = Math.min(from + PAGE_SIZE - 1, MAX_ROWS_PER_ENTITY - 1);
-    const { data, error } = await admin
-      .from(def.table)
-      .select(fields.join(","))
-      .eq("owner_user_id", owner)
-      .order(def.order, { ascending: true })
-      .range(from, to);
+  let query = admin
+    .from(def.table)
+    .select(fields.join(","))
+    .eq("owner_user_id", owner);
+  for (const [col, val] of Object.entries(def.eqFilter || {})) {
+    query = query.eq(col, val);
+  }
+  const { data, error } = await query
+    .order(def.order, { ascending: true })
+    .range(from, to);
     if (error) throw new Error(`${def.table}: ${error.message}`);
     const chunk = (data || []) as unknown as Record<string, unknown>[];
     rows.push(...chunk.map((r) => pickFields(r, fields)));
@@ -194,7 +207,12 @@ async function fetchEntityRows(
 async function processRequest(admin: any, req: any) {
   const requestId: string = req.id;
   const owner: string = req.owner_user_id;
-  const scope: string[] = (req.scope?.entities || []) as string[];
+  // Aceita os dois formatos de escopo: { entities: [...] } e o mapa
+  // plano gravado por integration-export ({ leads: true, vendas: true, ... }).
+  const rawScope = (req.scope || {}) as Record<string, unknown>;
+  const scope: string[] = Array.isArray(rawScope.entities)
+    ? (rawScope.entities as string[])
+    : Object.keys(rawScope).filter((k) => rawScope[k] === true);
 
   await admin
     .from("integration_export_requests")

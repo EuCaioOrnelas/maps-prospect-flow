@@ -61,7 +61,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
 
   const saveAndContinue = async () => {
     setPassError(null);
-    if (!isStrongPassword(newPass)) { setPassError("A senha ainda não atende a todos os requisitos."); return; }
+    if (!isStrongPassword(newPass, 10)) { setPassError("A senha ainda não atende a todos os requisitos."); return; }
     if (newPass !== confirmPass) { setPassError("As duas senhas não são iguais."); return; }
     // Abre a aba já neste clique (necessário na prévia); connect() reaproveita.
     const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
@@ -233,7 +233,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
             <li className="flex gap-2"><span className="font-semibold text-primary">3.</span> Ao voltar, a conexão aparece como <b>Conectado</b>.</li>
           </ol>
           <div className="space-y-3">
-            <PasswordField id="wp-setup-pass" label="Senha de Integração" value={newPass} onChange={setNewPass} autoComplete="new-password" showStrength />
+            <PasswordField id="wp-setup-pass" label="Senha de Integração" value={newPass} onChange={setNewPass} autoComplete="new-password" showStrength minLength={10} />
             <PasswordField id="wp-setup-pass2" label="Repita a senha" value={confirmPass} onChange={setConfirmPass} autoComplete="new-password" />
             {passError && <p className="text-sm text-destructive">{passError}</p>}
           </div>
