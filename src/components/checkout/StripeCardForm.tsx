@@ -66,9 +66,17 @@ function toTitleCase(value: string) {
 // (hsl(var(--x))). Convertemos o tema atual em cores reais.
 function themeColor(varName: string, fallback: string) {
   if (typeof window === "undefined") return fallback;
-  const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  if (!raw) return fallback;
-  return raw.startsWith("#") || raw.startsWith("rgb") || raw.startsWith("hsl") ? raw : `hsl(${raw.replace(/\s+/g, ", ").replace(/,\s*\/,?\s*/, " / ")})`;
+  try {
+    const probe = document.createElement("span");
+    probe.style.color = `hsl(var(${varName}))`;
+    probe.style.display = "none";
+    document.body.appendChild(probe);
+    const rgb = getComputedStyle(probe).color; // sempre "rgb(r, g, b)"
+    probe.remove();
+    return /^rgba?\(/.test(rgb) ? rgb : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function buildStyle(): StripeCardNumberElementOptions["style"] {
