@@ -524,6 +524,7 @@ export function WianChat() {
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
+    setMenuStep("menu");
     setMessages((prev) => [
       ...prev,
       { role: "ai", content: "Sem problema 👍 Toque no menu abaixo para escolher outra área de atendimento." },
@@ -975,6 +976,7 @@ export function WianChat() {
     setActiveCategory(null);
     setActiveSolution(null);
     setTriage({});
+    setMenuStep("root");
     setPhase("triage-menu");
     setStars(0); setComment(""); setExtra(""); setInput("");
     setPhone(""); setCategory("");
