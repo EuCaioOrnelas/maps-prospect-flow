@@ -34,6 +34,8 @@ interface Props {
   showStrength?: boolean;
   required?: boolean;
   rightSlot?: React.ReactNode;
+  /** Tamanho mínimo exigido (padrão 8; use 10 para a Senha de Integração). */
+  minLength?: number;
 }
 
 /** Campo de senha com mostrar/ocultar e recomendações de segurança. */
