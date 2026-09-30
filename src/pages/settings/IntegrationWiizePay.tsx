@@ -49,13 +49,13 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
-  authorized: "bg-blue-100 text-blue-800",
-  processing: "bg-blue-100 text-blue-800",
-  completed: "bg-emerald-100 text-emerald-800",
-  failed: "bg-red-100 text-red-800",
-  expired: "bg-gray-100 text-gray-700",
-  cancelled: "bg-gray-100 text-gray-700",
+  pending: "bg-warning/15 text-warning border border-warning/30",
+  authorized: "bg-info/10 text-info border border-info/30",
+  processing: "bg-info/10 text-info border border-info/30",
+  completed: "bg-primary/10 text-primary border border-primary/30",
+  failed: "bg-destructive/10 text-destructive border border-destructive/30",
+  expired: "bg-muted text-muted-foreground border border-border",
+  cancelled: "bg-muted text-muted-foreground border border-border",
 };
 
 async function callApi<T = any>(body: Record<string, unknown>): Promise<T> {
@@ -318,26 +318,38 @@ export default function IntegrationWiizePay() {
         <div className="flex-1 flex flex-col min-w-0 lg:pl-[72px]">
           <div className="lg:hidden"><AppHeader profile={profile} /></div>
           <div className="flex-1 overflow-auto">
-            <div className="max-w-5xl mx-auto px-6 py-10">
-              <div className="flex items-center gap-3 mb-8">
-                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2">
-                  <ArrowLeft size={16} /> Voltar
-                </Button>
-              </div>
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="gap-2 mb-6 -ml-2 text-muted-foreground">
+                <ArrowLeft size={16} /> Voltar
+              </Button>
 
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Plug className="h-5 w-5 text-primary" />
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 mb-8">
+                <div className="absolute inset-y-0 left-0 w-1 bg-primary" />
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shrink-0">
+                    <Plug className="h-7 w-7 text-primary-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Integrações</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Wiize Pay</h1>
+                    <p className="text-muted-foreground mt-1">
+                      Conecte sua conta, gere cobranças direto do CRM e exporte seus dados com segurança.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
+                      <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Conexão criptografada
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground">
+                      <Lock className="h-3.5 w-3.5 text-primary" /> Sem senha compartilhada
+                    </span>
+                  </div>
                 </div>
-                <h1 className="text-2xl font-bold">Integrações</h1>
               </div>
-              <p className="text-muted-foreground mb-6">
-                Exportação segura de dados e preparação para a integração com o Wiize Pay.
-              </p>
 
               {confirmResult && (
-                <Alert className={confirmResult.ok ? "border-emerald-300 bg-emerald-50 mb-4" : "border-red-300 bg-red-50 mb-4"}>
-                  {confirmResult.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <TriangleAlert className="h-4 w-4 text-red-600" />}
+                <Alert className={confirmResult.ok ? "border-primary/30 bg-primary/5 mb-4" : "border-destructive/30 bg-destructive/5 mb-4"}>
+                  {confirmResult.ok ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <TriangleAlert className="h-4 w-4 text-destructive" />}
                   <AlertTitle>{confirmResult.ok ? "Confirmação concluída" : "Não foi possível confirmar"}</AlertTitle>
                   <AlertDescription>{confirmResult.text}</AlertDescription>
                 </Alert>
@@ -352,11 +364,11 @@ export default function IntegrationWiizePay() {
               )}
 
               <Tabs defaultValue="visao-geral">
-                <TabsList className="mb-6">
-                  <TabsTrigger value="visao-geral">Visão geral</TabsTrigger>
-                  <TabsTrigger value="exportar">Exportar</TabsTrigger>
-                  <TabsTrigger value="historico">Histórico</TabsTrigger>
-                  <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+                <TabsList className="mb-6 h-auto w-full sm:w-auto grid grid-cols-2 sm:inline-flex gap-1 rounded-xl bg-muted p-1">
+                  <TabsTrigger value="visao-geral" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Visão geral</TabsTrigger>
+                  <TabsTrigger value="exportar" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Exportar</TabsTrigger>
+                  <TabsTrigger value="historico" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Histórico</TabsTrigger>
+                  <TabsTrigger value="seguranca" className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Segurança</TabsTrigger>
                 </TabsList>
 
                 {/* ---------------- Visão geral ---------------- */}
@@ -373,13 +385,13 @@ export default function IntegrationWiizePay() {
                       <p>
                         <span className="font-medium">Senha de Integração:</span>{" "}
                         {state?.password_set ? (
-                          <Badge className="bg-emerald-100 text-emerald-800 ml-1">Definida</Badge>
+                          <Badge className={`${STATUS_COLORS.completed} ml-1`}>Definida</Badge>
                         ) : (
-                          <Badge className="bg-amber-100 text-amber-800 ml-1">Não definida</Badge>
+                          <Badge className={`${STATUS_COLORS.pending} ml-1`}>Não definida</Badge>
                         )}
                       </p>
                       {state?.locked && (
-                        <p className="text-red-600">
+                        <p className="text-destructive">
                           Conta temporariamente bloqueada por tentativas inválidas até {formatDate(state.locked_until)}.
                         </p>
                       )}
@@ -402,8 +414,8 @@ export default function IntegrationWiizePay() {
                       ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {Object.entries(ENTITY_LABELS).map(([key, label]) => (
-                            <div key={key} className="rounded-lg border p-3">
-                              <p className="text-2xl font-bold">{entities[key]?.count ?? 0}</p>
+                            <div key={key} className="rounded-xl border border-border bg-muted/40 p-4 transition-colors hover:border-primary/40">
+                              <p className="text-2xl font-bold text-foreground tabular-nums">{(entities[key]?.count ?? 0).toLocaleString("pt-BR")}</p>
                               <p className="text-xs text-muted-foreground">{label}</p>
                             </div>
                           ))}
@@ -426,8 +438,8 @@ export default function IntegrationWiizePay() {
                   </Alert>
 
                   {activeRequest && ["pending", "authorized", "processing"].includes(activeRequest.status) && (
-                    <Alert className="border-blue-300 bg-blue-50">
-                      <Clock className="h-4 w-4 text-blue-600" />
+                    <Alert className="border-info/30 bg-info/5">
+                      <Clock className="h-4 w-4 text-info" />
                       <AlertTitle>Exportação em andamento</AlertTitle>
                       <AlertDescription>
                         Status: {STATUS_LABELS[activeRequest.status] || activeRequest.status}. Esta página atualiza
@@ -447,10 +459,10 @@ export default function IntegrationWiizePay() {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {Object.entries(ENTITY_LABELS).map(([key, label]) => (
-                          <label key={key} className="flex items-center gap-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                          <label key={key} className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${selectedEntities[key] ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/50"}`}>
                             <input
                               type="checkbox"
-                              className="h-4 w-4"
+                              className="h-4 w-4 accent-primary"
                               checked={!!selectedEntities[key]}
                               onChange={(e) => setSelectedEntities((p) => ({ ...p, [key]: e.target.checked }))}
                             />
@@ -478,9 +490,9 @@ export default function IntegrationWiizePay() {
 
                       {exportMessage && (
                         <Alert className={
-                          exportMessage.kind === "ok" ? "border-emerald-300 bg-emerald-50"
-                            : exportMessage.kind === "warn" ? "border-amber-300 bg-amber-50"
-                              : "border-red-300 bg-red-50"
+                          exportMessage.kind === "ok" ? "border-primary/30 bg-primary/5"
+                            : exportMessage.kind === "warn" ? "border-warning/30 bg-warning/5"
+                              : "border-destructive/30 bg-destructive/5"
                         }>
                           <AlertDescription>{exportMessage.text}</AlertDescription>
                         </Alert>
@@ -495,7 +507,7 @@ export default function IntegrationWiizePay() {
                         Solicitar exportação
                       </Button>
                       {!state?.password_set && (
-                        <p className="text-xs text-amber-700">
+                        <p className="text-xs text-warning">
                           Defina a Senha de Integração na aba Segurança para habilitar este botão.
                         </p>
                       )}
@@ -518,10 +530,10 @@ export default function IntegrationWiizePay() {
                       ) : (
                         <div className="space-y-3">
                           {exports.map((exp) => (
-                            <div key={exp.id} className="rounded-lg border p-3 flex flex-wrap items-center gap-3">
+                            <div key={exp.id} className="rounded-xl border border-border p-4 flex flex-wrap items-center gap-3 hover:border-primary/40 transition-colors">
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge className={STATUS_COLORS[exp.status] || "bg-gray-100"}>
+                                  <Badge className={STATUS_COLORS[exp.status] || STATUS_COLORS.expired}>
                                     {STATUS_LABELS[exp.status] || exp.status}
                                   </Badge>
                                   <span className="text-xs text-muted-foreground">{formatDate(exp.created_at)}</span>
@@ -541,7 +553,7 @@ export default function IntegrationWiizePay() {
                                 </Button>
                               )}
                               {["pending", "authorized"].includes(exp.status) && (
-                                <Button size="sm" variant="ghost" className="gap-1 text-red-600" onClick={() => handleCancel(exp.id)}>
+                                <Button size="sm" variant="ghost" className="gap-1 text-destructive" onClick={() => handleCancel(exp.id)}>
                                   <Ban className="h-4 w-4" /> Cancelar
                                 </Button>
                               )}
@@ -568,7 +580,7 @@ export default function IntegrationWiizePay() {
                               <span className="text-xs text-muted-foreground">{formatDate(log.created_at)}</span>
                               {log.ip && <span className="text-xs text-muted-foreground">IP {log.ip}</span>}
                               {log.error_message && (
-                                <span className="text-xs text-red-600 truncate">{log.error_message}</span>
+                                <span className="text-xs text-destructive truncate">{log.error_message}</span>
                               )}
                             </div>
                           ))}
@@ -610,7 +622,7 @@ export default function IntegrationWiizePay() {
                         showStrength
                       />
                       {passwordMessage && (
-                        <Alert className={passwordMessage.kind === "ok" ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}>
+                        <Alert className={passwordMessage.kind === "ok" ? "border-primary/30 bg-primary/5" : "border-destructive/30 bg-destructive/5"}>
                           <AlertDescription>{passwordMessage.text}</AlertDescription>
                         </Alert>
                       )}
