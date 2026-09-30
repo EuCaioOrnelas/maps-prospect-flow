@@ -35,6 +35,7 @@ import AnimatedCreditCard from "@/components/ui/animated-credit-card";
 import type { CustomerData } from "@/components/checkout/PaymentMethodModal";
 import { Elements, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
+import { ResilientElements } from "@/components/checkout/ResilientElements";
 import { StripeCardForm, type StripeCardFormHandle } from "@/components/checkout/StripeCardForm";
 import { CouponInputCard, type AppliedCoupon } from "@/components/checkout/CouponInputCard";
 import { OrderBumpsCard } from "@/components/checkout/OrderBumpsCard";
@@ -71,9 +72,9 @@ const PLAN_PRICES: Record<string, { monthly: number; annual: number; name: strin
 
 export default function CheckoutCard() {
   return (
-    <Elements stripe={stripePromise}>
+    <ResilientElements>
       <CheckoutCardInner />
-    </Elements>
+    </ResilientElements>
   );
 }
 

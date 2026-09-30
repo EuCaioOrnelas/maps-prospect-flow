@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe";
+import { ResilientElements } from "@/components/checkout/ResilientElements";
 
 import {
   brl,
@@ -78,9 +79,9 @@ export function BuyCreditsDialog({
   resumeTopup?: ApiTopup | null;
 }) {
   return (
-    <Elements stripe={stripePromise}>
+    <ResilientElements>
       <BuyCreditsDialogInner open={open} onOpenChange={onOpenChange} resumeTopup={resumeTopup} />
-    </Elements>
+    </ResilientElements>
   );
 }
 
@@ -764,12 +765,9 @@ function NewCardSection(props: {
   );
 
   return (
-    <Elements
-      stripe={stripePromise}
-      options={elementsOptions}
-    >
+    <ResilientElements options={elementsOptions}>
       <NewCardInner {...props} />
-    </Elements>
+    </ResilientElements>
   );
 }
 
