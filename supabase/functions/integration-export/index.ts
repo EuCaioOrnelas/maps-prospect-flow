@@ -247,7 +247,7 @@ async function checkRateLimit(identifier: string, endpoint: string, max = 10, wi
       p_window_seconds: windowSec,
     });
     if (error) return true; // falha aberta apenas para o rate limit (não é controle de segurança primário)
-    return data !== false;
+    return (data as { allowed?: boolean } | null)?.allowed !== false;
   } catch {
     return true;
   }
