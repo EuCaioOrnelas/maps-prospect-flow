@@ -32,6 +32,13 @@ export function WiizePayConnectionCard() {
     try { setSt(await call({ action: "status" })); } catch { setSt(null); } finally { setLoaded(true); }
   }, []);
   useEffect(() => { load(); }, [load]);
+  // Ao voltar para esta aba (depois de autorizar na outra), atualiza o status.
+  useEffect(() => {
+    const onFocus = () => { if (document.visibilityState === "visible") load(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => { window.removeEventListener("focus", onFocus); document.removeEventListener("visibilitychange", onFocus); };
+  }, [load]);
 
   const connect = async () => {
     setBusy(true);
