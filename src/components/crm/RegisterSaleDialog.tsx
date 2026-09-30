@@ -20,7 +20,7 @@ interface RegisterSaleDialogProps {
   initialValue?: number;
   initialTitle?: string;
   initialDescription?: string;
-  onCreated?: () => void;
+  onCreated?: (created?: { id: string }) => void;
   embedded?: boolean;
   embeddedLayout?: "compact" | "page";
   /** Quando informado, o dialog entra em modo edição da venda. */

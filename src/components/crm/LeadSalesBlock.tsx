@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Download, Trash2, CalendarClock, Repeat, DollarSign, CreditCard, RefreshCw } from "lucide-react";
+import { Plus, FileText, Download, Trash2, CalendarClock, Repeat, DollarSign } from "lucide-react";
 import { useSales, type Sale } from "@/hooks/useSales";
 import { SalesKPIs } from "./SalesKPIs";
 import { RegisterSaleDialog } from "./RegisterSaleDialog";
 import { WiizePayChargeDialog } from "./WiizePayChargeDialog";
-import { useWiizePayCharges, useWiizePayChargeMutations, chargeStatusLabel } from "@/hooks/useWiizePayCharges";
+import { useWiizePayCharges } from "@/hooks/useWiizePayCharges";
+import { WiizePaySaleBilling } from "./WiizePaySaleBilling";
 import { toast } from "sonner";
 
 interface LeadSalesBlockProps {
@@ -48,7 +49,6 @@ export function LeadSalesBlock({
   const setDialogOpen = onRegisterOpenChange ?? setInternalDialogOpen;
   const [chargeDealId, setChargeDealId] = useState<string | null>(null);
   const { data: wp } = useWiizePayCharges(leadId);
-  const { refresh: refreshCharge, cancel: cancelCharge } = useWiizePayChargeMutations(leadId);
   const latestCharge = (dealId: string) => wp?.charges.find((c) => c.deal_id === dealId);
 
   const handleDownload = async (path: string) => {
@@ -74,9 +74,11 @@ export function LeadSalesBlock({
         leadName={leadName}
         initialValue={initialValue}
         initialTitle={initialTitle}
-        onCreated={() => {
+        onCreated={(created) => {
           fetchSales();
           onSaleCreated?.();
+          // Com Wiize Pay conectado, a venda nova segue direto para a cobrança.
+          if (created?.id && wp?.connected && wp.can_charge) setChargeDealId(created.id);
         }}
       />
     );
@@ -87,7 +89,7 @@ export function LeadSalesBlock({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">Vendas & Receita</h3>
-          <p className="text-xs text-muted-foreground">Histórico financeiro com este cliente</p>
+          <p className="text-xs text-muted-foreground">{wp?.connected ? "Vendas novas são cobradas pelo Wiize Pay" : "Histórico financeiro com este cliente"}</p>
         </div>
         <Button size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-1.5" />
@@ -169,33 +171,9 @@ export function LeadSalesBlock({
                         )}
                       </div>
                     )}
-                    {wp?.connected && (() => {
-                      const ch = latestCharge(s.id);
-                      const open = ch && !["cancelled", "error"].includes(ch.status);
-                      return (
-                        <div className="flex flex-wrap items-center gap-2 mt-3">
-                          {ch && <Badge variant="outline">Wiize Pay: {chargeStatusLabel[ch.status]}</Badge>}
-                          {ch?.external_id && ch.status !== "paid" && ch.status !== "cancelled" && (
-                            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => refreshCharge.mutate(ch.id)}>
-                              <RefreshCw className="w-3 h-3 mr-1" /> Atualizar
-                            </Button>
-                          )}
-                          {wp.can_charge && open && ch.status !== "paid" && (
-                            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => {
-                              if (confirm("Cancelar esta cobrança?")) cancelCharge.mutate(ch.id, {
-                                onSuccess: () => toast.success("Cobrança cancelada"),
-                                onError: () => toast.error("Não foi possível cancelar"),
-                              });
-                            }}>Cancelar cobrança</Button>
-                          )}
-                          {wp.can_charge && !open && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setChargeDealId(s.id)}>
-                              <CreditCard className="w-3 h-3 mr-1" /> Cobrar com Wiize Pay
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })()}
+                    <div className="mt-3">
+                      <WiizePaySaleBilling sale={s} charge={latestCharge(s.id)} meta={wp} phone={s.lead?.phone} />
+                    </div>
                   </div>
                   <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => handleDelete(s.id)}>
                     <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
@@ -209,7 +187,8 @@ export function LeadSalesBlock({
       {chargeDealId && (
         <WiizePayChargeDialog
           open
-          onOpenChange={(o) => !o && setChargeDealId(null)}
+          fromNewSale
+          onOpenChange={(o) => { if (!o) { setChargeDealId(null); fetchSales(); } }}
           leadId={leadId}
           dealId={chargeDealId}
         />
