@@ -1,5 +1,10 @@
 # Roadmap
 
+- [x] Corrigir o endereço usado para enviar clientes ao Wiize Pay e nunca descartar clientes da fila.
+- [ ] Clientes chegarem no Wiize Pay; bloqueado até publicar a versão mais recente do projeto Wiize Pay.
+- [x] Tela de venda abrir já no modo Wiize Pay, com prazo de contrato livre, etapas Cliente > Contrato > Serviço > Cobrança e sem comprovante.
+- [ ] Débito em conta e criação de contrato pela integração; bloqueado até o Wiize Pay aceitar pela API.
+
 - [x] Refinar visual da conexão e dados disponíveis da página Wiize Pay e limpar os controles de seleção.
 - [x] Mover Ajuda e Sugestões do menu lateral e móvel para cartões no perfil.
 
