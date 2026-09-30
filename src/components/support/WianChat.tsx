@@ -279,7 +279,7 @@ export function WianChat() {
   const [phone, setPhone] = useState(formDraft.phone || "");
   const [extra, setExtra] = useState(formDraft.extra || "");
   const [category, setCategory] = useState<string>(formDraft.category || "");
-  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; phone?: string; category?: string }>({});
+  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; phone?: string; category?: string; extra?: string }>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [stars, setStars] = useState<number | null>(null);
   const [comment, setComment] = useState("");
@@ -385,6 +385,7 @@ export function WianChat() {
       setCategory(
         cat.id === "financeiro" ? "Financeiro" :
         cat.id === "planos" ? "Financeiro" :
+        cat.id === "wiizepay" ? "Wiize Pay" :
         cat.id === "suporte" ? "Outro" : "Outro"
       );
       const aiMsg: Msg = {
@@ -569,6 +570,7 @@ export function WianChat() {
       "Fluxos e automações": "WhatsApp",
       "Financeiro / Cobrança": "Financeiro",
       "Planos e cancelamento": "Financeiro",
+      "Suporte Wiize Pay": "Wiize Pay",
       "Relatórios e métricas": "Operacional",
       "Falar com suporte humano": "Outro",
     };
@@ -815,8 +817,10 @@ export function WianChat() {
 
 
   const submitEscalation = async () => {
-    const errs: { name?: string; email?: string; phone?: string; category?: string } = {};
+    const errs: { name?: string; email?: string; phone?: string; category?: string; extra?: string } = {};
     if (!category) errs.category = "Selecione um tópico para o chamado.";
+    if (category === "Wiize Pay" && extra.trim().length < 20)
+      errs.extra = "Explique o motivo do contato e qual erro aconteceu (mínimo 20 caracteres).";
     if (!name.trim()) errs.name = "Informe seu nome.";
     const emailTrim = email.trim();
     if (!emailTrim) errs.email = "Informe seu email.";
@@ -1200,6 +1204,7 @@ export function WianChat() {
                   <SelectItem value="Campanhas">Campanhas / Disparos</SelectItem>
                   <SelectItem value="CRM">CRM / Leads</SelectItem>
                   <SelectItem value="Financeiro">Financeiro / Pagamento</SelectItem>
+                  <SelectItem value="Wiize Pay">Suporte Wiize Pay</SelectItem>
                   <SelectItem value="Conta">Conta / Acesso</SelectItem>
                   <SelectItem value="Bug">Problema de sistema (bug)</SelectItem>
                   <SelectItem value="Operacional">Dúvida operacional</SelectItem>
@@ -1240,12 +1245,19 @@ export function WianChat() {
               {formErrors.phone && <p className="text-[11px] text-destructive">{formErrors.phone}</p>}
             </div>
 
-            <Textarea
-              placeholder="Algo a mais que queira contar? (opcional — a conversa acima já vai junto)"
-              value={extra}
-              onChange={(e) => setExtra(e.target.value)}
-              rows={3}
-            />
+            <div className="space-y-1">
+              <Textarea
+                placeholder={category === "Wiize Pay"
+                  ? "Explique o motivo do contato*: o que aconteceu, qual erro apareceu, em qual tela e o que você esperava (mín. 20 caracteres)"
+                  : "Algo a mais que queira contar? (opcional — a conversa acima já vai junto)"}
+                value={extra}
+                onChange={(e) => { setExtra(e.target.value); setFormErrors((p) => ({ ...p, extra: undefined })); }}
+                rows={category === "Wiize Pay" ? 5 : 3}
+                maxLength={2000}
+                className={formErrors.extra ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {formErrors.extra && <p className="text-[11px] text-destructive">{formErrors.extra}</p>}
+            </div>
 
             {submitError && (
               <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] text-destructive flex items-start gap-2">
