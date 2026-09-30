@@ -39,11 +39,11 @@ async function sha256hex(s: string) {
 
 // ---------- helpers ----------
 /** Access token válido (renova com refresh_token quando faltar < 60 s). */
-async function getAccessToken(ownerId: string): Promise<string | null> {
+async function getAccessToken(ownerId: string, force = false): Promise<string | null> {
   const { data: sec } = await admin.from("integration_connection_secrets").select("*").eq("owner_user_id", ownerId).maybeSingle();
   if (!sec?.access_token_enc) return null;
   const exp = sec.access_expires_at ? new Date(sec.access_expires_at).getTime() : 0;
-  if (exp - Date.now() > 60_000) return decrypt(sec.access_token_enc);
+  if (!force && exp - Date.now() > 60_000) return decrypt(sec.access_token_enc);
   if (!sec.refresh_token_enc || !TOKEN_URL.startsWith("https://") || !CLIENT_ID) return null;
   const resp = await fetch(TOKEN_URL, {
     method: "POST",
