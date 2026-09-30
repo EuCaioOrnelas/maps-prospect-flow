@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plug, Loader2, CheckCircle2, ShieldCheck, Receipt, Link2, ArrowRight } from "lucide-react";
+import { Plug, Loader2, RefreshCw, CheckCircle2, ShieldCheck, Receipt, Link2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PasswordField, isStrongPassword } from "@/components/wiize-api/PasswordField";
@@ -122,6 +122,20 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
   };
 
   const active = st?.connection?.status === "active";
+  const [syncing, setSyncing] = useState(false);
+  const syncCustomers = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("wiize-pay-customers", { body: { action: "sync_all" } });
+      if (error) throw new Error(error.message);
+      if (data?.error === "rate_limited") { toast.error("Aguarde um minuto antes de sincronizar de novo."); return; }
+      if (data?.error) throw new Error(data.error);
+      if (data.failed) toast.error(`${data.sent} clientes enviados. O restante será reenviado automaticamente.`);
+      else if (data.pending > 0) toast.success(`${data.sent} clientes enviados. Os outros ${data.pending} continuam sendo enviados em segundo plano.`);
+      else toast.success(`${data.sent} clientes enviados ao Wiize Pay.`);
+    } catch { toast.error("Não foi possível sincronizar agora. Vamos tentar de novo automaticamente."); }
+    finally { setSyncing(false); }
+  };
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -156,9 +170,14 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
         </div>
         {st?.can_manage && (
           active ? (
+            <div className="flex gap-2 shrink-0">
+            <Button onClick={syncCustomers} disabled={syncing || busy} className="gap-2">
+              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}Sincronizar clientes
+            </Button>
             <Button variant="outline" onClick={disconnect} disabled={busy} className="shrink-0">
               {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Desconectar
             </Button>
+            </div>
           ) : (
             <Button onClick={onConnectClick} disabled={busy || !st?.configured || passwordSet === null} className="shrink-0 gap-2 h-11 px-5 shadow-sm">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
