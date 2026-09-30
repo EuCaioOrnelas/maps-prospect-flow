@@ -1562,22 +1562,6 @@ export function WianChat() {
               )
               : (
                 <>
-                  {TRIAGE_TREE.filter((c) => c.id === "wiizepay").map((cat) => (
-                    <div key={cat.id} className="border-b border-border/60 bg-muted/30 px-4 py-3">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Wiize Pay · pagamentos e cobranças</p>
-                      <button
-                        onClick={() => pickCategory(cat)}
-                        className="flex w-full items-center gap-3 rounded-xl border-2 border-primary/40 bg-primary/10 px-4 py-3 text-left transition-colors hover:border-primary hover:bg-primary/15"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-base">💰</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-foreground">Suporte Wiize Pay</p>
-                          <p className="text-[11px] text-muted-foreground">Falar com um especialista sobre cobranças, PIX, boleto e cartão</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
-                      </button>
-                    </div>
-                  ))}
                   <p className="px-5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Suporte Wiize</p>
                   {TRIAGE_TREE.filter((c) => c.id !== "wiizepay").map((cat) => {
                   const Icon = CATEGORY_ICONS[cat.id] || HelpCircle;
