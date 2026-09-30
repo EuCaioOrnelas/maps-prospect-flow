@@ -384,7 +384,7 @@ export default function IntegrationWiizePay() {
                       {loading ? (
                         <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
                       ) : (
-                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60">
                            {Object.entries(ENTITY_LABELS).map(([key, label]) => {
                              const Icon = ENTITY_ICONS[key] || Database;
                              return <div key={key} className="flex items-center gap-3 bg-card p-4 min-w-0">
