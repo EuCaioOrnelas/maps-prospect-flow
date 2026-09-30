@@ -35,9 +35,18 @@ function json(body: unknown, status = 200) {
 // -------------------------------------------------------------
 // Entidades exportáveis (mesmas chaves usadas em integration-export)
 // -------------------------------------------------------------
-type EntityDef = { table: string; order: string; fields: string[] };
+type EntityDef = { table: string; order: string; fields: string[]; eqFilter?: Record<string, string> };
 
 const ENTITIES: Record<string, EntityDef> = {
+  contratos: {
+    table: "lead_deals",
+    order: "created_at",
+    eqFilter: { sale_type: "recurring" },
+    fields: [
+      "id", "lead_id", "title", "value", "contract_months", "status",
+      "start_date", "expiration_date", "responsible_user_id", "created_at", "updated_at",
+    ],
+  },
   leads: {
     table: "leads",
     order: "created_at",
