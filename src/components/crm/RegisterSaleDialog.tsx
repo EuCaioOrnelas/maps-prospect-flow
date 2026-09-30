@@ -41,9 +41,20 @@ const CONTRACT_OPTIONS = [
   { value: "18", label: "18 meses" },
   { value: "24", label: "24 meses" },
   { value: "36", label: "36 meses" },
+  { value: "48", label: "48 meses" },
+  { value: "60", label: "60 meses" },
 ];
+/** Limite aceito pela API do Wiize Pay (installments_or_months ≤ 60). */
 const MAX_CONTRACT_MONTHS = 60;
+/** Wiize Pay parcela em até 21x. */
+const MAX_INSTALLMENTS = 21;
 const isPresetMonths = (m: string) => CONTRACT_OPTIONS.some((o) => o.value === m);
+const WIZARD_STEPS = [
+  { n: 1, label: "Cliente", Icon: UserIcon },
+  { n: 2, label: "Contrato", Icon: FileSignature },
+  { n: 3, label: "Serviço", Icon: Layers3 },
+  { n: 4, label: "Cobrança", Icon: Receipt },
+] as const;
 
 export function RegisterSaleDialog({
   open,
@@ -97,6 +108,7 @@ export function RegisterSaleDialog({
   const [savedSaleId, setSavedSaleId] = useState<string | null>(null);
   const [paymentLink, setPaymentLink] = useState<{ url: string; expiresAt: string | null } | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [step, setStep] = useState(1);
 
   useEffect(() => {
     if (!open) return;
@@ -144,6 +156,7 @@ export function RegisterSaleDialog({
     setSavedSaleId(null);
     setPaymentLink(null);
     setIdempotencyKey(crypto.randomUUID());
+    setStep(1);
   }, [open, sale, initialValue, initialTitle, initialDescription, leadName, leadId]);
 
   useEffect(() => {
@@ -164,6 +177,24 @@ export function RegisterSaleDialog({
       if (billingType !== "one_time") return [method];
       return current.includes(method) ? current.filter((item) => item !== method) : [...current, method];
     });
+  };
+
+  const parsedValue = Number(value.replace(/\./g, "").replace(",", "."));
+  /** Valida a etapa atual do fluxo Wiize Pay antes de avançar. */
+  const goNext = () => {
+    if (step === 1 && ![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
+    if (step === 2) {
+      if (!startDate) return toast.error("Informe a data de início");
+      const m = Number(months);
+      if (billingType === "recurring" && (!Number.isInteger(m) || m < 1 || m > MAX_CONTRACT_MONTHS)) {
+        return toast.error(`Informe um tempo de contrato entre 1 e ${MAX_CONTRACT_MONTHS} meses`);
+      }
+    }
+    if (step === 3) {
+      if (!title.trim()) return toast.error("Informe o nome do serviço");
+      if (!parsedValue || parsedValue <= 0) return toast.error("Informe um valor válido");
+    }
+    setStep((s) => Math.min(4, s + 1));
   };
 
   const handleSubmit = async () => {
