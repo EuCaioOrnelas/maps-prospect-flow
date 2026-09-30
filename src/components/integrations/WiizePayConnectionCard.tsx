@@ -36,10 +36,13 @@ export function WiizePayConnectionCard() {
   const connect = async () => {
     setBusy(true);
     try {
-      const r = await call({ action: "start", origin: window.location.origin });
+      const uiTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+      const r = await call({ action: "start", origin: window.location.origin, ui_theme: uiTheme });
       const url = new URL(r.authorize_url);
       if (url.protocol !== "https:") throw new Error("invalid_url");
-      window.location.assign(url.toString());
+      // Sai do quadro de prévia do Lovable. Sem isso, o domínio público pode recusar
+      // ser carregado dentro do iframe quando o Wiize Pay retorna ao Wiize.
+      window.open(url.toString(), "_top");
     } catch (e) {
       toast.error((e as Error).message === "not_configured"
         ? "O Wiize Pay ainda não liberou a conexão. Tente mais tarde."
@@ -60,7 +63,7 @@ export function WiizePayConnectionCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
-      <div className="p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-4">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${active ? "bg-primary" : "bg-primary/10"}`}>
           {active ? <CheckCircle2 className="h-6 w-6 text-primary-foreground" /> : <Plug className="h-6 w-6 text-primary" />}
         </div>
@@ -95,7 +98,7 @@ export function WiizePayConnectionCard() {
               {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Desconectar
             </Button>
           ) : (
-            <Button onClick={connect} disabled={busy || !st?.configured} className="shrink-0 gap-2 h-11 px-5">
+            <Button onClick={connect} disabled={busy || !st?.configured} className="shrink-0 gap-2 h-11 px-5 shadow-sm">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Conectar Wiize Pay
               {!busy && <ArrowRight className="h-4 w-4" />}

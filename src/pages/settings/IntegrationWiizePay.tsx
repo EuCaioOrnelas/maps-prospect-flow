@@ -382,14 +382,14 @@ export default function IntegrationWiizePay() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm space-y-2">
-                      <p>
+                      <div className="flex flex-wrap items-center gap-1">
                         <span className="font-medium">Senha de Integração:</span>{" "}
                         {state?.password_set ? (
                           <Badge className={`${STATUS_COLORS.completed} ml-1`}>Definida</Badge>
                         ) : (
                           <Badge className={`${STATUS_COLORS.pending} ml-1`}>Não definida</Badge>
                         )}
-                      </p>
+                      </div>
                       {state?.locked && (
                         <p className="text-destructive">
                           Conta temporariamente bloqueada por tentativas inválidas até {formatDate(state.locked_until)}.
