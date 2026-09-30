@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, User as UserIcon, Activity, StickyNote, ShieldCheck, QrCode, Landmark, Layers3, CheckCircle2 } from "lucide-react";
+import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, User as UserIcon, Activity, StickyNote, ShieldCheck, QrCode, Landmark, Layers3, CheckCircle2, Wallet } from "lucide-react";
 import { useSales, PAYMENT_METHODS, type SaleType, type Sale, type SaleStatus } from "@/hooks/useSales";
-import { useWiizePayChargeMutations, type WiizePayBillingType, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
+import { useWiizePayCharges, useWiizePayChargeMutations, type WiizePayBillingType, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
 import { WiizePayLinkShare } from "./WiizePayLinkShare";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { cn } from "@/lib/utils";
@@ -38,8 +38,12 @@ const CONTRACT_OPTIONS = [
   { value: "3", label: "3 meses" },
   { value: "6", label: "6 meses" },
   { value: "12", label: "12 meses" },
+  { value: "18", label: "18 meses" },
   { value: "24", label: "24 meses" },
+  { value: "36", label: "36 meses" },
 ];
+const MAX_CONTRACT_MONTHS = 60;
+const isPresetMonths = (m: string) => CONTRACT_OPTIONS.some((o) => o.value === m);
 
 export function RegisterSaleDialog({
   open,
@@ -54,14 +58,21 @@ export function RegisterSaleDialog({
   embeddedLayout = "compact",
   sale = null,
   canChangeResponsible = true,
-  wiizePay,
+  wiizePay: wiizePayProp,
 }: RegisterSaleDialogProps) {
+  // Quem abre a tela pode já ter o status; senão (ex.: chat), buscamos aqui mesmo (mesmo cache).
+  const ownMeta = useWiizePayCharges(wiizePayProp === undefined && open && !sale ? leadId ?? "" : "");
+  const wiizePay: WiizePayListMeta | null | undefined = wiizePayProp !== undefined
+    ? wiizePayProp
+    : ownMeta.data ?? (ownMeta.isError || !leadId ? null : undefined);
   const { createSale, updateSale, uploadAttachment } = useSales();
   const { members } = useAccountMembers();
   const [submitting, setSubmitting] = useState(false);
   const compact = embedded && embeddedLayout !== "page";
   const isEdit = !!sale;
   const wiizePayActive = !isEdit && !!wiizePay?.connected && !!wiizePay.can_charge;
+  /** Status ainda não carregado: evita mostrar o formulário interno e trocar de tela em seguida. */
+  const wiizePayChecking = !isEdit && wiizePay === undefined;
   const { create: createCharge } = useWiizePayChargeMutations(leadId);
 
   const [title, setTitle] = useState("");
@@ -69,6 +80,7 @@ export function RegisterSaleDialog({
   const [saleType, setSaleType] = useState<SaleType>("recurring");
   const [value, setValue] = useState<string>("");
   const [months, setMonths] = useState<string>("12");
+  const [customMonths, setCustomMonths] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("pix");
   const [startDate, setStartDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -96,6 +108,7 @@ export function RegisterSaleDialog({
         Number(sale.value || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       );
       setMonths(String(sale.contract_months ?? 12));
+      setCustomMonths(!isPresetMonths(String(sale.contract_months ?? 12)));
       setPaymentMethod(sale.payment_method ?? "pix");
       setStartDate(sale.start_date ?? new Date().toISOString().slice(0, 10));
       setStatus(sale.status);
@@ -114,6 +127,7 @@ export function RegisterSaleDialog({
         : ""
     );
     setMonths("12");
+    setCustomMonths(false);
     setPaymentMethod("pix");
     setStartDate(new Date().toISOString().slice(0, 10));
     setStatus("active");
@@ -157,6 +171,10 @@ export function RegisterSaleDialog({
     if (!isEdit && !leadId) return toast.error("Selecione um cliente para registrar a venda");
     const numValue = Number(value.replace(/\./g, "").replace(",", "."));
     if (!numValue || numValue <= 0) return toast.error("Informe um valor válido");
+    const monthsNum = Number(months);
+    if (saleType === "recurring" && (!Number.isInteger(monthsNum) || monthsNum < 1 || monthsNum > MAX_CONTRACT_MONTHS)) {
+      return toast.error(`Informe um tempo de contrato entre 1 e ${MAX_CONTRACT_MONTHS} meses`);
+    }
     if (wiizePayActive && !savedSaleId) {
       if (![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
       if (!chargeMethods.length) return toast.error("Escolha uma forma de pagamento");
@@ -373,14 +391,45 @@ export function RegisterSaleDialog({
               <Label className="flex items-center gap-1.5">
                 <CalendarClock className="w-3.5 h-3.5 text-primary" /> Tempo de contrato *
               </Label>
-              <Select value={months} onValueChange={setMonths}>
-                <SelectTrigger className={cn(compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CONTRACT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select
+                  value={customMonths ? "custom" : months}
+                  onValueChange={(v) => {
+                    if (v === "custom") { setCustomMonths(true); return; }
+                    setCustomMonths(false);
+                    setMonths(v);
+                  }}
+                >
+                  <SelectTrigger className={cn(customMonths ? "w-40 shrink-0" : "w-full", compact && "h-8 text-xs")}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CONTRACT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                    <SelectItem value="custom">Outro prazo…</SelectItem>
+                  </SelectContent>
+                </Select>
+                {customMonths && (
+                  <div className="relative flex-1">
+                    <Input
+                      aria-label="Quantidade de meses do contrato"
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={MAX_CONTRACT_MONTHS}
+                      value={months}
+                      onChange={(e) => setMonths(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                      className={cn("pr-14", compact && "h-8 text-xs")}
+                      autoFocus
+                    />
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">meses</span>
+                  </div>
+                )}
+              </div>
+              {startDate && Number(months) >= 1 && (
+                <p className="text-xs text-muted-foreground">
+                  Termina em {(() => { const d = new Date(startDate + "T12:00"); d.setMonth(d.getMonth() + Number(months)); return d.toLocaleDateString("pt-BR"); })()}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -398,7 +447,7 @@ export function RegisterSaleDialog({
               className={cn(compact && "h-8 text-xs")}
             />
           </div>
-          {!wiizePayActive && <div className="space-y-1.5">
+          {!wiizePayActive && !wiizePayChecking && <div className="space-y-1.5">
             <Label className="flex items-center gap-1.5">
               <CreditCard className="w-3.5 h-3.5 text-primary" /> Forma de pagamento
             </Label>
@@ -413,6 +462,12 @@ export function RegisterSaleDialog({
           </div>}
         </div>
 
+        {wiizePayChecking && (
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Verificando a conexão com o Wiize Pay…
+          </div>
+        )}
+
         {wiizePayActive && (
           <section className="space-y-4 border-t border-border pt-4" aria-label="Cobrança Wiize Pay">
             <div className="flex items-start gap-3">
@@ -424,9 +479,26 @@ export function RegisterSaleDialog({
                   <h4 className="font-semibold text-foreground">Cobrança Wiize Pay</h4>
                   <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Conectado</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Cliente, contrato e cobrança serão criados juntos. Os dados do cartão ficam somente no ambiente seguro do Wiize Pay.</p>
+                <p className="text-xs text-muted-foreground">Segue o mesmo fluxo do Wiize Pay. Os dados do cartão ficam somente no ambiente seguro do Wiize Pay.</p>
               </div>
             </div>
+
+            <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Etapas no Wiize Pay">
+              {([
+                ["1", "Cliente", UserIcon],
+                ["2", "Contrato", FileSignature],
+                ["3", "Serviço", Layers3],
+                ["4", "Cobrança", Receipt],
+              ] as const).map(([n, label, Icon]) => (
+                <li key={n} className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 text-xs", paymentLink ? "border-primary/40 bg-primary/5 text-foreground" : "border-border text-muted-foreground")}>
+                  <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold", paymentLink ? "bg-primary text-primary-foreground" : "bg-muted text-foreground")}>
+                    {paymentLink ? <CheckCircle2 className="h-3 w-3" /> : n}
+                  </span>
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="font-medium">{label}</span>
+                </li>
+              ))}
+            </ol>
 
             {paymentLink ? (
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
@@ -471,7 +543,7 @@ export function RegisterSaleDialog({
 
                 <div className="space-y-2">
                   <Label>Formas de pagamento *</Label>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {([
                       ["pix", "PIX", QrCode],
                       ["boleto", "Boleto", Landmark],
@@ -482,6 +554,15 @@ export function RegisterSaleDialog({
                         <Icon className="h-4 w-4 text-primary" /><span className="text-sm font-medium">{label}</span>
                       </label>
                     ))}
+                    <div
+                      className="flex min-h-12 cursor-not-allowed items-center gap-3 rounded-lg border border-dashed border-border px-3 opacity-70"
+                      title="O Wiize Pay ainda não aceita débito em conta corrente pela integração."
+                    >
+                      <Checkbox checked={false} disabled aria-label="Débito em conta corrente (em breve)" />
+                      <Wallet className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">Débito em conta</span>
+                      <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Em breve</span>
+                    </div>
                   </div>
                   {billingType !== "one_time" && <p className="text-xs text-muted-foreground">Cobranças parceladas e recorrentes aceitam uma forma de pagamento.</p>}
                 </div>
@@ -503,13 +584,15 @@ export function RegisterSaleDialog({
         )}
 
         <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-          <FileSlot
-            label="Comprovante"
-            icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
-            file={receiptFile}
-            onChange={setReceiptFile}
-            compact={compact}
-          />
+          {!wiizePayActive && !wiizePayChecking && (
+            <FileSlot
+              label="Comprovante"
+              icon={<Receipt className="w-3.5 h-3.5 text-primary" />}
+              file={receiptFile}
+              onChange={setReceiptFile}
+              compact={compact}
+            />
+          )}
           <FileSlot
             label="Contrato"
             icon={<FileSignature className="w-3.5 h-3.5 text-primary" />}

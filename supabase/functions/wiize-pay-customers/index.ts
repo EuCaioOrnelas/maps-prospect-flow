@@ -92,36 +92,53 @@ const clean = (v: unknown, max = 255) => {
 const digits = (v: unknown) => { const d = String(v ?? "").replace(/\D/g, ""); return d || undefined; };
 
 function toCustomer(l: any) {
-  const name = clean(l.company_name) || clean(l.contact_name) || clean(l.email) || clean(l.phone) || "Cliente";
+  const name = clean(l.company_name, 200) || clean(l.contact_name, 200) || clean(l.email, 200) || clean(l.phone, 200) || "Cliente";
   const c: Record<string, string> = { id: l.id, name };
+  const email = clean(l.email, 254);
+  const doc = digits(l.document);
   const opt: Record<string, string | undefined> = {
-    trade_name: l.company_name && l.contact_name ? clean(l.contact_name) : undefined,
-    email: clean(l.email), phone: digits(l.phone), document: digits(l.document),
-    address: clean(l.address, 500), city: clean(l.city),
+    trade_name: l.company_name && l.contact_name ? clean(l.contact_name, 200) : undefined,
+    email: email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email.toLowerCase() : undefined,
+    phone: digits(l.phone)?.slice(0, 30),
+    document: doc && (doc.length === 11 || doc.length === 14) ? doc : undefined,
+    address: clean(l.address, 200), city: clean(l.city, 120),
     state: l.region && String(l.region).trim().length === 2 ? String(l.region).trim().toUpperCase() : undefined,
   };
   for (const [k, v] of Object.entries(opt)) if (v) c[k] = v;
   return c;
 }
 
+type BatchResult = { ok: boolean; error?: string; itemErrors?: Map<string, string> };
+
 /** Envia um lote. Renova o token e tenta de novo em 401; repete falhas temporárias. */
-async function sendBatch(ownerId: string, customers: Record<string, string>[]): Promise<{ ok: boolean; error?: string }> {
+async function sendBatch(ownerId: string, customers: Record<string, string>[]): Promise<BatchResult> {
   let lastErr = "unknown";
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
     const token = await getAccessToken(ownerId, attempt > 0 && lastErr === "http_401");
     if (!token) return { ok: false, error: "token_unavailable" };
     try {
-      const resp = await fetch(`${API_BASE}/customers`, {
+      const resp = await fetch(`${API_BASE}/v1/customers`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ customers }),
         signal: AbortSignal.timeout(20_000),
       });
-      await resp.text().catch(() => "");
-      if (resp.ok) return { ok: true };
+      const text = await resp.text().catch(() => "");
+      if (resp.ok) {
+        // A API responde { results: [{ id, status: created|updated|linked|error, message }] }
+        const itemErrors = new Map<string, string>();
+        try {
+          const out = JSON.parse(text);
+          for (const r of out?.results ?? []) if (r?.status === "error" && r.id) itemErrors.set(String(r.id), String(r.message || "error").slice(0, 200));
+        } catch { /* corpo sem detalhes: considera tudo enviado */ }
+        return { ok: true, itemErrors };
+      }
       lastErr = `http_${resp.status}`;
-      if (resp.status !== 401 && resp.status !== 429 && resp.status < 500) return { ok: false, error: lastErr };
+      console.error("wiize-pay /v1/customers", resp.status, text.slice(0, 300).replace(/wpat_[A-Za-z0-9_-]+/g, "***"));
+      // Rota ainda não publicada no Wiize Pay: tenta de novo depois, sem perder clientes.
+      if (resp.status === 404 || text.includes("Only HTML requests")) return { ok: false, error: "wiize_pay_route_unavailable" };
+      if (resp.status !== 401 && resp.status !== 429 && resp.status < 500) return { ok: false, error: `${lastErr}:${text.slice(0, 200)}` };
     } catch (e) {
       lastErr = e instanceof Error ? e.name : "network_error";
     }
@@ -129,8 +146,19 @@ async function sendBatch(ownerId: string, customers: Record<string, string>[]): 
   return { ok: false, error: lastErr };
 }
 
+async function reschedule(ids: string[], attempts: number, error: string) {
+  const now = new Date().toISOString();
+  // Nunca descarta: depois de várias tentativas passa a tentar de hora em hora.
+  const delayMin = attempts >= MAX_ATTEMPTS ? 60 : Math.min(60, 2 ** attempts);
+  await admin.from("wiize_pay_customer_sync_queue").update({
+    attempts, last_error: error, updated_at: now,
+    next_attempt_at: new Date(Date.now() + delayMin * 60_000).toISOString(),
+  }).in("lead_id", ids);
+}
+
 async function processOwner(ownerId: string, deadline: number) {
   let sent = 0, failed = 0;
+  let lastError: string | undefined;
   while (Date.now() < deadline) {
     const { data: q } = await admin.from("wiize_pay_customer_sync_queue").select("lead_id, attempts")
       .eq("owner_user_id", ownerId).lte("next_attempt_at", new Date().toISOString())
@@ -146,27 +174,23 @@ async function processOwner(ownerId: string, deadline: number) {
     if (!leads?.length) continue;
     const res = await sendBatch(ownerId, leads.map(toCustomer));
     const sentIds = leads.map((l: any) => l.id);
+    const attempts = Math.max(...q.map((r: any) => r.attempts)) + 1;
     if (res.ok) {
-      await admin.from("wiize_pay_customer_sync_queue").delete().in("lead_id", sentIds);
-      sent += sentIds.length;
+      const bad = sentIds.filter((id: string) => res.itemErrors?.has(id));
+      const good = sentIds.filter((id: string) => !res.itemErrors?.has(id));
+      if (good.length) await admin.from("wiize_pay_customer_sync_queue").delete().in("lead_id", good);
+      for (const id of bad) await reschedule([id], attempts, res.itemErrors!.get(id)!);
+      sent += good.length;
+      failed += bad.length;
+      if (bad.length) lastError = "item_errors";
     } else {
-      const attempts = Math.max(...q.map((r: any) => r.attempts)) + 1;
-      const now = new Date().toISOString();
-      if (attempts >= MAX_ATTEMPTS) {
-        // Desiste após várias tentativas; volta a enviar na próxima edição ou no botão Sincronizar.
-        await admin.from("wiize_pay_customer_sync_queue").delete().in("lead_id", sentIds);
-      } else {
-        const delayMin = Math.min(60, 2 ** attempts);
-        await admin.from("wiize_pay_customer_sync_queue").update({
-          attempts, last_error: res.error, updated_at: now,
-          next_attempt_at: new Date(Date.now() + delayMin * 60_000).toISOString(),
-        }).in("lead_id", sentIds);
-      }
+      await reschedule(sentIds, attempts, res.error || "unknown");
       failed += sentIds.length;
+      lastError = res.error;
       break; // não insiste neste ciclo; reenvio agendado
     }
   }
-  return { sent, failed };
+  return { sent, failed, error: lastError };
 }
 
 Deno.serve(async (req) => {
@@ -237,7 +261,7 @@ Deno.serve(async (req) => {
     const { count: pending } = await admin.from("wiize_pay_customer_sync_queue").select("lead_id", { count: "exact", head: true }).eq("owner_user_id", ownerId);
     // Se sobrou (muitos clientes), o processamento continua em segundo plano.
     if ((pending || 0) > 0 && !r.failed) await admin.rpc("wiize_pay_wake_customer_sync" as any).then(() => {}, () => {});
-    return json({ ok: !r.failed, queued, sent: r.sent, failed: r.failed, pending: pending || 0 });
+    return json({ ok: !r.failed, queued, sent: r.sent, failed: r.failed, pending: pending || 0, reason: r.error ?? null });
   }
 
   return json({ error: "invalid_action" }, 400);
