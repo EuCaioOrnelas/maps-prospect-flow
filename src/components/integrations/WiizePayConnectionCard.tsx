@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plug, Loader2, CheckCircle2, ShieldCheck, Receipt, Link2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PasswordField, isStrongPassword } from "@/components/wiize-api/PasswordField";
 
 interface ConnStatus {
   configured: boolean;
@@ -60,6 +62,8 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
     if (!isStrongPassword(newPass)) { setPassError("A senha ainda não atende a todos os requisitos."); return; }
     if (newPass !== confirmPass) { setPassError("As duas senhas não são iguais."); return; }
     // Abre a aba já neste clique (necessário na prévia); connect() reaproveita.
+    const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
+    const preTab = inFrame ? window.open("", "_blank") : null;
     setSavingPass(true);
     try {
       const { data, error } = await supabase.functions.invoke("integration-export", { body: { action: "set_password", new_password: newPass } });
@@ -69,19 +73,20 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
       setSetupOpen(false);
       onPasswordSaved?.();
       toast.success("Senha de Integração criada.");
-      await connect(true);
+      await connect(preTab);
     } catch (e) {
+      if (preTab && !preTab.closed) preTab.close();
       setPassError((e as Error).message === "save_failed" ? "Não foi possível salvar a senha. Tente novamente." : (e as Error).message);
     } finally { setSavingPass(false); }
   };
 
-  const connect = async (afterSetup = false) => {
+  const connect = async (preTab?: Window | null) => {
     setBusy(true);
     // Dentro de um quadro (prévia), o navegador bloqueia a troca da página inteira
     // depois de uma espera. Por isso a nova aba é aberta JÁ no clique e só recebe o
     // endereço depois. Fora de quadro, a própria aba segue para o Wiize Pay.
     const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
-    const tab = inFrame ? window.open("", "_blank") : null;
+    const tab = preTab !== undefined ? preTab : (inFrame ? window.open("", "_blank") : null);
     try {
       const uiTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
       const r = await call({ action: "start", origin: window.location.origin, ui_theme: uiTheme });
@@ -154,7 +159,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
               {busy && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Desconectar
             </Button>
           ) : (
-            <Button onClick={connect} disabled={busy || !st?.configured} className="shrink-0 gap-2 h-11 px-5 shadow-sm">
+            <Button onClick={onConnectClick} disabled={busy || !st?.configured || passwordSet === null} className="shrink-0 gap-2 h-11 px-5 shadow-sm">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Conectar Wiize Pay
               {!busy && <ArrowRight className="h-4 w-4" />}
@@ -173,6 +178,33 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
           </div>
         ))}
       </div>
+
+      <Dialog open={setupOpen} onOpenChange={(o) => !savingPass && setSetupOpen(o)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Antes de conectar: crie sua Senha de Integração</DialogTitle>
+            <DialogDescription>
+              É uma senha só para integrações, diferente da senha de login. Ela protege ações sensíveis, como exportar dados ou desligar a conexão.
+            </DialogDescription>
+          </DialogHeader>
+          <ol className="space-y-2 text-sm text-foreground">
+            <li className="flex gap-2"><span className="font-semibold text-primary">1.</span> Crie a Senha de Integração abaixo.</li>
+            <li className="flex gap-2"><span className="font-semibold text-primary">2.</span> Você será levado ao Wiize Pay para entrar e clicar em <b>Autorizar</b>.</li>
+            <li className="flex gap-2"><span className="font-semibold text-primary">3.</span> Ao voltar, a conexão aparece como <b>Conectado</b>.</li>
+          </ol>
+          <div className="space-y-3">
+            <PasswordField id="wp-setup-pass" label="Senha de Integração" value={newPass} onChange={setNewPass} autoComplete="new-password" showStrength />
+            <PasswordField id="wp-setup-pass2" label="Repita a senha" value={confirmPass} onChange={setConfirmPass} autoComplete="new-password" />
+            {passError && <p className="text-sm text-destructive">{passError}</p>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSetupOpen(false)} disabled={savingPass}>Cancelar</Button>
+            <Button onClick={saveAndContinue} disabled={savingPass} className="gap-2">
+              {savingPass && <Loader2 className="h-4 w-4 animate-spin" />}Salvar e continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
