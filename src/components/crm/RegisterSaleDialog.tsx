@@ -190,7 +190,7 @@ export function RegisterSaleDialog({
       await Promise.all(uploads);
 
       toast.success("Venda registrada com sucesso!");
-      onCreated?.();
+      onCreated?.(created ? { id: (created as { id: string }).id } : undefined);
       onOpenChange(false);
     } catch (err) {
       console.error(err);
