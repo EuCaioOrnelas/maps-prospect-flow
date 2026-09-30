@@ -64,7 +64,7 @@ export const UserActionsMenu = ({
   const [impersonateLink, setImpersonateLink] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const updateProfile = async (patch: Record<string, any>) => {
+  const updateProfile = async (patch: TablesUpdate<"profiles">) => {
     const { error } = await supabase.from("profiles").update(patch).eq("id", userId);
     if (error) throw error;
   };
