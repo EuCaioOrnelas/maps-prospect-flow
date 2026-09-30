@@ -1,11 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { z } from "npm:zod@3.23.8";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const ENC_KEY = Deno.env.get("WIIZE_PAY_TOKEN_ENC_KEY") || "";
 const API_BASE = (Deno.env.get("WIIZE_PAY_API_BASE_URL") || "").replace(/\/+$/, "");
-const CHECKOUT_ORIGIN = (Deno.env.get("WIIZE_PAY_CHECKOUT_ORIGIN") || "").replace(/\/+$/, "");
 const TOKEN_URL = Deno.env.get("WIIZE_PAY_TOKEN_URL") || "";
 const CLIENT_ID = Deno.env.get("WIIZE_PAY_CLIENT_ID") || "";
 const CLIENT_SECRET = Deno.env.get("WIIZE_PAY_CLIENT_SECRET") || "";
@@ -17,6 +15,9 @@ const corsHeaders = {
   "Cache-Control": "no-store",
   "X-Content-Type-Options": "nosniff",
 };
+const json = (b: unknown, s = 200) =>
+  new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 // ---------- crypto (mesmo formato da Etapa 1) ----------
 const enc = new TextEncoder();
 const b64url = (b: Uint8Array) => btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -33,11 +34,19 @@ async function decrypt(p: string) {
   const [iv, ct] = p.split(".");
   return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64url(iv) }, await aesKey(), fromB64url(ct)));
 }
-async function sha256hex(s: string) {
-  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(s)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+async function audit(ownerId: string, userId: string, action: string, status: string, req: Request, error?: string) {
+  await admin.from("integration_export_audit_logs").insert({
+    owner_user_id: ownerId, user_id: userId, action, status,
+    ip: (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || null,
+    user_agent: (req.headers.get("user-agent") || "").slice(0, 300),
+    error_message: error ? error.slice(0, 300) : null,
+    auth_method: "session",
+  });
 }
-
-// ---------- helpers ----------
+async function rateLimit(id: string, endpoint: string, max = 20) {
+  const { data } = await admin.rpc("check_rate_limit", { p_identifier: id, p_endpoint: endpoint, p_max_requests: max, p_window_seconds: 60 });
+  return data !== false;
+}
 /** Access token válido (renova com refresh_token quando faltar < 60 s). */
 async function getAccessToken(ownerId: string, force = false): Promise<string | null> {
   const { data: sec } = await admin.from("integration_connection_secrets").select("*").eq("owner_user_id", ownerId).maybeSingle();
@@ -154,15 +163,10 @@ async function processOwner(ownerId: string, deadline: number) {
         }).in("lead_id", sentIds);
       }
       failed += sentIds.length;
-      if (res.error === "token_unavailable") break;
       break; // não insiste neste ciclo; reenvio agendado
     }
   }
-  const status = failed ? "partial" : "ok";
-  await admin.from("integration_connections").update({
-    last_error: failed ? "customer_sync_failed" : null, updated_at: new Date().toISOString(),
-  }).eq("owner_user_id", ownerId).then(() => {}, () => {});
-  return { sent, failed, status };
+  return { sent, failed };
 }
 
 Deno.serve(async (req) => {
