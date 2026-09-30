@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type WiizePayChargeStatus =
-  | "draft" | "awaiting_wiize_pay" | "sent" | "awaiting_payment" | "paid" | "cancelled" | "error";
+  | "draft" | "awaiting_wiize_pay" | "sent" | "awaiting_payment" | "overdue" | "paid" | "refunded" | "cancelled" | "error";
 
 export type WiizePayBillingType = "one_time" | "installment" | "recurring";
 
@@ -56,6 +56,8 @@ function saveMeta<T extends WiizePayListMeta>(r: T): T {
   } catch { /* noop */ }
   return r;
 }
+/** Situações que ainda podem mudar: a tela confere de novo a cada 20s. */
+export const PENDING: WiizePayChargeStatus[] = ["sent", "awaiting_payment", "overdue"];
 const placeholder = () => { const m = readMeta(); return m ? { charges: [] as WiizePayCharge[], ...m } : undefined; };
 
 export function useWiizePayCharges(leadId: string) {
@@ -64,6 +66,7 @@ export function useWiizePayCharges(leadId: string) {
     queryFn: () => call<{ charges: WiizePayCharge[] } & WiizePayListMeta>({ action: "list_for_lead", lead_id: leadId }).then(saveMeta),
     staleTime: 60_000,
     placeholderData: placeholder,
+    refetchInterval: (q) => (q.state.data?.charges ?? []).some((c) => PENDING.includes(c.status)) ? 20_000 : false,
     enabled: !!leadId,
   });
 }
@@ -75,6 +78,7 @@ export function useAllWiizePayCharges() {
     queryFn: () => call<{ charges: WiizePayCharge[] } & WiizePayListMeta>({ action: "list_all" }).then(saveMeta),
     staleTime: 60_000,
     placeholderData: placeholder,
+    refetchInterval: (q) => (q.state.data?.charges ?? []).some((c) => PENDING.includes(c.status)) ? 20_000 : false,
   });
 }
 
@@ -114,9 +118,11 @@ export function isWiizePayEra(saleCreatedAt: string, meta?: Pick<WiizePayListMet
 export const chargeStatusLabel: Record<WiizePayChargeStatus, string> = {
   draft: "Rascunho",
   awaiting_wiize_pay: "Aguardando Wiize Pay",
-  sent: "Enviada",
-  awaiting_payment: "Aguardando pagamento",
+  sent: "Cobrança criada",
+  awaiting_payment: "Pagamento pendente",
+  overdue: "Vencida",
   paid: "Paga",
+  refunded: "Estornada",
   cancelled: "Cancelada",
   error: "Erro",
 };
@@ -124,9 +130,11 @@ export const chargeStatusLabel: Record<WiizePayChargeStatus, string> = {
 export const chargeStatusTone: Record<WiizePayChargeStatus, string> = {
   draft: "bg-muted text-muted-foreground border-border",
   awaiting_wiize_pay: "bg-muted text-muted-foreground border-border",
-  sent: "bg-primary/10 text-primary border-primary/30",
-  awaiting_payment: "bg-primary/10 text-primary border-primary/30",
-  paid: "bg-primary text-primary-foreground border-primary",
+  sent: "bg-muted text-foreground border-border",
+  awaiting_payment: "bg-muted text-foreground border-border",
+  overdue: "bg-destructive/10 text-destructive border-destructive/30",
+  paid: "bg-primary/10 text-primary border-primary/30",
+  refunded: "bg-muted text-muted-foreground border-border",
   cancelled: "bg-muted text-muted-foreground border-border",
   error: "bg-destructive/10 text-destructive border-destructive/30",
 };

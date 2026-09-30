@@ -46,8 +46,8 @@ const Event = z.object({
 });
 
 const STATUS: Record<string, string> = {
-  "charge.paid": "paid", "charge.pending": "awaiting_payment", "charge.overdue": "awaiting_payment",
-  "charge.cancelled": "cancelled", "charge.failed": "error", "charge.refunded": "cancelled",
+  "charge.paid": "paid", "charge.pending": "awaiting_payment", "charge.overdue": "overdue",
+  "charge.cancelled": "cancelled", "charge.failed": "error", "charge.refunded": "refunded",
 };
 const LABEL: Record<string, string> = {
   "charge.paid": "Pagamento confirmado no Wiize Pay", "charge.pending": "Cobrança aguardando pagamento no Wiize Pay",

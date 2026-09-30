@@ -44,7 +44,7 @@ export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact 
   }
 
   const failed = charge && ["cancelled", "error"].includes(charge.status);
-  const pending = charge && ["sent", "awaiting_payment"].includes(charge.status);
+  const pending = charge && ["sent", "awaiting_payment", "overdue"].includes(charge.status);
   const btn = compact ? "h-7 px-2 text-xs" : "h-7 text-xs";
 
   const getLink = async () => {
