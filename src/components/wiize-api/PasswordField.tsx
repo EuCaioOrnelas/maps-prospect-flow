@@ -100,7 +100,7 @@ export function PasswordField({
             )}
           </div>
           <ul className="grid gap-1">
-            {PASSWORD_RULES.map((rule) => {
+            {rules.map((rule) => {
               const ok = rule.test(value);
               return (
                 <li
