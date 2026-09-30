@@ -249,7 +249,7 @@ export default function IntegrationWiizePay() {
 
   async function handleSavePassword() {
     setPasswordMessage(null);
-    if (!isStrongPassword(newPassword)) {
+    if (!isStrongPassword(newPassword, 10)) {
       setPasswordMessage({ kind: "error", text: "A senha não atende aos requisitos mínimos." });
       return;
     }
@@ -587,6 +587,7 @@ export default function IntegrationWiizePay() {
                         onChange={setNewPassword}
                         autoComplete="new-password"
                         showStrength
+                        minLength={10}
                       />
                       {passwordMessage && (
                         <Alert className={passwordMessage.kind === "ok" ? "border-primary/30 bg-primary/5" : "border-destructive/30 bg-destructive/5"}>
