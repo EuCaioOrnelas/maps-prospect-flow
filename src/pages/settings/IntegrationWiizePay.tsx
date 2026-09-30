@@ -373,7 +373,7 @@ export default function IntegrationWiizePay() {
 
                 {/* ---------------- Visão geral ---------------- */}
                 <TabsContent value="visao-geral" className="space-y-4">
-                  <WiizePayConnectionCard />
+                  <WiizePayConnectionCard onPasswordSaved={loadAll} />
 
                   <Card>
                     <CardHeader>
