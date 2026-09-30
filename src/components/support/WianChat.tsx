@@ -295,6 +295,9 @@ export function WianChat() {
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [wasEscalated, setWasEscalated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Etapa interna do menu: "root" = escolha Suporte Wiize x Suporte Wiize Pay,
+  // "menu" = categorias do Suporte Wiize, "submenu" = problemas da categoria.
+  const [menuStep, setMenuStep] = useState<"root" | "menu" | "submenu">("root");
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
