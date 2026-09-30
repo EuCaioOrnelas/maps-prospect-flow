@@ -709,7 +709,15 @@ export function RegisterSaleDialog({
       }} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {paymentLink ? "Concluir" : savedSaleId ? "Fechar" : "Cancelar"}
       </Button>
-      {!paymentLink && <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
+      {wiizePayActive && !paymentLink && step > 1 && !locked && (
+        <Button variant="ghost" size="sm" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
+          Voltar
+        </Button>
+      )}
+      {wiizePayActive && !paymentLink && step < 4 && (
+        <Button size="sm" onClick={goNext} className={cn(compact && "h-8 px-2 text-xs")}>Próximo</Button>
+      )}
+      {!paymentLink && !wiizePayChecking && (!wiizePayActive || step === 4) && <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         {isEdit ? "Salvar alterações" : savedSaleId ? "Tentar cobrança novamente" : wiizePayActive ? "Criar venda e cobrança" : "Registrar venda"}
       </Button>}
