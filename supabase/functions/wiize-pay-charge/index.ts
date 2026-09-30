@@ -118,43 +118,74 @@ const mapStatus = (s: unknown) => {
 };
 
 const METHODS = ["pix", "boleto", "credit_card"] as const;
+const BILLING = ["one_time", "installment", "recurring"] as const;
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("preview"), deal_id: z.string().uuid() }),
   z.object({
     action: z.literal("create"), deal_id: z.string().uuid(), idempotency_key: z.string().min(8).max(100),
     payment_methods: z.array(z.enum(METHODS)).min(1).max(3),
     due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    billing_type: z.enum(BILLING).optional(),
+    installments: z.number().int().min(2).max(24).optional(),
+    customer_document: z.string().max(20).optional(),
   }),
   z.object({ action: z.literal("status"), id: z.string().uuid() }),
   z.object({ action: z.literal("cancel"), id: z.string().uuid() }),
+  z.object({ action: z.literal("link"), id: z.string().uuid() }),
   z.object({ action: z.literal("list_for_lead"), lead_id: z.string().uuid() }),
+  z.object({ action: z.literal("list_all") }),
 ]);
 
-async function buildSnapshot(ownerId: string, dealId: string) {
+const onlyDigits = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+const validEmail = (v: unknown) => (typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? v.trim().slice(0, 254) : null);
+const cut = (v: unknown, n: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, n) : null);
+
+type BuildOpts = { billing_type?: typeof BILLING[number]; installments?: number; document?: string };
+
+async function buildSnapshot(ownerId: string, dealId: string, opts: BuildOpts = {}) {
   const { data: deal } = await admin.from("lead_deals")
-    .select("id, lead_id, owner_user_id, title, description, value, sale_type, contract_months, start_date, expiration_date, status")
+    .select("id, lead_id, owner_user_id, title, value, sale_type, contract_months, start_date, expiration_date, status, created_at, billing_provider")
     .eq("id", dealId).maybeSingle();
   if (!deal || deal.owner_user_id !== ownerId) return null;
   const { data: lead } = await admin.from("leads")
-    .select("id, company_name, contact_name, email, phone, city, owner_user_id").eq("id", deal.lead_id).maybeSingle();
+    .select("id, company_name, contact_name, email, phone, city, owner_user_id, document").eq("id", deal.lead_id).maybeSingle();
   if (!lead || (lead as any).owner_user_id !== ownerId) return null;
-  const months = deal.sale_type === "recurring" ? Math.max(1, deal.contract_months || 1) : 1;
-  const amountCents = Math.round(Number(deal.value) * 100);
-  return {
-    schema_version: "1.0",
-    source: "wiize_crm",
-    deal: {
-      id: deal.id, title: deal.title || "Venda", description: deal.description || null,
-      type: deal.sale_type === "recurring" ? "recurring" : "one_time",
-      amount_cents: amountCents, currency: "BRL", installments_or_months: months,
-      total_cents: amountCents * months, start_date: deal.start_date, end_date: deal.expiration_date,
-    },
-    customer: {
-      lead_id: lead.id, company_name: lead.company_name, contact_name: lead.contact_name,
-      email: lead.email, phone: lead.phone, city: lead.city,
-    },
+  const type = opts.billing_type || (deal.sale_type === "recurring" ? "recurring" : "one_time");
+  const valueCents = Math.round(Number(deal.value) * 100);
+  let amountCents = valueCents, n = 1, totalCents = valueCents;
+  if (type === "recurring") { n = Math.max(1, Math.min(60, deal.contract_months || 1)); totalCents = valueCents * n; }
+  if (type === "installment") { n = Math.max(2, Math.min(24, opts.installments || 2)); amountCents = Math.round(valueCents / n); totalCents = valueCents; }
+  const document = onlyDigits(opts.document ?? (lead as any).document) || null;
+  const d: Record<string, unknown> = {
+    id: deal.id, title: (deal.title || "Venda").slice(0, 160), type,
+    amount_cents: amountCents, currency: "BRL", installments_or_months: n, total_cents: totalCents,
   };
+  if (deal.start_date) d.start_date = String(deal.start_date).slice(0, 10);
+  if (deal.expiration_date) d.end_date = String(deal.expiration_date).slice(0, 10);
+  const customer: Record<string, unknown> = {
+    lead_id: lead.id, company_name: cut(lead.company_name, 200), contact_name: cut(lead.contact_name, 200),
+    email: validEmail(lead.email), phone: cut(onlyDigits(lead.phone), 30), city: cut(lead.city, 120), document,
+  };
+  return { snapshot: { schema_version: "1.0", source: "wiize_crm", deal: d, customer }, deal, lead };
 }
+
+async function postCharge(token: string, rowId: string, snapshot: Record<string, unknown>) {
+  const raw = JSON.stringify({ external_reference: rowId, ...snapshot });
+  const checksum = await sha256hex(raw);
+  const resp = await fetch(`${API_BASE}/v1/charges`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json",
+      "Idempotency-Key": rowId, "X-Wiize-Checksum": checksum,
+    },
+    body: raw,
+  });
+  const out = await resp.json().catch(() => ({}));
+  return { resp, out, checksum };
+}
+
+const providerMessage = (out: any, status: number) =>
+  String(out?.message || out?.error || `wiize_pay_http_${status}`).slice(0, 200);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -181,17 +212,23 @@ Deno.serve(async (req) => {
   if (!parsed.success) return json({ error: "invalid_params", details: parsed.error.flatten().fieldErrors }, 400);
   const body = parsed.data;
 
-  if (!(await rateLimit(userId, `wiize-pay-charge:${body.action}`))) return json({ error: "rate_limited" }, 429);
+  if (!(await rateLimit(userId, `wiize-pay-charge:${body.action}`, body.action.startsWith("list") ? 60 : 20))) return json({ error: "rate_limited" }, 429);
 
   try {
-    const { data: conn } = await admin.from("integration_connections").select("status").eq("owner_user_id", ownerId).maybeSingle();
+    const { data: conn } = await admin.from("integration_connections").select("status, connected_at").eq("owner_user_id", ownerId).maybeSingle();
     const connected = conn?.status === "active";
+    const meta = { connected, connected_at: connected ? conn?.connected_at ?? null : null, api_configured: apiConfigured(), can_charge: privileged };
+    const listCols = "id, deal_id, lead_id, status, external_id, error_message, created_at, updated_at, snapshot";
 
     if (body.action === "list_for_lead") {
-      const { data } = await admin.from("wiize_pay_charge_requests")
-        .select("id, deal_id, status, external_id, error_message, created_at, updated_at, snapshot")
+      const { data } = await admin.from("wiize_pay_charge_requests").select(listCols)
         .eq("owner_user_id", ownerId).eq("lead_id", body.lead_id).order("created_at", { ascending: false }).limit(50);
-      return json({ charges: data || [], connected, api_configured: apiConfigured(), can_charge: privileged });
+      return json({ charges: data || [], ...meta });
+    }
+    if (body.action === "list_all") {
+      const { data } = await admin.from("wiize_pay_charge_requests").select(listCols)
+        .eq("owner_user_id", ownerId).order("created_at", { ascending: false }).limit(1000);
+      return json({ charges: data || [], ...meta });
     }
 
     if (!privileged) {
@@ -200,69 +237,96 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === "preview") {
-      const snap = await buildSnapshot(ownerId, body.deal_id);
-      if (!snap) return json({ error: "not_found" }, 404);
-      return json({ snapshot: snap, connected, api_configured: apiConfigured() });
+      const b = await buildSnapshot(ownerId, body.deal_id);
+      if (!b) return json({ error: "not_found" }, 404);
+      return json({ snapshot: b.snapshot, ...meta });
     }
 
     if (body.action === "create") {
       if (!connected) return json({ error: "not_connected" }, 409);
+      if (!apiConfigured()) return json({ error: "not_configured" }, 409);
       const { data: existing } = await admin.from("wiize_pay_charge_requests").select("*")
         .eq("owner_user_id", ownerId).eq("idempotency_key", body.idempotency_key).maybeSingle();
       if (existing) return json({ charge: existing, idempotent: true });
 
-      const base = await buildSnapshot(ownerId, body.deal_id);
-      if (!base) return json({ error: "not_found" }, 404);
-      const snapshot = { ...base, payment: { methods: body.payment_methods, due_date: body.due_date } };
-      const checksum = await sha256hex(JSON.stringify(snapshot));
+      const type = body.billing_type;
+      if ((type === "recurring" || type === "installment") && body.payment_methods.length !== 1) {
+        return json({ error: "validation", message: "Parcelado e recorrente aceitam uma única forma de pagamento." }, 400);
+      }
+      const doc = body.customer_document !== undefined ? onlyDigits(body.customer_document) : undefined;
+      if (doc !== undefined && doc && ![11, 14].includes(doc.length)) {
+        return json({ error: "validation", message: "CPF deve ter 11 dígitos e CNPJ 14." }, 400);
+      }
+      const b = await buildSnapshot(ownerId, body.deal_id, { billing_type: type, installments: body.installments, document: doc });
+      if (!b) return json({ error: "not_found" }, 404);
+      if (conn?.connected_at && new Date(b.deal.created_at) < new Date(conn.connected_at)) {
+        return json({ error: "validation", message: "Vendas anteriores à conexão ficam só no controle interno." }, 409);
+      }
+      const docFinal = (b.snapshot.customer as any).document as string | null;
+      if (!docFinal || ![11, 14].includes(docFinal.length)) {
+        return json({ error: "validation", message: "Informe o CPF ou CNPJ do cliente." }, 400);
+      }
+      if (doc && doc !== onlyDigits((b.lead as any).document)) {
+        await admin.from("leads").update({ document: doc }).eq("id", b.lead.id).eq("owner_user_id", ownerId);
+      }
+      const snapshot = { ...b.snapshot, payment: { methods: body.payment_methods, due_date: body.due_date } };
 
       const { data: row, error } = await admin.from("wiize_pay_charge_requests").insert({
-        owner_user_id: ownerId, created_by: userId, lead_id: base.customer.lead_id, deal_id: base.deal.id,
-        snapshot, checksum, idempotency_key: body.idempotency_key,
-        status: apiConfigured() ? "draft" : "awaiting_wiize_pay",
+        owner_user_id: ownerId, created_by: userId, lead_id: b.lead.id, deal_id: b.deal.id,
+        snapshot, checksum: "pending", idempotency_key: body.idempotency_key, status: "draft",
       }).select("*").single();
       if (error) throw error;
-
-      if (!apiConfigured()) {
-        await audit(ownerId, userId, "wiize_pay_charge_create", "ready_for_wiize_pay", req);
-        return json({ charge: row, ready_for_wiize_pay: true });
-      }
 
       const token = await getAccessToken(ownerId);
       if (!token) {
         await admin.from("wiize_pay_charge_requests").update({ status: "error", error_message: "token_unavailable", updated_at: new Date().toISOString() }).eq("id", row.id);
         await audit(ownerId, userId, "wiize_pay_charge_create", "error", req, "token_unavailable");
-        return json({ error: "token_unavailable" }, 409);
+        return json({ error: "token_unavailable", message: "A conexão com o Wiize Pay expirou. Reconecte em Integrações." }, 409);
       }
-      const resp = await fetch(`${API_BASE}/v1/charges`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json",
-          "Idempotency-Key": row.id, "X-Wiize-Checksum": checksum,
-        },
-        body: JSON.stringify({ external_reference: row.id, ...snapshot }),
-      });
-      const out = await resp.json().catch(() => ({}));
+      const { resp, out, checksum } = await postCharge(token, row.id, snapshot);
       const checkoutUrl = safeCheckoutUrl(out.checkout_url);
       if (!resp.ok || typeof out.id !== "string" || !checkoutUrl) {
-        const msg = `wiize_pay_http_${resp.status}`;
-        await admin.from("wiize_pay_charge_requests").update({ status: "error", error_message: msg, updated_at: new Date().toISOString() }).eq("id", row.id);
+        const msg = providerMessage(out, resp.status);
+        console.error(`wiize-pay create failed [${resp.status}]: ${JSON.stringify(out).slice(0, 400)}`);
+        await admin.from("wiize_pay_charge_requests").update({ status: "error", checksum, error_message: msg, updated_at: new Date().toISOString() }).eq("id", row.id);
         await audit(ownerId, userId, "wiize_pay_charge_create", "error", req, msg);
-        return json({ error: "wiize_pay_error" }, 502);
+        return json({ error: "wiize_pay_error", status: resp.status, message: msg }, 502);
       }
       const { data: upd } = await admin.from("wiize_pay_charge_requests").update({
-        status: "sent", external_id: out.id.slice(0, 200),
+        status: "awaiting_payment", checksum, external_id: out.id.slice(0, 200),
         checkout_url_expires_at: out.checkout_expires_at || new Date(Date.now() + 15 * 60_000).toISOString(),
         updated_at: new Date().toISOString(),
       }).eq("id", row.id).select("*").single();
+      await admin.from("lead_deals").update({
+        billing_provider: "wiize_pay", billing_type: (b.snapshot.deal as any).type,
+        installments: (b.snapshot.deal as any).type === "installment" ? (b.snapshot.deal as any).installments_or_months : null,
+        wiize_pay_charge_id: row.id, payment_method: body.payment_methods.length === 1 ? body.payment_methods[0] : "wiize_pay",
+      }).eq("id", b.deal.id).eq("owner_user_id", ownerId);
       await audit(ownerId, userId, "wiize_pay_charge_create", "ok", req);
-      // checkout_url é de uso único: devolvido uma vez, nunca gravado
-      return json({ charge: upd, checkout_url: checkoutUrl });
+      // checkout_url: devolvido, nunca gravado
+      return json({ charge: upd, checkout_url: checkoutUrl, checkout_expires_at: upd?.checkout_url_expires_at });
     }
 
-    // status / cancel
+    // status / cancel / link
     const { data: ch } = await admin.from("wiize_pay_charge_requests").select("*").eq("id", body.id).maybeSingle();
     if (!ch || ch.owner_user_id !== ownerId) return json({ error: "not_found" }, 404);
+
+    if (body.action === "link") {
+      if (!ch.external_id || ["paid", "cancelled", "error"].includes(ch.status)) return json({ error: "validation", message: "Esta cobrança não aceita novo link." }, 409);
+      const token = await getAccessToken(ownerId);
+      if (!token) return json({ error: "token_unavailable", message: "Reconecte o Wiize Pay em Integrações." }, 409);
+      const { resp, out } = await postCharge(token, ch.id, ch.snapshot as Record<string, unknown>);
+      const checkoutUrl = safeCheckoutUrl(out.checkout_url);
+      if (!resp.ok || !checkoutUrl) {
+        if (resp.ok && out.status) {
+          await admin.from("wiize_pay_charge_requests").update({ status: mapStatus(out.status), updated_at: new Date().toISOString() }).eq("id", ch.id);
+        }
+        return json({ error: "wiize_pay_error", status: resp.status, message: resp.ok ? "Cobrança já finalizada no Wiize Pay." : providerMessage(out, resp.status) }, 502);
+      }
+      await admin.from("wiize_pay_charge_requests").update({ checkout_url_expires_at: out.checkout_expires_at || null, updated_at: new Date().toISOString() }).eq("id", ch.id);
+      await audit(ownerId, userId, "wiize_pay_charge_link", "ok", req);
+      return json({ checkout_url: checkoutUrl, checkout_expires_at: out.checkout_expires_at || null });
+    }
 
     if (body.action === "status") {
       if (!apiConfigured() || !ch.external_id) return json({ charge: ch });
@@ -287,8 +351,9 @@ Deno.serve(async (req) => {
         method: "POST", headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
       });
       if (!resp.ok) {
-        await audit(ownerId, userId, "wiize_pay_charge_cancel", "error", req, `wiize_pay_http_${resp.status}`);
-        return json({ error: "wiize_pay_error" }, 502);
+        const out = await resp.json().catch(() => ({}));
+        await audit(ownerId, userId, "wiize_pay_charge_cancel", "error", req, providerMessage(out, resp.status));
+        return json({ error: "wiize_pay_error", status: resp.status, message: providerMessage(out, resp.status) }, 502);
       }
     }
     const { data: upd } = await admin.from("wiize_pay_charge_requests")
