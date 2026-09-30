@@ -41,7 +41,6 @@ import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
 import { RenewSaleDialog } from "@/components/crm/RenewSaleDialog";
 import { WiizePaySaleBilling } from "@/components/crm/WiizePaySaleBilling";
-import { WiizePayChargeDialog } from "@/components/crm/WiizePayChargeDialog";
 import { useAllWiizePayCharges, type WiizePayCharge } from "@/hooks/useWiizePayCharges";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useAccountRole } from "@/hooks/useAccountRole";
@@ -82,7 +81,6 @@ export default function CRMSales() {
     for (const c of wp?.charges ?? []) if (!m[c.deal_id]) m[c.deal_id] = c; // lista vem da mais nova
     return m;
   }, [wp]);
-  const [newSaleCharge, setNewSaleCharge] = useState<{ id: string; lead_id: string } | null>(null);
   const { members } = useAccountMembers();
   const { role } = useAccountRole();
   const memberById = useMemo(() => Object.fromEntries(members.map((m) => [m.user_id, m])), [members]);
@@ -241,9 +239,8 @@ export default function CRMSales() {
                     leadName={leadName}
                     initialValue={initialValue}
                     initialTitle={initialTitle}
-                    onCreated={(created) => {
-                      // Com Wiize Pay conectado, a venda nova segue direto para a cobrança.
-                      if (created?.id && leadId && wp?.connected && wp.can_charge) setNewSaleCharge({ id: created.id, lead_id: leadId });
+                    wiizePay={wp}
+                    onCreated={() => {
                       navigate("/crm/vendas");
                     }}
                   />
@@ -630,16 +627,6 @@ export default function CRMSales() {
           saleResponsibleUserId: editingSale?.responsible_user_id,
         })}
       />
-
-      {newSaleCharge && (
-        <WiizePayChargeDialog
-          open
-          fromNewSale
-          onOpenChange={(o) => { if (!o) { setNewSaleCharge(null); fetchSales(); } }}
-          leadId={newSaleCharge.lead_id}
-          dealId={newSaleCharge.id}
-        />
-      )}
 
       <RenewSaleDialog
         open={!!renewingSale}
