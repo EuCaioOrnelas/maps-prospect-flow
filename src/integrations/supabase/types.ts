@@ -13565,6 +13565,57 @@ export type Database = {
           },
         ]
       }
+      wiize_pay_charge_requests: {
+        Row: {
+          checkout_url_expires_at: string | null
+          checksum: string
+          created_at: string
+          created_by: string
+          deal_id: string
+          error_message: string | null
+          external_id: string | null
+          id: string
+          idempotency_key: string
+          lead_id: string
+          owner_user_id: string
+          snapshot: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          checkout_url_expires_at?: string | null
+          checksum: string
+          created_at?: string
+          created_by: string
+          deal_id: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          idempotency_key: string
+          lead_id: string
+          owner_user_id: string
+          snapshot: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          checkout_url_expires_at?: string | null
+          checksum?: string
+          created_at?: string
+          created_by?: string
+          deal_id?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          idempotency_key?: string
+          lead_id?: string
+          owner_user_id?: string
+          snapshot?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wiize_template_categories: {
         Row: {
           color: string
