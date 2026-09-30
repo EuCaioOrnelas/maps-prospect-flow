@@ -132,6 +132,8 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
       if (data?.error) throw new Error(data.error);
       if (data.reason === "wiize_pay_route_unavailable") {
         toast.error(`O Wiize Pay ainda não está recebendo clientes. Publique a versão mais recente do Wiize Pay; os ${data.queued} clientes ficam guardados e serão enviados automaticamente.`, { duration: 10000 });
+      } else if (data.reason === "reconnect_required") {
+        toast.error(`Sua conexão foi feita antes da permissão de enviar clientes e cobranças. Clique em Desconectar e conecte de novo; os ${data.queued} clientes ficam guardados e são enviados em seguida.`, { duration: 12000 });
       } else if (data.reason === "token_unavailable") {
         toast.error("A conexão com o Wiize Pay expirou. Reconecte a conta; os clientes ficam guardados para envio.");
       } else if (data.failed) toast.error(`${data.sent} clientes enviados. ${data.failed} tiveram problema e serão reenviados automaticamente.`);

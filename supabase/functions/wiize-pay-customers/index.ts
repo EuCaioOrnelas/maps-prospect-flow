@@ -257,7 +257,14 @@ Deno.serve(async (req) => {
       if (page.length < 1000) break;
       from += 1000;
     }
+    // Conexões feitas antes da permissão de cobrança não podem enviar clientes: pede para reconectar.
+    const { data: conn } = await admin.from("integration_connections").select("scopes").eq("owner_user_id", ownerId).maybeSingle();
+    const scopes: string[] = Array.isArray(conn?.scopes) ? conn!.scopes as string[] : [];
+    if (!scopes.includes("charges.write") && !scopes.includes("customers.write")) {
+      return json({ ok: false, queued, sent: 0, failed: 0, pending: queued, reason: "reconnect_required" });
+    }
     const r = await processOwner(ownerId, deadline);
+    if (r.error === "http_401") r.error = "reconnect_required";
     await audit(ownerId, userId, "wiize_pay_customers_sync_all", r.failed ? "partial" : "ok", req);
     const { count: pending } = await admin.from("wiize_pay_customer_sync_queue").select("lead_id", { count: "exact", head: true }).eq("owner_user_id", ownerId);
     // Se sobrou (muitos clientes), o processamento continua em segundo plano.
