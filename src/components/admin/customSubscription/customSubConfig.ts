@@ -4,8 +4,8 @@
 type PlanDefault = { searches_limit: number; whatsapp_numbers_limit: number; monthly_value_cents: number };
 export const PLAN_DEFAULTS: Record<"free" | "start" | "growth" | "scale", PlanDefault> = {
   free: { searches_limit: 120, whatsapp_numbers_limit: 1, monthly_value_cents: 0 },
-  start: { searches_limit: 1000, whatsapp_numbers_limit: 1, monthly_value_cents: 29600 },
-  growth: { searches_limit: 3000, whatsapp_numbers_limit: 3, monthly_value_cents: 69600 },
+  start: { searches_limit: 1000, whatsapp_numbers_limit: 1, monthly_value_cents: 8900 },
+  growth: { searches_limit: 1000, whatsapp_numbers_limit: 2, monthly_value_cents: 12900 },
   scale: { searches_limit: 10000, whatsapp_numbers_limit: 10, monthly_value_cents: 89700 },
 };
 

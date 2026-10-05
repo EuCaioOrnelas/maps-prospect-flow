@@ -23,8 +23,8 @@ const corsHeaders = {
 };
 
 const PLAN_VALUES: Record<string, number> = {
-  start: 296.0,
-  growth: 396.0,
+  start: 89.0,
+  growth: 129.0,
   scale: 1496.0,
 };
 const PLAN_NAMES: Record<string, string> = {
@@ -61,7 +61,7 @@ serve(async (req) => {
     }
 
     const planKey = profile.trial_plan_chosen || "start";
-    const value = PLAN_VALUES[planKey] || 296;
+    const value = PLAN_VALUES[planKey] || 89;
     const planName = PLAN_NAMES[planKey] || "Wiize Start";
 
     // 2) Estado ANTES

@@ -21,8 +21,8 @@ const PLAN_NAMES: Record<string, string> = {
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 19600,
-  growth: 39600,
+  start: 8900,
+  growth: 12900,
   scale: 89700,
 };
 

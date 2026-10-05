@@ -13,8 +13,8 @@ const logStep = (step: string, details?: any) => {
 };
 
 const PLAN_CONFIG: Record<string, { name: string; priceMonthly: number; priceAnnual: number }> = {
-  start: { name: "Wiize Atendimento", priceMonthly: 196.00, priceAnnual: 1957.00 },
-  growth: { name: "Wiize Growth IA", priceMonthly: 396.00, priceAnnual: 7152.00 },
+  start: { name: "Wiize Atendimento", priceMonthly: 89.00, priceAnnual: 1957.00 },
+  growth: { name: "Wiize Growth IA", priceMonthly: 129.00, priceAnnual: 7152.00 },
   scale: { name: "Wiize Enterprise", priceMonthly: 1496.00, priceAnnual: 1496.00 },
 };
 
@@ -24,9 +24,9 @@ const BUMP_CATALOG: Record<string, {
   column: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
   allowedPlans: string[];
 }> = {
-  numbers:       { monthly: 96.00,  column: "extra_numbers",              allowedPlans: ["start", "growth"] },
-  contacts:      { monthly: 48.00,  column: "extra_contacts_packs",       allowedPlans: ["start", "growth"] },
-  opportunities: { monthly: 196.00, column: "extra_opportunities_packs",  allowedPlans: ["growth"] },
+  numbers:       { monthly: 49.00, column: "extra_numbers",             allowedPlans: ["start", "growth"] },
+  contacts:      { monthly: 39.00, column: "extra_contacts_packs",      allowedPlans: ["start", "growth"] },
+  opportunities: { monthly: 99.00, column: "extra_opportunities_packs", allowedPlans: ["growth"] },
 };
 
 function sanitizeBumps(bumps: any, planKey: string, isAnnual: boolean): Record<string, number> {

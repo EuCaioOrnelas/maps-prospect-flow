@@ -232,8 +232,8 @@ export default function PlanComparisonTable() {
           <span className="font-display text-base md:text-lg font-bold text-foreground">Planos</span>
         </div>
         {[
-          { name: "Atendimento", price: "196", popular: false },
-          { name: "Growth IA", price: "396", popular: true },
+          { name: "Atendimento", price: "89", popular: false },
+          { name: "Growth IA", price: "129", popular: true },
           { name: "Enterprise", price: "Sob medida", popular: false, custom: true as const },
         ].map((col) => (
           <div key={col.name} className="text-center px-1">

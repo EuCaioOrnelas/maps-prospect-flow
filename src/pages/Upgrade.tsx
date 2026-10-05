@@ -23,8 +23,8 @@ import {
 
 const PRICE_IDS: Record<string, Record<string, string>> = {
   monthly: {
-    start: "price_1TYl5KK8CM0R6xMMeHUhKt7s",
-    growth: "price_1UBNs5K8CM0R6xMMJAnZEQdm",
+    start: "",
+    growth: "",
     scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
   },
   annual: {
@@ -60,8 +60,8 @@ const mainPlans: Record<string, PlanDef[]> = {
     {
       name: "Atendimento",
       key: "start",
-      price: "196",
-      anchorPrice: "392",
+      price: "89",
+      anchorPrice: "196",
       opportunities: "Até 1.000 contatos no CRM",
       description: "Para organizar atendimento, CRM e campanhas no WhatsApp com IA.",
       features: [
@@ -82,8 +82,8 @@ const mainPlans: Record<string, PlanDef[]> = {
     {
       name: "Growth IA",
       key: "growth",
-      price: "396",
-      anchorPrice: "792",
+      price: "129",
+      anchorPrice: "396",
       opportunities: "Até 10.000 contatos no CRM",
       description: "Para prospectar, qualificar e converter oportunidades B2B com Wiize AI.",
       features: [

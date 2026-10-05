@@ -320,7 +320,7 @@ const _legacyCategories = [
     questions: [
       {
         question: "Qual plano é ideal para mim?",
-        answer: "O plano Atendimento (R$196/mês) atende quem quer organizar atendimento e CRM, com 1 número WhatsApp e 2 usuários. O Growth IA (R$396/mês) é para quem quer prospectar e vender, com 1.000 oportunidades por mês, 2 números WhatsApp e 3 usuários. O Enterprise (investimento personalizado) é indicado para agências e operações de alto volume — fale com nosso time para uma proposta sob medida."
+        answer: "O plano Atendimento (R$89/mês) atende quem quer organizar atendimento e CRM, com 1 número WhatsApp e 2 usuários. O Growth IA (R$129/mês) é para quem quer prospectar e vender, com 1.000 oportunidades por mês, 2 números WhatsApp e 3 usuários. O Enterprise (investimento personalizado) é indicado para agências e operações de alto volume — fale com nosso time para uma proposta sob medida."
       },
       {
         question: "Posso cancelar minha assinatura a qualquer momento?",
