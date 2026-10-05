@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, User as UserIcon, Activity, StickyNote, ShieldCheck, QrCode, Landmark, Layers3, CheckCircle2, Wallet } from "lucide-react";
 import { useSales, PAYMENT_METHODS, type SaleType, type Sale, type SaleStatus } from "@/hooks/useSales";
 import { useWiizePayCharges, useWiizePayChargeMutations, type WiizePayBillingType, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
+import { WiizePayPromo } from "./WiizePayPromo";
 import { WiizePayLinkShare } from "./WiizePayLinkShare";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { cn } from "@/lib/utils";
@@ -571,6 +572,7 @@ export function RegisterSaleDialog({
   const formBody = (
     <>
       <div className={cn(compact ? "space-y-2.5 py-1" : "space-y-4 py-2")}>
+        {!isEdit && wiizePay && !wiizePay.connected && <WiizePayPromo variant="strip" connected={false} />}
         {wiizePayActive ? (
           <>
             {wiizePaySection}

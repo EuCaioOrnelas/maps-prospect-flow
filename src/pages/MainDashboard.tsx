@@ -23,6 +23,7 @@ import { ForecastChart } from "@/components/dashboard/v2/ForecastChart";
 import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { WiizePayPromo } from "@/components/crm/WiizePayPromo";
 import { TrialAutoChargeBanner } from "@/components/dashboard/TrialAutoChargeBanner";
 import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
 // Checklist e modal de onboarding removidos — somente o tour guiado orienta o usuário.
@@ -165,6 +166,7 @@ export default function MainDashboard() {
               </div>
 
               <TrialAutoChargeBanner />
+              {!tourCockpitActive && <WiizePayPromo variant="banner" dismissible />}
 
               {/* 1 — Hero Impact (oculto no plano Atendimento — sem prospecção) */}
               {hasOpportunitiesAccess(profile as any) && (
