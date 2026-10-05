@@ -904,7 +904,7 @@ export default function AdminSupportTickets() {
                       {t.ticket_number && <span className="font-mono text-[11px] text-primary">{t.ticket_number}</span>}
                       {t.category === "Wiize Pay" && (
                         <Badge variant="outline" className="gap-1 text-[9px] py-0 px-1 h-4 bg-primary/10 text-primary border-primary/30">
-                          <CreditCard className="h-2.5 w-2.5" />Wiize Pay
+                          <CreditCard className="h-2.5 w-2.5" />WiizePay
                         </Badge>
                       )}
                       {t.is_manual && <Badge variant="outline" className="text-[9px] py-0 px-1 h-4 bg-accent text-accent-foreground border-border">Manual</Badge>}
@@ -976,7 +976,7 @@ export default function AdminSupportTickets() {
               {selected?.is_manual && <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/30">Manual</Badge>}
               {selected?.category === "Wiize Pay" && (
                 <Badge variant="outline" className="gap-1 bg-primary/10 text-primary border-primary/30">
-                  <CreditCard className="h-3 w-3" />Wiize Pay
+                  <CreditCard className="h-3 w-3" />WiizePay
                 </Badge>
               )}
               {selected?.phase && <Badge variant="outline" className="text-[10px]">{selected.phase}</Badge>}

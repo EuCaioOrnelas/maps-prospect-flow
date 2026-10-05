@@ -45,9 +45,9 @@ const CONTRACT_OPTIONS = [
   { value: "48", label: "48 meses" },
   { value: "60", label: "60 meses" },
 ];
-/** Limite aceito pela API do Wiize Pay (installments_or_months ≤ 60). */
+/** Limite aceito pela API da WiizePay (installments_or_months ≤ 60). */
 const MAX_CONTRACT_MONTHS = 60;
-/** Wiize Pay parcela em até 21x. */
+/** A WiizePay parcela em até 21x. */
 const MAX_INSTALLMENTS = 21;
 const isPresetMonths = (m: string) => CONTRACT_OPTIONS.some((o) => o.value === m);
 const WIZARD_STEPS = [
@@ -181,7 +181,7 @@ export function RegisterSaleDialog({
   };
 
   const parsedValue = Number(value.replace(/\./g, "").replace(",", "."));
-  /** Valida a etapa atual do fluxo Wiize Pay antes de avançar. */
+  /** Valida a etapa atual do fluxo WiizePay antes de avançar. */
   const goNext = () => {
     if (step === 1 && ![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
     if (step === 2) {
@@ -335,7 +335,7 @@ export function RegisterSaleDialog({
   const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const inputCls = cn(compact && "h-8 text-xs");
   const locked = !!savedSaleId;
-  /** Fora do Wiize Pay mostra tudo; com Wiize Pay, só a etapa atual. */
+  /** Fora da WiizePay mostra tudo; com WiizePay, só a etapa atual. */
   const showStep = (s: number) => !wiizePayActive || (!paymentLink && step === s);
 
   const titleField = (
@@ -397,7 +397,7 @@ export function RegisterSaleDialog({
       {startDate && Number(months) >= 1 && (
         <p className="text-xs text-muted-foreground">
           Termina em {(() => { const d = new Date(startDate + "T12:00"); d.setMonth(d.getMonth() + Number(months)); return d.toLocaleDateString("pt-BR"); })()}
-          {wiizePayActive && ` · até ${MAX_CONTRACT_MONTHS} meses no Wiize Pay`}
+          {wiizePayActive && ` · até ${MAX_CONTRACT_MONTHS} meses na WiizePay`}
         </p>
       )}
     </div>
@@ -423,21 +423,21 @@ export function RegisterSaleDialog({
   );
 
   const wiizePaySection = wiizePayActive && (
-    <section className="space-y-4" aria-label="Cobrança Wiize Pay">
+    <section className="space-y-4" aria-label="Cobrança WiizePay">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
           <ShieldCheck className="h-4 w-4" />
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-semibold text-foreground">Cobrança Wiize Pay</h4>
+            <h4 className="font-semibold text-foreground">Cobrança WiizePay</h4>
             <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Conectado</span>
           </div>
-          <p className="text-xs text-muted-foreground">Os dados do cartão ficam somente no ambiente seguro do Wiize Pay.</p>
+          <p className="text-xs text-muted-foreground">Os dados do cartão ficam somente no ambiente seguro da WiizePay.</p>
         </div>
       </div>
 
-      <ol className="grid grid-cols-4 gap-1.5" aria-label="Etapas no Wiize Pay">
+      <ol className="grid grid-cols-4 gap-1.5" aria-label="Etapas na WiizePay">
         {WIZARD_STEPS.map(({ n, label, Icon }) => {
           const done = !!paymentLink || n < step;
           const current = !paymentLink && n === step;
@@ -466,7 +466,7 @@ export function RegisterSaleDialog({
       {paymentLink && (
         <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
           <div className="flex items-center gap-2 font-medium text-foreground"><CheckCircle2 className="h-5 w-5 text-primary" /> Venda e cobrança criadas</div>
-          <p className="text-xs text-muted-foreground">A situação (aguardando, paga, vencida…) é atualizada sozinha quando o Wiize Pay avisar.</p>
+          <p className="text-xs text-muted-foreground">A situação (aguardando, paga, vencida…) é atualizada sozinha quando a WiizePay avisar.</p>
           <WiizePayLinkShare url={paymentLink.url} expiresAt={paymentLink.expiresAt} title={title} />
         </div>
       )}
@@ -630,7 +630,7 @@ export function RegisterSaleDialog({
 
             {wiizePayChecking ? (
               <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Verificando a conexão com o Wiize Pay…
+                <Loader2 className="h-4 w-4 animate-spin" /> Verificando a conexão com a WiizePay…
               </div>
             ) : (
               <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>

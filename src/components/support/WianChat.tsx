@@ -295,7 +295,7 @@ export function WianChat() {
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
   const [wasEscalated, setWasEscalated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Etapa interna do menu: "root" = escolha Suporte Wiize x Suporte Wiize Pay,
+  // Etapa interna do menu: "root" = escolha Suporte Wiize x Suporte WiizePay,
   // "menu" = categorias do Suporte Wiize, "submenu" = problemas da categoria.
   const [menuStep, setMenuStep] = useState<"root" | "menu" | "submenu">("root");
 
@@ -579,7 +579,7 @@ export function WianChat() {
       "Fluxos e automações": "WhatsApp",
       "Financeiro / Cobrança": "Financeiro",
       "Planos e cancelamento": "Financeiro",
-      "Suporte Wiize Pay": "Wiize Pay",
+      "Suporte WiizePay": "Wiize Pay",
       "Relatórios e métricas": "Operacional",
       "Falar com suporte humano": "Outro",
     };
@@ -1240,7 +1240,7 @@ export function WianChat() {
                   <SelectItem value="Campanhas">Campanhas / Disparos</SelectItem>
                   <SelectItem value="CRM">CRM / Leads</SelectItem>
                   <SelectItem value="Financeiro">Financeiro / Pagamento</SelectItem>
-                  <SelectItem value="Wiize Pay">Suporte Wiize Pay</SelectItem>
+                  <SelectItem value="Wiize Pay">Suporte WiizePay</SelectItem>
                   <SelectItem value="Conta">Conta / Acesso</SelectItem>
                   <SelectItem value="Bug">Problema de sistema (bug)</SelectItem>
                   <SelectItem value="Operacional">Dúvida operacional</SelectItem>
@@ -1528,7 +1528,7 @@ export function WianChat() {
                     <CreditCard className="h-5 w-5" strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground">Suporte Wiize Pay</p>
+                    <p className="text-sm font-semibold text-foreground">Suporte WiizePay</p>
                     <p className="text-[11px] text-muted-foreground">Nossa plataforma de pagamentos: cobranças, PIX, boleto, cartão e débito em conta</p>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
