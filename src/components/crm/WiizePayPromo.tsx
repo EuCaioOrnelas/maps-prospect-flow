@@ -103,7 +103,7 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
         </ul>
         <div className="flex shrink-0 items-center gap-3">
           {/* Espaço da imagem (formato 3:1, ex.: 480 × 160 px). Substituir pela arte final quando enviada. */}
-          <div className="hidden h-14 w-42 items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent md:flex">
+          <div className="hidden h-14 w-44 items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent md:flex">
             <QrCode className="h-6 w-6 text-primary/40" aria-hidden="true" />
           </div>
           <Button onClick={go} className="shrink-0">Conhecer a WiizePay <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
