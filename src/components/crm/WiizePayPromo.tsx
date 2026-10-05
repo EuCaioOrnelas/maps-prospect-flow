@@ -49,9 +49,11 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   };
 
   const closeBtn = dismissible && (
-    <Button type="button" variant="ghost" size="icon" onClick={dismiss} aria-label="Dispensar recomendação" title="Dispensar" className="absolute right-3 top-3 z-10 h-8 w-8 text-muted-foreground">
-      <X className="h-4 w-4" />
-    </Button>
+    <div className="absolute right-2 top-2 z-10">
+      <Button type="button" variant="ghost" size="icon" onClick={dismiss} aria-label="Dispensar recomendação" title="Dispensar" className="h-8 w-8 text-muted-foreground">
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
   );
 
   if (variant === "strip") {
