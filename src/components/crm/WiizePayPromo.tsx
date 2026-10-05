@@ -8,8 +8,8 @@ import wiizePayBanner from "@/assets/wiizepay-banner.png.asset.json";
 
 export type WiizePayPromoVariant = "banner" | "strip" | "card";
 
-const DISMISS_KEY = "wiize-pay-promo-dismissed-v2";
-const DISMISS_DAYS = 30;
+const DISMISS_KEY = "wiize-pay-promo-dismissed-v3";
+const DISMISS_DAYS = 7;
 const CONNECT_PATH = "/configuracoes/integracoes/wiize-pay";
 const WIIZEPAY_SITE = "https://wiizepay.com.br";
 
