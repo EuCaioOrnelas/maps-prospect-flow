@@ -85,15 +85,15 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   return (
     <section className={cn("relative overflow-hidden rounded-lg border border-border bg-card shadow-sm", className)} aria-label="Conheça a WiizePay">
       {closeBtn}
-      <div className="flex flex-col gap-4 p-4 pr-12 sm:flex-row sm:items-center sm:gap-5">
+      <div className="flex flex-col gap-3 p-4 pr-12 sm:flex-row sm:items-center sm:gap-5">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"><Gauge className="h-5 w-5" /></div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase text-primary">WiizePay para prestadores de serviços</p>
+            <p className="truncate text-xs font-semibold uppercase text-primary">WiizePay para prestadores de serviços</p>
             <h3 className="truncate font-display text-base font-semibold text-foreground">Receba com a mesma simplicidade que você vende</h3>
           </div>
         </div>
-        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 lg:flex-nowrap xl:gap-x-5">
+        <ul className="hidden shrink-0 items-center gap-x-4 lg:flex xl:gap-x-5">
           {BENEFITS.map(({ Icon, title }) => (
             <li key={title} className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Icon className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
