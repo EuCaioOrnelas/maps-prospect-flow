@@ -4,7 +4,7 @@ import { ArrowRight, CreditCard, QrCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllWiizePayCharges } from "@/hooks/useWiizePayCharges";
 import { cn } from "@/lib/utils";
-import wiizePayBanner from "@/assets/wiizepay-banner-fina.png.asset.json";
+import wiizePayBanner from "@/assets/wiizepay-banner-4x1.png.asset.json";
 
 export type WiizePayPromoVariant = "banner" | "strip" | "card";
 
@@ -82,7 +82,7 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   return (
     <section className={cn("relative overflow-hidden rounded-lg border border-border bg-card shadow-sm", className)} aria-label="Conheça a WiizePay">
       {closeBtn}
-      {/* Banner inteiro é a imagem, na proporção real da arte (3:1), clicável até o site da WiizePay. */}
+      {/* Banner inteiro é a imagem, na proporção real da arte (1200×271), clicável até o site da WiizePay. */}
       <a
         href={WIIZEPAY_SITE}
         target="_blank"
