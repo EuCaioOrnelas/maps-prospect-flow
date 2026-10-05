@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ArrowRight, CreditCard, QrCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -9,15 +8,33 @@ import wiizePayEntry from "@/assets/wiizepay-entrada.png.asset.json";
 
 export type WiizePayPromoVariant = "modal" | "strip" | "card";
 
-const DISMISS_KEY = "wiizepay-entry-promo-dismissed-v1";
-const DISMISS_DAYS = 30;
-const CONNECT_PATH = "/configuracoes/integracoes/wiize-pay";
+const DISMISS_KEY = "wiizepay-entry-promo-v2";
+const SESSION_KEY = "wiizepay-entry-promo-session-v2";
+const DISMISS_DAYS = 15;
 const WIIZEPAY_SITE = "https://wiizepay.com.br";
 
-function dismissedRecently() {
+/**
+ * Regra do aviso de entrada (guardada no navegador):
+ * - primeiro acesso: não mostra, apenas registra;
+ * - a partir do acesso seguinte: mostra e só volta após 15 dias.
+ * A decisão vale pela sessão, para não mudar ao navegar.
+ */
+function shouldShowEntryPromo(): boolean {
   try {
+    const cached = sessionStorage.getItem(SESSION_KEY);
+    if (cached) return cached === "show";
     const raw = localStorage.getItem(DISMISS_KEY);
-    return !!raw && Date.now() - Number(raw) < DISMISS_DAYS * 86_400_000;
+    let show = false;
+    if (!raw) {
+      localStorage.setItem(DISMISS_KEY, "armed");
+    } else if (raw === "armed") {
+      show = true;
+    } else {
+      show = Date.now() - Number(raw) >= DISMISS_DAYS * 86_400_000;
+    }
+    if (show) localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    sessionStorage.setItem(SESSION_KEY, show ? "show" : "hide");
+    return show;
   } catch { return false; }
 }
 
@@ -31,17 +48,19 @@ interface Props {
 
 /** Recomenda a WiizePay só para quem ainda não conectou. */
 export function WiizePayPromo({ variant, connected, dismissible = false, className }: Props) {
-  const navigate = useNavigate();
   const own = useAllWiizePayCharges();
-  const [hidden, setHidden] = useState(dismissible ? dismissedRecently() : false);
+  const [hidden, setHidden] = useState(() => (dismissible ? !shouldShowEntryPromo() : false));
 
   const isConnected = connected !== undefined ? connected : own.data?.connected === true;
   const statusResolved = connected !== undefined || own.isSuccess || own.isError;
   if (!statusResolved || isConnected || hidden) return null;
 
-  const go = () => navigate(CONNECT_PATH);
+  const go = () => window.open(WIIZEPAY_SITE, "_blank", "noopener,noreferrer");
   const dismiss = () => {
-    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* noop */ }
+    try {
+      localStorage.setItem(DISMISS_KEY, String(Date.now()));
+      sessionStorage.setItem(SESSION_KEY, "hide");
+    } catch { /* noop */ }
     setHidden(true);
   };
 
