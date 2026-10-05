@@ -23,7 +23,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 296, growth: 696, scale: 897 };
+const PLAN_PRICES_MONTHLY: Record<string, number> = { start: 89, growth: 129, scale: 897 };
 
 const CATEGORY_CONFIG = [
   { key: "activation_score", label: "Ativação", icon: "🚀", color: "bg-emerald-500" },

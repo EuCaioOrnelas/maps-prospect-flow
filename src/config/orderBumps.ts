@@ -1,7 +1,7 @@
 /**
  * Catálogo de Order Bumps do checkout / gestão de add-ons.
  *
- * Preços e price IDs do Stripe definidos em 2026-05-19.
+ * Preços definidos em 2026-10-05. Novos price IDs do Stripe pendentes.
  *
  * Regras:
  * - `numbers` (incremento de 1) e `contacts` (incremento de 1.000) aparecem em
@@ -46,8 +46,8 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     description: "Conecte mais um número de WhatsApp e libere mais 1 usuário na conta para escalar atendimento e disparos.",
     unit: "número + usuário",
     step: 1,
-    monthlyPriceCents: 9600,
-    stripePriceIdMonthly: "price_1TYdiXK8CM0R6xMMqnhxGM1V",
+    monthlyPriceCents: 4900,
+    stripePriceIdMonthly: "",
     stripePriceIdAnnual: null,
     icon: MessageSquare,
     availableOn: ["start", "growth", "scale"],
@@ -61,8 +61,8 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     description: "Amplia o limite total de contatos armazenados e gerenciados dentro do seu CRM.",
     unit: "contatos",
     step: 1000,
-    monthlyPriceCents: 4800,
-    stripePriceIdMonthly: "price_1TYdkPK8CM0R6xMMXHTfihdw",
+    monthlyPriceCents: 3900,
+    stripePriceIdMonthly: "",
     stripePriceIdAnnual: null,
     icon: Users,
     availableOn: ["start", "growth", "scale"],
@@ -76,8 +76,8 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     description: "Mais leads B2B qualificados captados e diagnosticados pelo SDR IA todo mês.",
     unit: "oportunidades",
     step: 1000,
-    monthlyPriceCents: 19600,
-    stripePriceIdMonthly: "price_1TYdknK8CM0R6xMM9TXjGFf5",
+    monthlyPriceCents: 9900,
+    stripePriceIdMonthly: "",
     stripePriceIdAnnual: null,
     icon: Target,
     availableOn: ["growth", "scale"],

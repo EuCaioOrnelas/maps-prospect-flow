@@ -20,8 +20,8 @@ export const NEW_PLAN_CUTOFF = "2026-05-18T00:00:00Z";
 /**
  * Segundo corte (v3) — 2026-09-03.
  * A partir dele:
- *  - Growth IA: R$ 396/mês, 1.000 oportunidades, 2 números, 3 assentos (dono + 2)
- *  - Atendimento: R$ 196/mês, 1 número, 2 assentos (dono + 1)
+ *  - Growth IA: R$ 129/mês, 1.000 oportunidades, 2 números, 3 assentos (dono + 2)
+ *  - Atendimento: R$ 89/mês, 1 número, 2 assentos (dono + 1)
  *  - Sem planos anuais para novas assinaturas.
  * Clientes criados ANTES mantêm o padrão anterior (R$ 696 / 3.000 / 5 / 5).
  */

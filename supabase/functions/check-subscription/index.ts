@@ -15,8 +15,8 @@ const logStep = (step: string, details?: any) => {
 // Map price IDs to plan names - includes all historical price IDs
 const PRICE_TO_PLAN: Record<string, string> = {
   // Current prices (2026-05)
-  "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",   // R$196/month (atual)
-  "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",  // R$396/month (v3, 1.000 oportunidades)
+  "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",   // R$196/month (legado)
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",  // R$396/month (legado, 1.000 oportunidades)
   "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",  // R$696/month (atual)
   // Previous monthly prices - mantidos para reconhecer assinaturas legadas
   "price_1TLZi1K8CM0R6xMMDOg3MSTp": "start",   // R$296/month (legado)
@@ -44,10 +44,10 @@ const PLAN_LIMITS: Record<string, number> = {
   "scale": 10000,
 };
 
-// Novo padrão (v3, a partir de 2026-09-03): Growth IA R$396 com 1.000 oportunidades.
+// Padrão anterior (v3, a partir de 2026-09-03): Growth IA R$396 com 1.000 oportunidades.
 // Preços antigos continuam com os limites legados (grandfathering).
 const PRICE_LIMIT_OVERRIDE: Record<string, number> = {
-  "price_1UBNs5K8CM0R6xMMJAnZEQdm": 1000, // Growth IA R$396/mês (v3)
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm": 1000, // Growth IA R$396/mês (legado v3)
 };
 
 // Limites do novo padrão (v3) para novas assinaturas sem price ID em contexto.

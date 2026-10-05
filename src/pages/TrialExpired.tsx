@@ -11,8 +11,8 @@ import type { LucideIcon } from "lucide-react";
 
 const PRICE_IDS: Record<string, Record<string, string>> = {
   monthly: {
-    start: "price_1TYl5KK8CM0R6xMMeHUhKt7s",
-    growth: "price_1UBNs5K8CM0R6xMMJAnZEQdm",
+    start: "",
+    growth: "",
     scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
   },
   annual: {
@@ -46,7 +46,7 @@ type PlanDef = {
 const mainPlans: Record<string, PlanDef[]> = {
   monthly: [
     {
-      name: "Start", key: "start", price: "296", anchorPrice: "592", opportunities: "1.000",
+      name: "Atendimento", key: "start", price: "89", anchorPrice: "196", opportunities: "1.000",
       description: "Para validar e começar a gerar oportunidades",
       features: [
         { text: "Geração de mensagens com IA" },
@@ -62,7 +62,7 @@ const mainPlans: Record<string, PlanDef[]> = {
       popular: false, icon: Rocket,
     },
     {
-      name: "Growth", key: "growth", price: "396", anchorPrice: "792", opportunities: "1.000",
+      name: "Growth IA", key: "growth", price: "129", anchorPrice: "396", opportunities: "1.000",
       description: "Para escalar e converter oportunidades com IA",
       features: [
         { text: "Geração de mensagens com IA" },
@@ -179,6 +179,9 @@ const TrialExpired = () => {
     setLoadingPlan(selectedPlanKey);
     try {
       const priceId = PRICE_IDS[billingKey][selectedPlanKey];
+      if (!priceId) {
+        throw new Error("O novo preço no cartão ainda está sendo configurado. Escolha PIX por enquanto.");
+      }
       const response = await supabase.functions.invoke("create-checkout", {
         body: { priceId, guestEmail: user ? undefined : customerData.email, couponCode: couponFromUrl || undefined },
       });

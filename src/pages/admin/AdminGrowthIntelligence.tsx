@@ -25,10 +25,10 @@ interface UserRow {
   engagement_score?: number;
 }
 
-const PLAN_VALUE: Record<string, number> = { start: 196, growth: 396, scale: 1990 };
+const PLAN_VALUE: Record<string, number> = { start: 89, growth: 129, scale: 1990 };
 const UPGRADE_TARGET: Record<string, { plan: string; value: number }> = {
-  start: { plan: "growth", value: 396 - 196 },
-  growth: { plan: "scale", value: 1990 - 396 },
+  start: { plan: "growth", value: 129 - 89 },
+  growth: { plan: "scale", value: 1990 - 129 },
 };
 
 export default function AdminGrowthIntelligence() {

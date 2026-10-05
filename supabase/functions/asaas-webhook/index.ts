@@ -328,7 +328,7 @@ async function activatePlan(
   }
 
   // Calculate price in cents from payment value (grandfathering support)
-  const defaultPrices: Record<string, number> = { start: 19600, growth: 39600, scale: 149600 };
+  const defaultPrices: Record<string, number> = { start: 8900, growth: 12900, scale: 149600 };
   const priceCents = paymentValue ? Math.round(paymentValue * 100) : (defaultPrices[planKey] || 0);
 
   // Build update payload — preserve bonus_searches (carried from previous plan)

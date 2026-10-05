@@ -19,8 +19,8 @@ const COUPON_CODE = "FIRST50";
 const TIMER_SECONDS = 10 * 60;
 
 const PRICE_IDS = {
-  start: "price_1TYl5KK8CM0R6xMMeHUhKt7s",
-  growth: "price_1UBNs5K8CM0R6xMMJAnZEQdm",
+  start: "",
+  growth: "",
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
@@ -40,10 +40,10 @@ interface Plan {
 
 const plans: Plan[] = [
   {
-    name: "Start",
+    name: "Atendimento",
     key: "start",
-    price: 196,
-    originalPrice: 397,
+    price: 89,
+    originalPrice: 196,
     searches: "100",
     whatsappNumbers: 2,
     monthlyMessages: "10.000",
@@ -61,10 +61,10 @@ const plans: Plan[] = [
     icon: Rocket,
   },
   {
-    name: "Growth",
+    name: "Growth IA",
     key: "growth",
-    price: 396,
-    originalPrice: 696,
+    price: 129,
+    originalPrice: 396,
     searches: "1.000",
     whatsappNumbers: 2,
     monthlyMessages: "30.000",
@@ -182,6 +182,9 @@ const UpgradePromo = () => {
     setLoadingPlan(selectedPlanKey);
     try {
       const priceId = PRICE_IDS[selectedPlanKey as keyof typeof PRICE_IDS];
+      if (!priceId) {
+        throw new Error("O novo preço no cartão ainda está sendo configurado. Escolha PIX por enquanto.");
+      }
       const response = await supabase.functions.invoke("create-checkout", {
         body: { priceId, guestEmail: user ? undefined : customerData.email, couponCode: COUPON_CODE },
       });
@@ -225,6 +228,11 @@ const UpgradePromo = () => {
     // For non-logged users from email capture, go directly to Stripe with coupon
     setLoadingPlan(selectedPlanKey);
     const priceId = PRICE_IDS[selectedPlanKey as keyof typeof PRICE_IDS];
+    if (!priceId) {
+      toast({ title: "Cartão em configuração", description: "Escolha PIX por enquanto." });
+      setLoadingPlan(null);
+      return;
+    }
     supabase.functions.invoke("create-checkout", {
       body: { priceId, guestEmail: email, couponCode: COUPON_CODE },
     }).then(({ data, error }) => {

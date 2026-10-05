@@ -27,14 +27,14 @@ const PLAN_NAMES: Record<string, string> = {
 
 // New prices for NEW subscribers (used as fallback)
 const PLAN_PRICES: Record<string, string> = {
-  start: "R$ 196",
-  growth: "R$ 396",
+  start: "R$ 89",
+  growth: "R$ 129",
   scale: "R$ 897",
 };
 
 const PLAN_PRICES_CENTS: Record<string, number> = {
-  start: 19600,    // R$ 196/mês — PIX é apenas mensal
-  growth: 39600,   // R$ 396/mês (novo padrão)
+  start: 8900,    // R$ 89/mês — PIX é apenas mensal
+  growth: 12900,  // R$ 129/mês (novo padrão)
   scale: 89700,    // R$ 897/mês
 };
 

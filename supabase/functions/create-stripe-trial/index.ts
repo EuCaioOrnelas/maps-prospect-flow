@@ -32,8 +32,8 @@ const corsHeaders = {
 };
 
 const PLAN_TO_MONTHLY_PRICE: Record<string, string> = {
-  start: "price_1TYl5KK8CM0R6xMMeHUhKt7s", // R$196 (novo)
-  growth: "price_1UBNs5K8CM0R6xMMJAnZEQdm", // R$396 (v3)
+  start: "", // TODO: informar o novo Price ID mensal de R$ 89
+  growth: "", // TODO: informar o novo Price ID mensal de R$ 129
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
@@ -136,7 +136,12 @@ serve(async (req) => {
       if (!setupIntentId || !planKey) throw new Error("setupIntentId and planKey are required");
 
       const priceId = PLAN_TO_MONTHLY_PRICE[planKey];
-      if (!priceId) throw new Error(`Invalid plan: ${planKey}`);
+      if (!priceId) {
+        return json(
+          { error: "PRICE_PENDING", message: "O novo preço deste plano ainda não está disponível no cartão." },
+          503,
+        );
+      }
 
       const si = await stripe.setupIntents.retrieve(setupIntentId);
       if (si.status !== "succeeded") {
