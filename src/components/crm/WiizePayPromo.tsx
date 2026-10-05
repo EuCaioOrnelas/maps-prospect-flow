@@ -99,26 +99,44 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
 
   if (variant === "strip") {
     return (
-      <div className={cn("flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3 shadow-sm", className)}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"><QrCode className="h-4 w-4" /></div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground">Receba com simplicidade pela WiizePay</p>
-          <p className="text-xs text-muted-foreground">PIX automático e cobranças recorrentes, com tudo acompanhado na Wiize.</p>
+      <div className={cn("relative overflow-hidden rounded-lg border border-border bg-card p-3 shadow-sm", className)}>
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"><QrCode className="h-4 w-4" /></div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold tracking-tight text-foreground">Receba com simplicidade pela WiizePay</p>
+            <p className="text-xs text-muted-foreground">PIX automático e cobranças recorrentes, com tudo acompanhado na Wiize.</p>
+          </div>
+          <Button type="button" size="sm" className="group/btn" onClick={go}>
+            Conhecer a WiizePay
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
+          </Button>
         </div>
-        <Button type="button" size="sm" onClick={go}>Conhecer a WiizePay <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Button>
       </div>
     );
   }
 
   if (variant === "card") {
     return (
-      <div className={cn("relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm", className)}>
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"><CreditCard className="h-5 w-5" /></div>
-          <div className="min-w-0 flex-1 space-y-1">
-            <p className="text-sm font-semibold text-foreground">Transforme a venda em recebimento</p>
-            <p className="text-xs leading-relaxed text-muted-foreground">Com a WiizePay, você cria PIX e cobranças automáticas e oferece um painel organizado ao cliente.</p>
-            <Button type="button" size="sm" variant="outline" className="mt-2" onClick={go}>Conhecer a WiizePay <ArrowRight className="ml-1 h-3.5 w-3.5" /></Button>
+      <div className={cn("group relative overflow-hidden rounded-xl border border-primary/20 bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md", className)}>
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+        <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-primary/[0.07] blur-2xl" />
+        <div className="relative flex items-start gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+            <CreditCard className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <p className="text-sm font-semibold tracking-tight text-foreground">Transforme a venda em recebimento</p>
+              <span className="rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">WiizePay</span>
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Com a WiizePay, você cria PIX e cobranças automáticas e oferece um painel organizado ao cliente.
+            </p>
+            <Button type="button" size="sm" className="group/btn mt-3" onClick={go}>
+              Conhecer a WiizePay
+              <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
+            </Button>
           </div>
         </div>
       </div>
