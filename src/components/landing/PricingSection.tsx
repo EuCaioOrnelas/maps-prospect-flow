@@ -392,6 +392,9 @@ export const PricingSection = () => {
  try {
  const billingKey = "monthly";
  const priceId = PRICE_IDS[billingKey][selectedPlan.key];
+ if (!priceId) {
+ throw new Error("O novo preço no cartão ainda está sendo configurado. Escolha PIX por enquanto.");
+ }
  const response = await supabase.functions.invoke("create-checkout", {
  body: { priceId, guestEmail: user ? undefined : customerData.email },
  });

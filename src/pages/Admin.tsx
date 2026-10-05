@@ -83,8 +83,8 @@ import { Badge } from "@/components/ui/badge";
 // Preços dos planos (fallback caso Stripe falhe)
 const PLAN_PRICES: { [key: string]: number } = {
   free: 0,
-  start: 196,
-  growth: 497,
+  start: 89,
+  growth: 129,
   scale: 897,
 };
 
@@ -292,7 +292,7 @@ const Admin = () => {
   // Fetch PIX MRR from database
   const loadPixMRR = useCallback(async () => {
     try {
-      const planPrices: Record<string, number> = { start: 196, growth: 497, scale: 897 };
+      const planPrices: Record<string, number> = { start: 89, growth: 129, scale: 897 };
       const planNameToKey: Record<string, string> = { 'Wiize Start': 'start', 'Wiize Growth': 'growth', 'Wiize Scale': 'scale' };
       
       // Get PIX user IDs

@@ -89,8 +89,8 @@ interface PayingProfile {
 }
 
 const PLAN_PRICES_MONTHLY: Record<string, number> = {
-  start: 296,
-  growth: 396,
+  start: 89,
+  growth: 129,
   scale: 897,
 };
 
