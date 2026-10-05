@@ -4,7 +4,7 @@ import { ArrowRight, CreditCard, QrCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllWiizePayCharges } from "@/hooks/useWiizePayCharges";
 import { cn } from "@/lib/utils";
-import wiizePayBanner from "@/assets/wiizepay-banner-fina.png.asset.json";
+import wiizePayBanner from "@/assets/wiizepay-banner-4x1.png.asset.json";
 
 export type WiizePayPromoVariant = "banner" | "strip" | "card";
 
