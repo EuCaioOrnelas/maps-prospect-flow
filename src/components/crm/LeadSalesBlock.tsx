@@ -7,6 +7,7 @@ import { useSales, type Sale } from "@/hooks/useSales";
 import { SalesKPIs } from "./SalesKPIs";
 import { RegisterSaleDialog } from "./RegisterSaleDialog";
 import { useWiizePayCharges } from "@/hooks/useWiizePayCharges";
+import { WiizePayPromo } from "./WiizePayPromo";
 import { WiizePaySaleBilling } from "./WiizePaySaleBilling";
 import { toast } from "sonner";
 
@@ -84,6 +85,7 @@ export function LeadSalesBlock({
 
   return (
     <div className="space-y-4">
+      {wp && !wp.connected && <WiizePayPromo variant="card" connected={false} />}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">Vendas & Receita</h3>
