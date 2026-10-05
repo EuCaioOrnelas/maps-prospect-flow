@@ -398,6 +398,21 @@ serve(async (req) => {
       }, 403);
     }
 
+    // Trava: a mesma conta não pode prospectar o mesmo nicho na mesma região duas vezes.
+    const lockNiche = normalizeSearchKey(searchTerm);
+    const lockLocation = normalizeSearchKey(location);
+    const { data: existingLock } = await admin
+      .from("prospecting_search_locks").select("created_at")
+      .eq("owner_user_id", ownerId).eq("source", "web")
+      .eq("niche_key", lockNiche).eq("location_key", lockLocation).maybeSingle();
+    if (existingLock) {
+      return json({
+        error: "already_prospected",
+        message: `Sua conta já prospectou "${searchTerm}"${location ? ` em ${location}` : ""} na web. Escolha outro nicho ou outra região.`,
+        alreadyProspected: true,
+      }, 409);
+    }
+
     // A quantidade não é controlada pelo cliente: cada busca tenta entregar o
     // máximo possível, respeitando o teto operacional e o saldo da conta.
     const target = Math.min(MAX_VALID_RESULTS, remaining);
@@ -457,16 +472,17 @@ serve(async (req) => {
       .eq("owner_user_id", ownerId)
       .in("domain", domains);
     const known = new Set((existing || []).map((e: any) => e.domain));
-    const fresh = candidates.filter((c) => !known.has(c.domain)).slice(0, target);
+    // Repetidos (já na conta) aparecem no resultado e são cobrados, mas a linha
+    // existente na Gestão é mantida com a análise que já tinha.
+    const delivered = candidates.slice(0, target);
+    const fresh = delivered.filter((c) => !known.has(c.domain));
+    const duplicateDomains = delivered.filter((c) => known.has(c.domain)).map((c) => c.domain);
 
-    if (fresh.length < MIN_VALID_RESULTS) {
+    if (delivered.length < MIN_VALID_RESULTS) {
       return json({
         error: "insufficient_results",
-        message:
-          fresh.length === 0
-            ? "Todos os sites encontrados já estão na sua base de oportunidades. Tente outro nicho, termo ou localização."
-            : `Encontramos apenas ${fresh.length} sites novos e válidos (mínimo ${MIN_VALID_RESULTS}). Tente ampliar a localização ou usar outro termo.`,
-        foundCount: fresh.length,
+        message: `Encontramos apenas ${delivered.length} sites válidos (mínimo ${MIN_VALID_RESULTS}). Tente ampliar a localização ou usar outro termo.`,
+        foundCount: delivered.length,
       }, 422);
     }
 
@@ -517,12 +533,20 @@ serve(async (req) => {
       });
     }
 
-    const { data: inserted, error: insertError } = await admin
-      .from("leads")
-      .insert(rows)
-      .select("id, company_name, domain, phone, email, social_media");
+    const { data: insertedRows, error: insertError } = rows.length > 0
+      ? await admin.from("leads").insert(rows).select("id, company_name, domain, phone, email, social_media")
+      : { data: [], error: null };
+    const inserted = insertedRows || [];
+    let existingLeads: any[] = [];
+    if (duplicateDomains.length > 0) {
+      const { data: dupRows } = await admin
+        .from("leads").select("id, company_name, domain, phone, email, social_media")
+        .eq("owner_user_id", ownerId).in("domain", duplicateDomains);
+      const seenDup = new Set<string>();
+      existingLeads = (dupRows || []).filter((r: any) => !seenDup.has(r.domain) && seenDup.add(r.domain));
+    }
 
-    if (insertError || !inserted) {
+    if (insertError) {
       console.error("[web-search] erro ao salvar leads", insertError);
       return json({
         error: "save_failed",
@@ -531,18 +555,25 @@ serve(async (req) => {
     }
 
     const savedCount = inserted.length;
+    const chargeCount = savedCount + existingLeads.length;
+    const allDelivered = [...inserted, ...existingLeads];
 
-    // Débito somente do que foi realmente salvo
-    if (savedCount > 0) {
+    // Cobra tudo o que foi entregue (novos + repetidos que já estavam na conta)
+    if (chargeCount > 0) {
       await admin
         .from("profiles")
-        .update({ searches_used: ((profileData as any).searches_used || 0) + savedCount })
+        .update({ searches_used: ((profileData as any).searches_used || 0) + chargeCount })
         .eq("id", billingProfileId);
+      const { error: lockError } = await admin.from("prospecting_search_locks").insert({
+        owner_user_id: ownerId, source: "web", niche_key: lockNiche, location_key: lockLocation,
+        niche: searchTerm, location: location || null, created_by_user_id: user.id,
+      });
+      if (lockError && lockError.code !== "23505") console.error("[web-search] trava", lockError);
     }
 
-    const withPhone = inserted.filter((l: any) => !!l.phone).length;
-    const withEmail = inserted.filter((l: any) => !!l.email).length;
-    const withSocial = inserted.filter((l: any) => !!l.social_media).length;
+    const withPhone = allDelivered.filter((l: any) => !!l.phone).length;
+    const withEmail = allDelivered.filter((l: any) => !!l.email).length;
+    const withSocial = allDelivered.filter((l: any) => !!l.social_media).length;
 
     const { data: history } = await admin
       .from("search_history")
@@ -553,10 +584,10 @@ serve(async (req) => {
         location: location || null,
         extra_term: null,
         requested_count: target,
-        results_count: savedCount,
+        results_count: chargeCount,
         source: "web",
         status: "completed",
-        leads: inserted.map((l: any) => ({ id: l.id, name: l.company_name, domain: l.domain })),
+        leads: allDelivered.map((l: any) => ({ id: l.id, name: l.company_name, domain: l.domain })),
       })
       .select("id")
       .maybeSingle();
@@ -565,10 +596,12 @@ serve(async (req) => {
       success: true,
       searchId: history?.id || null,
       searchQuery: query,
-      leadIds: inserted.map((l: any) => l.id),
+      leadIds: allDelivered.map((l: any) => l.id),
       summary: {
-        found: fresh.length,
+        found: delivered.length,
         saved: savedCount,
+        alreadyInAccount: existingLeads.length,
+        charged: chargeCount,
         withPhone,
         withWhatsApp: rows.filter((row) => row.whatsapp_status === "provavel").length,
         withEmail,

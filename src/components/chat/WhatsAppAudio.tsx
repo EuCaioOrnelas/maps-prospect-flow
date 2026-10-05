@@ -234,7 +234,15 @@ export function WhatsAppAudio({ src, isOutbound, avatarUrl, avatarInitials = "",
       const { data, error } = await supabase.functions.invoke("transcribe-audio", {
         body: { audio_url: src, message_id: messageId },
       });
-      if (error) throw error;
+      if (error) {
+        const ctx = (error as { context?: Response }).context;
+        const payload = ctx ? await ctx.clone().json().catch(() => null) : null;
+        if (payload?.error === "audio_limit_reached") {
+          toast.error(payload.message);
+          return;
+        }
+        throw error;
+      }
       const text = (data as any)?.text || "";
       if (!text) {
         toast.error("Não foi possível transcrever o áudio");
