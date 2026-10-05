@@ -36,11 +36,12 @@ interface Props {
 /** Recomenda a WiizePay só para quem ainda não conectou. */
 export function WiizePayPromo({ variant, connected, dismissible = false, className }: Props) {
   const navigate = useNavigate();
+  const shouldCheckConnection = connected === undefined;
   const own = useAllWiizePayCharges();
   const [hidden, setHidden] = useState(dismissible ? dismissedRecently() : false);
 
-  const isConnected = connected !== undefined ? connected : own.data ? own.data.connected : own.isError ? false : undefined;
-  if (isConnected !== false || hidden) return null;
+  const isConnected = connected !== undefined ? connected : own.data?.connected === true;
+  if (isConnected || hidden) return null;
 
   const go = () => navigate(CONNECT_PATH);
   const dismiss = () => {
