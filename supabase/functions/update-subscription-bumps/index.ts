@@ -24,9 +24,9 @@ const BUMP_CATALOG: Record<string, {
   column: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
   allowedPlans: string[];
 }> = {
-  numbers:       { stripePriceId: "", asaasMonthly: 49.00, column: "extra_numbers",             allowedPlans: ["start", "growth", "scale"] },
-  contacts:      { stripePriceId: "", asaasMonthly: 39.00, column: "extra_contacts_packs",      allowedPlans: ["start", "growth", "scale"] },
-  opportunities: { stripePriceId: "", asaasMonthly: 99.00, column: "extra_opportunities_packs", allowedPlans: ["growth", "scale"] },
+  numbers:       { stripePriceId: "price_1UNClcK8CM0R6xMM0uMtVjvX", asaasMonthly: 49.00, column: "extra_numbers",             allowedPlans: ["start", "growth", "scale"] },
+  contacts:      { stripePriceId: "price_1UNClwK8CM0R6xMMWVap9ge2", asaasMonthly: 39.00, column: "extra_contacts_packs",      allowedPlans: ["start", "growth", "scale"] },
+  opportunities: { stripePriceId: "price_1UNCmEK8CM0R6xMMfGhL369a", asaasMonthly: 99.00, column: "extra_opportunities_packs", allowedPlans: ["growth", "scale"] },
 };
 
 const PLAN_MONTHLY_PRICE: Record<string, number> = {

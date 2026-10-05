@@ -19,8 +19,8 @@ const COUPON_CODE = "FIRST50";
 const TIMER_SECONDS = 10 * 60;
 
 const PRICE_IDS = {
-  start: "",
-  growth: "",
+  start: "price_1UNCkyK8CM0R6xMM8QSYPOT8",
+  growth: "price_1UNCieK8CM0R6xMMjgjVONVA",
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 

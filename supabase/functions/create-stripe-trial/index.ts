@@ -32,8 +32,8 @@ const corsHeaders = {
 };
 
 const PLAN_TO_MONTHLY_PRICE: Record<string, string> = {
-  start: "", // TODO: informar o novo Price ID mensal de R$ 89
-  growth: "", // TODO: informar o novo Price ID mensal de R$ 129
+  start: "price_1UNCkyK8CM0R6xMM8QSYPOT8",
+  growth: "price_1UNCieK8CM0R6xMMjgjVONVA",
   scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 

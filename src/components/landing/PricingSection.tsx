@@ -49,8 +49,8 @@ const AnimatedPrice = ({ targetPrice, anchorPrice, isVisible }: { targetPrice: s
 
 const PRICE_IDS: Record<string, Record<string, string>> = {
  monthly: {
- start: "",
- growth: "",
+ start: "price_1UNCkyK8CM0R6xMM8QSYPOT8",
+ growth: "price_1UNCieK8CM0R6xMMjgjVONVA",
  scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
  },
  annual: {
