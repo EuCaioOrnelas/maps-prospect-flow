@@ -571,9 +571,9 @@ serve(async (req) => {
       if (lockError && lockError.code !== "23505") console.error("[web-search] trava", lockError);
     }
 
-    const withPhone = inserted.filter((l: any) => !!l.phone).length;
-    const withEmail = inserted.filter((l: any) => !!l.email).length;
-    const withSocial = inserted.filter((l: any) => !!l.social_media).length;
+    const withPhone = allDelivered.filter((l: any) => !!l.phone).length;
+    const withEmail = allDelivered.filter((l: any) => !!l.email).length;
+    const withSocial = allDelivered.filter((l: any) => !!l.social_media).length;
 
     const { data: history } = await admin
       .from("search_history")
