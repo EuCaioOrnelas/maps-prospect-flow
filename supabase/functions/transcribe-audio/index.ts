@@ -99,6 +99,33 @@ Deno.serve(async (req) => {
     }
 
 
+    // Limite de 400 transcrições por usuário por mês (contado no registro de custo de IA).
+    const MONTHLY_AUDIO_LIMIT = 400;
+    let callerUserId: string | null = null;
+    const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (bearer && bearer !== serviceKey) {
+      const sbAuth = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey, { auth: { persistSession: false } });
+      const { data: u } = await sbAuth.auth.getUser(bearer);
+      callerUserId = u?.user?.id ?? null;
+      if (callerUserId) {
+        const now = new Date();
+        const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+        const { count } = await sbAuth
+          .from("ai_usage_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", callerUserId)
+          .eq("feature", "transcribe-audio")
+          .gte("created_at", monthStart);
+        if ((count ?? 0) >= MONTHLY_AUDIO_LIMIT) {
+          return new Response(JSON.stringify({
+            error: "audio_limit_reached",
+            message: `Você atingiu o limite de ${MONTHLY_AUDIO_LIMIT} transcrições de áudio neste mês. O limite renova no dia 1º.`,
+          }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+    }
+
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) {
       return new Response(JSON.stringify({ error: "OPENAI_API_KEY not configured" }), {
@@ -264,7 +291,7 @@ Deno.serve(async (req) => {
     const data = await whisperRes.json();
     // Whisper é cobrado por minuto (US$ 0.006/min). Estimamos pelo tamanho do áudio.
     const estimatedMinutes = Math.max(0.1, (audioBlob.size / (16 * 1024)) / 60);
-    logAiUsage({ feature: 'transcribe-audio', model: 'whisper-1', cost_usd: estimatedMinutes * 0.006, metadata: { estimated_minutes: Number(estimatedMinutes.toFixed(2)), bytes: audioBlob.size } });
+    logAiUsage({ feature: 'transcribe-audio', model: 'whisper-1', user_id: callerUserId, cost_usd: estimatedMinutes * 0.006, metadata: { estimated_minutes: Number(estimatedMinutes.toFixed(2)), bytes: audioBlob.size } });
     const transcript = String(data.text || "");
 
     // Persistência da transcrição SEMPRE criptografada (AES-256-GCM) no metadata da mensagem
