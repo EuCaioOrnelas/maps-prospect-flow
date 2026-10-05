@@ -166,7 +166,7 @@ export default function MainDashboard() {
               </div>
 
               <TrialAutoChargeBanner />
-              {!tourCockpitActive && <WiizePayPromo variant="banner" dismissible />}
+              <WiizePayPromo variant="banner" dismissible />
 
               {/* 1 — Hero Impact (oculto no plano Atendimento — sem prospecção) */}
               {hasOpportunitiesAccess(profile as any) && (

@@ -277,7 +277,7 @@ export const TRIAGE_TREE: Category[] = [
   },
   {
     id: "wiizepay",
-    label: "Suporte Wiize Pay",
+    label: "Suporte WiizePay",
     emoji: "💰",
     alwaysHuman: true,
     directEscalate: true,

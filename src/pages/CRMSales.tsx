@@ -143,7 +143,7 @@ export default function CRMSales() {
     });
   }, [sales, typeFilter, statusFilter, responsibleFilter, search, dateFrom, dateTo, user?.id]);
 
-  // KPIs seguem os filtros ativos. Com Wiize Pay, vendas cuja cobrança foi
+  // KPIs seguem os filtros ativos. Com WiizePay, vendas cuja cobrança foi
   // cancelada, estornada ou falhou deixam de contar como receita.
   const DEAD = ["cancelled", "refunded", "error"];
   const metrics = useMemo(
@@ -287,7 +287,7 @@ export default function CRMSales() {
             {wp?.connected && wpTotals.count > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { label: "Recebido no Wiize Pay", value: wpTotals.paid, tone: "text-primary" },
+                  { label: "Recebido na WiizePay", value: wpTotals.paid, tone: "text-primary" },
                   { label: "Pagamento pendente", value: wpTotals.pending, tone: "text-foreground" },
                   { label: "Vencido", value: wpTotals.overdue, tone: "text-destructive" },
                 ].map((k) => (

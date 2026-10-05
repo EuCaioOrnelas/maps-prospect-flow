@@ -98,14 +98,14 @@ export function WiizePayChargeDialog({ open, onOpenChange, leadId, dealId, fromN
       });
       if (r.checkout_url) {
         setResult({ url: r.checkout_url, expiresAt: r.checkout_expires_at ?? null });
-        toast.success("Cobrança criada no Wiize Pay.");
+        toast.success("Cobrança criada na WiizePay.");
       } else {
         toast.success("Cobrança registrada.");
         onOpenChange(false);
       }
     } catch (e) {
       const m = (e as Error).message;
-      setFormError(m === "not_connected" ? "Conecte sua conta Wiize Pay em Integrações." : m || "Não foi possível criar a cobrança.");
+      setFormError(m === "not_connected" ? "Conecte sua conta WiizePay em Integrações." : m || "Não foi possível criar a cobrança.");
     }
   };
 
@@ -126,8 +126,8 @@ export function WiizePayChargeDialog({ open, onOpenChange, leadId, dealId, fromN
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>{fromNewSale ? "Venda salva — agora crie a cobrança" : "Criar cobrança no Wiize Pay"}</DialogTitle>
-              <DialogDescription>O cliente, o contrato e a cobrança são criados na sua conta Wiize Pay. Nada é enviado antes da sua confirmação.</DialogDescription>
+              <DialogTitle>{fromNewSale ? "Venda salva — agora crie a cobrança" : "Criar cobrança na WiizePay"}</DialogTitle>
+              <DialogDescription>O cliente, o contrato e a cobrança são criados na sua conta WiizePay. Nada é enviado antes da sua confirmação.</DialogDescription>
             </DialogHeader>
 
             {loading || !snap ? (
@@ -140,7 +140,7 @@ export function WiizePayChargeDialog({ open, onOpenChange, leadId, dealId, fromN
                   <div className="space-y-1.5 pt-1">
                     <Label htmlFor="wp-doc">CPF ou CNPJ do cliente</Label>
                     <Input id="wp-doc" inputMode="numeric" value={doc} onChange={(e) => setDoc(maskDoc(e.target.value))} placeholder="000.000.000-00 ou 00.000.000/0000-00" />
-                    <p className="text-xs text-muted-foreground">Obrigatório no Wiize Pay. Fica salvo no contato.</p>
+                    <p className="text-xs text-muted-foreground">Obrigatório na WiizePay. Fica salvo no contato.</p>
                   </div>
                 </div>
 
@@ -199,7 +199,7 @@ export function WiizePayChargeDialog({ open, onOpenChange, leadId, dealId, fromN
 
                 <p className="flex items-start gap-2 text-xs text-muted-foreground">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-primary" />
-                  O cliente paga numa página segura do Wiize Pay. Dados de cartão nunca passam pelo Wiize.
+                  O cliente paga numa página segura da WiizePay. Dados de cartão nunca passam pela Wiize.
                 </p>
               </div>
             )}

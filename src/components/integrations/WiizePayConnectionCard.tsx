@@ -23,7 +23,7 @@ async function call(body: Record<string, unknown>) {
 const BENEFITS = [
   { icon: Receipt, title: "Cobranças pelo CRM", text: "PIX, boleto e cartão direto de cada venda." },
   { icon: Link2, title: "Status automático", text: "Pagamentos aparecem no lead sem digitar nada." },
-  { icon: ShieldCheck, title: "Acesso seguro", text: "Você autoriza no Wiize Pay; sua senha não passa pelo Wiize." },
+  { icon: ShieldCheck, title: "Acesso seguro", text: "Você autoriza na WiizePay; sua senha não passa pela Wiize." },
 ];
 
 export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: () => void } = {}) {
@@ -86,7 +86,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
     setBusy(true);
     // Dentro de um quadro (prévia), o navegador bloqueia a troca da página inteira
     // depois de uma espera. Por isso a nova aba é aberta JÁ no clique e só recebe o
-    // endereço depois. Fora de quadro, a própria aba segue para o Wiize Pay.
+    // endereço depois. Fora de quadro, a própria aba segue para a WiizePay.
     const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
     const tab = preTab !== undefined ? preTab : (inFrame ? window.open("", "_blank") : null);
     try {
@@ -95,7 +95,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
       if (url.protocol !== "https:") throw new Error("invalid_url");
       if (tab && !tab.closed) {
         tab.location.href = url.toString();
-        toast.info("Continue a autorização na nova aba do Wiize Pay.");
+        toast.info("Continue a autorização na nova aba da WiizePay.");
         setBusy(false);
       } else if (inFrame) {
         // Bloqueador de pop-up: tenta sair do quadro direto.
@@ -107,16 +107,16 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
     } catch (e) {
       if (tab && !tab.closed) tab.close();
       toast.error((e as Error).message === "not_configured"
-        ? "O Wiize Pay ainda não liberou a conexão. Tente mais tarde."
+        ? "A WiizePay ainda não liberou a conexão. Tente mais tarde."
         : "Não foi possível iniciar a conexão.");
       setBusy(false);
     }
   };
 
   const disconnect = async () => {
-    if (!confirm("Desconectar o Wiize Pay? O histórico já registrado será mantido.")) return;
+    if (!confirm("Desconectar a WiizePay? O histórico já registrado será mantido.")) return;
     setBusy(true);
-    try { await call({ action: "disconnect" }); toast.success("Wiize Pay desconectado."); await load(); }
+    try { await call({ action: "disconnect" }); toast.success("WiizePay desconectada."); await load(); }
     catch { toast.error("Não foi possível desconectar."); }
     finally { setBusy(false); }
   };
@@ -134,14 +134,14 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
       if (data?.error === "rate_limited") { toast.error("Aguarde um minuto antes de sincronizar de novo."); return; }
       if (data?.error) throw new Error(data.error);
       if (data.reason === "wiize_pay_route_unavailable") {
-        toast.error(`O Wiize Pay ainda não está recebendo clientes. Publique a versão mais recente do Wiize Pay; os ${data.queued} clientes ficam guardados e serão enviados automaticamente.`, { duration: 10000 });
+        toast.error(`A WiizePay ainda não está recebendo clientes. Publique a versão mais recente da WiizePay; os ${data.queued} clientes ficam guardados e serão enviados automaticamente.`, { duration: 10000 });
       } else if (data.reason === "reconnect_required") {
         toast.error(`Sua conexão foi feita antes da permissão de enviar clientes e cobranças. Clique em Desconectar e conecte de novo; os ${data.queued} clientes ficam guardados e são enviados em seguida.`, { duration: 12000 });
       } else if (data.reason === "token_unavailable") {
-        toast.error("A conexão com o Wiize Pay expirou. Reconecte a conta; os clientes ficam guardados para envio.");
+        toast.error("A conexão com a WiizePay expirou. Reconecte a conta; os clientes ficam guardados para envio.");
       } else if (data.failed) toast.error(`${data.sent} clientes enviados. ${data.failed} tiveram problema e serão reenviados automaticamente.`);
       else if (data.pending > 0) toast.success(`${data.sent} clientes enviados. Os outros ${data.pending} continuam sendo enviados em segundo plano.`);
-      else toast.success(`${data.sent} clientes enviados ao Wiize Pay.`);
+      else toast.success(`${data.sent} clientes enviados à WiizePay.`);
     } catch { toast.error("Não foi possível sincronizar agora. Vamos tentar de novo automaticamente."); }
     finally { setSyncing(false); }
   };
@@ -160,7 +160,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="font-display text-lg font-semibold text-foreground">Conta Wiize Pay</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">Conta WiizePay</h2>
             {!loaded ? null : active ? (
               <span className="inline-flex items-center gap-1.5 rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 Conectado
@@ -179,8 +179,8 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
             {active
               ? `Conectado${st?.connection?.external_account_label ? ` à conta ${st.connection.external_account_label}` : ""}${st?.connection?.connected_at ? ` desde ${new Date(st.connection.connected_at).toLocaleDateString("pt-BR")}` : ""}.`
               : !st?.configured
-                ? "A conexão será liberada assim que o Wiize Pay ativar o acesso seguro."
-                : "Você será levado ao Wiize Pay para autorizar. A conexão fica ativa até você desconectar."}
+                ? "A conexão será liberada assim que a WiizePay ativar o acesso seguro."
+                : "Você será levado à WiizePay para autorizar. A conexão fica ativa até você desconectar."}
           </p>
           {needsReconnect && (
             <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
@@ -201,7 +201,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
           ) : (
              <Button onClick={onConnectClick} disabled={busy || !st?.configured || passwordSet === null} className="gap-2 h-10 px-5">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Conectar Wiize Pay
+              Conectar WiizePay
               {!busy && <ArrowRight className="h-4 w-4" />}
             </Button>
           )
@@ -229,7 +229,7 @@ export function WiizePayConnectionCard({ onPasswordSaved }: { onPasswordSaved?: 
           </DialogHeader>
           <ol className="space-y-2 text-sm text-foreground">
             <li className="flex gap-2"><span className="font-semibold text-primary">1.</span> Crie a Senha de Integração abaixo.</li>
-            <li className="flex gap-2"><span className="font-semibold text-primary">2.</span> Você será levado ao Wiize Pay para entrar e clicar em <b>Autorizar</b>.</li>
+            <li className="flex gap-2"><span className="font-semibold text-primary">2.</span> Você será levado à WiizePay para entrar e clicar em <b>Autorizar</b>.</li>
             <li className="flex gap-2"><span className="font-semibold text-primary">3.</span> Ao voltar, a conexão aparece como <b>Conectado</b>.</li>
           </ol>
           <div className="space-y-3">

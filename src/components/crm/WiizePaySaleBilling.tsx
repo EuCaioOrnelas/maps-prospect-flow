@@ -22,7 +22,7 @@ interface Props {
 
 /**
  * Situação de cobrança de uma venda.
- * - Sem Wiize Pay conectado: não mostra nada (estrutura antiga).
+ * - Sem WiizePay conectada: não mostra nada (estrutura antiga).
  * - Venda anterior à conexão: selo "Controle interno".
  * - Venda nova: cria cobrança, mostra status, link, atualizar e cancelar.
  */
@@ -37,7 +37,7 @@ export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact 
 
   if (!charge && !era) {
     return (
-      <Badge variant="outline" className="gap-1 text-muted-foreground" title="Venda registrada antes da conexão com o Wiize Pay">
+      <Badge variant="outline" className="gap-1 text-muted-foreground" title="Venda registrada antes da conexão com a WiizePay">
         <Archive className="w-3 h-3" /> Controle interno
       </Badge>
     );
@@ -59,7 +59,7 @@ export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact 
     <div className="flex flex-wrap items-center gap-2">
       {charge && (
         <Badge variant="outline" className={chargeStatusTone[charge.status]} title={charge.status === "error" ? charge.error_message || undefined : undefined}>
-          Wiize Pay: {chargeStatusLabel[charge.status]}
+          WiizePay: {chargeStatusLabel[charge.status]}
         </Badge>
       )}
       {pending && meta?.can_charge && (
@@ -74,7 +74,7 @@ export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact 
       )}
       {pending && meta?.can_charge && (
         <Button size="sm" variant="ghost" className={btn} onClick={() => {
-          if (confirm("Cancelar esta cobrança no Wiize Pay?")) cancel.mutate(charge!.id, {
+          if (confirm("Cancelar esta cobrança na WiizePay?")) cancel.mutate(charge!.id, {
             onSuccess: () => toast.success("Cobrança cancelada"),
             onError: (e) => toast.error((e as Error).message || "Não foi possível cancelar"),
           });
@@ -94,7 +94,7 @@ export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact 
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Link de pagamento</DialogTitle>
-              <DialogDescription>Envie para o cliente pagar pelo Wiize Pay.</DialogDescription>
+              <DialogDescription>Envie para o cliente pagar pela WiizePay.</DialogDescription>
             </DialogHeader>
             <WiizePayLinkShare url={link.url} expiresAt={link.expiresAt} phone={phone} email={email} title={sale.title} />
             <DialogFooter><Button onClick={() => setLink(null)}>Fechar</Button></DialogFooter>

@@ -35,3 +35,5 @@
 - [x] Remover a segunda janela após cadastrar uma venda no card do contato e na página Vendas e Receita.
 - [ ] Validar visual e funcionamento do novo fluxo em computador e celular.
 - [ ] Corrigir a preferência de tema no fluxo de autorização; bloqueado até o projeto Wiize Pay aceitar `ui_theme`.
+
+- [x] Padronizar a marca WiizePay, melhorar os cards de recomendação e corrigir a exibição do banner no painel.

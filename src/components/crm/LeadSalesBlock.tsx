@@ -89,7 +89,7 @@ export function LeadSalesBlock({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">Vendas & Receita</h3>
-          <p className="text-xs text-muted-foreground">{wp?.connected ? "Vendas novas são cobradas pelo Wiize Pay" : "Histórico financeiro com este cliente"}</p>
+          <p className="text-xs text-muted-foreground">{wp?.connected ? "Vendas novas são cobradas pela WiizePay" : "Histórico financeiro com este cliente"}</p>
         </div>
         <Button size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-1.5" />

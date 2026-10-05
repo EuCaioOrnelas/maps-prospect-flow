@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 // ---------------------------------------------------------------
-// MÓDULO SEGURO DE EXPORTAÇÃO — Preparação Wiize Pay
+// MÓDULO SEGURO DE EXPORTAÇÃO — Preparação WiizePay
 // READY_FOR_WIIZE_PAY: o frontend apenas solicita; todas as
 // decisões de segurança vivem no backend (edge function).
 // ---------------------------------------------------------------
@@ -333,7 +333,7 @@ export default function IntegrationWiizePay() {
                <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 pb-6 border-b border-border/60">
                  <div>
                    <p className="text-xs font-semibold uppercase text-primary mb-2">Configurações / Integrações</p>
-                   <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground">Wiize Pay</h1>
+                   <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground">WiizePay</h1>
                    <p className="text-sm text-muted-foreground mt-2 max-w-xl">Conexão, cobranças e exportações em um só lugar.</p>
                  </div>
                  <span className="inline-flex items-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Autorização segura</span>
@@ -606,7 +606,7 @@ export default function IntegrationWiizePay() {
                       <CardTitle>Revogar conexão</CardTitle>
                       <CardDescription>
                         READY_FOR_WIIZE_PAY: quando a integração real existir, revogar invalidará autorizações,
-                        tokens e acessos delegados do Wiize Pay à sua conta, com registro em auditoria.
+                        tokens e acessos delegados da WiizePay à sua conta, com registro em auditoria.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
