@@ -117,7 +117,7 @@ export function isWiizePayEra(saleCreatedAt: string, meta?: Pick<WiizePayListMet
 
 export const chargeStatusLabel: Record<WiizePayChargeStatus, string> = {
   draft: "Rascunho",
-  awaiting_wiize_pay: "Aguardando Wiize Pay",
+  awaiting_wiize_pay: "Aguardando WiizePay",
   sent: "Cobrança criada",
   awaiting_payment: "Pagamento pendente",
   overdue: "Vencida",

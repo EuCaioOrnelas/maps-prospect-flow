@@ -11,7 +11,7 @@ interface Props {
   title?: string | null;
 }
 
-/** Link de pagamento do Wiize Pay: copiar e enviar ao cliente. */
+/** Link de pagamento da WiizePay: copiar e enviar ao cliente. */
 export function WiizePayLinkShare({ url, expiresAt, phone, email, title }: Props) {
   const text = `Olá! Segue o link para pagamento${title ? ` de "${title}"` : ""}: ${url}`;
   const phoneDigits = (phone || "").replace(/\D/g, "");

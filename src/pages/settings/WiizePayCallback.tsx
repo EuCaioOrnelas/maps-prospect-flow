@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 export default function WiizePayCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const [msg, setMsg] = useState("Concluindo a conexão com o Wiize Pay…");
+  const [msg, setMsg] = useState("Concluindo a conexão com a WiizePay…");
   const ran = useRef(false);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function WiizePayCallback() {
     supabase.functions
       .invoke("wiize-pay-connect", { body: { action: "callback", code, state, origin: window.location.origin } })
       .then(({ data, error }) => {
-        setMsg(error || data?.error ? "Não foi possível concluir a conexão. Tente novamente." : "Wiize Pay conectado!");
+        setMsg(error || data?.error ? "Não foi possível concluir a conexão. Tente novamente." : "WiizePay conectada!");
       })
       .finally(() => setTimeout(() => navigate("/configuracoes/integracoes/wiize-pay", { replace: true }), 1800));
   }, [params, navigate]);
