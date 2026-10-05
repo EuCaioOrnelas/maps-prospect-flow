@@ -65,7 +65,7 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
               onClick={dismiss}
               aria-label="Fechar anúncio da WiizePay"
               title="Fechar"
-              className="absolute -right-3 -top-3 z-10 h-10 w-10 rounded-full border border-border shadow-lg"
+              className="!absolute -right-3 -top-3 z-10 h-10 w-10 rounded-full border border-border shadow-lg"
             >
               <X className="h-5 w-5" />
             </Button>
