@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, CreditCard, Gauge, LayoutDashboard, QrCode, RefreshCw, X, Zap } from "lucide-react";
+import { ArrowRight, CreditCard, QrCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAllWiizePayCharges } from "@/hooks/useWiizePayCharges";
 import { cn } from "@/lib/utils";
+import wiizePayBanner from "@/assets/wiizepay-banner.png.asset.json";
 
 export type WiizePayPromoVariant = "banner" | "strip" | "card";
 
 const DISMISS_KEY = "wiize-pay-promo-dismissed-v2";
 const DISMISS_DAYS = 30;
 const CONNECT_PATH = "/configuracoes/integracoes/wiize-pay";
+const WIIZEPAY_SITE = "https://wiizepay.com.br";
 
 function dismissedRecently() {
   try {
@@ -17,13 +19,6 @@ function dismissedRecently() {
     return !!raw && Date.now() - Number(raw) < DISMISS_DAYS * 86_400_000;
   } catch { return false; }
 }
-
-const BENEFITS = [
-  { Icon: Zap, title: "Recebimento simples", text: "Venda e cobrança no mesmo fluxo" },
-  { Icon: QrCode, title: "PIX automático", text: "Cobrança pronta para enviar" },
-  { Icon: LayoutDashboard, title: "Painel do cliente", text: "Tudo organizado em um só lugar" },
-  { Icon: RefreshCw, title: "Cobranças automáticas", text: "Recorrências sem trabalho manual" },
-];
 
 interface Props {
   variant: WiizePayPromoVariant;
@@ -50,7 +45,7 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
 
   const closeBtn = dismissible && (
     <div className="absolute right-2 top-2 z-10">
-      <Button type="button" variant="ghost" size="icon" onClick={dismiss} aria-label="Dispensar recomendação" title="Dispensar" className="h-8 w-8 text-muted-foreground">
+      <Button type="button" variant="ghost" size="icon" onClick={dismiss} aria-label="Dispensar recomendação" title="Dispensar" className="h-8 w-8 bg-background/80 text-muted-foreground">
         <X className="h-4 w-4" />
       </Button>
     </div>
@@ -87,22 +82,21 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   return (
     <section className={cn("relative overflow-hidden rounded-lg border border-border bg-card shadow-sm", className)} aria-label="Conheça a WiizePay">
       {closeBtn}
-      <div className="flex flex-col gap-4 p-4 pr-12 sm:flex-row sm:items-center sm:gap-5">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"><Gauge className="h-5 w-5" /></div>
-          <div className="min-w-0">
-            <h3 className="truncate font-display text-base font-semibold text-foreground">Receba com a mesma simplicidade que você vende</h3>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{BENEFITS.map(({ title }) => title).join("  ·  ")}</p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          {/* Espaço da imagem (proporção 3:1 — criar com 504 × 168 px). Substituir pela arte final quando enviada. */}
-          <div className="hidden h-14 w-[168px] shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent md:flex">
-            <QrCode className="h-6 w-6 text-primary/40" aria-hidden="true" />
-          </div>
-          <Button onClick={go} className="shrink-0">Conhecer a WiizePay <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
-        </div>
-      </div>
+      {/* Banner inteiro é a imagem, na proporção real da arte (3:1), clicável até o site da WiizePay. */}
+      <a
+        href={WIIZEPAY_SITE}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block h-full w-full focus-visible:outline-2 focus-visible:outline-primary"
+        aria-label="Conhecer a WiizePay — wiizepay.com.br"
+      >
+        <img
+          src={wiizePayBanner.url}
+          alt="WiizePay — Receba seus pagamentos de forma simples e automática. Cobranças, clientes, contratos e recebimentos em um só lugar."
+          className="block h-auto w-full"
+          loading="lazy"
+        />
+      </a>
     </section>
   );
 }
