@@ -15,12 +15,12 @@ const corsHeaders = {
 
 const PLAN_PRICES: Record<string, { monthly: string; annual: string; name: string }> = {
   start: {
-    monthly: "price_1TYl5KK8CM0R6xMMeHUhKt7s", // R$196 (novo)
+    monthly: "", // TODO: informar o novo Price ID mensal de R$ 89
     annual: "price_1TLZkSK8CM0R6xMMwr1Ke1IX",
     name: "Wiize Atendimento",
   },
   growth: {
-    monthly: "price_1UBNs5K8CM0R6xMMJAnZEQdm", // R$396 (v3)
+    monthly: "", // TODO: informar o novo Price ID mensal de R$ 129
     annual: "price_1TLZn8K8CM0R6xMMaEz5JuVW",
     name: "Wiize Growth IA",
   },
@@ -33,17 +33,17 @@ const BUMP_CATALOG: Record<string, {
   allowedPlans: string[];
 }> = {
   numbers: {
-    priceId: "price_1TYdiXK8CM0R6xMMqnhxGM1V",
+    priceId: "", // TODO: informar o novo Price ID mensal de R$ 49
     column: "extra_numbers",
     allowedPlans: ["start", "growth"],
   },
   contacts: {
-    priceId: "price_1TYdkPK8CM0R6xMMXHTfihdw",
+    priceId: "", // TODO: informar o novo Price ID mensal de R$ 39
     column: "extra_contacts_packs",
     allowedPlans: ["start", "growth"],
   },
   opportunities: {
-    priceId: "price_1TYdknK8CM0R6xMM9TXjGFf5",
+    priceId: "", // TODO: informar o novo Price ID mensal de R$ 99
     column: "extra_opportunities_packs",
     allowedPlans: ["growth"],
   },
@@ -95,7 +95,22 @@ serve(async (req) => {
     if (!planConfig) throw new Error(`Invalid plan: ${planKey}`);
 
     const priceId = isAnnual ? planConfig.annual : planConfig.monthly;
+    if (!priceId) {
+      return new Response(
+        JSON.stringify({ error: "Novo preço do cartão ainda não configurado. Escolha PIX ou tente novamente mais tarde." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const cleanBumps = sanitizeBumps(bumps, planKey, isAnnual);
+    const missingBumpPrice = Object.entries(cleanBumps).some(
+      ([id, qty]) => qty > 0 && !BUMP_CATALOG[id]?.priceId,
+    );
+    if (missingBumpPrice) {
+      return new Response(
+        JSON.stringify({ error: "O novo preço desta expansão ainda não está disponível no cartão. Remova a expansão ou escolha PIX." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     log("Request", { planKey, email: customerData.email, billingPeriod, priceId, bumps: cleanBumps });
 
     // 1. Resolve user_id

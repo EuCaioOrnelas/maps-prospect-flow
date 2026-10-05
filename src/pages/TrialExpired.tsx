@@ -179,6 +179,9 @@ const TrialExpired = () => {
     setLoadingPlan(selectedPlanKey);
     try {
       const priceId = PRICE_IDS[billingKey][selectedPlanKey];
+      if (!priceId) {
+        throw new Error("O novo preço no cartão ainda está sendo configurado. Escolha PIX por enquanto.");
+      }
       const response = await supabase.functions.invoke("create-checkout", {
         body: { priceId, guestEmail: user ? undefined : customerData.email, couponCode: couponFromUrl || undefined },
       });

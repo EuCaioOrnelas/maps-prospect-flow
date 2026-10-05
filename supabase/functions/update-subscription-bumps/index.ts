@@ -24,14 +24,14 @@ const BUMP_CATALOG: Record<string, {
   column: "extra_numbers" | "extra_contacts_packs" | "extra_opportunities_packs";
   allowedPlans: string[];
 }> = {
-  numbers:       { stripePriceId: "price_1TYdiXK8CM0R6xMMqnhxGM1V", asaasMonthly: 96.00,  column: "extra_numbers",              allowedPlans: ["start", "growth", "scale"] },
-  contacts:      { stripePriceId: "price_1TYdkPK8CM0R6xMMXHTfihdw", asaasMonthly: 48.00,  column: "extra_contacts_packs",       allowedPlans: ["start", "growth", "scale"] },
-  opportunities: { stripePriceId: "price_1TYdknK8CM0R6xMM9TXjGFf5", asaasMonthly: 196.00, column: "extra_opportunities_packs",  allowedPlans: ["growth", "scale"] },
+  numbers:       { stripePriceId: "", asaasMonthly: 49.00, column: "extra_numbers",             allowedPlans: ["start", "growth", "scale"] },
+  contacts:      { stripePriceId: "", asaasMonthly: 39.00, column: "extra_contacts_packs",      allowedPlans: ["start", "growth", "scale"] },
+  opportunities: { stripePriceId: "", asaasMonthly: 99.00, column: "extra_opportunities_packs", allowedPlans: ["growth", "scale"] },
 };
 
 const PLAN_MONTHLY_PRICE: Record<string, number> = {
-  start: 196.00,
-  growth: 396.00,
+  start: 89.00,
+  growth: 129.00,
   scale: 1496.00,
 };
 
@@ -144,6 +144,9 @@ serve(async (req) => {
       const updates: Stripe.SubscriptionUpdateParams.Item[] = [];
       for (const [id, qty] of Object.entries(desired)) {
         const priceId = BUMP_CATALOG[id].stripePriceId;
+        if (qty > 0 && !priceId) {
+          throw new Error("O novo preço desta expansão ainda não está disponível no cartão. Tente novamente após a configuração.");
+        }
         const existing = itemsByPrice.get(priceId);
         if (qty > 0) {
           if (existing) {
