@@ -15,12 +15,12 @@ const corsHeaders = {
 
 const PLAN_PRICES: Record<string, { monthly: string; annual: string; name: string }> = {
   start: {
-    monthly: "", // TODO: informar o novo Price ID mensal de R$ 89
+    monthly: "price_1UNCkyK8CM0R6xMM8QSYPOT8",
     annual: "price_1TLZkSK8CM0R6xMMwr1Ke1IX",
     name: "Wiize Atendimento",
   },
   growth: {
-    monthly: "", // TODO: informar o novo Price ID mensal de R$ 129
+    monthly: "price_1UNCieK8CM0R6xMMjgjVONVA",
     annual: "price_1TLZn8K8CM0R6xMMaEz5JuVW",
     name: "Wiize Growth IA",
   },
@@ -33,17 +33,17 @@ const BUMP_CATALOG: Record<string, {
   allowedPlans: string[];
 }> = {
   numbers: {
-    priceId: "", // TODO: informar o novo Price ID mensal de R$ 49
+    priceId: "price_1UNClcK8CM0R6xMM0uMtVjvX",
     column: "extra_numbers",
     allowedPlans: ["start", "growth"],
   },
   contacts: {
-    priceId: "", // TODO: informar o novo Price ID mensal de R$ 39
+    priceId: "price_1UNClwK8CM0R6xMMWVap9ge2",
     column: "extra_contacts_packs",
     allowedPlans: ["start", "growth"],
   },
   opportunities: {
-    priceId: "", // TODO: informar o novo Price ID mensal de R$ 99
+    priceId: "price_1UNCmEK8CM0R6xMMfGhL369a",
     column: "extra_opportunities_packs",
     allowedPlans: ["growth"],
   },

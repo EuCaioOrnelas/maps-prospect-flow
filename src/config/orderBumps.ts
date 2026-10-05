@@ -1,7 +1,7 @@
 /**
  * Catálogo de Order Bumps do checkout / gestão de add-ons.
  *
- * Preços definidos em 2026-10-05. Novos price IDs do Stripe pendentes.
+ * Preços definidos em 2026-10-05.
  *
  * Regras:
  * - `numbers` (incremento de 1) e `contacts` (incremento de 1.000) aparecem em
@@ -47,7 +47,7 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     unit: "número + usuário",
     step: 1,
     monthlyPriceCents: 4900,
-    stripePriceIdMonthly: "",
+    stripePriceIdMonthly: "price_1UNClcK8CM0R6xMM0uMtVjvX",
     stripePriceIdAnnual: null,
     icon: MessageSquare,
     availableOn: ["start", "growth", "scale"],
@@ -62,7 +62,7 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     unit: "contatos",
     step: 1000,
     monthlyPriceCents: 3900,
-    stripePriceIdMonthly: "",
+    stripePriceIdMonthly: "price_1UNClwK8CM0R6xMMWVap9ge2",
     stripePriceIdAnnual: null,
     icon: Users,
     availableOn: ["start", "growth", "scale"],
@@ -77,7 +77,7 @@ export const ORDER_BUMPS: OrderBumpDef[] = [
     unit: "oportunidades",
     step: 1000,
     monthlyPriceCents: 9900,
-    stripePriceIdMonthly: "",
+    stripePriceIdMonthly: "price_1UNCmEK8CM0R6xMMfGhL369a",
     stripePriceIdAnnual: null,
     icon: Target,
     availableOn: ["growth", "scale"],
