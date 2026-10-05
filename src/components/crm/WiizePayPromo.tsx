@@ -57,31 +57,33 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
           <DialogDescription className="sr-only">
             Receba seus pagamentos de forma simples e automática com a WiizePay.
           </DialogDescription>
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            onClick={dismiss}
-            aria-label="Fechar anúncio da WiizePay"
-            title="Fechar"
-            className="absolute -right-3 -top-3 z-10 h-10 w-10 rounded-full border border-border shadow-lg"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-          <a
-            href={WIIZEPAY_SITE}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block overflow-hidden rounded-lg border border-border bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label="Conhecer a WiizePay — abre wiizepay.com.br em uma nova aba"
-          >
-            <img
-              src={wiizePayEntry.url}
-              alt="WiizePay — receba seus pagamentos de forma simples e automática"
-              className="block h-auto max-h-[78vh] w-full object-contain"
-              loading="eager"
-            />
-          </a>
+          <div className="relative">
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              onClick={dismiss}
+              aria-label="Fechar anúncio da WiizePay"
+              title="Fechar"
+              className="absolute -right-3 -top-3 z-10 h-10 w-10 rounded-full border border-border shadow-lg"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <a
+              href={WIIZEPAY_SITE}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block overflow-hidden rounded-lg border border-border bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Conhecer a WiizePay — abre wiizepay.com.br em uma nova aba"
+            >
+              <img
+                src={wiizePayEntry.url}
+                alt="WiizePay — receba seus pagamentos de forma simples e automática"
+                className="block h-auto max-h-[78vh] w-full object-contain"
+                loading="eager"
+              />
+            </a>
+          </div>
         </DialogContent>
       </Dialog>
     );
