@@ -36,7 +36,8 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   const [hidden, setHidden] = useState(dismissible ? dismissedRecently() : false);
 
   const isConnected = connected !== undefined ? connected : own.data?.connected === true;
-  if (isConnected || hidden) return null;
+  const statusResolved = connected !== undefined || own.isSuccess || own.isError;
+  if (!statusResolved || isConnected || hidden) return null;
 
   const go = () => navigate(CONNECT_PATH);
   const dismiss = () => {
