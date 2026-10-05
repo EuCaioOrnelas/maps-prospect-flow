@@ -49,6 +49,7 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
       <Dialog open={!hidden} onOpenChange={(open) => { if (!open) dismiss(); }}>
         <DialogContent
           hideCloseButton
+          overlayClassName="bg-black/70 backdrop-blur-sm"
           className={cn("w-[calc(100%-2rem)] max-w-5xl overflow-visible border-0 bg-transparent p-0 shadow-2xl", className)}
         >
           <DialogTitle className="sr-only">Conheça a WiizePay</DialogTitle>
