@@ -8720,6 +8720,42 @@ export type Database = {
         }
         Relationships: []
       }
+      prospecting_search_locks: {
+        Row: {
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          location: string | null
+          location_key: string
+          niche: string | null
+          niche_key: string
+          owner_user_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          location?: string | null
+          location_key?: string
+          niche?: string | null
+          niche_key: string
+          owner_user_id: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          location?: string | null
+          location_key?: string
+          niche?: string | null
+          niche_key?: string
+          owner_user_id?: string
+          source?: string
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           created_at: string
