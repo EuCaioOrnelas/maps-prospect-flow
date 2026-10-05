@@ -140,6 +140,7 @@ export default function MainDashboard() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <ExpiredSubscriptionDialog />
+            <WiizePayPromo variant="modal" dismissible />
             
             <div className="max-w-7xl mx-auto space-y-6 relative z-10">
               {/* Header */}
@@ -166,7 +167,6 @@ export default function MainDashboard() {
               </div>
 
               <TrialAutoChargeBanner />
-              <WiizePayPromo variant="banner" dismissible />
 
               {/* 1 — Hero Impact (oculto no plano Atendimento — sem prospecção) */}
               {hasOpportunitiesAccess(profile as any) && (

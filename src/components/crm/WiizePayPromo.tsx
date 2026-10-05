@@ -2,14 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, CreditCard, QrCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAllWiizePayCharges } from "@/hooks/useWiizePayCharges";
 import { cn } from "@/lib/utils";
-import wiizePayBanner from "@/assets/wiizepay-banner-4x1.png.asset.json";
+import wiizePayEntry from "@/assets/wiizepay-entrada.png.asset.json";
 
-export type WiizePayPromoVariant = "banner" | "strip" | "card";
+export type WiizePayPromoVariant = "modal" | "strip" | "card";
 
-const DISMISS_KEY = "wiize-pay-promo-dismissed-v3";
-const DISMISS_DAYS = 7;
+const DISMISS_KEY = "wiizepay-entry-promo-dismissed-v1";
+const DISMISS_DAYS = 30;
 const CONNECT_PATH = "/configuracoes/integracoes/wiize-pay";
 const WIIZEPAY_SITE = "https://wiizepay.com.br";
 
@@ -35,13 +36,58 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   const [hidden, setHidden] = useState(dismissible ? dismissedRecently() : false);
 
   const isConnected = connected !== undefined ? connected : own.data?.connected === true;
-  if (isConnected || hidden) return null;
+  const statusResolved = connected !== undefined || own.isSuccess || own.isError;
+  if (!statusResolved || isConnected || hidden) return null;
 
   const go = () => navigate(CONNECT_PATH);
   const dismiss = () => {
     try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* noop */ }
     setHidden(true);
   };
+
+  if (variant === "modal") {
+    return (
+      <Dialog open={!hidden} onOpenChange={(open) => { if (!open) dismiss(); }}>
+        <DialogContent
+          hideCloseButton
+          overlayClassName="bg-black/70 backdrop-blur-sm"
+          className={cn("w-[calc(100%-2rem)] max-w-5xl overflow-visible border-0 bg-transparent p-0 shadow-2xl", className)}
+        >
+          <DialogTitle className="sr-only">Conheça a WiizePay</DialogTitle>
+          <DialogDescription className="sr-only">
+            Receba seus pagamentos de forma simples e automática com a WiizePay.
+          </DialogDescription>
+          <div className="relative">
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              onClick={dismiss}
+              aria-label="Fechar anúncio da WiizePay"
+              title="Fechar"
+              className="!absolute -right-3 -top-3 z-10 h-10 w-10 rounded-full border border-border shadow-lg"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <a
+              href={WIIZEPAY_SITE}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block overflow-hidden rounded-lg border border-border bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Conhecer a WiizePay — abre wiizepay.com.br em uma nova aba"
+            >
+              <img
+                src={wiizePayEntry.url}
+                alt="WiizePay — receba seus pagamentos de forma simples e automática"
+                className="block h-auto max-h-[78vh] w-full object-contain"
+                loading="eager"
+              />
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const closeBtn = dismissible && (
     <div className="absolute right-2 top-2 z-10">
@@ -79,24 +125,5 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
     );
   }
 
-  return (
-    <section className={cn("relative overflow-hidden rounded-lg border border-border bg-card shadow-sm", className)} aria-label="Conheça a WiizePay">
-      {closeBtn}
-      {/* Banner inteiro é a imagem, na proporção real da arte (1200×271), clicável até o site da WiizePay. */}
-      <a
-        href={WIIZEPAY_SITE}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block h-full w-full focus-visible:outline-2 focus-visible:outline-primary"
-        aria-label="Conhecer a WiizePay — wiizepay.com.br"
-      >
-        <img
-          src={wiizePayBanner.url}
-          alt="WiizePay — Receba seus pagamentos de forma simples e automática. Cobranças, clientes, contratos e recebimentos em um só lugar."
-          className="block h-auto w-full"
-          loading="lazy"
-        />
-      </a>
-    </section>
-  );
+  return closeBtn;
 }
