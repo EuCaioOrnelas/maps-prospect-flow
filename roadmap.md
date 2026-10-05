@@ -37,3 +37,4 @@
 - [ ] Corrigir a preferência de tema no fluxo de autorização; bloqueado até o projeto Wiize Pay aceitar `ui_theme`.
 
 - [x] Padronizar a marca WiizePay, melhorar os cards de recomendação e corrigir a exibição do banner no painel.
+- [x] Substituir o banner do cockpit por um aviso de entrada com a arte completa, fechável e recorrente a cada 30 dias.
