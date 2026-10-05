@@ -76,7 +76,17 @@ type PersistResult = {
   insertedCount: number;
   visibleCount: number;
   error: string | null;
+  // Resultados que já existiam na conta: aparecem e são cobrados, mas a
+  // linha existente (com toda a análise já feita) é mantida sem alteração.
+  duplicateCount?: number;
 };
+
+// Normaliza nicho/região para a trava de "mesma busca": minúsculas, sem acento, espaços únicos.
+function normalizeSearchKey(value: string): string {
+  return String(value || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
 
 async function persistOpportunityLeads(
   admin: any,
@@ -602,7 +612,26 @@ serve(async (req) => {
       });
     }
 
-
+    // Trava: a mesma conta não pode prospectar o mesmo nicho na mesma região duas vezes.
+    const lockNiche = normalizeSearchKey(String(keyword));
+    const lockLocation = normalizeSearchKey(String(location));
+    if (!internalMode) {
+      const { data: existingLock } = await supabase
+        .from('prospecting_search_locks')
+        .select('created_at')
+        .eq('owner_user_id', ownerId)
+        .eq('source', 'maps')
+        .eq('niche_key', lockNiche)
+        .eq('location_key', lockLocation)
+        .maybeSingle();
+      if (existingLock) {
+        return new Response(JSON.stringify({
+          error: 'already_prospected',
+          message: `Sua conta já prospectou "${keyword}" em ${location}. Escolha outro nicho ou outra região.`,
+          alreadyProspected: true,
+        }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
 
     console.log(`Searching for: ${keyword} in ${location}`);
 
