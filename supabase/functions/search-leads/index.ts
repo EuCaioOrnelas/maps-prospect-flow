@@ -145,7 +145,7 @@ async function persistOpportunityLeads(
       .select('id')
       .eq('owner_user_id', ownerId)
       .in('phone', phonesOnly);
-    return { insertedCount: 0, visibleCount: visibleExisting?.length || 0, error: null };
+    return { insertedCount: 0, visibleCount: visibleExisting?.length || 0, error: null, duplicateCount: rowsWithAllColumns.length };
   }
 
   const missingColumnName = (err: any): string | null => {
@@ -195,7 +195,8 @@ async function persistOpportunityLeads(
   }
 
   const phones = accountRows.map((row) => row.phone).filter(Boolean);
-  if (phones.length === 0) return { insertedCount, visibleCount: 0, error: lastError };
+  const duplicateCount = rowsWithAllColumns.length - accountRows.length;
+  if (phones.length === 0) return { insertedCount, visibleCount: 0, error: lastError, duplicateCount };
 
   const repairPayload = {
     owner_user_id: ownerId,
@@ -227,7 +228,7 @@ async function persistOpportunityLeads(
     .in('phone', phones);
 
   if (visibilityError) lastError = visibilityError.message;
-  return { insertedCount, visibleCount: visibleRows?.length || 0, error: lastError };
+  return { insertedCount, visibleCount: (visibleRows?.length || 0) + duplicateCount, error: lastError, duplicateCount };
 }
 
 // Normalize phone — aceita BR (celular/fixo) E qualquer número internacional E.164.
@@ -873,14 +874,30 @@ serve(async (req) => {
       }
 
 
-      // Only charge opportunities that were actually persisted
-      if (savedCount > 0) {
+      // Cobra tudo o que foi entregue no resultado: novos + os que já existiam
+      // na conta (estes mantêm a análise anterior na Gestão, sem ser recriados).
+      const chargeCount = savedCount + (persistence.duplicateCount || 0);
+      if (chargeCount > 0) {
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ searches_used: (profile.searches_used || 0) + savedCount })
+          .update({ searches_used: (profile.searches_used || 0) + chargeCount })
           .eq('id', billingProfileId);
         if (updateError) console.error('Error updating opportunity count:', updateError);
-        profile.searches_used = (profile.searches_used || 0) + savedCount;
+        profile.searches_used = (profile.searches_used || 0) + chargeCount;
+      }
+
+      // Registra a trava de nicho + região (só quando a busca entregou algo).
+      if (leads.length > 0) {
+        const { error: lockError } = await supabase.from('prospecting_search_locks').insert({
+          owner_user_id: ownerId,
+          source: 'maps',
+          niche_key: lockNiche,
+          location_key: lockLocation,
+          niche: String(keyword),
+          location: String(location),
+          created_by_user_id: user.id,
+        });
+        if (lockError && lockError.code !== '23505') console.error('Error saving search lock:', lockError);
       }
 
 
