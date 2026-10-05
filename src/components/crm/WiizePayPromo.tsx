@@ -49,9 +49,11 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   };
 
   const closeBtn = dismissible && (
-    <Button type="button" variant="ghost" size="icon" onClick={dismiss} aria-label="Dispensar recomendação" title="Dispensar" className="absolute right-3 top-3 z-10 h-8 w-8 text-muted-foreground">
-      <X className="h-4 w-4" />
-    </Button>
+    <div className="absolute right-2 top-2 z-10">
+      <Button type="button" variant="ghost" size="icon" onClick={dismiss} aria-label="Dispensar recomendação" title="Dispensar" className="h-8 w-8 text-muted-foreground">
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
   );
 
   if (variant === "strip") {
@@ -85,34 +87,20 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   return (
     <section className={cn("relative overflow-hidden rounded-lg border border-border bg-card shadow-sm", className)} aria-label="Conheça a WiizePay">
       {closeBtn}
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="p-5 pr-12 sm:p-6 sm:pr-12">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"><Gauge className="h-6 w-6" /></div>
-            <div className="min-w-0 space-y-2">
-              <p className="text-xs font-semibold uppercase text-primary">WiizePay para prestadores de serviços</p>
-              <h3 className="font-display text-xl font-semibold text-foreground">Receba com a mesma simplicidade que você vende</h3>
-              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">Crie cobranças, automatize seus recebimentos e dê ao cliente uma experiência profissional — sem sair da Wiize.</p>
-            </div>
-          </div>
-          <div className="mt-5 grid gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-2 xl:grid-cols-4">
-            {BENEFITS.map(({ Icon, title, text }) => (
-              <div key={title} className="flex min-w-0 gap-3 bg-card p-3.5">
-                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <div className="min-w-0"><p className="text-xs font-semibold text-foreground">{title}</p><p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{text}</p></div>
-              </div>
-            ))}
+      <div className="flex flex-col gap-4 p-4 pr-12 sm:flex-row sm:items-center sm:gap-5">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"><Gauge className="h-5 w-5" /></div>
+          <div className="min-w-0">
+            <h3 className="truncate font-display text-base font-semibold text-foreground">Receba com a mesma simplicidade que você vende</h3>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{BENEFITS.map(({ title }) => title).join("  ·  ")}</p>
           </div>
         </div>
-        <div className="flex flex-col gap-4 border-t border-border bg-muted/20 p-5 lg:w-72 lg:border-l lg:border-t-0">
-          {/* Espaço da imagem (formato 4:3). Substituir pelo arte final quando enviada. */}
-          <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-            <QrCode className="h-10 w-10 text-primary/40" aria-hidden="true" />
+        <div className="flex shrink-0 items-center gap-3">
+          {/* Espaço da imagem (proporção 3:1 — criar com 504 × 168 px). Substituir pela arte final quando enviada. */}
+          <div className="hidden h-14 w-[168px] shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent md:flex">
+            <QrCode className="h-6 w-6 text-primary/40" aria-hidden="true" />
           </div>
-          <div className="w-full space-y-3">
-            <p className="text-xs leading-relaxed text-muted-foreground">Ative uma conta de pagamentos conectada ao seu processo comercial.</p>
-            <Button onClick={go} className="w-full">Conhecer a WiizePay <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
-          </div>
+          <Button onClick={go} className="shrink-0">Conhecer a WiizePay <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
         </div>
       </div>
     </section>
