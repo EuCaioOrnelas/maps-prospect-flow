@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // WiizeProspect price IDs válidos para MRR (atuais + legados)
 const WIIZE_PRICE_IDS = [
-  "price_1TYl5KK8CM0R6xMMeHUhKt7s", // Atendimento - R$196/mês (atual)
-  "price_1UBNs5K8CM0R6xMMJAnZEQdm", // Growth IA - R$396/mês (v3)
+  "price_1TYl5KK8CM0R6xMMeHUhKt7s", // Atendimento - R$196/mês (legado)
+  "price_1UBNs5K8CM0R6xMMJAnZEQdm", // Growth IA - R$396/mês (legado v3)
   "price_1TYl6iK8CM0R6xMMd23UBpIz", // Growth IA - R$696/mês (legado)
   "price_1TLZi1K8CM0R6xMMDOg3MSTp", // Start - R$296/mês (legado)
   "price_1TLZkSK8CM0R6xMMwr1Ke1IX", // Start - anual (equiv. mensal R$246)

@@ -2,7 +2,7 @@
 
 - [x] Atualizar Atendimento para R$ 89, Growth IA para R$ 129 e expansões para R$ 49/R$ 39/R$ 99 em todas as jornadas.
 - [x] Manter os novos IDs Stripe em aberto e impedir cobrança acidental pelos IDs antigos.
-- [ ] Validar preços e ancoragem no upgrade, checkout, trial e gestão de expansões.
+- [x] Validar preços e ancoragem no upgrade, checkout, trial e gestão de expansões.
 
 - [x] Corrigir o endereço usado para enviar clientes ao Wiize Pay e nunca descartar clientes da fila.
 - [ ] Clientes chegarem no Wiize Pay; bloqueado até publicar a versão mais recente do projeto Wiize Pay.
