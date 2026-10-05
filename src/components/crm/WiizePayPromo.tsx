@@ -104,7 +104,11 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
             ))}
           </div>
         </div>
-        <div className="flex items-center border-t border-border bg-muted/20 p-5 lg:w-56 lg:border-l lg:border-t-0">
+        <div className="flex flex-col gap-4 border-t border-border bg-muted/20 p-5 lg:w-72 lg:border-l lg:border-t-0">
+          {/* Espaço da imagem (formato 4:3). Substituir pelo arte final quando enviada. */}
+          <div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+            <QrCode className="h-10 w-10 text-primary/40" aria-hidden="true" />
+          </div>
           <div className="w-full space-y-3">
             <p className="text-xs leading-relaxed text-muted-foreground">Ative uma conta de pagamentos conectada ao seu processo comercial.</p>
             <Button onClick={go} className="w-full">Conhecer a WiizePay <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
