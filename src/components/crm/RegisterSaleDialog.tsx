@@ -264,7 +264,7 @@ export function RegisterSaleDialog({
         value: numValue,
         sale_type: saleType,
         contract_months: saleType === "recurring" ? Number(months) : 1,
-        payment_method: wiizePayActive ? (chargeMethods.length === 1 ? chargeMethods[0] : "wiize_pay") : paymentMethod,
+        payment_method: paymentMethod,
         start_date: startDate,
       });
       const newSaleId = savedSaleId || created?.id;
