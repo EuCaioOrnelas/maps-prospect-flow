@@ -111,8 +111,48 @@
   }
 
   .dark {
-    --background: 220 20% 4%;
-    --foreground: 210 40% 98%;
+    /* Paleta escura da WiizePay, convertida de OKLCH para HSL. */
+    color-scheme: dark;
+    --background: 152.66 28.69% 5.30%;
+    --foreground: 143.85 17.54% 95.78%;
+    --card: 152.89 25.56% 8.07%;
+    --card-foreground: 143.85 17.54% 95.78%;
+    --popover: 152.65 22.14% 9.41%;
+    --popover-foreground: 143.85 17.54% 95.78%;
+    --primary: 153.16 100% 30.74%;
+    --primary-foreground: 144.22 73.99% 2.75%;
+    --secondary: 152.34 17.37% 13.91%;
+    --secondary-foreground: 143.85 13.36% 94.47%;
+    --muted: 152.16 16.36% 13.10%;
+    --muted-foreground: 144.46 6.86% 63.47%;
+    --accent: 149.74 38.63% 14.92%;
+    --accent-foreground: 144.07 29.99% 94.06%;
+    --border: 151.98 13.94% 17.78%;
+    --input: 151.91 13.28% 18.76%;
+    --ring: 153.16 100% 30.74%;
+    --sidebar-background: 152.84 27.65% 6.45%;
+    --sidebar-foreground: 143.89 10.78% 91.81%;
+    --sidebar-primary: 153.16 100% 30.74%;
+    --sidebar-primary-foreground: 144.22 73.99% 2.75%;
+    --sidebar-accent: 147.38 24.18% 13.50%;
+    --sidebar-accent-foreground: 143.95 20.77% 94.30%;
+    --sidebar-border: 151.89 13.70% 15.96%;
+    --sidebar-ring: 153.16 100% 30.74%;
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85));
+    --gradient-hero: linear-gradient(180deg, hsl(var(--background)), hsl(var(--card)));
+    --gradient-card: linear-gradient(160deg, hsl(var(--popover)), hsl(var(--card)));
+    --gradient-glow: radial-gradient(ellipse at center, hsl(var(--primary) / 0.15), transparent 70%);
+    --shadow-glow: 0 0 60px hsl(var(--primary) / 0.2);
+    --shadow-button: 0 4px 16px hsl(var(--primary) / 0.3);
+  }
+
+  /* Prévia fixa do escuro também quando a tela de aparência está clara. */
+  .theme-preview-dark {
+    --background: 152.66 28.69% 5.30%;
+    --sidebar-background: 152.84 27.65% 6.45%;
+    --card: 152.89 25.56% 8.07%;
+    --foreground: 143.85 17.54% 95.78%;
+    --primary: 153.16 100% 30.74%;
   }
 
   /* Light theme for landing/sales pages */
@@ -603,12 +643,8 @@
   }
 
   .dashboard-card {
-    background: linear-gradient(
-      168deg,
-      hsl(220 18% 8.5%) 0%,
-      hsl(220 18% 6%) 100%
-    );
-    border: 1px solid hsl(0 0% 100% / 0.06);
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
     box-shadow:
       0 2px 16px -2px hsl(0 0% 0% / 0.35),
       0 0 0 0.5px hsl(0 0% 100% / 0.03) inset;
@@ -616,20 +652,15 @@
   }
 
   .dashboard-card:hover {
-    border-color: hsl(158 72% 38% / 0.12);
+    border-color: hsl(var(--primary) / 0.3);
     box-shadow:
       0 4px 24px -4px hsl(0 0% 0% / 0.45),
       0 0 0 0.5px hsl(158 72% 38% / 0.06) inset;
   }
 
   .dashboard-card-hero {
-    background: linear-gradient(
-      168deg,
-      hsl(220 18% 9.5%) 0%,
-      hsl(220 20% 6.5%) 60%,
-      hsl(200 18% 6%) 100%
-    );
-    border: 1px solid hsl(158 72% 38% / 0.08);
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
     box-shadow:
       0 4px 24px -4px hsl(0 0% 0% / 0.4),
       0 0 40px -12px hsl(158 72% 38% / 0.04),
@@ -964,8 +995,8 @@
 }
 
 .theme-change-screen[data-target-theme="dark"] {
-  --theme-transition-surface: hsl(220 20% 4%);
-  --theme-transition-foreground: hsl(210 40% 98%);
+  --theme-transition-surface: hsl(var(--background));
+  --theme-transition-foreground: hsl(var(--foreground));
 }
 
 .theme-change-spinner {
