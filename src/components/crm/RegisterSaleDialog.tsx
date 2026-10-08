@@ -12,6 +12,7 @@ import { useSales, PAYMENT_METHODS, type SaleType, type Sale, type SaleStatus } 
 import { useWiizePayCharges, attachWiizePayEmbed, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
 import { WiizePayEmbedFrame, type WiizePayEmbedEvent } from "./WiizePayEmbedFrame";
 import { WiizePayPromo } from "./WiizePayPromo";
+import { WiizePayExistingList } from "./WiizePayExistingList";
 import { WiizePayLinkShare } from "./WiizePayLinkShare";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { cn } from "@/lib/utils";
