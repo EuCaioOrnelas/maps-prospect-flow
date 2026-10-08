@@ -4,3 +4,4 @@
 
 - Chamadas à API do Wiize Pay tiram um `/v1` final de `WIIZE_PAY_API_BASE_URL` e usam `<base>/v1/<recurso>` (customers, charges) — por que: o secret atual já termina em `/api/public/v1`, e somar `/v1` de novo dá 404.
 - `DialogContent` aceita `overlayClassName` para exceções visuais pontuais sem alterar o fundo de todos os modais — por que: mantém o padrão global estável e permite campanhas específicas.
+- WiizePay embeds use a borderless, height-reserved viewport with internal scrolling, loading feedback, and message origin/source validation against the approved ticket URL — why: avoids nested framing, layout shifts, artificial delays, and untrusted cross-window messages.

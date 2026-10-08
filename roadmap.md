@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Melhorar carregamento e encaixe das janelas WiizePay no assistente de venda, sem bordas duplicadas; quatro testes passaram e carregamento/rolagem conferidos com conteúdo simulado, sem cobrança real.
+- [ ] Retirar aviso repetido de cookies nas janelas integradas; depende do projeto WiizePay reconhecer a sessão integrada, sem presumir consentimento opcional.
+
 - [x] Atualizar Atendimento para R$ 89, Growth IA para R$ 129 e expansões para R$ 49/R$ 39/R$ 99 em todas as jornadas.
 - [x] Manter os novos IDs Stripe em aberto e impedir cobrança acidental pelos IDs antigos.
 - [x] Validar preços e ancoragem no upgrade, checkout, trial e gestão de expansões.
