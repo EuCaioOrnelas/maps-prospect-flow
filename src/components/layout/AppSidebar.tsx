@@ -559,7 +559,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                     "ring-2 ring-background shadow-sm",
                     disconnectedNumberAlerts.length > 0
                       ? "bg-amber-500"
-                      : "bg-primary"
+                      : "bg-primary dark:text-sidebar-primary-foreground"
                   )}>
                     {unreadAnnouncements > 99 ? "+99" : unreadAnnouncements}
                   </span>

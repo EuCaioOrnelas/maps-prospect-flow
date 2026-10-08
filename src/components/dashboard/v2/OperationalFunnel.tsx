@@ -79,10 +79,10 @@ export function OperationalFunnel({ funnel }: OperationalFunnelProps) {
                         className={`h-8 rounded-sm bg-gradient-to-r from-primary to-primary/80 inline-flex items-center justify-center gap-1.5 transition-all ring-1 ring-primary/20 shadow-[0_1px_2px_rgba(0,0,0,0.06)] whitespace-nowrap ${padClass}`}
                         style={{ width: `${widthPct}%`, minWidth: "max-content", maxWidth: "100%" }}
                       >
-                        <span className={`${numClass} font-medium text-white tabular-nums leading-none`}>
+                        <span className={`${numClass} font-medium text-white dark:text-primary-foreground tabular-nums leading-none`}>
                           {fmtN(s.value)}
                         </span>
-                        <span className={`${pctClass} font-semibold text-white tabular-nums leading-none`}>
+                        <span className={`${pctClass} font-semibold text-white dark:text-primary-foreground tabular-nums leading-none`}>
                           · {convPct.toFixed(1)}%
                         </span>
                       </div>
