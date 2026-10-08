@@ -79,8 +79,8 @@ export function DashboardHero({
 
   return (
     <>
-      <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-card via-card to-primary/[0.03] rounded-2xl">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/[0.04] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+      <Card className="relative overflow-hidden border-border/40 bg-gradient-to-br from-card via-card to-primary/[0.03] dark:bg-none dark:bg-card rounded-2xl">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/[0.04] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none dark:hidden" />
         
         <div className="relative p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-6">
           <div className="flex-1 space-y-4">

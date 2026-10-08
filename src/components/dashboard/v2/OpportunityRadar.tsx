@@ -17,10 +17,10 @@ function fmt(n: number) {
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, string> = {
     "Pronto p/ venda": "bg-primary/10 text-primary",
-    "Alto valor": "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    "Engajado": "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
-    "Baixo engajamento": "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-    "Frio": "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    "Alto valor": "bg-emerald-500/10 text-emerald-600 dark:bg-success/10 dark:text-success",
+    "Engajado": "bg-yellow-500/10 text-yellow-600 dark:bg-warning/10 dark:text-warning",
+    "Baixo engajamento": "bg-orange-500/10 text-orange-600 dark:bg-warning/10 dark:text-warning",
+    "Frio": "bg-blue-500/10 text-blue-600 dark:bg-info/10 dark:text-info",
   };
   return (
     <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap", config[status] || "bg-muted text-muted-foreground")}>
