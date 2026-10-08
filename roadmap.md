@@ -46,3 +46,4 @@
 - [x] Substituir o banner do cockpit por um aviso de entrada com a arte completa, fechável e recorrente a cada 30 dias.
 - [x] Remover o chip "Responder agora" dos cards do CRM e da lista de atenção, corrigir o link de venda para wiizepay.com/cobrancas e dar acabamento profissional ao cabeçalho "Venda fechada com {cliente}".
 - [x] Deixar o card do CRM limpo, igual ao modelo: remover tempo relativo ("há 2 dias"), etiquetas e sugestão de próxima ação.
+- [x] Remover o botão "Criar cobrança" da tabela de Vendas e Receita (mantidos os indicadores de recebimento).

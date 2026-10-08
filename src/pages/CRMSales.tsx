@@ -40,7 +40,6 @@ import { SalesKPIs } from "@/components/crm/SalesKPIs";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
 import { RenewSaleDialog } from "@/components/crm/RenewSaleDialog";
-import { WiizePaySaleBilling } from "@/components/crm/WiizePaySaleBilling";
 import { useAllWiizePayCharges, type WiizePayCharge } from "@/hooks/useWiizePayCharges";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { useAccountRole } from "@/hooks/useAccountRole";
@@ -515,7 +514,6 @@ export default function CRMSales() {
                                 <Badge variant="outline" className={st.tone}>
                                   {st.label}
                                 </Badge>
-                                <WiizePaySaleBilling sale={s} charge={chargeByDeal[s.id]} meta={wp} phone={s.lead?.phone} compact />
                               </div>
                             </td>
                             <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
