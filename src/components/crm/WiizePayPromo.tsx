@@ -38,20 +38,25 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
   const [hidden, setHidden] = useState(false);
   const [entry, setEntry] = useState<PromoEntry | null>(null);
 
-  const isConnected = connected !== undefined ? connected : own.data?.connected === true;
-  const statusResolved = connected != null || own.isSuccess;
+  // Preview-only: ?ver-anuncio=1 (or =2/=3) shows an image without touching history or connection rules.
+  const previewParam = variant === "modal" && typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("ver-anuncio") : null;
+  const previewIndex = previewParam ? Math.min(Math.max(Number(previewParam) || 1, 1), ENTRY_IMAGES.length) - 1 : null;
+  const isConnected = previewIndex !== null ? false : connected !== undefined ? connected : own.data?.connected === true;
+  const statusResolved = previewIndex !== null || connected != null || own.isSuccess;
   useEffect(() => {
+    if (previewIndex !== null) { setEntry({ index: previewIndex, shownAt: Date.now() }); return; }
     if (variant !== "modal" || !statusResolved || isConnected || !userId) return;
     const next = readPromoEntry(userId, ENTRY_IMAGES.length, revision);
     setHidden(false);
     setEntry(next);
     if (next) recordPromoEntry(userId, next, ENTRY_IMAGES.length, revision);
-  }, [variant, statusResolved, isConnected, userId, revision]);
+  }, [variant, statusResolved, isConnected, userId, revision, previewIndex]);
   if (!statusResolved || isConnected || hidden || (variant === "modal" && !entry)) return null;
 
   const go = () => window.open(WIIZEPAY_SITE, "_blank", "noopener,noreferrer");
   const dismiss = () => {
-    if (userId && entry) dismissPromoEntry(userId, entry, revision);
+    if (userId && entry && previewIndex === null) dismissPromoEntry(userId, entry, revision);
     setHidden(true);
   };
   const image = ENTRY_IMAGES[entry?.index ?? 0] ?? ENTRY_IMAGES[0];
