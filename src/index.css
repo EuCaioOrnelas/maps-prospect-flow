@@ -2184,3 +2184,42 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 .group:hover .wa-private-blur {
   filter: none;
 }
+
+/* Superfícies especiais do chat seguem a mesma paleta do restante do escuro. */
+.dark :is(.wa-sidebar-bg, .wa-sidebar-header-bg, .wa-sidebar-search-area,
+  .wa-chat-header-bg, .wa-input-bar, .wa-empty-bg, .wa-search-panel, .wa-emoji-bg) {
+  background-color: hsl(var(--card));
+}
+.dark :is(.wa-header-bg, .wa-bg-search, .wa-bg-input, .wa-input-field,
+  .wa-doc-preview, .wa-attach-bg, .wa-preview-bg, .wa-composer-surface) {
+  background-color: hsl(var(--surface));
+}
+.dark :is(.wa-dropdown-menu, .wa-dropdown-bg, .wa-tooltip-subtle) {
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border-color: hsl(var(--border));
+}
+.dark :is(.wa-border, .wa-border-light, .wa-border-conversation,
+  .wa-sidebar-border, .wa-border-header-bottom) { border-color: hsl(var(--border)); }
+.dark .wa-input-border { border-color: hsl(var(--input)); }
+.dark :is(.wa-conv-active, .wa-search-focused) { background-color: hsl(var(--accent)); }
+.dark .wa-conv-hover:hover { background-color: hsl(var(--muted)); }
+.dark .wa-chat-bg { background-color: hsl(var(--background)); }
+.dark .wa-chat-bg::after { background-image: none; }
+.dark .wa-bubble-in {
+  background-color: hsl(var(--secondary));
+  --wa-fade-color: hsl(var(--secondary));
+}
+.dark .wa-bubble-out {
+  background-color: hsl(var(--accent));
+  --wa-fade-color: hsl(var(--accent));
+}
+.dark .wa-bubble-in-fill { fill: hsl(var(--secondary)); }
+.dark .wa-bubble-out-fill { fill: hsl(var(--accent)); }
+.dark .wa-date-badge { background-color: hsl(var(--surface)); color: hsl(var(--foreground)); }
+.dark :is(.wa-chat-header-text, .wa-sidebar-header-text, .wa-dropdown-item) { color: hsl(var(--foreground)); }
+.dark :is(.wa-chat-header-sub, .wa-chat-header-icon, .wa-sidebar-header-icon) { color: hsl(var(--muted-foreground)); }
+.dark .wa-quick-replies-fade-right { background: linear-gradient(to left, hsl(var(--background)), transparent); }
+.dark .wa-quick-replies-fade-left { background: linear-gradient(to right, hsl(var(--background)), transparent); }
+.dark .wa-composer-fade-right { background: linear-gradient(to left, hsl(var(--surface)), transparent); }
+.dark .wa-composer-fade-left { background: linear-gradient(to right, hsl(var(--surface)), transparent); }
