@@ -16,6 +16,7 @@ import { WiizePayLinkShare } from "./WiizePayLinkShare";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RegisterSaleDialogProps {
   open: boolean;
@@ -106,6 +107,22 @@ export function RegisterSaleDialog({
   const [paymentLink, setPaymentLink] = useState<{ url: string; expiresAt: string | null } | null>(null);
   const [embedIds, setEmbedIds] = useState<{ contract_id?: string; service_id?: string }>({});
   const [step, setStep] = useState(1);
+  const [leadDocument, setLeadDocument] = useState<string | null>(null);
+  const [serviceInfo, setServiceInfo] = useState<{ name?: string; amount_cents?: number; type?: "one_time" | "installment" | "recurring" }>({});
+
+  /** Busca o documento já cadastrado no lead (preenche o passo 1). */
+  useEffect(() => {
+    if (!open || !leadId || sale) { setLeadDocument(null); return; }
+    let alive = true;
+    supabase.from("leads").select("document").eq("id", leadId).maybeSingle().then(({ data }) => {
+      if (!alive) return;
+      const d = String((data as { document?: string | null } | null)?.document ?? "").replace(/\D/g, "");
+      setLeadDocument(d);
+      if (d) setCustomerDocument(formatDocument(d));
+    });
+    return () => { alive = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, leadId, sale]);
 
   useEffect(() => {
     if (!open) return;
@@ -149,6 +166,7 @@ export function RegisterSaleDialog({
     setSavedSaleId(null);
     setPaymentLink(null);
     setEmbedIds({});
+    setServiceInfo({});
     setStep(1);
   }, [open, sale, initialValue, initialTitle, initialDescription, leadName, leadId]);
 
@@ -162,13 +180,12 @@ export function RegisterSaleDialog({
 
   const parsedValue = Number(value.replace(/\./g, "").replace(",", "."));
   /** Etapa 1 valida os dados; as demais avançam pelos avisos da janela WiizePay. */
-  const goNext = () => {
+  const goNext = async () => {
     if (![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
-    if (!title.trim()) return toast.error("Informe um título para a venda");
-    if (!parsedValue || parsedValue <= 0) return toast.error("Informe um valor válido");
-    const m = Number(months);
-    if (saleType === "recurring" && (!Number.isInteger(m) || m < 1 || m > MAX_CONTRACT_MONTHS)) {
-      return toast.error(`Informe um tempo de contrato entre 1 e ${MAX_CONTRACT_MONTHS} meses`);
+    if (leadId && leadDocument !== documentDigits && !leadDocument) {
+      const { error } = await supabase.from("leads").update({ document: documentDigits }).eq("id", leadId);
+      if (error) return toast.error("Não foi possível salvar o CPF/CNPJ do cliente.");
+      setLeadDocument(documentDigits);
     }
     setStep(2);
   };
@@ -176,18 +193,24 @@ export function RegisterSaleDialog({
   /** Recebe os IDs da WiizePay; a venda só é criada quando a cobrança é criada. */
   const handleEmbedEvent = async (e: WiizePayEmbedEvent) => {
     if (e.type === "wiizepay:contract.selected") { setEmbedIds((c) => ({ ...c, contract_id: e.contract_id })); setStep(3); return; }
-    if (e.type === "wiizepay:service.selected") { setEmbedIds((c) => ({ ...c, service_id: e.service_id })); setStep(4); return; }
+    if (e.type === "wiizepay:service.selected") {
+      setEmbedIds((c) => ({ ...c, service_id: e.service_id }));
+      setServiceInfo({ name: e.name, amount_cents: e.amount_cents, type: e.service_type });
+      setStep(4);
+      return;
+    }
     if (submitting || savedSaleId || !leadId) return;
     setSubmitting(true);
     setChargeError(null);
     try {
+      const recurring = serviceInfo.type === "recurring";
       const created = await createSale({
         lead_id: leadId,
-        title: title.trim(),
+        title: serviceInfo.name?.trim() || `Venda - ${leadName || "cliente"}`,
         description: description.trim() || undefined,
-        value: parsedValue,
-        sale_type: saleType,
-        contract_months: saleType === "recurring" ? Number(months) : 1,
+        value: (serviceInfo.amount_cents ?? 0) / 100,
+        sale_type: recurring ? "recurring" : "one_time",
+        contract_months: recurring ? 12 : 1,
         payment_method: "wiize_pay",
         start_date: startDate,
       });
@@ -453,26 +476,17 @@ export function RegisterSaleDialog({
         <p className="text-xs text-muted-foreground">Cliente</p>
         <p className="font-medium text-foreground">{leadName || "Cliente selecionado"}</p>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="wp-customer-document">CPF ou CNPJ do cliente *</Label>
-        <Input id="wp-customer-document" inputMode="numeric" value={customerDocument} onChange={(event) => setCustomerDocument(formatDocument(event.target.value))} placeholder="00.000.000/0000-00" disabled={locked} />
-      </div>
-      {titleField}
-      <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+      {leadDocument !== null && !leadDocument ? (
         <div className="space-y-1.5">
-          <Label>Tipo de venda *</Label>
-          <Select value={saleType} onValueChange={(v) => setSaleType(v as SaleType)} disabled={locked}>
-            <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recurring">Recorrente</SelectItem>
-              <SelectItem value="one_time">Venda única</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="wp-customer-document">CPF ou CNPJ do cliente *</Label>
+          <Input id="wp-customer-document" inputMode="numeric" value={customerDocument} onChange={(event) => setCustomerDocument(formatDocument(event.target.value))} placeholder="00.000.000/0000-00" disabled={locked} />
         </div>
-        {valueField}
-      </div>
-      {saleType === "recurring" && monthsField}
-      <p className="text-xs text-muted-foreground">Esses dados alimentam a receita no CRM. Contrato, serviço e cobrança são escolhidos dentro da WiizePay nas próximas etapas.</p>
+      ) : leadDocument ? (
+        <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-sm">
+          <p className="text-xs text-muted-foreground">CPF/CNPJ</p>
+          <p className="font-medium text-foreground">{formatDocument(leadDocument)}</p>
+        </div>
+      ) : null}
     </div>
   );
 
