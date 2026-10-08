@@ -152,10 +152,21 @@ const Body = z.discriminatedUnion("action", [
 
 /** Janelas embutidas da WiizePay (produção). */
 const WIIZEPAY_ORIGIN = "https://wiizepay.com";
+const originOf = (v?: string | null) => { try { return v ? new URL(v).origin : null; } catch { return null; } };
+const ALLOWED_ORIGINS = new Set(
+  [WIIZEPAY_ORIGIN, "https://www.wiizepay.com", "https://wiizepay.com.br", "https://www.wiizepay.com.br",
+    originOf(Deno.env.get("WIIZE_PAY_CHECKOUT_ORIGIN")), originOf(Deno.env.get("WIIZE_PAY_API_BASE_URL"))]
+    .filter(Boolean) as string[],
+);
 const sameOrigin = (u: unknown) => {
-  if (typeof u !== "string") return null;
-  try { const url = new URL(u); return url.origin === WIIZEPAY_ORIGIN ? url.toString() : null; } catch { return null; }
+  if (typeof u !== "string" || !u.trim()) return null;
+  try {
+    const url = new URL(u.trim(), WIIZEPAY_ORIGIN);
+    return url.protocol === "https:" && ALLOWED_ORIGINS.has(url.origin) ? url.toString() : null;
+  } catch { return null; }
 };
+const ticketUrl = (out: any) =>
+  out?.url ?? out?.embed_url ?? out?.data?.url ?? out?.data?.embed_url ?? out?.ticket?.url ?? null;
 
 const onlyDigits = (v: unknown) => String(v ?? "").replace(/\D/g, "");
 const validEmail = (v: unknown) => (typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? v.trim().slice(0, 254) : null);
@@ -316,15 +327,16 @@ Deno.serve(async (req) => {
         body: JSON.stringify(payload), signal: AbortSignal.timeout(10_000),
       });
       const out = await r.json().catch(() => ({}));
-      const url = sameOrigin(out?.url);
+      const url = sameOrigin(ticketUrl(out));
       if (!r.ok || !url) {
-        const msg = providerMessage(out, r.status);
-        console.error(`wiize-pay embed-ticket failed [${r.status}] kind=${body.kind}`);
+        const msg = r.ok ? "invalid_embed_url" : providerMessage(out, r.status);
+        const raw = ticketUrl(out);
+        console.error(`wiize-pay embed-ticket failed [${r.status}] kind=${body.kind} keys=${Object.keys(out ?? {}).join(",")} origin=${typeof raw === "string" ? originOf(raw) ?? "relative" : typeof raw}`);
         await audit(ownerId, userId, "wiize_pay_embed_ticket", "error", req, msg);
-        return json({ error: "wiize_pay_error", status: r.status, message: msg }, 502);
+        return json({ error: "wiize_pay_error", status: r.status, message: r.ok ? "A WiizePay não devolveu um endereço válido para a janela." : msg }, 502);
       }
       // url de uso único: devolvida, nunca gravada nem registrada
-      return json({ url, origin: WIIZEPAY_ORIGIN });
+      return json({ url, origin: new URL(url).origin });
     }
 
     if (body.action === "embed_attach") {
