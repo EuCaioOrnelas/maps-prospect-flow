@@ -40,11 +40,11 @@ const themes: ThemeOption[] = [
     description: "Interface com fundo escuro",
     icon: Moon,
     preview: {
-      bg: "bg-[hsl(220,20%,7%)]",
-      sidebar: "bg-[hsl(220,18%,6%)]",
-      card: "bg-[hsl(220,18%,9%)]",
-      text: "bg-[hsl(210,40%,90%)]",
-      accent: "bg-[hsl(158,72%,38%)]",
+      bg: "theme-preview-dark bg-background",
+      sidebar: "bg-sidebar",
+      card: "bg-card",
+      text: "bg-foreground",
+      accent: "bg-primary",
     },
   },
 ];
