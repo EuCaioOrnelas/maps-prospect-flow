@@ -677,6 +677,24 @@ export function RegisterSaleDialog({
   );
 
 
+  const formBody = choosing ? (
+    <div className="grid gap-3 py-2 sm:grid-cols-2">
+      <button type="button" onClick={() => setManualChosen(true)} className="flex flex-col items-start gap-2 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/40">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-foreground"><PenLine className="h-5 w-5" /></span>
+        <span className="font-semibold text-foreground">Registrar manual</span>
+        <span className="text-xs text-muted-foreground">Cadastre a venda aqui no CRM, como sempre.</span>
+      </button>
+      <button type="button" onClick={() => { window.open("https://wiizepay.com/charges", "_blank", "noopener,noreferrer"); onOpenChange(false); }} className="flex flex-col items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 text-left transition-colors hover:border-primary/60 hover:bg-primary/10">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><ExternalLink className="h-5 w-5" /></span>
+        <span className="font-semibold text-foreground">Registrar na WiizePay</span>
+        <span className="text-xs text-muted-foreground">Abre a área de cobranças da WiizePay em uma nova aba.</span>
+      </button>
+    </div>
+  ) : formBodyRaw;
+  const footer = choosing ? (
+    <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+  ) : footerRaw;
+
   if (!open) {
     return null;
   }
