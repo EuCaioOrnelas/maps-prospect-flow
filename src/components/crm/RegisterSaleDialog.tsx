@@ -684,7 +684,7 @@ export function RegisterSaleDialog({
         <span className="font-semibold text-foreground">Registrar manual</span>
         <span className="text-xs text-muted-foreground">Cadastre a venda aqui no CRM, como sempre.</span>
       </button>
-      <button type="button" onClick={() => { window.open("https://wiizepay.com/charges", "_blank", "noopener,noreferrer"); onOpenChange(false); }} className="flex flex-col items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 text-left transition-colors hover:border-primary/60 hover:bg-primary/10">
+      <button type="button" onClick={() => { window.open("https://wiizepay.com/cobrancas", "_blank", "noopener,noreferrer"); onOpenChange(false); }} className="flex flex-col items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 text-left transition-colors hover:border-primary/60 hover:bg-primary/10">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><ExternalLink className="h-5 w-5" /></span>
         <span className="font-semibold text-foreground">Registrar na WiizePay</span>
         <span className="text-xs text-muted-foreground">Abre a área de cobranças da WiizePay em uma nova aba.</span>
@@ -702,11 +702,18 @@ export function RegisterSaleDialog({
   if (embedded) {
     return (
       <div className="w-full">
-        <div className="pb-4 mb-2">
-          <h3 className="text-xl font-semibold text-foreground">Registrar venda</h3>
-          <p className="text-sm text-muted-foreground">
-            {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
-          </p>
+        <div className="mb-4 flex items-start gap-3 border-b border-border/60 pb-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+            <Wallet className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              Registrar venda
+            </p>
+            <h3 className="mt-0.5 truncate text-xl font-semibold tracking-tight text-foreground">
+              {leadName ? `Venda fechada com ${leadName}` : "Detalhes da venda fechada"}
+            </h3>
+          </div>
         </div>
         {formBody}
         <div className="pt-2">
@@ -721,17 +728,25 @@ export function RegisterSaleDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn("sm:max-w-xl max-h-[90dvh] overflow-y-auto bg-card p-4", wiizePayActive && "sm:max-w-4xl", embedVisible && "flex h-[90dvh] min-h-0 flex-col overflow-hidden")}>
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar venda" : "Registrar venda"}</DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? clientName
-                ? `Atualize os detalhes da venda com ${clientName}`
-                : "Atualize os detalhes desta venda"
-              : clientName
-                ? `Cadastre a venda fechada com ${clientName}`
-                : "Cadastre os detalhes da venda fechada"}
-          </DialogDescription>
+        <DialogHeader className="space-y-0">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+              <Wallet className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                {isEdit ? "Editar venda" : "Registrar venda"}
+              </p>
+              <DialogTitle className="mt-0.5 text-xl font-semibold tracking-tight text-foreground">
+                {clientName ? `Venda fechada com ${clientName}` : "Detalhes da venda fechada"}
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                {isEdit
+                  ? `Atualize os detalhes da venda com ${clientName ?? "este cliente"}`
+                  : "Preencha os dados da venda para registrá-la no CRM"}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         {formBody}

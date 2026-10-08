@@ -282,6 +282,8 @@ export const IntelligenceCenter = ({
     for (const e of filtered) {
       if (!e.profile) continue;
       const k = e.profile.next_best_action;
+      // "Responder agora" foi retirado das recomendações do CRM.
+      if (k === "RESPOND_NOW") continue;
       map.set(k, [...(map.get(k) || []), e]);
     }
     return Array.from(map.entries())
