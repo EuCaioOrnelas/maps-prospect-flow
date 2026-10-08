@@ -5,8 +5,11 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { createWiizePayEmbedTicket, WIIZEPAY_ORIGIN, type WiizePayEmbedKind } from "@/hooks/useWiizePayCharges";
 import { cn } from "@/lib/utils";
 
+export type WiizePayServiceType = "one_time" | "installment" | "recurring";
+const SERVICE_TYPES: WiizePayServiceType[] = ["one_time", "installment", "recurring"];
+
 export type WiizePayEmbedEvent =
-  | { type: "wiizepay:service.selected"; service_id: string; name?: string; amount_cents?: number; service_type?: "one_time" | "installment" | "recurring" }
+  | { type: "wiizepay:service.selected"; service_id: string; name?: string; amount_cents?: number; service_type?: WiizePayServiceType; created?: boolean }
   | { type: "wiizepay:contract.selected"; contract_id: string }
   | { type: "wiizepay:charge.created"; charge_group_id: string; checkout_url: string };
 
@@ -66,7 +69,21 @@ export function WiizePayEmbedFrame({ kind, leadId, customerDocument, onEvent, cl
       switch (d.type) {
         case "wiizepay:ready": setReady(true); break;
         case "wiizepay:error": setError(str(d.message) || "A WiizePay informou um erro."); break;
-        case "wiizepay:service.selected": { const id = str(d.service_id); if (id) onEventRef.current({ type: d.type, service_id: id }); break; }
+        case "wiizepay:service.selected": {
+          const id = str(d.service_id);
+          if (!id) break;
+          const cents = typeof d.amount_cents === "number" && Number.isFinite(d.amount_cents) && d.amount_cents >= 0 ? Math.round(d.amount_cents) : undefined;
+          const raw = typeof d.service_type === "string" ? d.service_type : null;
+          onEventRef.current({
+            type: d.type,
+            service_id: id,
+            name: str(d.name) ?? undefined,
+            amount_cents: cents,
+            service_type: SERVICE_TYPES.includes(raw as WiizePayServiceType) ? (raw as WiizePayServiceType) : undefined,
+            created: d.created === true,
+          });
+          break;
+        }
         case "wiizepay:contract.selected": { const id = str(d.contract_id); if (id) onEventRef.current({ type: d.type, contract_id: id }); break; }
         case "wiizepay:charge.created": {
           const id = str(d.charge_group_id); const link = str(d.checkout_url);

@@ -12,6 +12,7 @@ import { useSales, PAYMENT_METHODS, type SaleType, type Sale, type SaleStatus } 
 import { useWiizePayCharges, attachWiizePayEmbed, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
 import { WiizePayEmbedFrame, type WiizePayEmbedEvent } from "./WiizePayEmbedFrame";
 import { WiizePayPromo } from "./WiizePayPromo";
+import { WiizePayExistingList } from "./WiizePayExistingList";
 import { WiizePayLinkShare } from "./WiizePayLinkShare";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
 import { cn } from "@/lib/utils";
@@ -491,17 +492,22 @@ export function RegisterSaleDialog({
     </div>
   );
 
-  const embedStep = (kind: "contract" | "service" | "charge") => (
-    <WiizePayEmbedFrame
-      kind={kind}
-      leadId={kind === "service" ? undefined : leadId}
-      customerDocument={documentDigits || undefined}
-      onEvent={handleEmbedEvent}
-      className={cn(!embedded && "h-full min-h-0 flex-1")}
-    />
+  const embedStep = (kind: "contract" | "service" | "charge", resource?: "services" | "contracts") => (
+    <div className={cn("min-h-0 space-y-2", !embedded && "flex-1", embedVisible && !embedded && "flex flex-col")}>
+      {resource && (
+        <WiizePayExistingList resource={resource} leadId={kind === "service" ? undefined : leadId} className="shrink-0" />
+      )}
+      <WiizePayEmbedFrame
+        kind={kind}
+        leadId={kind === "service" ? undefined : leadId}
+        customerDocument={documentDigits || undefined}
+        onEvent={handleEmbedEvent}
+        className={cn(!embedded && "h-full min-h-0 flex-1")}
+      />
+    </div>
   );
-  const stepContrato = embedStep("contract");
-  const stepServico = embedStep("service");
+  const stepContrato = embedStep("contract", "contracts");
+  const stepServico = embedStep("service", "services");
   const stepCobranca = (
     <div className={cn("space-y-3", embedVisible && !embedded && "flex min-h-0 flex-1 flex-col")}>
       {submitting && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Salvando a venda…</div>}

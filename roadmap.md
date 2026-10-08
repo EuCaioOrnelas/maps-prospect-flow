@@ -1,7 +1,10 @@
 # Roadmap
 
 - [x] Melhorar carregamento e encaixe das janelas WiizePay no assistente de venda, sem bordas duplicadas; quatro testes passaram e carregamento/rolagem conferidos com conteúdo simulado, sem cobrança real.
-- [ ] Retirar aviso repetido de cookies nas janelas integradas; depende do projeto WiizePay reconhecer a sessão integrada, sem presumir consentimento opcional.
+- [x] Retirar aviso repetido de cookies nas janelas integradas; a WiizePay deixou de exibir o aviso nas telas embutidas.
+- [x] Passar nome, valor e tipo do serviço escolhido para a venda registrada, usando o campo confirmado `service_type`.
+- [x] Mostrar contratos e serviços já cadastrados na WiizePay antes de escolher na janela; listas conferidas no navegador.
+- [ ] Registrar uma venda real de ponta a ponta e conferir 3D Secure; bloqueado até autorização explícita para cobrança real.
 
 - [x] Atualizar Atendimento para R$ 89, Growth IA para R$ 129 e expansões para R$ 49/R$ 39/R$ 99 em todas as jornadas.
 - [x] Manter os novos IDs Stripe em aberto e impedir cobrança acidental pelos IDs antigos.
