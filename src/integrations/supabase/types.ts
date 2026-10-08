@@ -13774,6 +13774,21 @@ export type Database = {
         }
         Relationships: []
       }
+      wiize_pay_webhook_nonces: {
+        Row: {
+          created_at: string
+          nonce: string
+        }
+        Insert: {
+          created_at?: string
+          nonce: string
+        }
+        Update: {
+          created_at?: string
+          nonce?: string
+        }
+        Relationships: []
+      }
       wiize_template_categories: {
         Row: {
           color: string
@@ -13801,6 +13816,138 @@ export type Database = {
           owner_user_id?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      wiizepay_revenue_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          owner_user_id: string
+          paid_at: string
+          paid_installments: number
+          refunded: boolean
+          refunded_at: string | null
+          wiizepay_sale_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          paid_at: string
+          paid_installments: number
+          refunded?: boolean
+          refunded_at?: string | null
+          wiizepay_sale_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          paid_at?: string
+          paid_installments?: number
+          refunded?: boolean
+          refunded_at?: string | null
+          wiizepay_sale_id?: string
+        }
+        Relationships: []
+      }
+      wiizepay_sales: {
+        Row: {
+          amount_received: number
+          cancelled_at: string | null
+          contract_id: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          customer_name: string | null
+          description: string | null
+          expires_on: string | null
+          id: string
+          installment_amount: number
+          installments: number | null
+          last_event_at: string | null
+          last_paid_at: string | null
+          next_due_on: string | null
+          owner_user_id: string
+          paid_installments: number
+          payment_method: string | null
+          recurrence_frequency: string | null
+          sale_type: string
+          service_id: string | null
+          service_name: string | null
+          starts_on: string | null
+          status: string
+          status_label: string | null
+          total_amount: number
+          type_label: string | null
+          updated_at: string
+          wiizepay_sale_id: string
+        }
+        Insert: {
+          amount_received?: number
+          cancelled_at?: string | null
+          contract_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          expires_on?: string | null
+          id?: string
+          installment_amount?: number
+          installments?: number | null
+          last_event_at?: string | null
+          last_paid_at?: string | null
+          next_due_on?: string | null
+          owner_user_id: string
+          paid_installments?: number
+          payment_method?: string | null
+          recurrence_frequency?: string | null
+          sale_type: string
+          service_id?: string | null
+          service_name?: string | null
+          starts_on?: string | null
+          status: string
+          status_label?: string | null
+          total_amount?: number
+          type_label?: string | null
+          updated_at?: string
+          wiizepay_sale_id: string
+        }
+        Update: {
+          amount_received?: number
+          cancelled_at?: string | null
+          contract_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          expires_on?: string | null
+          id?: string
+          installment_amount?: number
+          installments?: number | null
+          last_event_at?: string | null
+          last_paid_at?: string | null
+          next_due_on?: string | null
+          owner_user_id?: string
+          paid_installments?: number
+          payment_method?: string | null
+          recurrence_frequency?: string | null
+          sale_type?: string
+          service_id?: string | null
+          service_name?: string | null
+          starts_on?: string | null
+          status?: string
+          status_label?: string | null
+          total_amount?: number
+          type_label?: string | null
+          updated_at?: string
+          wiizepay_sale_id?: string
         }
         Relationships: []
       }
