@@ -5,7 +5,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { createWiizePayEmbedTicket, WIIZEPAY_ORIGIN, type WiizePayEmbedKind } from "@/hooks/useWiizePayCharges";
 
 export type WiizePayEmbedEvent =
-  | { type: "wiizepay:service.selected"; service_id: string }
+  | { type: "wiizepay:service.selected"; service_id: string; name?: string; amount_cents?: number; service_type?: "one_time" | "installment" | "recurring" }
   | { type: "wiizepay:contract.selected"; contract_id: string }
   | { type: "wiizepay:charge.created"; charge_group_id: string; checkout_url: string };
 
