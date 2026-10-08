@@ -146,3 +146,22 @@ export const createWiizePayEmbedTicket = (input: { kind: WiizePayEmbedKind; lead
   call<{ url: string; origin: string }>({ action: "embed_ticket", ...input });
 export const attachWiizePayEmbed = (input: { deal_id: string; contract_id?: string; service_id?: string; charge_group_id?: string; checkout_url?: string }) =>
   call<{ ok: boolean }>({ action: "embed_attach", ...input });
+
+/** Listas curtas da WiizePay (sem páginas): até 100 serviços ativos e até 50 contratos. */
+export type WiizePayEmbedResource = "services" | "contracts";
+export interface WiizePayEmbedItem {
+  id: string;
+  name?: string | null;
+  title?: string | null;
+  amount_cents?: number | null;
+  type?: string | null;
+  status?: string | null;
+  installments?: number | null;
+  starts_on?: string | null;
+  ends_on?: string | null;
+  accepted_methods?: string[] | null;
+}
+export async function listWiizePayEmbed(input: { resource: WiizePayEmbedResource; lead_id?: string }): Promise<WiizePayEmbedItem[]> {
+  const r = await call<{ items: WiizePayEmbedItem[] }>({ action: "embed_list", ...input });
+  return Array.isArray(r?.items) ? r.items : [];
+}
