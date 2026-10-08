@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, User as UserIcon, Activity, StickyNote, ShieldCheck, QrCode, Landmark, Layers3, CheckCircle2, Wallet } from "lucide-react";
+import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, User as UserIcon, Activity, StickyNote, ShieldCheck, QrCode, Landmark, Layers3, CheckCircle2, Wallet, ExternalLink, PenLine } from "lucide-react";
 import { useSales, PAYMENT_METHODS, type SaleType, type Sale, type SaleStatus } from "@/hooks/useSales";
 import { useWiizePayCharges, attachWiizePayEmbed, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
 import { WiizePayEmbedFrame, type WiizePayEmbedEvent } from "./WiizePayEmbedFrame";
@@ -85,9 +85,12 @@ export function RegisterSaleDialog({
   const [submitting, setSubmitting] = useState(false);
   const compact = embedded && embeddedLayout !== "page";
   const isEdit = !!sale;
-  const wiizePayActive = !isEdit && !!wiizePay?.connected && !!wiizePay.can_charge;
+  const wiizePayActive = false; // Integração na venda desativada: registro manual normal.
   /** Status ainda não carregado: evita mostrar o formulário interno e trocar de tela em seguida. */
-  const wiizePayChecking = !isEdit && wiizePay === undefined;
+  const wiizePayChecking = false;
+  const [manualChosen, setManualChosen] = useState(false);
+  useEffect(() => { if (!open) setManualChosen(false); }, [open]);
+  const choosing = !isEdit && !!wiizePay?.connected && !manualChosen;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -516,7 +519,7 @@ export function RegisterSaleDialog({
     </div>
   );
 
-  const formBody = (
+  const formBodyRaw = (
     <>
       <div className={cn(compact ? "space-y-2.5 py-1" : "space-y-4 py-2", embedVisible && !embedded && "flex min-h-0 flex-1 flex-col")}>
         {!isEdit && wiizePay && !wiizePay.connected && <WiizePayPromo variant="strip" connected={false} />}
@@ -650,7 +653,7 @@ export function RegisterSaleDialog({
     </>
   );
 
-  const footer = (
+  const footerRaw = (
     <div className={cn("flex justify-end gap-2 pt-2 border-t border-border/60", embedded && "shrink-0")}> 
       <Button variant="outline" size="sm" onClick={() => {
         if (savedSaleId) onCreated?.({ id: savedSaleId });
@@ -673,6 +676,24 @@ export function RegisterSaleDialog({
     </div>
   );
 
+
+  const formBody = choosing ? (
+    <div className="grid gap-3 py-2 sm:grid-cols-2">
+      <button type="button" onClick={() => setManualChosen(true)} className="flex flex-col items-start gap-2 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/40">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-foreground"><PenLine className="h-5 w-5" /></span>
+        <span className="font-semibold text-foreground">Registrar manual</span>
+        <span className="text-xs text-muted-foreground">Cadastre a venda aqui no CRM, como sempre.</span>
+      </button>
+      <button type="button" onClick={() => { window.open("https://wiizepay.com/charges", "_blank", "noopener,noreferrer"); onOpenChange(false); }} className="flex flex-col items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 text-left transition-colors hover:border-primary/60 hover:bg-primary/10">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><ExternalLink className="h-5 w-5" /></span>
+        <span className="font-semibold text-foreground">Registrar na WiizePay</span>
+        <span className="text-xs text-muted-foreground">Abre a área de cobranças da WiizePay em uma nova aba.</span>
+      </button>
+    </div>
+  ) : formBodyRaw;
+  const footer = choosing ? (
+    <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+  ) : footerRaw;
 
   if (!open) {
     return null;
