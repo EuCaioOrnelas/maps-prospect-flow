@@ -71,7 +71,8 @@ const SaleEvent = z.object({
   occurred_at: z.string().datetime({ offset: true }),
   data: z.object({
     sale_id: z.string().min(1).max(200),
-    organization_id: z.string().uuid().optional().nullable(),
+    organization_id: z.preprocess((v) => (v === "" ? null : v), z.string().uuid().optional().nullable()),
+    tenant_id: z.preprocess((v) => (v === "" ? null : v), z.string().max(200).optional().nullable()),
     customer: z.union([
       z.object({ source: z.literal("wiize"), wiize_customer_id: z.string().min(1).max(200) }).passthrough(),
       z.object({
@@ -113,9 +114,10 @@ async function activeOwner(owner: string) {
 
 /** Descobre a conta (organização) dona da venda. */
 async function resolveOwner(ev: SaleEv): Promise<string | null> {
+  // Código da conta Wiize enviado pela WiizePay tem prioridade.
+  if (ev.data.organization_id) return ev.data.organization_id;
   const { data: known } = await admin.from("wiizepay_sales").select("owner_user_id").eq("wiizepay_sale_id", ev.data.sale_id).limit(2);
   if (known && known.length === 1) return known[0].owner_user_id;
-  if (ev.data.organization_id) return ev.data.organization_id;
   const c = ev.data.customer;
   if (c.source === "wiize" && isUuid(c.wiize_customer_id)) {
     const { data: lead } = await admin.from("leads").select("owner_user_id, user_id").eq("id", c.wiize_customer_id).maybeSingle();
