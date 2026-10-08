@@ -67,7 +67,7 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
         <DialogContent
           hideCloseButton
           overlayClassName="bg-black/70 backdrop-blur-sm"
-          className={cn("w-[calc(100%-2rem)] max-w-5xl overflow-visible border-0 bg-transparent p-0 shadow-2xl", className)}
+          className={cn("w-fit max-w-[min(64rem,calc(100vw-2rem))] overflow-visible border-0 bg-transparent p-0 shadow-2xl", className)}
         >
           <DialogTitle className="sr-only">Conheça a WiizePay</DialogTitle>
           <DialogDescription className="sr-only">
@@ -95,7 +95,7 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
               <img
                 src={image.url}
                 alt={image.alt}
-                className="block h-auto max-h-[78vh] w-full object-contain"
+                className="block h-auto max-h-[78vh] w-auto max-w-full"
                 loading="eager"
               />
             </a>
