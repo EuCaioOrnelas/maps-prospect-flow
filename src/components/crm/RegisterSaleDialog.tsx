@@ -109,6 +109,7 @@ export function RegisterSaleDialog({
   const [step, setStep] = useState(1);
   const [leadDocument, setLeadDocument] = useState<string | null>(null);
   const [serviceInfo, setServiceInfo] = useState<{ name?: string; amount_cents?: number; type?: "one_time" | "installment" | "recurring" }>({});
+  const embedVisible = wiizePayActive && step > 1 && !paymentLink;
 
   /** Busca o documento já cadastrado no lead (preenche o passo 1). */
   useEffect(() => {
@@ -496,12 +497,13 @@ export function RegisterSaleDialog({
       leadId={kind === "service" ? undefined : leadId}
       customerDocument={documentDigits || undefined}
       onEvent={handleEmbedEvent}
+      className={cn(!embedded && "h-full min-h-0 flex-1")}
     />
   );
   const stepContrato = embedStep("contract");
   const stepServico = embedStep("service");
   const stepCobranca = (
-    <div className="space-y-3">
+    <div className={cn("space-y-3", embedVisible && !embedded && "flex min-h-0 flex-1 flex-col")}>
       {submitting && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Salvando a venda…</div>}
       {chargeError && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{chargeError}</div>}
       {!locked && embedStep("charge")}
@@ -510,7 +512,7 @@ export function RegisterSaleDialog({
 
   const formBody = (
     <>
-      <div className={cn(compact ? "space-y-2.5 py-1" : "space-y-4 py-2")}>
+      <div className={cn(compact ? "space-y-2.5 py-1" : "space-y-4 py-2", embedVisible && !embedded && "flex min-h-0 flex-1 flex-col")}>
         {!isEdit && wiizePay && !wiizePay.connected && <WiizePayPromo variant="strip" connected={false} />}
         {wiizePayActive ? (
           <>
@@ -691,7 +693,7 @@ export function RegisterSaleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto bg-card p-4">
+      <DialogContent className={cn("sm:max-w-xl max-h-[90dvh] overflow-y-auto bg-card p-4", wiizePayActive && "sm:max-w-4xl", embedVisible && "flex h-[90dvh] min-h-0 flex-col overflow-hidden")}>
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar venda" : "Registrar venda"}</DialogTitle>
           <DialogDescription>
