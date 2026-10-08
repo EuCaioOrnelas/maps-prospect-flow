@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { CRMTabs } from "@/components/crm/CRMTabs";
 import { SalesKPIs } from "@/components/crm/SalesKPIs";
+import { WiizePaySalesPanel } from "@/components/crm/WiizePaySalesPanel";
 import { RegisterSaleDialog } from "@/components/crm/RegisterSaleDialog";
 import { ExportSalesButton } from "@/components/crm/ExportSalesButton";
 import { RenewSaleDialog } from "@/components/crm/RenewSaleDialog";
@@ -244,6 +245,7 @@ export default function CRMSales() {
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-5">
+            {!isRegisterMode && <WiizePaySalesPanel />}
             {isRegisterMode ? (
               <Card className="p-4 sm:p-6 rounded-2xl border-border/40 max-w-3xl">
                 {leadId ? (

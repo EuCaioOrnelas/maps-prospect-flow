@@ -239,6 +239,13 @@
       "when": 1791418294681,
       "tag": "0033_lead_deals_wiizepay_embed_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791466258035,
+      "tag": "0034_wiizepay_sales_webhook",
+      "breakpoints": true
     }
   ]
 }
