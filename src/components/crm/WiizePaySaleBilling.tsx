@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CreditCard, RefreshCw, Link2, Loader2, Archive } from "lucide-react";
+import { RefreshCw, Link2, Loader2, Archive } from "lucide-react";
 import { toast } from "sonner";
 import {
   chargeStatusLabel, chargeStatusTone, isWiizePayEra, newWiizePayLink, useWiizePayChargeMutations,
   type WiizePayCharge, type WiizePayListMeta,
 } from "@/hooks/useWiizePayCharges";
-import { WiizePayChargeDialog } from "./WiizePayChargeDialog";
 import { WiizePayLinkShare } from "./WiizePayLinkShare";
 
 interface Props {
@@ -24,10 +23,9 @@ interface Props {
  * Situação de cobrança de uma venda.
  * - Sem WiizePay conectada: não mostra nada (estrutura antiga).
  * - Venda anterior à conexão: selo "Controle interno".
- * - Venda nova: cria cobrança, mostra status, link, atualizar e cancelar.
+ * - Venda nova: mostra status, link, atualizar e cancelar.
  */
 export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact }: Props) {
-  const [chargeOpen, setChargeOpen] = useState(false);
   const [link, setLink] = useState<{ url: string; expiresAt: string | null } | null>(null);
   const [linkBusy, setLinkBusy] = useState(false);
   const { refresh, cancel } = useWiizePayChargeMutations(sale.lead_id);
@@ -43,7 +41,6 @@ export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact 
     );
   }
 
-  const failed = charge && ["cancelled", "error"].includes(charge.status);
   const pending = charge && ["sent", "awaiting_payment", "overdue"].includes(charge.status);
   const btn = compact ? "h-7 px-2 text-xs" : "h-7 text-xs";
 
@@ -79,15 +76,6 @@ export function WiizePaySaleBilling({ sale, charge, meta, phone, email, compact 
             onError: (e) => toast.error((e as Error).message || "Não foi possível cancelar"),
           });
         }}>Cancelar cobrança</Button>
-      )}
-      {era && meta?.connected && meta.can_charge && (!charge || failed) && (
-        <Button size="sm" className={btn} onClick={() => setChargeOpen(true)}>
-          <CreditCard className="w-3 h-3 mr-1" /> {failed ? "Criar nova cobrança" : "Criar cobrança"}
-        </Button>
-      )}
-
-      {chargeOpen && (
-        <WiizePayChargeDialog open onOpenChange={(o) => !o && setChargeOpen(false)} leadId={sale.lead_id} dealId={sale.id} />
       )}
       {link && (
         <Dialog open onOpenChange={(o) => !o && setLink(null)}>
