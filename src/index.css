@@ -111,48 +111,79 @@
   }
 
   .dark {
-    /* Paleta escura da WiizePay, convertida de OKLCH para HSL. */
+    /* Cores originais WiizePay: HSL relativo mantém OKLCH e utilitários de opacidade. */
     color-scheme: dark;
-    --background: 152.66 28.69% 5.30%;
-    --foreground: 143.85 17.54% 95.78%;
-    --card: 152.89 25.56% 8.07%;
-    --card-foreground: 143.85 17.54% 95.78%;
-    --popover: 152.65 22.14% 9.41%;
-    --popover-foreground: 143.85 17.54% 95.78%;
-    --primary: 153.16 100% 30.74%;
-    --primary-foreground: 144.22 73.99% 2.75%;
-    --secondary: 152.34 17.37% 13.91%;
-    --secondary-foreground: 143.85 13.36% 94.47%;
-    --muted: 152.16 16.36% 13.10%;
-    --muted-foreground: 144.46 6.86% 63.47%;
-    --accent: 149.74 38.63% 14.92%;
-    --accent-foreground: 144.07 29.99% 94.06%;
-    --border: 151.98 13.94% 17.78%;
-    --input: 151.91 13.28% 18.76%;
-    --ring: 153.16 100% 30.74%;
-    --sidebar-background: 152.84 27.65% 6.45%;
-    --sidebar-foreground: 143.89 10.78% 91.81%;
-    --sidebar-primary: 153.16 100% 30.74%;
-    --sidebar-primary-foreground: 144.22 73.99% 2.75%;
-    --sidebar-accent: 147.38 24.18% 13.50%;
-    --sidebar-accent-foreground: 143.95 20.77% 94.30%;
-    --sidebar-border: 151.89 13.70% 15.96%;
-    --sidebar-ring: 153.16 100% 30.74%;
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85));
-    --gradient-hero: linear-gradient(180deg, hsl(var(--background)), hsl(var(--card)));
-    --gradient-card: linear-gradient(160deg, hsl(var(--popover)), hsl(var(--card)));
+    --background: from oklch(0.17 0.014 165) h s l;
+    --foreground: from oklch(0.97 0.005 160) h s l;
+    --surface: from oklch(0.21 0.018 165) h s l;
+    --card: from oklch(0.205 0.018 165) h s l;
+    --card-foreground: var(--foreground);
+    --popover: from oklch(0.22 0.018 165) h s l;
+    --popover-foreground: var(--foreground);
+    --primary: from oklch(0.60 0.17 158) h s l;
+    --primary-foreground: from oklch(0.14 0.025 160) h s l;
+    --secondary: from oklch(0.27 0.02 165) h s l;
+    --secondary-foreground: from oklch(0.96 0.005 160) h s l;
+    --muted: from oklch(0.26 0.018 165) h s l;
+    --muted-foreground: from oklch(0.72 0.018 160) h s l;
+    --accent: from oklch(0.3 0.045 160) h s l;
+    --accent-foreground: from oklch(0.96 0.012 160) h s l;
+    --border: from oklch(0.31 0.02 165) h s l;
+    --input: from oklch(0.32 0.02 165) h s l;
+    --ring: var(--primary);
+    --sidebar-background: from oklch(0.185 0.016 165) h s l;
+    --sidebar-foreground: from oklch(0.94 0.006 160) h s l;
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: from oklch(0.27 0.028 160) h s l;
+    --sidebar-accent-foreground: from oklch(0.96 0.008 160) h s l;
+    --sidebar-border: from oklch(0.29 0.018 165) h s l;
+    --sidebar-ring: var(--primary);
+    --success: from oklch(0.74 0.16 158) h s l;
+    --warning: from oklch(0.82 0.15 78) h s l;
+    --info: from oklch(0.72 0.12 236) h s l;
+    --destructive: from oklch(0.62 0.2 22) h s l;
+    --destructive-foreground: from oklch(0.98 0.005 250) h s l;
+    --chart-1: from oklch(0.75 0.16 163) h s l;
+    --chart-2: var(--info);
+    --chart-3: var(--warning);
+    --chart-4: from oklch(0.65 0.18 320) h s l;
+    --chart-5: var(--destructive);
+    --gradient-primary: linear-gradient(135deg, oklch(0.60 0.17 158), oklch(0.52 0.15 158));
+    --gradient-hero: linear-gradient(hsl(var(--background)), hsl(var(--background)));
+    --gradient-card: linear-gradient(hsl(var(--card)), hsl(var(--card)));
+    --gradient-surface: linear-gradient(160deg, oklch(0.23 0.02 165), oklch(0.19 0.016 165));
     --gradient-glow: radial-gradient(ellipse at center, hsl(var(--primary) / 0.15), transparent 70%);
+    --internal-glow-layer-opacity: 0;
+    --shadow-card: 0 1px 0 0 oklch(1 0 0 / 4%) inset, 0 18px 40px -24px oklch(0 0 0 / 60%);
     --shadow-glow: 0 0 60px hsl(var(--primary) / 0.2);
     --shadow-button: 0 4px 16px hsl(var(--primary) / 0.3);
   }
 
   /* Prévia fixa do escuro também quando a tela de aparência está clara. */
   .theme-preview-dark {
-    --background: 152.66 28.69% 5.30%;
-    --sidebar-background: 152.84 27.65% 6.45%;
-    --card: 152.89 25.56% 8.07%;
-    --foreground: 143.85 17.54% 95.78%;
-    --primary: 153.16 100% 30.74%;
+    --background: from oklch(0.17 0.014 165) h s l;
+    --sidebar-background: from oklch(0.185 0.016 165) h s l;
+    --card: from oklch(0.205 0.018 165) h s l;
+    --foreground: from oklch(0.97 0.005 160) h s l;
+    --primary: from oklch(0.60 0.17 158) h s l;
+  }
+
+  .dark .dashboard-card,
+  .dark .dashboard-card-hero {
+    background: hsl(var(--card));
+    border-color: hsl(var(--border));
+    box-shadow: var(--shadow-card);
+  }
+
+  .dark .briefing-bubble-ai {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+  }
+
+  .dark .briefing-bubble-user {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 
   /* Light theme for landing/sales pages */
