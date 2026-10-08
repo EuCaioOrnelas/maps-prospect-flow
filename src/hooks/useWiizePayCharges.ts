@@ -138,3 +138,11 @@ export const chargeStatusTone: Record<WiizePayChargeStatus, string> = {
   cancelled: "bg-muted text-muted-foreground border-border",
   error: "bg-destructive/10 text-destructive border-destructive/30",
 };
+
+/** Janelas embutidas da WiizePay: o passe é gerado no servidor (uso único, 2 min). */
+export const WIIZEPAY_ORIGIN = "https://wiizepay.com";
+export type WiizePayEmbedKind = "contract" | "service" | "charge";
+export const createWiizePayEmbedTicket = (input: { kind: WiizePayEmbedKind; lead_id?: string; theme: "light" | "dark"; customer_document?: string }) =>
+  call<{ url: string; origin: string }>({ action: "embed_ticket", ...input });
+export const attachWiizePayEmbed = (input: { deal_id: string; contract_id?: string; service_id?: string; charge_group_id?: string; checkout_url?: string }) =>
+  call<{ ok: boolean }>({ action: "embed_attach", ...input });

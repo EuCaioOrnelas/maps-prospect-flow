@@ -137,7 +137,25 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("link"), id: z.string().uuid() }),
   z.object({ action: z.literal("list_for_lead"), lead_id: z.string().uuid() }),
   z.object({ action: z.literal("list_all") }),
+  z.object({
+    action: z.literal("embed_ticket"), kind: z.enum(["contract", "service", "charge"]),
+    lead_id: z.string().uuid().optional(), theme: z.enum(["light", "dark"]),
+    customer_document: z.string().max(20).optional(),
+  }),
+  z.object({
+    action: z.literal("embed_attach"), deal_id: z.string().uuid(),
+    contract_id: z.string().max(200).optional(), service_id: z.string().max(200).optional(),
+    charge_group_id: z.string().max(200).optional(), checkout_url: z.string().max(2000).optional(),
+  }),
+  z.object({ action: z.literal("embed_list"), resource: z.enum(["services", "contracts"]), lead_id: z.string().uuid().optional() }),
 ]);
+
+/** Janelas embutidas da WiizePay (produção). */
+const WIIZEPAY_ORIGIN = "https://wiizepay.com";
+const sameOrigin = (u: unknown) => {
+  if (typeof u !== "string") return null;
+  try { const url = new URL(u); return url.origin === WIIZEPAY_ORIGIN ? url.toString() : null; } catch { return null; }
+};
 
 const onlyDigits = (v: unknown) => String(v ?? "").replace(/\D/g, "");
 const validEmail = (v: unknown) => (typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? v.trim().slice(0, 254) : null);
@@ -259,6 +277,70 @@ Deno.serve(async (req) => {
     if (!privileged) {
       await audit(ownerId, userId, `wiize_pay_charge_${body.action}`, "forbidden", req);
       return json({ error: "forbidden" }, 403);
+    }
+
+    if (body.action === "embed_ticket" || body.action === "embed_list") {
+      if (!connected) return json({ error: "not_connected", message: "Conecte a WiizePay em Integrações." }, 409);
+      const token = await getAccessToken(ownerId);
+      if (!token) return json({ error: "token_unavailable", message: "A conexão com a WiizePay expirou. Reconecte em Integrações." }, 409);
+      const leadId = body.lead_id;
+      let lead: any = null;
+      if (leadId) {
+        const { data } = await admin.from("leads").select("id, company_name, contact_name, email, phone, city, owner_user_id, document").eq("id", leadId).maybeSingle();
+        if (!data || (data as any).owner_user_id !== ownerId) return json({ error: "not_found" }, 404);
+        lead = data;
+      }
+      if (body.action === "embed_list") {
+        const qs = body.resource === "contracts" && leadId ? `?lead_id=${encodeURIComponent(leadId)}` : "";
+        const r = await fetch(`${WIIZEPAY_ORIGIN}/api/public/v1/${body.resource}${qs}`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }, signal: AbortSignal.timeout(10_000),
+        });
+        const out = await r.json().catch(() => ({}));
+        if (!r.ok) return json({ error: "wiize_pay_error", status: r.status, message: providerMessage(out, r.status) }, 502);
+        return json({ items: Array.isArray(out?.data) ? out.data : Array.isArray(out) ? out : [] });
+      }
+      if (body.kind !== "service" && !lead) return json({ error: "validation", message: "Selecione o cliente." }, 400);
+      if (lead) {
+        const doc = onlyDigits(body.customer_document ?? lead.document);
+        if (doc && [11, 14].includes(doc.length) && doc !== onlyDigits(lead.document)) {
+          await admin.from("leads").update({ document: doc }).eq("id", lead.id).eq("owner_user_id", ownerId);
+        }
+        // 1) cliente vai antes de qualquer janela
+        await pushCustomer(token, lead, doc);
+      }
+      const payload: Record<string, unknown> = { kind: body.kind, theme: body.theme };
+      if (lead) payload.customer = { lead_id: lead.id };
+      const r = await fetch(`${WIIZEPAY_ORIGIN}/api/public/v1/embed-tickets`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload), signal: AbortSignal.timeout(10_000),
+      });
+      const out = await r.json().catch(() => ({}));
+      const url = sameOrigin(out?.url);
+      if (!r.ok || !url) {
+        const msg = providerMessage(out, r.status);
+        console.error(`wiize-pay embed-ticket failed [${r.status}] kind=${body.kind}`);
+        await audit(ownerId, userId, "wiize_pay_embed_ticket", "error", req, msg);
+        return json({ error: "wiize_pay_error", status: r.status, message: msg }, 502);
+      }
+      // url de uso único: devolvida, nunca gravada nem registrada
+      return json({ url, origin: WIIZEPAY_ORIGIN });
+    }
+
+    if (body.action === "embed_attach") {
+      const patch: Record<string, unknown> = {};
+      if (body.contract_id) patch.wiize_pay_contract_id = body.contract_id;
+      if (body.service_id) patch.wiize_pay_service_id = body.service_id;
+      if (body.charge_group_id) { patch.wiize_pay_charge_group_id = body.charge_group_id; patch.billing_provider = "wiize_pay"; }
+      if (body.checkout_url) {
+        const u = sameOrigin(body.checkout_url) || safeCheckoutUrl(body.checkout_url);
+        if (!u) return json({ error: "validation", message: "Link de pagamento inválido." }, 400);
+        patch.wiize_pay_checkout_url = u;
+      }
+      const { error } = await admin.from("lead_deals").update(patch).eq("id", body.deal_id).eq("owner_user_id", ownerId);
+      if (error) throw error;
+      await audit(ownerId, userId, "wiize_pay_embed_attach", "ok", req);
+      return json({ ok: true });
     }
 
     if (body.action === "preview") {
