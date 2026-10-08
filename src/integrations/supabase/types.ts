@@ -6087,7 +6087,11 @@ export type Database = {
           updated_at: string
           user_id: string
           value: number
+          wiize_pay_charge_group_id: string | null
           wiize_pay_charge_id: string | null
+          wiize_pay_checkout_url: string | null
+          wiize_pay_contract_id: string | null
+          wiize_pay_service_id: string | null
         }
         Insert: {
           billing_provider?: string
@@ -6120,7 +6124,11 @@ export type Database = {
           updated_at?: string
           user_id: string
           value: number
+          wiize_pay_charge_group_id?: string | null
           wiize_pay_charge_id?: string | null
+          wiize_pay_checkout_url?: string | null
+          wiize_pay_contract_id?: string | null
+          wiize_pay_service_id?: string | null
         }
         Update: {
           billing_provider?: string
@@ -6153,7 +6161,11 @@ export type Database = {
           updated_at?: string
           user_id?: string
           value?: number
+          wiize_pay_charge_group_id?: string | null
           wiize_pay_charge_id?: string | null
+          wiize_pay_checkout_url?: string | null
+          wiize_pay_contract_id?: string | null
+          wiize_pay_service_id?: string | null
         }
         Relationships: [
           {
