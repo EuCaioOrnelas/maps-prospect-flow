@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Igualar a paleta completa do tema escuro à WiizePay, incluindo fundos, cards, verde e superfícies especiais; preservar o claro e conferir na tela.
+- [x] Igualar a paleta completa do tema escuro à WiizePay, incluindo fundos, cards, verde e superfícies especiais; cores de fundo/card/verde/borda conferidas contra o original no navegador, claro preservado.
 
 - [x] Melhorar carregamento e encaixe das janelas WiizePay no assistente de venda, sem bordas duplicadas; quatro testes passaram e carregamento/rolagem conferidos com conteúdo simulado, sem cobrança real.
 - [x] Retirar aviso repetido de cookies nas janelas integradas; a WiizePay deixou de exibir o aviso nas telas embutidas.
