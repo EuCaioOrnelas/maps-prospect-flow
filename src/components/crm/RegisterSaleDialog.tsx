@@ -9,7 +9,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, FileText, Trash2, Loader2, Tag, AlignLeft, Repeat, DollarSign, CalendarClock, Calendar, CreditCard, Receipt, FileSignature, User as UserIcon, Activity, StickyNote, ShieldCheck, QrCode, Landmark, Layers3, CheckCircle2, Wallet } from "lucide-react";
 import { useSales, PAYMENT_METHODS, type SaleType, type Sale, type SaleStatus } from "@/hooks/useSales";
-import { useWiizePayCharges, useWiizePayChargeMutations, type WiizePayBillingType, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
+import { useWiizePayCharges, attachWiizePayEmbed, type WiizePayListMeta } from "@/hooks/useWiizePayCharges";
+import { WiizePayEmbedFrame, type WiizePayEmbedEvent } from "./WiizePayEmbedFrame";
 import { WiizePayPromo } from "./WiizePayPromo";
 import { WiizePayLinkShare } from "./WiizePayLinkShare";
 import { useAccountMembers } from "@/hooks/useAccountMembers";
@@ -85,7 +86,6 @@ export function RegisterSaleDialog({
   const wiizePayActive = !isEdit && !!wiizePay?.connected && !!wiizePay.can_charge;
   /** Status ainda não carregado: evita mostrar o formulário interno e trocar de tela em seguida. */
   const wiizePayChecking = !isEdit && wiizePay === undefined;
-  const { create: createCharge } = useWiizePayChargeMutations(leadId);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -100,15 +100,11 @@ export function RegisterSaleDialog({
   const [status, setStatus] = useState<SaleStatus>("active");
   const [notes, setNotes] = useState("");
   const [responsibleUserId, setResponsibleUserId] = useState<string>("");
-  const [billingType, setBillingType] = useState<WiizePayBillingType>("recurring");
-  const [installments, setInstallments] = useState(2);
-  const [chargeMethods, setChargeMethods] = useState<string[]>(["pix"]);
   const [customerDocument, setCustomerDocument] = useState("");
-  const [dueDate, setDueDate] = useState(() => new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10));
   const [chargeError, setChargeError] = useState<string | null>(null);
   const [savedSaleId, setSavedSaleId] = useState<string | null>(null);
   const [paymentLink, setPaymentLink] = useState<{ url: string; expiresAt: string | null } | null>(null);
-  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [embedIds, setEmbedIds] = useState<{ contract_id?: string; service_id?: string }>({});
   const [step, setStep] = useState(1);
 
   useEffect(() => {
@@ -148,23 +144,13 @@ export function RegisterSaleDialog({
     setResponsibleUserId("");
     setReceiptFile(null);
     setContractFile(null);
-    setBillingType("recurring");
-    setInstallments(2);
-    setChargeMethods(["pix"]);
     setCustomerDocument("");
-    setDueDate(new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10));
     setChargeError(null);
     setSavedSaleId(null);
     setPaymentLink(null);
-    setIdempotencyKey(crypto.randomUUID());
+    setEmbedIds({});
     setStep(1);
   }, [open, sale, initialValue, initialTitle, initialDescription, leadName, leadId]);
-
-  useEffect(() => {
-    if (!wiizePayActive) return;
-    setSaleType(billingType === "recurring" ? "recurring" : "one_time");
-    if (billingType !== "one_time" && chargeMethods.length > 1) setChargeMethods([chargeMethods[0]]);
-  }, [billingType, wiizePayActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const documentDigits = customerDocument.replace(/\D/g, "");
   const formatDocument = (raw: string) => {
@@ -173,7 +159,7 @@ export function RegisterSaleDialog({
     return d.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
   };
 
-  const toggleChargeMethod = (method: string) => {
+  const _unused = (method: string) => {
     setChargeMethods((current) => {
       if (billingType !== "one_time") return [method];
       return current.includes(method) ? current.filter((item) => item !== method) : [...current, method];
@@ -181,21 +167,47 @@ export function RegisterSaleDialog({
   };
 
   const parsedValue = Number(value.replace(/\./g, "").replace(",", "."));
-  /** Valida a etapa atual do fluxo WiizePay antes de avançar. */
+  /** Etapa 1 valida os dados; as demais avançam pelos avisos da janela WiizePay. */
   const goNext = () => {
-    if (step === 1 && ![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
-    if (step === 2) {
-      if (!startDate) return toast.error("Informe a data de início");
-      const m = Number(months);
-      if (billingType === "recurring" && (!Number.isInteger(m) || m < 1 || m > MAX_CONTRACT_MONTHS)) {
-        return toast.error(`Informe um tempo de contrato entre 1 e ${MAX_CONTRACT_MONTHS} meses`);
-      }
+    if (![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
+    if (!title.trim()) return toast.error("Informe um título para a venda");
+    if (!parsedValue || parsedValue <= 0) return toast.error("Informe um valor válido");
+    const m = Number(months);
+    if (saleType === "recurring" && (!Number.isInteger(m) || m < 1 || m > MAX_CONTRACT_MONTHS)) {
+      return toast.error(`Informe um tempo de contrato entre 1 e ${MAX_CONTRACT_MONTHS} meses`);
     }
-    if (step === 3) {
-      if (!title.trim()) return toast.error("Informe o nome do serviço");
-      if (!parsedValue || parsedValue <= 0) return toast.error("Informe um valor válido");
+    setStep(2);
+  };
+
+  /** Recebe os IDs da WiizePay; a venda só é criada quando a cobrança é criada. */
+  const handleEmbedEvent = async (e: WiizePayEmbedEvent) => {
+    if (e.type === "wiizepay:contract.selected") { setEmbedIds((c) => ({ ...c, contract_id: e.contract_id })); setStep(3); return; }
+    if (e.type === "wiizepay:service.selected") { setEmbedIds((c) => ({ ...c, service_id: e.service_id })); setStep(4); return; }
+    if (submitting || savedSaleId || !leadId) return;
+    setSubmitting(true);
+    setChargeError(null);
+    try {
+      const created = await createSale({
+        lead_id: leadId,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        value: parsedValue,
+        sale_type: saleType,
+        contract_months: saleType === "recurring" ? Number(months) : 1,
+        payment_method: "wiize_pay",
+        start_date: startDate,
+      });
+      if (!created?.id) throw new Error("sale_not_created");
+      setSavedSaleId(created.id);
+      await attachWiizePayEmbed({ deal_id: created.id, ...embedIds, charge_group_id: e.charge_group_id, checkout_url: e.checkout_url });
+      setPaymentLink({ url: e.checkout_url, expiresAt: null });
+      toast.success("Venda e cobrança criadas com sucesso!");
+    } catch (err) {
+      setChargeError("A cobrança foi criada na WiizePay, mas não conseguimos salvar tudo na venda. " + ((err as Error).message || ""));
+      toast.error("Não foi possível salvar a venda.");
+    } finally {
+      setSubmitting(false);
     }
-    setStep((s) => Math.min(4, s + 1));
   };
 
   const handleSubmit = async () => {
@@ -206,11 +218,6 @@ export function RegisterSaleDialog({
     const monthsNum = Number(months);
     if (saleType === "recurring" && (!Number.isInteger(monthsNum) || monthsNum < 1 || monthsNum > MAX_CONTRACT_MONTHS)) {
       return toast.error(`Informe um tempo de contrato entre 1 e ${MAX_CONTRACT_MONTHS} meses`);
-    }
-    if (wiizePayActive && !savedSaleId) {
-      if (![11, 14].includes(documentDigits.length)) return toast.error("Informe um CPF ou CNPJ válido");
-      if (!chargeMethods.length) return toast.error("Escolha uma forma de pagamento");
-      if (!dueDate) return toast.error("Informe o primeiro vencimento");
     }
 
     setSubmitting(true);
@@ -292,34 +299,7 @@ export function RegisterSaleDialog({
       }
       if (!savedSaleId) await Promise.all(uploads);
 
-      if (wiizePayActive) {
-        setChargeError(null);
-        try {
-          const charge = await createCharge.mutateAsync({
-            deal_id: newSaleId,
-            idempotency_key: idempotencyKey,
-            payment_methods: chargeMethods,
-            due_date: dueDate,
-            billing_type: billingType,
-            installments: billingType === "installment" ? installments : undefined,
-            customer_document: documentDigits,
-          });
-          if (charge.checkout_url) {
-            setPaymentLink({ url: charge.checkout_url, expiresAt: charge.checkout_expires_at ?? null });
-            toast.success("Venda e cobrança criadas com sucesso!");
-            return;
-          }
-          toast.success("Venda e cobrança registradas com sucesso!");
-        } catch (chargeFailure) {
-          const message = (chargeFailure as Error).message || "Não foi possível criar a cobrança.";
-          setChargeError(message);
-          setIdempotencyKey(crypto.randomUUID());
-          toast.error("A venda foi salva, mas a cobrança não foi criada.");
-          return;
-        }
-      } else {
-        toast.success("Venda registrada com sucesso!");
-      }
+      toast.success("Venda registrada com sucesso!");
 
       onCreated?.({ id: newSaleId });
       onOpenChange(false);
@@ -341,7 +321,7 @@ export function RegisterSaleDialog({
   const titleField = (
     <div className="space-y-1.5">
       <Label htmlFor="sale-title" className="flex items-center gap-1.5">
-        <Tag className="w-3.5 h-3.5 text-primary" /> {wiizePayActive ? "Nome do serviço *" : "Título da venda *"}
+        <Tag className="w-3.5 h-3.5 text-primary" /> Título da venda *
       </Label>
       <Input id="sale-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Plano Growth Anual - João da Silva" maxLength={120} className={inputCls} disabled={locked} />
     </div>
@@ -474,7 +454,7 @@ export function RegisterSaleDialog({
   );
 
   const stepCliente = (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-sm">
         <p className="text-xs text-muted-foreground">Cliente</p>
         <p className="font-medium text-foreground">{leadName || "Cliente selecionado"}</p>
@@ -483,89 +463,40 @@ export function RegisterSaleDialog({
         <Label htmlFor="wp-customer-document">CPF ou CNPJ do cliente *</Label>
         <Input id="wp-customer-document" inputMode="numeric" value={customerDocument} onChange={(event) => setCustomerDocument(formatDocument(event.target.value))} placeholder="00.000.000/0000-00" disabled={locked} />
       </div>
-    </div>
-  );
-
-  const stepContrato = (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Tipo de cobrança *</Label>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {([
-            ["one_time", "À vista", "Uma cobrança", DollarSign],
-            ["installment", "Parcelada", `Até ${MAX_INSTALLMENTS}x`, Layers3],
-            ["recurring", "Recorrente", "Cobrança mensal", Repeat],
-          ] as const).map(([key, label, hint, Icon]) => (
-            <button key={key} type="button" aria-pressed={billingType === key} className={cn(optionCls(billingType === key), "py-2")} onClick={() => setBillingType(key)} disabled={locked}>
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{label}</span><span className="block text-xs text-muted-foreground">{hint}</span></span>
-              <span className={cn("h-2 w-2 shrink-0 rounded-full", billingType === key ? "bg-foreground" : "bg-transparent")} />
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-        {startField}
-        {billingType === "recurring" && monthsField}
-      </div>
-      {contractFileField}
-    </div>
-  );
-
-  const stepServico = (
-    <div className="space-y-4">
       {titleField}
-      {descriptionField}
       <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
+        <div className="space-y-1.5">
+          <Label>Tipo de venda *</Label>
+          <Select value={saleType} onValueChange={(v) => setSaleType(v as SaleType)} disabled={locked}>
+            <SelectTrigger className={inputCls}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recurring">Recorrente</SelectItem>
+              <SelectItem value="one_time">Venda única</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {valueField}
-        {billingType === "installment" && (
-          <div className="space-y-1.5">
-            <Label htmlFor="wp-installments">Quantidade de parcelas *</Label>
-            <Select value={String(installments)} onValueChange={(next) => setInstallments(Number(next))} disabled={locked}>
-              <SelectTrigger id="wp-installments"><SelectValue /></SelectTrigger>
-              <SelectContent>{Array.from({ length: MAX_INSTALLMENTS - 1 }, (_, index) => index + 2).map((count) => <SelectItem key={count} value={String(count)}>{count}x</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-        )}
       </div>
+      {saleType === "recurring" && monthsField}
+      <p className="text-xs text-muted-foreground">Esses dados alimentam a receita no CRM. Contrato, serviço e cobrança são escolhidos dentro da WiizePay nas próximas etapas.</p>
     </div>
   );
 
+  const embedStep = (kind: "contract" | "service" | "charge") => (
+    <WiizePayEmbedFrame
+      kind={kind}
+      leadId={kind === "service" ? undefined : leadId}
+      customerDocument={documentDigits || undefined}
+      onEvent={handleEmbedEvent}
+    />
+  );
+  const stepContrato = embedStep("contract");
+  const stepServico = embedStep("service");
   const stepCobranca = (
-    <div className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="wp-first-due">Primeiro vencimento *</Label>
-        <Input id="wp-first-due" type="date" min={new Date().toISOString().slice(0, 10)} value={dueDate} onChange={(event) => setDueDate(event.target.value)} disabled={locked} />
-      </div>
-      <div className="space-y-2">
-        <Label>Formas de pagamento *</Label>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {([
-            ["pix", "PIX", QrCode],
-            ["boleto", "Boleto", Landmark],
-            ["credit_card", "Crédito", CreditCard],
-            ["debit", "Débito em conta", Wallet],
-          ] as const).map(([key, label, Icon]) => (
-            <label key={key} className={cn(optionCls(chargeMethods.includes(key)), "cursor-pointer")}>
-              <Checkbox checked={chargeMethods.includes(key)} onCheckedChange={() => toggleChargeMethod(key)} disabled={locked} />
-              <Icon className="h-4 w-4" /><span className="text-sm font-medium">{label}</span>
-            </label>
-          ))}
-        </div>
-        {billingType !== "one_time" && <p className="text-xs text-muted-foreground">Cobranças parceladas e recorrentes aceitam uma forma de pagamento.</p>}
-      </div>
-      <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
-        <p className="text-xs text-muted-foreground">Resumo</p>
-        <p className="font-semibold text-foreground">
-          {billingType === "installment" && parsedValue > 0
-            ? `${installments}x de ${brl(parsedValue / installments)}`
-            : billingType === "recurring"
-              ? `${months} cobranças mensais de ${brl(parsedValue || 0)}`
-              : `${brl(parsedValue || 0)} à vista`}
-        </p>
-        {title && <p className="text-xs text-muted-foreground">{title}{leadName ? ` · ${leadName}` : ""}</p>}
-      </div>
-      {chargeError && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"><strong>A venda já foi salva.</strong> {chargeError} Corrija a conexão, se necessário, e tente criar a cobrança novamente.</div>}
+    <div className="space-y-3">
+      {submitting && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Salvando a venda…</div>}
+      {chargeError && <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{chargeError}</div>}
+      {!locked && embedStep("charge")}
     </div>
   );
 
@@ -711,15 +642,15 @@ export function RegisterSaleDialog({
       }} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {paymentLink ? "Concluir" : savedSaleId ? "Fechar" : "Cancelar"}
       </Button>
-      {wiizePayActive && !paymentLink && step > 1 && !locked && (
-        <Button variant="ghost" size="sm" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
+      {wiizePayActive && !paymentLink && step > 1 && !submitting && (
+        <Button variant="ghost" size="sm" onClick={() => setStep((s) => Math.max(1, s - 1))} className={cn(compact && "h-8 px-2 text-xs")}>
           Voltar
         </Button>
       )}
-      {wiizePayActive && !paymentLink && step < 4 && (
+      {wiizePayActive && !paymentLink && step === 1 && (
         <Button size="sm" onClick={goNext} className={cn(compact && "h-8 px-2 text-xs")}>Próximo</Button>
       )}
-      {!paymentLink && !wiizePayChecking && (!wiizePayActive || step === 4) && <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
+      {!paymentLink && !wiizePayChecking && !wiizePayActive && <Button size="sm" onClick={handleSubmit} disabled={submitting} className={cn(compact && "h-8 px-2 text-xs")}>
         {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         {isEdit ? "Salvar alterações" : savedSaleId ? "Tentar cobrança novamente" : wiizePayActive ? "Criar venda e cobrança" : "Registrar venda"}
       </Button>}
