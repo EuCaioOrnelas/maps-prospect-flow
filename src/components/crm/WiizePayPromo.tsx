@@ -1,42 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, CreditCard, QrCode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useAllWiizePayCharges } from "@/hooks/useWiizePayCharges";
 import { cn } from "@/lib/utils";
 import wiizePayEntry from "@/assets/wiizepay-entrada.png.asset.json";
+import wiizePayTaxaZero from "@/assets/wiizepay-taxa-zero.png.asset.json";
+import wiizePayAtiveAgora from "@/assets/wiizepay-ative-agora.png.asset.json";
+import { useAuth } from "@/contexts/AuthContext";
+import { dismissPromoEntry, readPromoEntry, recordPromoEntry, type PromoEntry } from "@/lib/wiizepayPromoRotation";
 
 export type WiizePayPromoVariant = "modal" | "strip" | "card";
 
-const DISMISS_KEY = "wiizepay-entry-promo-v2";
-const SESSION_KEY = "wiizepay-entry-promo-session-v2";
-const DISMISS_DAYS = 15;
 const WIIZEPAY_SITE = "https://wiizepay.com.br";
-
-/**
- * Regra do aviso de entrada (guardada no navegador):
- * - primeiro acesso: não mostra, apenas registra;
- * - a partir do acesso seguinte: mostra e só volta após 15 dias.
- * A decisão vale pela sessão, para não mudar ao navegar.
- */
-function shouldShowEntryPromo(): boolean {
-  try {
-    const cached = sessionStorage.getItem(SESSION_KEY);
-    if (cached) return cached === "show";
-    const raw = localStorage.getItem(DISMISS_KEY);
-    let show = false;
-    if (!raw) {
-      localStorage.setItem(DISMISS_KEY, "armed");
-    } else if (raw === "armed") {
-      show = true;
-    } else {
-      show = Date.now() - Number(raw) >= DISMISS_DAYS * 86_400_000;
-    }
-    if (show) localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    sessionStorage.setItem(SESSION_KEY, show ? "show" : "hide");
-    return show;
-  } catch { return false; }
-}
+const ENTRY_IMAGES = [
+  { url: wiizePayEntry.url, alt: "WiizePay — receba seus pagamentos de forma simples e automática" },
+  { url: wiizePayTaxaZero.url, alt: "WiizePay — taxa 0% por 3 meses no Pix e Boleto" },
+  { url: wiizePayAtiveAgora.url, alt: "Ative agora o WiizePay e receba pagamentos no automático" },
+];
+// One-time browser-cache reset requested by this account; never bypasses connection checks.
+const RESET_REVISIONS: Record<string, string> = { "62ba5c53-a297-49cd-9ca3-b44302fc59f4": "preview-2026-10-08" };
 
 interface Props {
   variant: WiizePayPromoVariant;
@@ -49,20 +32,29 @@ interface Props {
 /** Recomenda a WiizePay só para quem ainda não conectou. */
 export function WiizePayPromo({ variant, connected, dismissible = false, className }: Props) {
   const own = useAllWiizePayCharges();
-  const [hidden, setHidden] = useState(() => (dismissible ? !shouldShowEntryPromo() : false));
+  const { user } = useAuth();
+  const userId = user?.id;
+  const revision = userId ? RESET_REVISIONS[userId] ?? "1" : "1";
+  const [hidden, setHidden] = useState(false);
+  const [entry, setEntry] = useState<PromoEntry | null>(null);
 
   const isConnected = connected !== undefined ? connected : own.data?.connected === true;
-  const statusResolved = connected !== undefined || own.isSuccess || own.isError;
-  if (!statusResolved || isConnected || hidden) return null;
+  const statusResolved = connected != null || own.isSuccess;
+  useEffect(() => {
+    if (variant !== "modal" || !statusResolved || isConnected || !userId) return;
+    const next = readPromoEntry(userId, ENTRY_IMAGES.length, revision);
+    setHidden(false);
+    setEntry(next);
+    if (next) recordPromoEntry(userId, next, ENTRY_IMAGES.length, revision);
+  }, [variant, statusResolved, isConnected, userId, revision]);
+  if (!statusResolved || isConnected || hidden || (variant === "modal" && !entry)) return null;
 
   const go = () => window.open(WIIZEPAY_SITE, "_blank", "noopener,noreferrer");
   const dismiss = () => {
-    try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now()));
-      sessionStorage.setItem(SESSION_KEY, "hide");
-    } catch { /* noop */ }
+    if (userId && entry) dismissPromoEntry(userId, entry, revision);
     setHidden(true);
   };
+  const image = ENTRY_IMAGES[entry?.index ?? 0] ?? ENTRY_IMAGES[0];
 
   if (variant === "modal") {
     return (
@@ -96,8 +88,8 @@ export function WiizePayPromo({ variant, connected, dismissible = false, classNa
               aria-label="Conhecer a WiizePay — abre wiizepay.com.br em uma nova aba"
             >
               <img
-                src={wiizePayEntry.url}
-                alt="WiizePay — receba seus pagamentos de forma simples e automática"
+                src={image.url}
+                alt={image.alt}
                 className="block h-auto max-h-[78vh] w-full object-contain"
                 loading="eager"
               />
