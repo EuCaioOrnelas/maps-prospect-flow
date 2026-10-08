@@ -69,7 +69,21 @@ export function WiizePayEmbedFrame({ kind, leadId, customerDocument, onEvent, cl
       switch (d.type) {
         case "wiizepay:ready": setReady(true); break;
         case "wiizepay:error": setError(str(d.message) || "A WiizePay informou um erro."); break;
-        case "wiizepay:service.selected": { const id = str(d.service_id); if (id) onEventRef.current({ type: d.type, service_id: id }); break; }
+        case "wiizepay:service.selected": {
+          const id = str(d.service_id);
+          if (!id) break;
+          const cents = typeof d.amount_cents === "number" && Number.isFinite(d.amount_cents) && d.amount_cents >= 0 ? Math.round(d.amount_cents) : undefined;
+          const raw = typeof d.service_type === "string" ? d.service_type : null;
+          onEventRef.current({
+            type: d.type,
+            service_id: id,
+            name: str(d.name) ?? undefined,
+            amount_cents: cents,
+            service_type: SERVICE_TYPES.includes(raw as WiizePayServiceType) ? (raw as WiizePayServiceType) : undefined,
+            created: d.created === true,
+          });
+          break;
+        }
         case "wiizepay:contract.selected": { const id = str(d.contract_id); if (id) onEventRef.current({ type: d.type, contract_id: id }); break; }
         case "wiizepay:charge.created": {
           const id = str(d.charge_group_id); const link = str(d.checkout_url);

@@ -51,4 +51,30 @@ describe("WiizePay embedded loading", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     expect(createWiizePayEmbedTicket).toHaveBeenCalledTimes(2);
   });
+
+  it("forwards the chosen service name, amount and type", async () => {
+    const onEvent = vi.fn();
+    vi.mocked(createWiizePayEmbedTicket).mockResolvedValue({ url: "https://wiizepay.com/embed/service", origin: "https://wiizepay.com" });
+    render(<WiizePayEmbedFrame kind="service" onEvent={onEvent} />);
+    const frame = await screen.findByTitle("WiizePay") as HTMLIFrameElement;
+    act(() => window.dispatchEvent(new MessageEvent("message", {
+      origin: "https://wiizepay.com",
+      source: frame.contentWindow,
+      data: { source: "wiizepay", type: "wiizepay:service.selected", service_id: "s-1", name: "Consultoria", amount_cents: 150000, service_type: "recurring", created: true },
+    })));
+    expect(onEvent).toHaveBeenCalledWith({ type: "wiizepay:service.selected", service_id: "s-1", name: "Consultoria", amount_cents: 150000, service_type: "recurring", created: true });
+  });
+
+  it("keeps the service when the type is unknown", async () => {
+    const onEvent = vi.fn();
+    vi.mocked(createWiizePayEmbedTicket).mockResolvedValue({ url: "https://wiizepay.com/embed/service", origin: "https://wiizepay.com" });
+    render(<WiizePayEmbedFrame kind="service" onEvent={onEvent} />);
+    const frame = await screen.findByTitle("WiizePay") as HTMLIFrameElement;
+    act(() => window.dispatchEvent(new MessageEvent("message", {
+      origin: "https://wiizepay.com",
+      source: frame.contentWindow,
+      data: { source: "wiizepay", type: "wiizepay:service.selected", service_id: "s-2", name: "Suporte", amount_cents: 8900, service_type: "weird" },
+    })));
+    expect(onEvent).toHaveBeenCalledWith({ type: "wiizepay:service.selected", service_id: "s-2", name: "Suporte", amount_cents: 8900, service_type: undefined, created: false });
+  });
 });
