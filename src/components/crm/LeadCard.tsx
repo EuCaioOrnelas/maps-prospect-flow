@@ -5,13 +5,10 @@ import { cn } from '@/lib/utils';
 import { Phone, MessageCircle, Pencil, Check, X, Mail, Archive, DollarSign, Paperclip, ArchiveRestore } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { formatPhoneShort } from '@/lib/phoneUtils';
 import { useLeadScores } from '@/hooks/useLeadScores';
-import { useLeadIntelligence, NEXT_ACTION_LABELS } from '@/hooks/useLeadIntelligence';
+import { useLeadIntelligence } from '@/hooks/useLeadIntelligence';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { isProfileAnalyzed } from '@/lib/intelligence';
 import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
@@ -62,7 +59,6 @@ const LeadCardComponent = ({
   const phoneFormatted = formatPhoneShort(lead.phone);
   const phoneDisplay = phoneHidden ? maskPhoneTail(phoneFormatted) : phoneFormatted;
   const displayName = lead.contact_name || lead.company_name || phoneDisplay;
-  const hasResponse = !!lead.last_response_at;
   onDragStartRef.current = onDragStart;
   leadIdRef.current = lead.id;
 
@@ -288,44 +284,7 @@ const LeadCardComponent = ({
 
 
 
-      {/* Footer - Tags and Response time */}
-      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-        {/* Custom tags */}
-        {Array.isArray(lead.tags) && lead.tags.slice(0, 2).map((tag) => (
-          <Badge
-            key={tag}
-            variant="outline"
-            className="text-[10px] px-1.5 py-0 shrink-0 pointer-events-none border-primary/30 text-primary"
-          >
-            {tag}
-          </Badge>
-        ))}
-        {Array.isArray(lead.tags) && lead.tags.length > 2 && (
-          <span className="text-[10px] text-muted-foreground">+{lead.tags.length - 2}</span>
-        )}
 
-        {hasResponse && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1 ml-auto min-w-0">
-            <MessageCircle className="w-3 h-3 shrink-0" />
-            <span className="truncate min-w-0">
-              {formatDistanceToNow(new Date(lead.last_response_at!), {
-                addSuffix: true,
-                locale: ptBR,
-              })}
-            </span>
-          </span>
-        )}
-      </div>
-
-      {/* Inteligência: próxima ação sugerida pelo motor central. "Responder agora" foi retirado do CRM. */}
-      {intel && intel.opportunity_score >= 40 && intel.next_best_action !== "RESPOND_NOW" && (
-        <div className="mt-2 flex items-center gap-1.5 min-w-0">
-          {intel.is_hot && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
-          <span className="text-[10px] font-medium text-primary truncate">
-            {NEXT_ACTION_LABELS[intel.next_best_action] || intel.next_best_action}
-          </span>
-        </div>
-      )}
 
       {/* Ações rápidas */}
       <div className="mt-2.5">
