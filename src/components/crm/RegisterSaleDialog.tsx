@@ -684,7 +684,7 @@ export function RegisterSaleDialog({
         <span className="font-semibold text-foreground">Registrar manual</span>
         <span className="text-xs text-muted-foreground">Cadastre a venda aqui no CRM, como sempre.</span>
       </button>
-      <button type="button" onClick={() => { window.open("https://wiizepay.com/charges", "_blank", "noopener,noreferrer"); onOpenChange(false); }} className="flex flex-col items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 text-left transition-colors hover:border-primary/60 hover:bg-primary/10">
+      <button type="button" onClick={() => { window.open("https://wiizepay.com/cobrancas", "_blank", "noopener,noreferrer"); onOpenChange(false); }} className="flex flex-col items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-4 text-left transition-colors hover:border-primary/60 hover:bg-primary/10">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><ExternalLink className="h-5 w-5" /></span>
         <span className="font-semibold text-foreground">Registrar na WiizePay</span>
         <span className="text-xs text-muted-foreground">Abre a área de cobranças da WiizePay em uma nova aba.</span>

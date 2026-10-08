@@ -317,8 +317,8 @@ const LeadCardComponent = ({
         )}
       </div>
 
-      {/* Inteligência: próxima ação sugerida pelo motor central */}
-      {intel && intel.opportunity_score >= 40 && (
+      {/* Inteligência: próxima ação sugerida pelo motor central. "Responder agora" foi retirado do CRM. */}
+      {intel && intel.opportunity_score >= 40 && intel.next_best_action !== "RESPOND_NOW" && (
         <div className="mt-2 flex items-center gap-1.5 min-w-0">
           {intel.is_hot && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
           <span className="text-[10px] font-medium text-primary truncate">
