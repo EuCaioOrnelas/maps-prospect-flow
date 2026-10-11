@@ -20,9 +20,9 @@ Envelope de resposta de sucesso:
   "data": { },
   "usage": {
     "operation": "prospecting.analyze",
-    "tokens_charged": 5,
+    "tokens_charged": 3,
     "cost_brl": 0.05,
-    "balance_tokens": 4995
+    "balance_tokens": 4997
   },
   "request_id": "95fd8879-873d-4044-86c7-bef6a37751ff"
 }
@@ -52,7 +52,7 @@ Envelope de erro:
 
 ## 3. Endpoints
 
-### 3.1 POST /v1/prospecting/search — 9 tokens (R$ 0,09)
+### 3.1 POST /v1/prospecting/search — 5 tokens (R$ 0,05)
 
 Encontra empresas reais por termo e localização.
 
@@ -65,7 +65,7 @@ Campos:
 { "query": "padaria", "location": "São Paulo, SP", "limit": 20 }
 ```
 
-### 3.2 POST /v1/prospecting/analyze — 5 tokens (R$ 0,05)
+### 3.2 POST /v1/prospecting/analyze — 3 tokens (R$ 0,03)
 
 Gera score de oportunidade (0–100), nível, probabilidade de fechamento, diagnóstico,
 pontos fortes/fracos, breakdown do score e ação recomendada.
@@ -90,7 +90,7 @@ Resposta (`data`): `company_name`, `opportunity_score`, `opportunity_level`,
 `close_probability`, `diagnosis`, `recommended_action`, `score_breakdown`,
 `strengths[]`, `weaknesses[]`.
 
-### 3.3 POST /v1/prospecting/approach — 4 tokens (R$ 0,04) por mensagem gerada
+### 3.3 POST /v1/prospecting/approach — 2 tokens (R$ 0,02) por mensagem gerada
 
 Cria mensagem de abordagem comercial personalizada. Envie o `diagnosis` e o `score`
 retornados pelo `/analyze` para maior precisão.
@@ -99,7 +99,7 @@ Campo `type` (opcional):
 
 - `"followup"` (padrão) — mensagem no padrão Meta / follow-up.
 - `"manual"` — mensagem de primeiro contato manual para WhatsApp.
-- `"both"` — gera as duas (custa 8 tokens: 4 por mensagem).
+- `"both"` — gera as duas (custa 4 tokens: 2 por mensagem).
 
 ```json
 {
@@ -130,9 +130,9 @@ Só é cobrado o que foi realmente gerado (`usage.units`).
 
 | Operação | Endpoint | Custo |
 | --- | --- | --- |
-| Buscar empresas | /v1/prospecting/search | 9 tokens por empresa retornada |
-| Analisar + diagnosticar | /v1/prospecting/analyze | 5 tokens (score e diagnóstico juntos) |
-| Gerar abordagem | /v1/prospecting/approach | 4 tokens por mensagem gerada |
+| Buscar empresas | /v1/prospecting/search | 5 tokens por empresa retornada |
+| Analisar + diagnosticar | /v1/prospecting/analyze | 3 tokens (score e diagnóstico juntos) |
+| Gerar abordagem | /v1/prospecting/approach | 2 tokens por mensagem gerada |
 
 ## 5. Idempotência
 
