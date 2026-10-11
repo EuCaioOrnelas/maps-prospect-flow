@@ -58,9 +58,9 @@ const quickResponse = `{
   },
   "usage": {
     "operation": "prospecting.analyze",
-    "tokens_charged": 5,
-    "cost_brl": 0.05,
-    "balance_tokens": 4995
+    "tokens_charged": 3,
+    "cost_brl": 0.03,
+    "balance_tokens": 4997
   },
   "request_id": "95fd8879-873d-4044-86c7-bef6a37751ff"
 }`;
@@ -245,9 +245,9 @@ export default function ApiDocs() {
               <table className="w-full">
                 <tbody>
                   <Row head cells={["Operação", "Endpoint", "Custo"]} />
-                  <Row cells={["Buscar empresas", "/v1/prospecting/search", "9 tokens (R$ 0,09) por empresa retornada"]} />
-                  <Row cells={["Analisar + diagnosticar", "/v1/prospecting/analyze", "5 tokens (R$ 0,05)"]} />
-                  <Row cells={["Gerar abordagem", "/v1/prospecting/approach", "4 tokens (R$ 0,04) por mensagem gerada"]} />
+                  <Row cells={["Buscar empresas", "/v1/prospecting/search", "5 tokens (R$ 0,05) por empresa retornada"]} />
+                  <Row cells={["Analisar + diagnosticar", "/v1/prospecting/analyze", "3 tokens (R$ 0,03)"]} />
+                  <Row cells={["Gerar abordagem", "/v1/prospecting/approach", "2 tokens (R$ 0,02) por mensagem gerada"]} />
                 </tbody>
               </table>
             </div>
@@ -281,7 +281,7 @@ export default function ApiDocs() {
                   para um resultado mais preciso. O campo opcional <code>type</code> define o tipo de
                   mensagem: <code>"manual"</code> (primeiro contato manual para WhatsApp),{" "}
                   <code>"followup"</code> (padrão Meta, usado quando <code>type</code> não é enviado) ou{" "}
-                  <code>"both"</code> (gera as duas, cobrando 4 tokens por mensagem — 8 no total). Com{" "}
+                  <code>"both"</code> (gera as duas, cobrando 2 tokens por mensagem — 4 no total). Com{" "}
                   <code>"both"</code>, a resposta vem em <code>manual</code> e <code>followup</code>; só é
                   cobrada a mensagem realmente gerada.
                 </p>
