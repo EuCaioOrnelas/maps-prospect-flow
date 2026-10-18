@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Limpar os recursos da página principal: retirar rótulos e ícones decorativos, adicionar separador verde entre título e descrição e retirar ícones do cabeçalho comparativo.
+- [x] Limpar os recursos da página principal: retirar rótulos e ícones decorativos, adicionar separador verde no estilo Wiizecore entre título e descrição e retirar ícones do cabeçalho comparativo; conferido no navegador sem erros e sem excesso horizontal no celular.
 
 - [x] Atualizar links oficiais da Meta na documentação e no guia de implementação; destinos oficiais respondem, acesso às telas Meta depende das permissões da conta.
 - [x] Retirar minicards redundantes acima dos títulos nas páginas públicas, recursos e produtos; preservadas identificação de módulos, prova social e etiquetas de planos.

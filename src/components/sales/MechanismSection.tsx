@@ -119,7 +119,7 @@ function StepRow({
           <h3 className="font-display text-lg font-semibold leading-tight text-foreground sm:text-xl">
             {step.title}
           </h3>
-          <div aria-hidden="true" className="my-4 h-0.5 w-12 bg-primary" />
+          <div aria-hidden="true" className="my-4 h-1 w-10 rounded-full bg-primary" />
           <p className="text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
           <ul className="mt-4 space-y-2.5 border-t border-border/60 pt-4">
             {step.bullets.map((b) => (

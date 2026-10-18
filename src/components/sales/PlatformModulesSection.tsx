@@ -1324,7 +1324,7 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
           <h3 className="font-display font-bold text-foreground text-xl sm:text-2xl lg:text-[1.75rem] leading-tight">
             {item.title}
           </h3>
-          <div aria-hidden="true" className="my-4 h-0.5 w-12 shrink-0 bg-primary" />
+          <div aria-hidden="true" className="my-4 h-1 w-10 shrink-0 rounded-full bg-primary" />
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-5">
             {item.description}
           </p>
