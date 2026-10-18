@@ -23,9 +23,6 @@ export const BenefitsSection = () => {
  transition={{ duration: 0.6 }}
  className="text-center mb-16"
  >
- <span className="inline-block px-3.5 py-1.5 rounded-hover text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary mb-4">
- Resultados reais
- </span>
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-4">
  Menos esforço.<br />
  <span className="text-shimmer-highlight">Mais resultado.</span>

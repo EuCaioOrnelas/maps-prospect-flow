@@ -773,10 +773,6 @@ export const PricingSection = () => {
  
  <div className="relative z-10">
  <div className="text-center mb-6 sm:mb-10">
- <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3.5 py-1.5 rounded-hover text-[11px] sm:text-sm font-medium mb-3 sm:mb-4">
- <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
- Infraestrutura Profissional
- </div>
  
  <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
  Segurança e confiança em cada etapa

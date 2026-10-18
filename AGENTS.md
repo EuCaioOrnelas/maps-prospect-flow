@@ -7,3 +7,4 @@
 - WiizePay embeds use a borderless, height-reserved viewport with internal scrolling, loading feedback, and message origin/source validation against the approved ticket URL — why: avoids nested framing, layout shifts, artificial delays, and untrusted cross-window messages.
 - WiizePay entry promotions keep rotation history per authenticated user in browser storage and record impressions only after the connection check succeeds — why: account changes and connected users must not consume or share the sequence.
 - Dark theme colors use relative HSL from the reference OKLCH palette in global CSS; special surfaces consume semantic tokens — why: preserves source color fidelity and opacity utilities without altering the light theme.
+- Public marketing SectionHeading renders its eyebrow only with explicit showEyebrow opt-in — why: avoids redundant heading decoration while permitting necessary context.

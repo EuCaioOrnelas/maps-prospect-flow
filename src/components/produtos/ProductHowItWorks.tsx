@@ -22,7 +22,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   }, [title, highlight]);
 
   return (
-    <h2 className="mt-3 max-w-full font-display text-[clamp(1.6rem,3.25vw,2.9rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
+    <h2 className="max-w-full font-display text-[clamp(1.6rem,3.25vw,2.9rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
       {parts.before && <span className="block text-balance lg:whitespace-nowrap">{parts.before.trim()}</span>}
       {parts.match && <span className="block text-balance text-shimmer-highlight lg:whitespace-nowrap">{parts.match}</span>}
       {parts.after && <span>{parts.after}</span>}
@@ -70,9 +70,6 @@ export const ProductHowItWorks = ({ title, highlight, steps }: ProductHowItWorks
       <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-12">
           <div>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              Como funciona
-            </span>
             <SplitTitle title={title} highlight={highlight} />
 
             <ol ref={listRef} className="relative mt-10 space-y-8 pl-6 sm:mt-12 sm:space-y-10 sm:pl-8">

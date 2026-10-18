@@ -55,10 +55,7 @@ export const RelatedProducts = ({ currentSlug }: { currentSlug: string }) => {
       <div className="container mx-auto w-full max-w-[90rem] px-6 sm:px-10 lg:px-16">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-              Escolha seu caminho
-            </span>
-            <h2 className="mt-3 font-display text-[1.7rem] font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
+            <h2 className="font-display text-[1.7rem] font-extrabold leading-tight tracking-tight text-foreground sm:text-3xl md:text-4xl">
               Tudo para vender B2B.{" "}
               <span className="whitespace-nowrap text-shimmer-highlight">Em um só lugar.</span>
             </h2>

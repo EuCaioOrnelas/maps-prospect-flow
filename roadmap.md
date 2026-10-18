@@ -1,5 +1,9 @@
 # Roadmap
 
+- [x] Atualizar links oficiais da Meta na documentação e no guia de implementação; destinos oficiais respondem, acesso às telas Meta depende das permissões da conta.
+- [x] Retirar minicards redundantes acima dos títulos nas páginas públicas, recursos e produtos; preservadas identificação de módulos, prova social e etiquetas de planos.
+- [x] Conferir página principal, prospecção, produto, API e guia de conexão no navegador, sem erros; documentação protegida conferida no código, sem sessão disponível para teste autenticado.
+
 - [x] Igualar a paleta completa do tema escuro à WiizePay, incluindo fundos, cards, verde e superfícies especiais; cores de fundo/card/verde/borda conferidas contra o original no navegador, claro preservado.
 
 - [x] Melhorar carregamento e encaixe das janelas WiizePay no assistente de venda, sem bordas duplicadas; quatro testes passaram e carregamento/rolagem conferidos com conteúdo simulado, sem cobrança real.

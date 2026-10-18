@@ -93,10 +93,6 @@ export const FeaturesSection = () => {
  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
  }`}
  >
- <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-sm glass mb-4 sm:mb-6">
- <Brain size={16} className="text-primary" />
- <span className="text-xs sm:text-sm text-muted-foreground">Tecnologia de Prospecção Inteligente</span>
- </div>
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mb-4 px-2 text-foreground">
  Tudo que você precisa para vender mais
  </h2>
