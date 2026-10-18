@@ -191,7 +191,7 @@ const MetaApiGuide = () => {
                   <p className="text-xs text-muted-foreground">
                     Os valores são aproximados e podem variar. Cada conversa de marketing inclui uma janela de 24h
                     onde você pode enviar quantas mensagens quiser sem custo adicional. Consulte os preços atualizados em{" "}
-                    <a href="https://developers.facebook.com/docs/whatsapp/pricing" target="_blank" rel="noopener noreferrer"
+                    <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing" target="_blank" rel="noopener noreferrer"
                       className="text-primary hover:underline inline-flex items-center gap-0.5">
                       Meta Pricing <ExternalLink size={9} />
                     </a>
@@ -276,7 +276,7 @@ const MetaApiGuide = () => {
                   {
                     title: "Acesse o Meta Business Suite",
                     desc: "Vá para business.facebook.com e clique em 'Criar conta'. Se já tem uma conta, faça login.",
-                    link: "https://business.facebook.com",
+                    link: "https://business.facebook.com/",
                   },
                   {
                     title: "Preencha os dados da empresa",
@@ -306,8 +306,8 @@ const MetaApiGuide = () => {
                 <StepList steps={[
                   {
                     title: "Acesse Configurações da conta",
-                    desc: "Em business.facebook.com, clique em 'Configurações' (ícone de engrenagem no canto inferior esquerdo).",
-                    link: "https://business.facebook.com",
+                    desc: "Abra as Configurações do negócio e selecione o portfólio empresarial correto. Se a Meta abrir a página inicial, clique na engrenagem de Configurações.",
+                    link: "https://business.facebook.com/settings/",
                   },
                   {
                     title: "Vá em Contas → Contas do WhatsApp",
@@ -353,8 +353,8 @@ const MetaApiGuide = () => {
                 <StepList steps={[
                   {
                     title: "Acesse o WhatsApp Manager",
-                    desc: "No Meta Business Suite, vá em 'WhatsApp Manager' e selecione sua conta WABA.",
-                    link: "https://business.facebook.com/wa/manage/message-templates/",
+                    desc: "Abra o WhatsApp Manager, selecione sua conta WABA e entre em 'Modelos de mensagem' ou 'Message templates'. Se a Meta pedir uma empresa, selecione primeiro o portfólio correto.",
+                    link: "https://business.facebook.com/wa/manage/",
                   },
                   {
                     title: "Clique em 'Criar template'",

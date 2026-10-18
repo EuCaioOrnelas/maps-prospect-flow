@@ -620,9 +620,13 @@ const PhaseNumeroContent = () => (
         hint='Está na seção "Conta do WhatsApp Business", logo no topo da Configuração da API.'
         example="987654321098765"
       />
-      <BigLink href="https://business.facebook.com/latest/whatsapp_manager/phone_numbers/">
-        (Opcional) Ver seus números no WhatsApp Manager
+      <BigLink href="https://business.facebook.com/wa/manage/">
+        (Opcional) Abrir WhatsApp Manager
       </BigLink>
+      <p className="text-xs text-zinc-500">
+        Selecione sua conta do WhatsApp e abra “Números de telefone”. Se a Meta pedir uma empresa,
+        escolha o portfólio usado na Etapa 1. O endereço dessa tela depende da conta selecionada.
+      </p>
     </Step>
 
     <FinishBox>
@@ -649,9 +653,13 @@ const PhaseUsuarioContent = () => (
         <strong>1.</strong> Clique no botão abaixo para abrir as <strong>Configurações do Meta Business Suite</strong>.
         Se pedir login, use a mesma conta Facebook usada até aqui.
       </p>
-      <BigLink href="https://business.facebook.com/latest/settings">
+      <BigLink href="https://business.facebook.com/settings/">
         Abrir Configurações do Meta Business
       </BigLink>
+      <p className="text-xs text-zinc-500">
+        Se a Meta abrir a página inicial, entre em Configurações pela engrenagem. Os links internos
+        podem variar conforme o portfólio e as permissões da sua conta.
+      </p>
       <p>
         <strong>2.</strong> Se você tiver mais de uma conta de negócios, abra o seletor no canto
         <strong> superior esquerdo</strong> e escolha a <strong>mesma conta de negócios</strong> que você
