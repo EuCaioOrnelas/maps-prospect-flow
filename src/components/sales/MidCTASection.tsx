@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MidCTASectionProps {
@@ -34,10 +34,6 @@ export const MidCTASection = ({ onSignupClick }: MidCTASectionProps) => {
           />
 
           <div className="relative">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-              <Sparkles size={13} strokeWidth={2.2} />
-              Pronto para simplificar sua operação?
-            </div>
 
             <h2 className="mx-auto max-w-2xl text-balance text-3xl font-bold leading-[1.12] tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem]">
               Sua operação comercial pode{" "}

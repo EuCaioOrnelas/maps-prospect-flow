@@ -22,7 +22,6 @@ export const ClosingSection = ({ onSignupClick }: ClosingSectionProps) => {
  transition={{ duration: 0.7 }}
  className="text-center"
  >
- <p className="text-sm text-muted-foreground uppercase tracking-widest mb-6">Decisão estratégica</p>
  
  <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
  Comece agora<br className="hidden sm:block" />
