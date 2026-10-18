@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 interface SectionHeadingProps {
  eyebrow: string;
  eyebrowTone?: "primary" | "destructive" | "muted";
+ showEyebrow?: boolean;
  title: ReactNode;
  highlight: string;
  /**
@@ -26,6 +27,7 @@ const toneMap = {
 export const SectionHeading = ({
  eyebrow,
  eyebrowTone = "primary",
+ showEyebrow = false,
  title,
  highlight,
  highlightFit = "default",
@@ -53,11 +55,11 @@ export const SectionHeading = ({
  transition={{ duration: 0.6 }}
  className={`max-w-3xl ${alignClass} mb-12 sm:mb-16 ${className}`}
  >
- <span
+ {showEyebrow && <span
  className={`inline-block px-3.5 py-1.5 rounded-hover text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-4 ${toneMap[eyebrowTone]}`}
  >
  {eyebrow}
- </span>
+ </span>}
  <h2 className="font-display font-bold text-foreground leading-[1.08] tracking-tight mb-4 sm:mb-5">
  <span className={`block ${titleClass}`}>{title}</span>
  <span className={`block font-extrabold text-shimmer-highlight leading-[1.02] mt-1 ${highlightClass}`}>

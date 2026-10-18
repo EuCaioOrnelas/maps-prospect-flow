@@ -26,7 +26,7 @@ function SplitTitle({ title, highlight }: { title: string; highlight?: string })
   }, [title, highlight]);
 
   return (
-    <h2 className="mt-3 max-w-full font-display text-[clamp(1.55rem,3.05vw,2.6rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
+    <h2 className="max-w-full font-display text-[clamp(1.55rem,3.05vw,2.6rem)] font-extrabold leading-[1.12] tracking-tight text-foreground">
       {parts.before && <span className={parts.match ? "block text-balance sm:whitespace-nowrap" : "line-clamp-2"}>{parts.before.trim()}</span>}
       {parts.match && (
         <span className="block text-balance text-shimmer-highlight sm:whitespace-nowrap">{parts.match}</span>
@@ -50,9 +50,6 @@ export const ProductFeatureBlock = ({ feature, visual, index = 0 }: ProductFeatu
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="order-1 min-w-0 lg:order-none"
     >
-      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-        {feature.eyebrow}
-      </span>
       <SplitTitle title={feature.title} highlight={feature.titleHighlight} />
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
         {feature.description}
