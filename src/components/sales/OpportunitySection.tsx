@@ -1,7 +1,6 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { motion } from "framer-motion";
-import { X, Check, ListChecks } from "lucide-react";
-import logoWhiteAsset from "@/assets/wiize-logo-branca.png.asset.json";
+import { X, Check } from "lucide-react";
 import { SectionHeading } from "@/components/landing/SectionHeading";
 
 type Row = { strong: string; rest: string };
@@ -57,9 +56,6 @@ export const OpportunitySection = () => {
           {/* Header */}
           <div className="grid grid-cols-[minmax(0,1fr)_82px_88px] sm:grid-cols-[minmax(0,1fr)_150px_180px]">
             <div className="flex min-h-20 items-center gap-2 px-3 sm:px-5">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-sm bg-primary/10 shrink-0">
-                <ListChecks size={14} className="text-primary" strokeWidth={2.5} />
-              </span>
               <span className="text-xs font-bold text-foreground sm:text-sm">Recurso</span>
             </div>
             <div className="flex min-h-20 items-center justify-center px-1 text-center">
@@ -68,12 +64,6 @@ export const OpportunitySection = () => {
               </span>
             </div>
             <div className="flex min-h-20 flex-row items-center justify-center gap-2 sm:gap-3 bg-gradient-to-b from-primary to-primary/90 px-2">
-              <img
-                src={logoWhiteAsset.url}
-                alt="Wiize"
-                className="h-6 w-auto object-contain sm:h-8"
-                loading="lazy"
-              />
               <span className="text-[10px] font-semibold tracking-wide text-primary-foreground sm:text-sm">
                 Wiize
               </span>

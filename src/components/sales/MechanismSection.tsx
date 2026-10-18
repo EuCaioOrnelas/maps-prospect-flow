@@ -69,7 +69,6 @@ function StepRow({
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rowRef, { once: true, amount: 0.25 });
-  const Icon = step.icon;
 
   return (
     <div ref={rowRef} className="relative md:grid md:grid-cols-2 md:items-center md:gap-16">
@@ -117,13 +116,11 @@ function StepRow({
         className={`pl-12 md:pl-0 ${isLeft ? "md:col-start-1" : "md:col-start-2"}`}
       >
         <div className="group rounded-panel border border-border/60 bg-card p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_12px_32px_-18px_hsl(var(--primary)/0.35)] sm:p-6">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-card bg-primary/10 transition-colors duration-300 group-hover:bg-primary/15">
-            <Icon size={20} className="text-primary" strokeWidth={1.9} />
-          </div>
           <h3 className="font-display text-lg font-semibold leading-tight text-foreground sm:text-xl">
             {step.title}
           </h3>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
+          <div aria-hidden="true" className="my-4 h-0.5 w-12 bg-primary" />
+          <p className="text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
           <ul className="mt-4 space-y-2.5 border-t border-border/60 pt-4">
             {step.bullets.map((b) => (
               <li key={b} className="flex items-start gap-2.5">

@@ -1279,7 +1279,6 @@ const modules: ModuleItem[] = [
 
 const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
   const reversed = index % 2 === 1;
-  const Icon = item.icon;
   const Mock = item.mock;
 
   return (
@@ -1322,18 +1321,10 @@ const ModuleCard = ({ item, index }: { item: ModuleItem; index: number }) => {
       >
         {/* Área de texto */}
         <div className="p-5 sm:p-8 lg:p-10 flex flex-col justify-center">
-          <div className="w-12 h-12 rounded-card bg-primary flex items-center justify-center text-primary-foreground mb-4 shadow-[0_4px_12px_-6px_hsl(var(--primary)/0.6)]">
-            <Icon size={24} strokeWidth={1.8} />
-          </div>
-          <div className="inline-flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-hover bg-primary text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
-              {item.eyebrow}
-            </span>
-          </div>
-          <h3 className="font-display font-bold text-foreground text-xl sm:text-2xl lg:text-[1.75rem] leading-tight tracking-tight mb-3">
+          <h3 className="font-display font-bold text-foreground text-xl sm:text-2xl lg:text-[1.75rem] leading-tight">
             {item.title}
           </h3>
+          <div aria-hidden="true" className="my-4 h-0.5 w-12 shrink-0 bg-primary" />
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-5">
             {item.description}
           </p>
