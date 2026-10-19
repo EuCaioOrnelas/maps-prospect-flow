@@ -49,10 +49,10 @@ export function usePagePopupDismiss(popupKey: string) {
     if (!user || !canClose) return;
 
     setShowPopup(false);
-    await supabase.from("user_dismissed_popups").insert({
+    await supabase.from("user_dismissed_popups").upsert({
       user_id: user.id,
       popup_key: popupKey,
-    });
+    }, { onConflict: "user_id,popup_key", ignoreDuplicates: true });
   }, [user, popupKey, canClose]);
 
   return { showPopup, loading, dismiss, canClose, countdown };

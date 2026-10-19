@@ -104,10 +104,10 @@ const MetaCampaigns = () => {
 
   const handleDisclaimerAccept = async () => {
     if (!user) return;
-    await supabase.from("user_dismissed_popups").insert({
+    await supabase.from("user_dismissed_popups").upsert({
       user_id: user.id,
       popup_key: "meta_campaigns_disclaimer",
-    });
+    }, { onConflict: "user_id,popup_key", ignoreDuplicates: true });
     await supabase.from("user_events").insert({
       user_id: user.id,
       event_name: "meta_disclaimer_accepted",
