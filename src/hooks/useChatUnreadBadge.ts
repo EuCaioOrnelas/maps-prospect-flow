@@ -34,7 +34,10 @@ export function useChatUnreadBadge() {
     const { data, error } = await supabase
       .from("chat_conversations")
       .select("unread_count, responsible_user_id, is_archived")
-      .eq("owner_user_id", accountOwnerId);
+      .eq("owner_user_id", accountOwnerId)
+      .gt("unread_count", 0)
+      .not("is_archived", "is", true)
+      .limit(2000);
     if (error || !data) return;
 
     const filter = getFilter();
@@ -69,25 +72,31 @@ export function useChatUnreadBadge() {
   // Realtime: refresh on any conversation change for this account
   useEffect(() => {
     if (!accountOwnerId) return;
+    let debounce: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel(`chat-unread-badge-${accountOwnerId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "chat_conversations", filter: `owner_user_id=eq.${accountOwnerId}` },
-        () => fetchCount()
+        () => {
+          // Agrupa rajadas de alterações numa única consulta.
+          if (debounce) clearTimeout(debounce);
+          debounce = setTimeout(fetchCount, 1500);
+        }
       )
       .subscribe();
     return () => {
+      if (debounce) clearTimeout(debounce);
       supabase.removeChannel(channel);
     };
   }, [accountOwnerId, fetchCount]);
 
-  // Poll as fallback every 30s — pausado quando a aba está invisível
+  // Poll as fallback every 2 min (realtime já cobre o dia a dia) — pausado quando a aba está invisível
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | null = null;
 
     const start = () => {
-      if (id === null) id = setInterval(fetchCount, 30_000);
+      if (id === null) id = setInterval(fetchCount, 120_000);
     };
     const stop = () => {
       if (id !== null) {
