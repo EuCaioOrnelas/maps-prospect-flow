@@ -60,8 +60,8 @@ SELECT tablename FROM pg_publication_tables WHERE pubname = 'supabase_realtime';
 DO $$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['trial_product_events','wa_flow_executions','calendar_google_sync',
-                           'influencer_campaign_recipients','revenue_leads']
+  FOREACH t IN ARRAY ARRAY['trial_product_events','wa_flow_executions',
+                           'revenue_leads']
   LOOP
     IF EXISTS (SELECT 1 FROM pg_publication_tables
                WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename=t) THEN
