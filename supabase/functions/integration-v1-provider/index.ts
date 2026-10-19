@@ -599,12 +599,12 @@ export async function verifyUser(req: Request): Promise<
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const { data: member } = await admin
     .from("account_members")
-    .select("account_owner_id, status")
-    .eq("member_user_id", userId)
+    .select("owner_user_id, status")
+    .eq("user_id", userId)
     .eq("status", "active")
     .maybeSingle();
 
-  const companyId = (member?.account_owner_id as string | undefined) ?? userId;
+  const companyId = (member?.owner_user_id as string | undefined) ?? userId;
   if (!companyId) return { ok: false, code: "PERM_NO_COMPANY" };
 
   const { data: profile } = await admin

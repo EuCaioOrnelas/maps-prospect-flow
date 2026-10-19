@@ -37,9 +37,9 @@ export function useActivationProgress() {
       // Create initial progress record
       const { data: newData } = await supabase
         .from("user_activation_progress")
-        .insert({ user_id: user.id })
+        .upsert({ user_id: user.id }, { onConflict: "user_id" })
         .select()
-        .single();
+        .maybeSingle();
       setProgress(newData as any);
     } else {
       setProgress(data as any);
