@@ -294,10 +294,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Throttle: never run the full account sync more than once per 5 minutes
   // from focus/visibility events. Login / token refresh still sync immediately.
   const lastSyncAtRef = useRef<number>(0);
+  const syncInFlightRef = useRef(false);
+  const authUserIdRef = useRef<string | null>(null);
   const SYNC_MIN_INTERVAL_MS = 5 * 60 * 1000;
 
   // Sincroniza estado da conta (assinatura + reset mensal de buscas) e atualiza o profile.
   const syncAccountState = async (userId: string, reason: string, email?: string | null) => {
+    if (syncInFlightRef.current) return;
+    if (Date.now() - lastSyncAtRef.current < SYNC_MIN_INTERVAL_MS) return;
+    syncInFlightRef.current = true;
     try {
       if (typeof window !== 'undefined' && window.location.pathname.startsWith('/api')) {
         return;
@@ -340,6 +345,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile((prev) => (profilesEqual(prev, updatedProfile) ? prev : updatedProfile));
     } catch (err) {
       console.error('[AuthContext] Account sync failed:', err);
+    } finally {
+      syncInFlightRef.current = false;
     }
   };
 
@@ -378,6 +385,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('[AuthContext] Auth state changed:', event);
+        const nextUserId = newSession?.user?.id ?? null;
+        const sameAccount = authUserIdRef.current === nextUserId;
+        authUserIdRef.current = nextUserId;
+        if (!sameAccount) lastSyncAtRef.current = 0;
 
         // Atualiza session/user de forma estável: só troca a referência se o
         // user.id realmente mudou. Caso contrário, qualquer TOKEN_REFRESHED
@@ -397,7 +408,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Só buscamos profile / sincronizamos em eventos que realmente exigem.
         // TOKEN_REFRESHED é silencioso para a UI.
-        const isMeaningful = event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED';
+        // SIGNED_IN also fires on tab refocus; it is not necessarily a new login.
+        const isMeaningful = (event === 'SIGNED_IN' && !sameAccount) || event === 'SIGNED_OUT' || event === 'USER_UPDATED';
 
         if (newSession?.user && isMeaningful) {
           setTimeout(async () => {
