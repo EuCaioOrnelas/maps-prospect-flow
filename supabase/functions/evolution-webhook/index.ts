@@ -184,16 +184,22 @@ async function storeMedia(ownerId: string, msgId: string, p: Parsed): Promise<st
   if (!p.mediaBase64) return null;
   try {
     const clean = p.mediaBase64.replace(/^data:[^;]+;base64,/, "");
+    // Limite de 16 MB: arquivos maiores não são guardados (evita lotar o armazenamento).
+    if (clean.length * 0.75 > 16 * 1024 * 1024) {
+      console.warn("[evolution-webhook] media skipped: too large");
+      return null;
+    }
     const bytes = Uint8Array.from(atob(clean), (c) => c.charCodeAt(0));
     const ext = extFor(p.mime, p.type);
     const safeId = msgId.replace(/[^\w-]/g, "").slice(0, 40) || crypto.randomUUID();
-    const path = `${ownerId}/evolution/${Date.now()}_${safeId}.${ext}`;
+    // Caminho fixo por mensagem: avisos repetidos sobrescrevem em vez de duplicar o arquivo.
+    const path = `${ownerId}/evolution/${safeId}.${ext}`;
     let { error } = await supabase.storage.from("chat-media").upload(path, bytes, {
       contentType: (p.mime || "application/octet-stream").split(";")[0],
-      upsert: false,
+      upsert: true,
     });
     if (error && /mime type|not supported/i.test(error.message || "")) {
-      ({ error } = await supabase.storage.from("chat-media").upload(path, bytes, { contentType: "application/octet-stream", upsert: false }));
+      ({ error } = await supabase.storage.from("chat-media").upload(path, bytes, { contentType: "application/octet-stream", upsert: true }));
     }
     if (error) { console.error("[evolution-webhook] media upload failed", error); return null; }
     return `${SUPABASE_URL}/storage/v1/object/public/chat-media/${path}`;
