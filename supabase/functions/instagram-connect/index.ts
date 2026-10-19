@@ -51,8 +51,8 @@ Deno.serve(async (req) => {
     if (authError || !claims?.claims) return json({ error: "Unauthorized" }, 401);
     const userId = claims.claims.sub as string;
 
-    const { data: profile } = await supabase.from("profiles").select("id,owner_user_id").eq("id", userId).maybeSingle();
-    const ownerId = (profile?.owner_user_id as string) || userId;
+    const { data: profile } = await supabase.from("profiles").select("id,parent_owner_id").eq("id", userId).maybeSingle();
+    const ownerId = (profile?.parent_owner_id as string) || userId;
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "list");

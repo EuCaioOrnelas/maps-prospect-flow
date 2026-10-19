@@ -1481,8 +1481,8 @@ async function handleInbound(body: Record<string, any>) {
   const tail = phone.slice(-8);
 
   // owner do usuário que recebeu
-  const { data: profile } = await supabase.from("profiles").select("id,owner_user_id").eq("id", userId).maybeSingle();
-  const ownerId = profile?.owner_user_id || userId;
+  const { data: profile } = await supabase.from("profiles").select("id,parent_owner_id").eq("id", userId).maybeSingle();
+  const ownerId = profile?.parent_owner_id || userId;
 
   const text = String(body.incoming_text || "");
   const runtimeBase: Runtime = {
