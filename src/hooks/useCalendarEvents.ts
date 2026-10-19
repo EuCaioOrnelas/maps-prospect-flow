@@ -110,7 +110,7 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
       .channel(`calendar-events-${accountOwnerId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "calendar_events" },
+        { event: "*", schema: "public", table: "calendar_events", filter: `owner_user_id=eq.${accountOwnerId}` },
         (payload) => {
           invalidate();
           const row = payload.new as { id?: string; assigned_user_id?: string } | null;
