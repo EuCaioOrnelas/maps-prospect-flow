@@ -327,6 +327,7 @@ export function useChat() {
         event: "*",
         schema: "public",
         table: "chat_conversations",
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const nextRow = (payload.new || payload.old) as ChatConversation | undefined;
         if (nextRow?.owner_user_id && nextRow.owner_user_id !== accountOwnerId) return;
@@ -369,6 +370,7 @@ export function useChat() {
         event: "INSERT",
         schema: "public",
         table: "chat_messages",
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const encryptedMsg = payload.new as ChatMessage;
         const newMsg = { ...encryptedMsg, content: null, media_caption: null };
@@ -418,6 +420,7 @@ export function useChat() {
         event: "UPDATE",
         schema: "public",
         table: "chat_messages",
+        filter: `owner_user_id=eq.${accountOwnerId}`,
       }, (payload) => {
         const encrypted = payload.new as ChatMessage;
         const updated = { ...encrypted, content: null, media_caption: null };

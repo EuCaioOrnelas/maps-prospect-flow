@@ -374,11 +374,12 @@ export default function OpportunitiesManagement() {
   // Realtime — merge row-level changes in place (no full refetch, no reorder)
   useEffect(() => {
     if (!user) return;
+    const realtimeOwnerId = accountOwnerId || user.id;
     const channel = supabase
-      .channel(`opps-leads-${user.id}`)
+      .channel(`opps-leads-${realtimeOwnerId}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "leads" },
+        { event: "UPDATE", schema: "public", table: "leads", filter: `owner_user_id=eq.${realtimeOwnerId}` },
         (payload) => {
           const updated = payload.new as OpportunityLead;
           if (!updated?.id) return;
@@ -394,7 +395,7 @@ export default function OpportunitiesManagement() {
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
+        { event: "INSERT", schema: "public", table: "leads", filter: `owner_user_id=eq.${realtimeOwnerId}` },
         (payload) => {
           const inserted = payload.new as any as OpportunityLead & { owner_user_id?: string | null; user_id?: string | null };
           if (!inserted?.id) return;
@@ -418,7 +419,7 @@ export default function OpportunitiesManagement() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, accountOwnerId]);
 
 
   // Gera a abordagem com IA sem toasts (usada na etapa automática pós-diagnóstico)
