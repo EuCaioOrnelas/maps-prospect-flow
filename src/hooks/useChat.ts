@@ -513,12 +513,16 @@ export function useChat() {
   }, [activeConversationId, user, accountOwnerId, conversations, connections]);
 
   // Send media message
-  const sendMedia = useCallback(async (file: File, caption?: string, targetConversationId?: string, replyToId?: string) => {
+  const sendMedia = useCallback(async (rawFile: File, caption?: string, targetConversationId?: string, replyToId?: string) => {
     const convId = targetConversationId || activeConversationId;
     if (!convId || !user) return;
     const conversation = conversations.find(c => c.id === convId);
     if (!conversation) return;
     const isActive = convId === activeConversationId;
+
+    const tooLarge = chatFileTooLarge(rawFile);
+    if (tooLarge) { toast.error(tooLarge); return; }
+    const file = await compressChatImage(rawFile);
 
     const messageType = file.type.startsWith("image/") ? "image"
       : file.type.startsWith("video/") ? "video"
