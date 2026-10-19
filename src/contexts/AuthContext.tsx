@@ -7,6 +7,7 @@ import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPage
 import { attributePartnerLeadOnSignup, getPartnerReferralMetadata } from '@/hooks/usePartnerTracking';
 import { isPublicDemoPath, PUBLIC_DEMO_PROFILE } from '@/lib/publicDemo';
 import { useInactivityLogout } from '@/hooks/useInactivityLogout';
+import { withRequestTimeout } from '@/lib/requestTimeout';
 
 interface Profile {
   id: string;
@@ -310,7 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // O AuthProvider também envolve as áreas Wiize API e Partners. Essas contas
       // têm ciclo de cobrança próprio e nunca devem disparar a conciliação da
       // assinatura da plataforma principal.
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const { data: { session: currentSession } } = await withRequestTimeout(supabase.auth.getSession());
       const currentProduct = currentSession?.user?.user_metadata?.wiize_product;
       if (!currentSession?.user || currentSession.user.id !== userId || currentProduct === 'wiize_api' || currentProduct === 'wiize_partners') {
         return;
@@ -319,11 +320,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log(`[AuthContext] Sync account state (${reason})...`);
       lastSyncAtRef.current = Date.now();
 
-      const results = await Promise.allSettled([
+      const results = await withRequestTimeout(Promise.allSettled([
         supabase.functions.invoke('check-subscription'),
         supabase.rpc('check_and_reset_monthly_searches', { user_id: userId }),
         reconcilePendingAsaasCheckout(userId, email),
-      ]);
+      ]), 30_000);
 
       if (results[0].status === 'rejected') {
         console.error('[AuthContext] Error checking subscription:', results[0].reason);
@@ -341,8 +342,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('[AuthContext] Error reconciling pending Asaas checkout:', results[2].reason);
       }
 
-      const updatedProfile = await fetchProfile(userId);
-      setProfile((prev) => (profilesEqual(prev, updatedProfile) ? prev : updatedProfile));
+      const updatedProfile = await withRequestTimeout(fetchProfile(userId));
+      if (authUserIdRef.current === userId && updatedProfile) {
+        setProfile((prev) => (profilesEqual(prev, updatedProfile) ? prev : updatedProfile));
+      }
     } catch (err) {
       console.error('[AuthContext] Account sync failed:', err);
     } finally {
