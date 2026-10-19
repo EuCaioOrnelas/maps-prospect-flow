@@ -2,8 +2,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChat } from './useChat';
 
-const mocks = vi.hoisted(() => ({ query: vi.fn(), invoke: vi.fn(), owner: 'owner' }));
-vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'user' }, accountOwnerId: mocks.owner }) }));
+const mocks = vi.hoisted(() => ({ query: vi.fn(), invoke: vi.fn(), owner: 'owner', user: { id: 'user' } }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user, accountOwnerId: mocks.owner }) }));
 vi.mock('@/lib/profilePicCache', () => ({ hydrateProfilePics: (rows: unknown) => rows }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   from: () => ({ select: () => ({ eq: mocks.query }) }),
