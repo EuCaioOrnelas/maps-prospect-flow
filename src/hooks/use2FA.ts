@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 
 export interface TwoFactorStatus {
   two_factor_enabled: boolean;
@@ -31,17 +32,23 @@ export async function call2FA<T = any>(action: string, payload: Record<string, u
 export function use2FAStatus() {
   const [status, setStatus] = useState<TwoFactorStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const { data } = await call2FA<TwoFactorStatus>("status");
-    setStatus(
-      data ?? { two_factor_enabled: false, enabled_at: null, session_verified: true, recovery_codes_left: 0 },
-    );
-    setLoading(false);
+    setError(null);
+    try {
+      const result = await withRequestTimeout(call2FA<TwoFactorStatus>("status"));
+      if (result.error || !result.data) throw new Error("Não foi possível verificar a segurança da sua conta.");
+      setStatus(result.data);
+    } catch {
+      setError("Não foi possível verificar a segurança da sua conta. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  return { status, loading, refresh };
+  return { status, loading, error, refresh };
 }

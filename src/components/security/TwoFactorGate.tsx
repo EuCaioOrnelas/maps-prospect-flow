@@ -4,13 +4,14 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { call2FA, use2FAStatus } from "@/hooks/use2FA";
 import { TwoFactorChallengeCard } from "@/components/security/TwoFactorChallengeCard";
+import { Button } from "@/components/ui/button";
 
 /**
  * Exige o segundo fator a cada novo acesso: enquanto a sessão não estiver
  * verificada, nenhum conteúdo autenticado é liberado.
  */
 export function TwoFactorGate({ children }: { children: React.ReactNode }) {
-  const { status, loading, refresh } = use2FAStatus();
+  const { status, loading, error: statusError, refresh } = use2FAStatus();
   const [code, setCode] = useState("");
   const [recovery, setRecovery] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +44,15 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (statusError || !status) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center text-foreground">
+        <p role="alert">{statusError || "Não foi possível verificar sua conta."}</p>
+        <Button onClick={() => void refresh()} disabled={loading}>Tentar novamente</Button>
       </div>
     );
   }

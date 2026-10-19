@@ -8,3 +8,5 @@
 - WiizePay entry promotions keep rotation history per authenticated user in browser storage and record impressions only after the connection check succeeds — why: account changes and connected users must not consume or share the sequence.
 - Dark theme colors use relative HSL from the reference OKLCH palette in global CSS; special surfaces consume semantic tokens — why: preserves source color fidelity and opacity utilities without altering the light theme.
 - Public marketing SectionHeading renders its eyebrow only with explicit showEyebrow opt-in — why: avoids redundant heading decoration while permitting necessary context.
+- Auth account synchronization is single-flight and throttled; repeated SIGNED_IN for the same user is not a new login — why: tab refocus must not duplicate account reads or disrupt page state.
+- Chat startup reads and second-factor status reads have bounded waits with retry; second-factor errors never unlock protected content — why: transient failures must neither leave an endless spinner nor bypass verification.

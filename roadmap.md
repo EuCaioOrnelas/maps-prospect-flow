@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Corrigir carregamento infinito ao voltar ao Chat, evitar sincronizações simultâneas da sessão e validar navegação de retorno.
+- [x] Corrigir esperas sem limite no Chat e na verificação de segurança, permitir nova tentativa e evitar sincronizações repetidas ao voltar à aba; cinco testes passaram e compilação sem erros.
+- [ ] Conferir saída e retorno ao Chat com a conta real; bloqueado até o usuário entrar na prévia, pois a sessão dessa conta não pôde ser disponibilizada para teste.
 
 - [x] Limpar os recursos da página principal: retirar rótulos e ícones decorativos, adicionar separador verde no estilo Wiizecore entre título e descrição e retirar ícones do cabeçalho comparativo; conferido no navegador sem erros e sem excesso horizontal no celular.
 

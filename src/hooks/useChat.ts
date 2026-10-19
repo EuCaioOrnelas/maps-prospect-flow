@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { formatPhoneForMeta } from "@/lib/phoneUtils";
 import { resolveStorageUrl, resolveStorageUrls } from "@/lib/privateStorage";
 import { META_GRAPH_BASE } from "@/lib/metaApi";
+import { withRequestTimeout } from "@/lib/requestTimeout";
 
 export interface ChatConversation {
   id: string;
@@ -88,6 +89,10 @@ export function useChat() {
     try { return activeConnKey ? localStorage.getItem(activeConnKey) : null; } catch { return null; }
   }, [activeConnKey]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const connectionRequestRef = useRef(0);
+  const [reloadVersion, setReloadVersion] = useState(0);
+  const retryLoad = useCallback(() => setReloadVersion(value => value + 1), []);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
@@ -99,6 +104,7 @@ export function useChat() {
     try {
       const res = await fetch(`${META_GRAPH_BASE}/me?access_token=${encodeURIComponent(accessToken)}`, {
         method: "GET",
+        signal: AbortSignal.timeout(5_000),
       });
       if (!res.ok) return false;
       const data = await res.json();
@@ -110,11 +116,16 @@ export function useChat() {
 
   // Load WABA connections and validate tokens
   const loadConnections = useCallback(async (forceValidate = false) => {
-    if (!user) return;
-    const { data } = await supabase
+    const requestId = ++connectionRequestRef.current;
+    if (!user || !accountOwnerId) { setLoading(false); return; }
+    setLoadError(null);
+    try {
+    const { data, error } = await withRequestTimeout(supabase
       .from("user_waba_connections")
       .select("id, phone_number_id, display_phone_number, business_name, nickname, status, waba_id, access_token, token_expires_at, provider, evolution_state")
-      .eq("owner_user_id", accountOwnerId);
+      .eq("owner_user_id", accountOwnerId));
+    if (requestId !== connectionRequestRef.current) return;
+    if (error) throw error;
     if (!data || data.length === 0) {
       setConnections([]);
       setLoading(false);
@@ -135,7 +146,8 @@ export function useChat() {
     if (!forceValidate && cached && (Date.now() - cached.ts) < CACHE_TTL) {
       setConnectionHealth(cached.health);
       // Pick best active connection
-      const healthyConn = data.find(c => cached!.health[c.id] !== false);
+      const cachedHealth = cached.health;
+      const healthyConn = data.find(c => cachedHealth[c.id] !== false);
       const savedId = readSavedConnectionId();
       const saved = savedId ? data.find(c => c.id === savedId) : null;
       setActiveConnectionId(saved?.id || healthyConn?.id || data[0].id);
@@ -165,6 +177,8 @@ export function useChat() {
       })
     );
 
+    if (requestId !== connectionRequestRef.current) return;
+
     setConnectionHealth(healthMap);
 
     // Save to localStorage
@@ -182,12 +196,19 @@ export function useChat() {
     const saved2 = savedId2 ? data.find(c => c.id === savedId2) : null;
     setActiveConnectionId(saved2?.id || healthyConn?.id || data[0].id);
     setLoading(false);
+    } catch {
+      if (requestId === connectionRequestRef.current) {
+        setLoadError("Não foi possível carregar o Chat. Verifique sua conexão e tente novamente.");
+      }
+    } finally {
+      if (requestId === connectionRequestRef.current) setLoading(false);
+    }
   }, [user, accountOwnerId, validateToken, readSavedConnectionId, setActiveConnectionId]);
 
   useEffect(() => {
-    if (!user) return;
-    loadConnections();
-  }, [user?.id, loadConnections]);
+    void loadConnections();
+    return () => { connectionRequestRef.current += 1; };
+  }, [user?.id, loadConnections, reloadVersion]);
 
   // Track last loaded ids to avoid blanking UI when effects re-run with same params
   // (e.g. after AuthContext refocus produces a new `user` reference).
@@ -197,25 +218,33 @@ export function useChat() {
   // Load conversations
   useEffect(() => {
     if (!user || !activeConnectionId) return;
+    let cancelled = false;
     const isFirstLoadForConn = loadedConvForConnRef.current !== activeConnectionId;
     const loadConversations = async () => {
       if (isFirstLoadForConn) setLoading(true);
-      const { data: secureData, error } = await supabase.functions.invoke("chat-secure-read", {
+      setLoadError(null);
+      try {
+      const { data: secureData, error } = await withRequestTimeout(supabase.functions.invoke("chat-secure-read", {
         body: { action: "conversations", connection_id: activeConnectionId },
-      });
+      }));
+      if (cancelled) return;
       if (error) {
         console.error("[chat] secure conversation load failed", error);
-        setLoading(false);
-        return;
+        throw error;
       }
       const data = secureData?.conversations;
 
       setConversations(hydrateProfilePics((data as ChatConversation[]) || []));
       loadedConvForConnRef.current = activeConnectionId;
-      setLoading(false);
+      } catch {
+        if (!cancelled) setLoadError("Não foi possível carregar as conversas. Tente novamente.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
-    loadConversations();
-  }, [user?.id, accountOwnerId, activeConnectionId]);
+    void loadConversations();
+    return () => { cancelled = true; };
+  }, [user?.id, accountOwnerId, activeConnectionId, reloadVersion]);
 
   // Conversa aberta em um ref: usado pelo canal realtime e para descartar
   // respostas atrasadas de conversas que já foram fechadas.
@@ -959,6 +988,8 @@ export function useChat() {
     allConnectionsExpired,
     connectionHealth,
     loading,
+    loadError,
+    retryLoad,
     loadingMessages,
     searchQuery,
     setSearchQuery,

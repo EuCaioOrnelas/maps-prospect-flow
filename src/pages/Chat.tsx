@@ -43,7 +43,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
-  const [showApiDialog, setShowApiDialog] = useState<boolean | null>(null);
+  const [showApiDialog, setShowApiDialog] = useState(false);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const [reconnectOpen, setReconnectOpen] = useState(false);
@@ -161,7 +161,7 @@ const Chat = () => {
     }
   };
 
-  const isLoading = chat.loading || showApiDialog === null;
+  const isLoading = chat.loading;
   // O chat está liberado para todos os usuários. A tela de apresentação só
   // aparece quando ainda não existe nenhum número conectado à conta.
   const shouldShowDialog = isLoading ? false : hasNoConnection;
@@ -253,7 +253,12 @@ const Chat = () => {
               </div>
             )}
 
-            {!isLoading && shouldShowDialog ? (
+            {chat.loadError ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+                <p role="alert" className="text-muted-foreground">{chat.loadError}</p>
+                <Button onClick={() => void chat.retryLoad()}><RefreshCw size={16} className="mr-2" />Tentar novamente</Button>
+              </div>
+            ) : !isLoading && shouldShowDialog ? (
               <div className="relative flex-1 overflow-auto bg-background">
                 <header className="h-[58px] min-h-[58px] border-b border-border/60 bg-background sticky top-0 z-10 flex items-center">
                   <div className="px-6 sm:px-10 lg:px-14 flex items-center gap-3">

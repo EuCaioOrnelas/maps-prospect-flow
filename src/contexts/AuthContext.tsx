@@ -7,6 +7,7 @@ import { trackSignupCompleted, getLandingPageSlug } from '@/hooks/useLandingPage
 import { attributePartnerLeadOnSignup, getPartnerReferralMetadata } from '@/hooks/usePartnerTracking';
 import { isPublicDemoPath, PUBLIC_DEMO_PROFILE } from '@/lib/publicDemo';
 import { useInactivityLogout } from '@/hooks/useInactivityLogout';
+import { withRequestTimeout } from '@/lib/requestTimeout';
 
 interface Profile {
   id: string;
@@ -294,10 +295,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Throttle: never run the full account sync more than once per 5 minutes
   // from focus/visibility events. Login / token refresh still sync immediately.
   const lastSyncAtRef = useRef<number>(0);
+  const syncInFlightRef = useRef(false);
+  const authUserIdRef = useRef<string | null>(null);
   const SYNC_MIN_INTERVAL_MS = 5 * 60 * 1000;
 
   // Sincroniza estado da conta (assinatura + reset mensal de buscas) e atualiza o profile.
   const syncAccountState = async (userId: string, reason: string, email?: string | null) => {
+    if (syncInFlightRef.current) return;
+    if (Date.now() - lastSyncAtRef.current < SYNC_MIN_INTERVAL_MS) return;
+    syncInFlightRef.current = true;
     try {
       if (typeof window !== 'undefined' && window.location.pathname.startsWith('/api')) {
         return;
@@ -305,7 +311,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // O AuthProvider também envolve as áreas Wiize API e Partners. Essas contas
       // têm ciclo de cobrança próprio e nunca devem disparar a conciliação da
       // assinatura da plataforma principal.
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const { data: { session: currentSession } } = await withRequestTimeout(supabase.auth.getSession());
       const currentProduct = currentSession?.user?.user_metadata?.wiize_product;
       if (!currentSession?.user || currentSession.user.id !== userId || currentProduct === 'wiize_api' || currentProduct === 'wiize_partners') {
         return;
@@ -314,11 +320,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log(`[AuthContext] Sync account state (${reason})...`);
       lastSyncAtRef.current = Date.now();
 
-      const results = await Promise.allSettled([
+      const results = await withRequestTimeout(Promise.allSettled([
         supabase.functions.invoke('check-subscription'),
         supabase.rpc('check_and_reset_monthly_searches', { user_id: userId }),
         reconcilePendingAsaasCheckout(userId, email),
-      ]);
+      ]), 30_000);
 
       if (results[0].status === 'rejected') {
         console.error('[AuthContext] Error checking subscription:', results[0].reason);
@@ -336,10 +342,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('[AuthContext] Error reconciling pending Asaas checkout:', results[2].reason);
       }
 
-      const updatedProfile = await fetchProfile(userId);
-      setProfile((prev) => (profilesEqual(prev, updatedProfile) ? prev : updatedProfile));
+      const updatedProfile = await withRequestTimeout(fetchProfile(userId));
+      if (authUserIdRef.current === userId && updatedProfile) {
+        setProfile((prev) => (profilesEqual(prev, updatedProfile) ? prev : updatedProfile));
+      }
     } catch (err) {
       console.error('[AuthContext] Account sync failed:', err);
+    } finally {
+      syncInFlightRef.current = false;
     }
   };
 
@@ -378,6 +388,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('[AuthContext] Auth state changed:', event);
+        const nextUserId = newSession?.user?.id ?? null;
+        const sameAccount = authUserIdRef.current === nextUserId;
+        authUserIdRef.current = nextUserId;
+        if (!sameAccount) lastSyncAtRef.current = 0;
 
         // Atualiza session/user de forma estável: só troca a referência se o
         // user.id realmente mudou. Caso contrário, qualquer TOKEN_REFRESHED
@@ -397,7 +411,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Só buscamos profile / sincronizamos em eventos que realmente exigem.
         // TOKEN_REFRESHED é silencioso para a UI.
-        const isMeaningful = event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED';
+        // SIGNED_IN also fires on tab refocus; it is not necessarily a new login.
+        const isMeaningful = (event === 'SIGNED_IN' && !sameAccount) || event === 'SIGNED_OUT' || event === 'USER_UPDATED';
 
         if (newSession?.user && isMeaningful) {
           setTimeout(async () => {
