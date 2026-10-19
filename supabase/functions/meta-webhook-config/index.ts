@@ -247,11 +247,11 @@ Deno.serve(async (req) => {
     // Sub-usuários (account_members) enxergam as conexões do dono da conta.
     const { data: member } = await admin
       .from("account_members")
-      .select("account_owner_id")
-      .eq("member_user_id", userId)
+      .select("owner_user_id")
+      .eq("user_id", userId)
       .eq("status", "active")
       .maybeSingle();
-    const ownerId = (member?.account_owner_id as string | undefined) ?? userId;
+    const ownerId = (member?.owner_user_id as string | undefined) ?? userId;
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const action = body.action ?? "info";
