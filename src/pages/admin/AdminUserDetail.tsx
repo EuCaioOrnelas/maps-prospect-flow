@@ -175,13 +175,21 @@ export default function AdminUserDetail() {
 
   const loadProfile = async () => {
     if (!userId) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select(
         "id, name, email, avatar_url, plan, created_at, phone, cpf, address, address_number, address_complement, neighborhood, city, state, postal_code, payment_provider, subscription_price_cents, subscription_current_period_end, first_paid_at, searches_used, searches_limit, custom_searches_limit, bonus_searches, trial_end_at, trial_will_charge_at, is_blocked"
       )
       .eq("id", userId)
       .maybeSingle();
+    if (error) {
+      // Se algum campo não existir neste banco, a consulta inteira falhava e a
+      // ficha aparecia vazia ("Sem nome"). Busca tudo o que existir.
+      console.warn("[AdminUserDetail] perfil com campos ausentes, usando leitura completa", error.message);
+      const { data: full } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+      setProfile((full as any) || null);
+      return;
+    }
     setProfile((data as any) || null);
   };
 
