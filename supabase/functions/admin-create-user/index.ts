@@ -337,7 +337,8 @@ Deno.serve(async (req) => {
     const msg = error instanceof Error ? error.message : String(error);
     log("Unexpected error", { error: msg });
     return new Response(JSON.stringify({ error: `Erro interno: ${msg}` }), {
-      status: 500,
+      // 200 de propósito: a tela antiga só mostra o motivo quando a resposta não é erro HTTP.
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
