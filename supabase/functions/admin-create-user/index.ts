@@ -342,3 +342,17 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+// Procura o id de login pelo e-mail (a API administrativa não tem busca direta).
+async function findAuthUserIdByEmail(admin: any, email: string): Promise<string | null> {
+  const target = email.trim().toLowerCase();
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) return null;
+    const users = data?.users ?? [];
+    const found = users.find((u: any) => (u.email || "").toLowerCase() === target);
+    if (found) return found.id;
+    if (users.length < 1000) return null;
+  }
+  return null;
+}
