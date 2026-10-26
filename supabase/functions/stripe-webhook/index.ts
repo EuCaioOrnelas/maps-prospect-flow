@@ -975,17 +975,46 @@ serve(async (req) => {
         if (customer && !customer.deleted && customer.email) {
           const { data: profile } = await supabaseClient
             .from("profiles")
-            .select("id, plan, searches_limit, searches_used, created_at")
+            .select("id, plan, searches_limit, searches_used, created_at, trial_asaas_subscription_id, trial_will_charge_at, admin_assigned_plan, is_custom_subscription")
             .eq("email", customer.email)
             .maybeSingle();
 
-          if (profile) {
+          // Cancelamento do teste grátis antes do fim: mantém o acesso só até o
+          // último dia do teste e marca como cancelado (o acesso é retirado
+          // automaticamente quando o teste termina).
+          const trialEndsAt = (profile as any)?.trial_will_charge_at
+            ? new Date((profile as any).trial_will_charge_at).getTime()
+            : 0;
+          const isTrialSubStillRunning =
+            !!profile &&
+            (profile as any).trial_asaas_subscription_id === subscription.id &&
+            trialEndsAt > Date.now();
+
+          if (profile && isTrialSubStillRunning) {
+            await supabaseClient
+              .from("profiles")
+              .update({
+                trial_auto_charge_cancelled: true,
+                trial_auto_charge_cancelled_at: new Date().toISOString(),
+              })
+              .eq("id", profile.id);
+            logStep("Trial subscription cancelled - access kept until trial end", {
+              trialEndsAt: new Date(trialEndsAt).toISOString(),
+            });
+          } else if (profile && ((profile as any).admin_assigned_plan || (profile as any).is_custom_subscription)) {
+            logStep("Subscription deleted but profile has admin/custom plan - no change");
+          } else if (profile) {
             await supabaseClient
               .from("profiles")
               .update({ 
                 plan: "free",
                 searches_limit: PLAN_LIMITS["free"],
-                searches_used: 0  // Reset usage on downgrade
+                searches_used: 0,  // Reset usage on downgrade
+                subscription_current_period_end: null,
+                payment_provider: null,
+                ...((profile as any).trial_asaas_subscription_id === subscription.id
+                  ? { trial_auto_charge_cancelled: true }
+                  : {}),
               })
               .eq("id", profile.id);
 
