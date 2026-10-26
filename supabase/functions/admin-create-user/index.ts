@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 
     if (!body.email || !body.password || !body.name) {
       return new Response(JSON.stringify({ error: "Email, senha e nome são obrigatórios" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -109,14 +109,14 @@ Deno.serve(async (req) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(body.email)) {
       return new Response(JSON.stringify({ error: "Formato de email inválido" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (body.password.length < 8) {
       return new Response(JSON.stringify({ error: "Senha deve ter pelo menos 8 caracteres" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -179,13 +179,13 @@ Deno.serve(async (req) => {
         }
         if (!newUserId) {
           return new Response(JSON.stringify({ error: "Este email já está cadastrado com uma conta ativa" }), {
-            status: 400,
+            status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       } else {
         return new Response(JSON.stringify({ error: `Erro ao criar usuário: ${msg || "falha no cadastro de login"}` }), {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -255,7 +255,7 @@ Deno.serve(async (req) => {
       await supabaseAdmin.auth.admin.deleteUser(newUserId);
       return new Response(
         JSON.stringify({ error: `Erro ao criar contrato: ${subError?.message}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
