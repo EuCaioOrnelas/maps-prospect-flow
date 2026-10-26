@@ -121,37 +121,79 @@ Deno.serve(async (req) => {
       });
     }
 
+    body.email = body.email.trim().toLowerCase();
     log("Creating auth user", { email: body.email, plan: body.plan });
 
     // 1) Cria usuário via admin API (auto-confirma e-mail)
+    const userMetadata = {
+      name: body.name,
+      created_by_admin: true,
+      admin_id: userData.user.id,
+    };
+    let newUserId: string | null = null;
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: body.email,
       password: body.password,
       email_confirm: true,
-      user_metadata: {
-        name: body.name,
-        created_by_admin: true,
-        admin_id: userData.user.id,
-      },
+      user_metadata: userMetadata,
     });
 
     if (createError || !newUser?.user) {
-      log("Auth create error", { error: createError?.message });
       const msg = createError?.message || "";
-      if (msg.includes("already registered") || msg.includes("already exists")) {
-        return new Response(JSON.stringify({ error: "Este email já está cadastrado" }), {
+      log("Auth create error", { error: msg, status: (createError as any)?.status, code: (createError as any)?.code });
+      const alreadyExists =
+        /already (been )?registered|already exists|email_exists/i.test(msg) ||
+        (createError as any)?.code === "email_exists";
+
+      if (alreadyExists) {
+        // Conta de login "órfã": existe no login mas não tem perfil (ex.: cadastro
+        // interrompido pela trava antifraude ou perfil apagado). Reaproveita.
+        const orphanId = await findAuthUserIdByEmail(supabaseAdmin, body.email);
+        if (orphanId) {
+          const { data: existingProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("id, plan")
+            .eq("id", orphanId)
+            .maybeSingle();
+          const { data: existingSub } = await supabaseAdmin
+            .from("custom_subscriptions")
+            .select("id")
+            .eq("user_id", orphanId)
+            .limit(1)
+            .maybeSingle();
+          const isUnused = !existingSub && (!existingProfile || existingProfile.plan === "free");
+          if (isUnused) {
+            const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(orphanId, {
+              password: body.password,
+              email_confirm: true,
+              ban_duration: "none",
+              user_metadata: userMetadata,
+            });
+            if (!updErr) {
+              newUserId = orphanId;
+              log("Reusing orphan auth user", { userId: orphanId });
+            } else {
+              log("Orphan update error", { error: updErr.message });
+            }
+          }
+        }
+        if (!newUserId) {
+          return new Response(JSON.stringify({ error: "Este email já está cadastrado com uma conta ativa" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        return new Response(JSON.stringify({ error: `Erro ao criar usuário: ${msg || "falha no cadastro de login"}` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: `Erro ao criar usuário: ${msg}` }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    } else {
+      newUserId = newUser.user.id;
     }
 
-    const newUserId = newUser.user.id;
-    log("Auth user created", { userId: newUserId });
+    log("Auth user ready", { userId: newUserId });
 
     // 2) Garante que o profile existe (não dependemos do trigger handle_new_user)
     await new Promise((r) => setTimeout(r, 300));
