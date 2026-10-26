@@ -7,6 +7,7 @@ import { formatPhoneForMeta } from "@/lib/phoneUtils";
 import { resolveStorageUrl, resolveStorageUrls } from "@/lib/privateStorage";
 import { META_GRAPH_BASE } from "@/lib/metaApi";
 import { withRequestTimeout } from "@/lib/requestTimeout";
+import { chatFileTooLarge, compressChatImage } from "@/lib/chatMediaCompression";
 
 export interface ChatConversation {
   id: string;
