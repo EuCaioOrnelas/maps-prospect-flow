@@ -275,7 +275,20 @@ export default function AdminUsuarios() {
                         {(() => {
                           const end = user.trial_end_at || user.trial_will_charge_at;
                           const inTrial = !!end && new Date(end).getTime() > Date.now();
-                          if (!inTrial) return null;
+                          if (!inTrial) {
+                            if (end && user.trial_auto_charge_cancelled && user.plan === "free") {
+                              return (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1.5 py-0 bg-destructive/10 text-destructive border-destructive/30"
+                                  title={`Teste grátis cancelado · terminou em ${new Date(end).toLocaleDateString("pt-BR")}`}
+                                >
+                                  Teste cancelado
+                                </Badge>
+                              );
+                            }
+                            return null;
+                          }
                           const days = Math.max(0, Math.ceil((new Date(end).getTime() - Date.now()) / 86400000));
                           const cancelled = !!user.trial_auto_charge_cancelled;
                           return (
@@ -303,7 +316,9 @@ export default function AdminUsuarios() {
                     <TableCell>
                       {user.payment_provider ? (
                         <Badge variant="outline" className={`${providerColors[bucket]} text-[10px] font-medium`}>
-                          {getProviderLabel(user.payment_provider)}
+                          {user.payment_provider === "asaas" && !user.asaas_subscription_id && user.trial_card_last4
+                            ? "Cartão (teste grátis)"
+                            : getProviderLabel(user.payment_provider)}
                         </Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground/60">—</span>
