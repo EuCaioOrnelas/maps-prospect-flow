@@ -164,7 +164,18 @@ export const CreateUserDialog = ({ onUserCreated }: Props) => {
           feature_permissions: form.feature_permissions,
         },
       });
-      if (error) throw error;
+      if (error) {
+        // O erro genérico esconde a mensagem real do servidor; lemos o corpo da resposta.
+        let serverMsg = error.message;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx && typeof ctx.text === "function") {
+            const txt = await ctx.text();
+            try { serverMsg = JSON.parse(txt)?.error || txt || serverMsg; } catch { serverMsg = txt || serverMsg; }
+          }
+        } catch {}
+        throw new Error(serverMsg);
+      }
       if (data?.error) throw new Error(data.error);
 
       toast({
