@@ -125,9 +125,25 @@ const hasFuturePaidWindow = (profile?: BillingProfileState | null) => {
   return !Number.isNaN(endsAt.getTime()) && graceEndsAt > Date.now();
 };
 
+// Teste grátis que terminou sem virar assinatura paga (cancelado ou não cobrado).
+// Nunca deve manter acesso nem herdar a "carência" de 7 dias de quem paga PIX.
+const isEndedTrialOnly = (profile?: BillingProfileState | null) => {
+  if (!profile?.trial_will_charge_at) return false;
+  if (profile.admin_assigned_plan || profile.is_custom_subscription) return false;
+  const endsAt = new Date(profile.trial_will_charge_at).getTime();
+  if (Number.isNaN(endsAt) || endsAt > Date.now()) return false;
+  // Se o período pago vai além do fim do teste, houve cobrança real depois.
+  const periodEnd = profile.subscription_current_period_end
+    ? new Date(profile.subscription_current_period_end).getTime()
+    : 0;
+  if (periodEnd > endsAt + 24 * 60 * 60 * 1000) return false;
+  return true;
+};
+
 const shouldPreservePaidAccess = (profile?: BillingProfileState | null) => {
   if (!profile?.plan || profile.plan === "free") return false;
   if (profile.admin_assigned_plan || profile.is_custom_subscription) return true;
+  if (isEndedTrialOnly(profile)) return false;
 
   const provider = profile.payment_provider;
   if (!provider || provider === "stripe") return false;
@@ -483,6 +499,34 @@ serve(async (req) => {
         subscribed: false, 
         plan: "free",
         searches_limit: PLAN_LIMITS["free"]
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Teste cancelado já encerrado: tira o acesso na hora e limpa a etiqueta de pagamento.
+    if (
+      currentProfile.trial_auto_charge_cancelled &&
+      isEndedTrialOnly(currentProfile) &&
+      (currentProfile.plan !== "free" || currentProfile.payment_provider)
+    ) {
+      logStep("Cancelled trial ended - removing access", { previousPlan: currentProfile.plan });
+      await supabaseClient
+        .from('profiles')
+        .update({
+          plan: "free",
+          searches_limit: PLAN_LIMITS["free"],
+          searches_used: 0,
+          subscription_current_period_end: null,
+          payment_provider: null,
+        })
+        .eq('id', userId);
+      return new Response(JSON.stringify({
+        subscribed: false,
+        plan: "free",
+        searches_limit: PLAN_LIMITS["free"],
+        trial_cancelled: true,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
