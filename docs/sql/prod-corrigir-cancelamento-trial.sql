@@ -177,3 +177,18 @@ BEGIN
   RETURN NEW;
 END;
 $function$;
+
+-- Corrige quem já está com teste cancelado e encerrado, mas ainda com plano pago
+UPDATE public.profiles
+SET plan = 'free',
+    searches_limit = 10,
+    searches_used = 0,
+    payment_provider = NULL,
+    subscription_current_period_end = NULL
+WHERE trial_auto_charge_cancelled = true
+  AND trial_will_charge_at < now()
+  AND COALESCE(admin_assigned_plan, false) = false
+  AND COALESCE(is_custom_subscription, false) = false
+  AND (subscription_current_period_end IS NULL
+       OR subscription_current_period_end <= trial_will_charge_at + interval '1 day')
+  AND (plan <> 'free' OR payment_provider IS NOT NULL);
