@@ -253,6 +253,13 @@
       "when": 1793039207628,
       "tag": "0035_trial_not_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793039818999,
+      "tag": "0036_expire_cancelled_trials",
+      "breakpoints": true
     }
   ]
 }

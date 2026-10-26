@@ -14174,6 +14174,7 @@ export type Database = {
         Args: { _post_id: string }
         Returns: undefined
       }
+      expire_cancelled_trials: { Args: never; Returns: number }
       generate_partner_referral_code: {
         Args: { p_full_name: string }
         Returns: string
