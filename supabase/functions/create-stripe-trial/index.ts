@@ -40,6 +40,9 @@ const PLAN_TO_MONTHLY_PRICE: Record<string, string> = {
   scale: Deno.env.get("STRIPE_PRICE_SCALE_MONTHLY") || "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
+// Limite de oportunidades durante o teste (mesma tabela dos planos atuais).
+const TRIAL_PLAN_LIMITS: Record<string, number> = { start: 1000, growth: 1000, scale: 10000 };
+
 const PLAN_NAMES: Record<string, string> = {
   start: "Wiize Atendimento",
   growth: "Wiize Growth IA",
