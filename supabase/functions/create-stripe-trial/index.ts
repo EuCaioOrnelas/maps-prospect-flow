@@ -223,17 +223,21 @@ serve(async (req) => {
 
       const db = adminClient();
       // A ficha é criada pelo banco no cadastro; espera um instante se ainda não apareceu.
-      let prof: { id: string; email: string | null; trial_start_at: string | null; terms_accepted_at: string | null } | null = null;
-      for (let attempt = 0; attempt < 4 && !prof; attempt++) {
-        const { data, error: profErr } = await db
-          .from("profiles")
-          .select("id, email, trial_start_at, terms_accepted_at")
-          .eq("id", userId)
-          .maybeSingle();
-        if (profErr) throw new Error(profErr.message);
-        prof = data as typeof prof;
-        if (!prof) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
-      }
+      type ProfRow = { id: string; email: string | null; trial_start_at: string | null; terms_accepted_at: string | null };
+      const readProfile = async (): Promise<ProfRow | null> => {
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const { data, error: profErr } = await db
+            .from("profiles")
+            .select("id, email, trial_start_at, terms_accepted_at")
+            .eq("id", userId)
+            .maybeSingle();
+          if (profErr) throw new Error(profErr.message);
+          if (data) return data as ProfRow;
+          await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
+        }
+        return null;
+      };
+      const prof = await readProfile();
       if (!prof) throw new Error("Ficha do cliente não encontrada");
       if (normEmail(prof.email) !== normEmail(customer.email)) {
         throw new Error("E-mail da conta não confere com o do cartão");
