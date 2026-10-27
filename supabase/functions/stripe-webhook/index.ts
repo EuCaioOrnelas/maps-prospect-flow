@@ -919,6 +919,13 @@ serve(async (req) => {
                   transitionType,
                 }
               );
+            } else if (
+              ["canceled", "unpaid"].includes(subscription.status) &&
+              (await hasOtherLiveSubscription(stripe, customer.email, subscription.id))
+            ) {
+              logStep("Ignoring cancellation of old/orphan subscription - customer has another live subscription", {
+                subscriptionId: subscription.id,
+              });
             } else if (["canceled", "unpaid"].includes(subscription.status)) {
               await supabaseClient
                 .from("profiles")
