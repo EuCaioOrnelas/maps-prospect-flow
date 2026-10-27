@@ -1030,6 +1030,14 @@ serve(async (req) => {
             (profile as any).trial_asaas_subscription_id === subscription.id &&
             trialEndsAt > Date.now();
 
+          // Assinatura antiga/órfã (outra tentativa de cadastro) enquanto existe
+          // um teste em andamento com outra assinatura: não mexe na conta.
+          const profileTrialSubId = (profile as any)?.trial_asaas_subscription_id as string | null | undefined;
+          const isOrphanOfRunningTrial =
+            !!profile &&
+            trialEndsAt > Date.now() &&
+            profileTrialSubId !== subscription.id;
+
           if (profile && isTrialSubStillRunning) {
             await supabaseClient
               .from("profiles")
@@ -1041,8 +1049,17 @@ serve(async (req) => {
             logStep("Trial subscription cancelled - access kept until trial end", {
               trialEndsAt: new Date(trialEndsAt).toISOString(),
             });
+          } else if (profile && isOrphanOfRunningTrial) {
+            logStep("Ignoring deletion of orphan subscription - trial still running with another subscription", {
+              deletedSubscriptionId: subscription.id,
+              trialSubscriptionId: profileTrialSubId ?? null,
+            });
           } else if (profile && ((profile as any).admin_assigned_plan || (profile as any).is_custom_subscription)) {
             logStep("Subscription deleted but profile has admin/custom plan - no change");
+          } else if (profile && (await hasOtherLiveSubscription(stripe, customer.email, subscription.id))) {
+            logStep("Ignoring deletion - customer still has another live subscription", {
+              deletedSubscriptionId: subscription.id,
+            });
           } else if (profile) {
             await supabaseClient
               .from("profiles")
