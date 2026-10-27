@@ -31,17 +31,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Preços mensais do trial. Prioriza os secrets (STRIPE_PRICE_*) para permitir
+// trocar o preço sem alterar código; os IDs abaixo são apenas o fallback legado.
 const PLAN_TO_MONTHLY_PRICE: Record<string, string> = {
-  start: "price_1UNCkyK8CM0R6xMM8QSYPOT8",
-  growth: "price_1UNCieK8CM0R6xMMjgjVONVA",
-  scale: "price_1SlylcK8CM0R6xMMyHRWAd8G",
+  start: Deno.env.get("STRIPE_PRICE_START_MONTHLY") || "price_1UNCkyK8CM0R6xMM8QSYPOT8",
+  growth: Deno.env.get("STRIPE_PRICE_GROWTH_MONTHLY") || "price_1UNCieK8CM0R6xMMjgjVONVA",
+  scale: Deno.env.get("STRIPE_PRICE_SCALE_MONTHLY") || "price_1SlylcK8CM0R6xMMyHRWAd8G",
 };
 
 const PLAN_NAMES: Record<string, string> = {
-  start: "Wiize Start",
-  growth: "Wiize Growth",
-  scale: "Wiize Scale",
+  start: "Wiize Atendimento",
+  growth: "Wiize Growth IA",
+  scale: "Wiize Enterprise",
 };
+
+// Confere se o preço existe e está ativo no Stripe antes de criar a assinatura.
+// Sem isso, um preço arquivado/excluído derruba o cadastro com erro genérico.
+async function assertPriceUsable(stripe: Stripe, priceId: string, planKey: string) {
+  try {
+    const price = await stripe.prices.retrieve(priceId);
+    if (!price.active) throw new Error("inactive");
+  } catch (e) {
+    log("Price not usable", { planKey, priceId, error: String(e) });
+    throw new Error(
+      "PRICE_PENDING: O preço deste plano ainda não está disponível no cartão. Avise o suporte.",
+    );
+  }
+}
 
 const log = (step: string, details?: unknown) => {
   console.log(`[CREATE-STRIPE-TRIAL] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
@@ -142,6 +158,7 @@ serve(async (req) => {
           503,
         );
       }
+      await assertPriceUsable(stripe, priceId, planKey);
 
       const si = await stripe.setupIntents.retrieve(setupIntentId);
       if (si.status !== "succeeded") {
