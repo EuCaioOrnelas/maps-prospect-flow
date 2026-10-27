@@ -219,12 +219,18 @@ serve(async (req) => {
       const customer = (await stripe.customers.retrieve(customerId)) as Stripe.Customer;
 
       const db = adminClient();
-      const { data: prof, error: profErr } = await db
-        .from("profiles")
-        .select("id, email")
-        .eq("id", userId)
-        .maybeSingle();
-      if (profErr) throw new Error(profErr.message);
+      // A ficha é criada pelo banco no cadastro; espera um instante se ainda não apareceu.
+      let prof: { id: string; email: string | null; trial_start_at: string | null; terms_accepted_at: string | null } | null = null;
+      for (let attempt = 0; attempt < 4 && !prof; attempt++) {
+        const { data, error: profErr } = await db
+          .from("profiles")
+          .select("id, email, trial_start_at, terms_accepted_at")
+          .eq("id", userId)
+          .maybeSingle();
+        if (profErr) throw new Error(profErr.message);
+        prof = data as typeof prof;
+        if (!prof) await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
+      }
       if (!prof) throw new Error("Ficha do cliente não encontrada");
       if (normEmail(prof.email) !== normEmail(customer.email)) {
         throw new Error("E-mail da conta não confere com o do cartão");
@@ -234,15 +240,25 @@ serve(async (req) => {
         ? sub.default_payment_method
         : sub.default_payment_method?.id;
       const card = pmId ? await cardDetails(stripe, pmId) : { cardLast4: "", cardBrand: "" };
-      const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
-      const planKey = sub.metadata?.plan_key || p?.planKey || null;
+      // O fim do teste vem sempre do Stripe; sem ele, 7 dias a partir de agora.
+      const trialEnd = sub.trial_end
+        ? new Date(sub.trial_end * 1000).toISOString()
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const rawPlan = String(sub.metadata?.plan_key || p?.planKey || "growth");
+      const planKey = rawPlan in TRIAL_PLAN_LIMITS ? rawPlan : "growth";
+      const nowIso = new Date().toISOString();
       const clean = (v: unknown) => {
         const t = String(v ?? "").trim();
         return t ? t.slice(0, 200) : null;
       };
 
+      // Grava o teste completo pelo servidor. Não depende da versão da regra de
+      // cadastro do banco: plano, aceite dos termos e datas ficam sempre certos.
       const update: Record<string, unknown> = {
+        plan: planKey,
+        searches_limit: TRIAL_PLAN_LIMITS[planKey],
         payment_provider: "stripe",
+        requires_payment_setup: false,
         trial_plan_chosen: planKey,
         trial_billing_period: "monthly",
         trial_auto_charge_cancelled: false,
@@ -250,6 +266,9 @@ serve(async (req) => {
         trial_asaas_customer_id: customerId,
         trial_card_last4: card.cardLast4 || null,
         trial_card_brand: card.cardBrand || null,
+        trial_will_charge_at: trialEnd,
+        trial_end_at: trialEnd,
+        subscription_current_period_end: trialEnd,
         cpf: clean(p?.cpf)?.replace(/\D/g, "") || null,
         phone: clean(p?.phone),
         postal_code: clean(p?.postalCode),
@@ -260,16 +279,14 @@ serve(async (req) => {
         city: clean(p?.city),
         state: clean(p?.state),
       };
-      if (trialEnd) {
-        update.trial_will_charge_at = trialEnd;
-        update.trial_end_at = trialEnd;
-        update.subscription_current_period_end = trialEnd;
-      }
+      if (!prof.trial_start_at) update.trial_start_at = nowIso;
+      // O cadastro só chega aqui com a caixa de termos marcada.
+      if (!prof.terms_accepted_at) update.terms_accepted_at = nowIso;
 
       const { error: upErr } = await db.from("profiles").update(update).eq("id", userId);
       if (upErr) throw new Error(upErr.message);
-      log("Profile completed", { userId, subscriptionId: sub.id });
-      return json({ success: true });
+      log("Profile completed", { userId, subscriptionId: sub.id, planKey, trialEnd });
+      return json({ success: true, trialEnd });
     }
 
     // ------------------------------------------------------------------
