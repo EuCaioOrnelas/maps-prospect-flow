@@ -8,6 +8,8 @@ const corsHeaders = {
 
 // WiizeProspect price IDs válidos para MRR (atuais + legados)
 const WIIZE_PRICE_IDS = [
+  "price_1UNCkyK8CM0R6xMM8QSYPOT8", // Atendimento - R$89/mês (atual)
+  "price_1UNCieK8CM0R6xMMjgjVONVA", // Growth IA - R$129/mês (atual)
   "price_1TYl5KK8CM0R6xMMeHUhKt7s", // Atendimento - R$196/mês (legado)
   "price_1UBNs5K8CM0R6xMMJAnZEQdm", // Growth IA - R$396/mês (legado v3)
   "price_1TYl6iK8CM0R6xMMd23UBpIz", // Growth IA - R$696/mês (legado)
@@ -32,6 +34,8 @@ const ADMIN_EMAILS = ["caiowiize@gmail.com"];
 
 // Plan name mapping from price IDs
 const PRICE_TO_PLAN: { [key: string]: string } = {
+  "price_1UNCkyK8CM0R6xMM8QSYPOT8": "start",
+  "price_1UNCieK8CM0R6xMMjgjVONVA": "growth",
   "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",
   "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",
   "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",
@@ -458,6 +462,8 @@ Deno.serve(async (req) => {
     // --- Compute real monthly MRR by tracking subscription lifecycles ---
     // For each month, calculate which subs were active and sum their monthly value
     const PLAN_MRR: { [priceId: string]: number } = {
+      "price_1UNCkyK8CM0R6xMM8QSYPOT8": 89,
+      "price_1UNCieK8CM0R6xMMjgjVONVA": 129,
       "price_1TYl5KK8CM0R6xMMeHUhKt7s": 196,
       "price_1UBNs5K8CM0R6xMMJAnZEQdm": 396,
       "price_1TYl6iK8CM0R6xMMd23UBpIz": 696,
