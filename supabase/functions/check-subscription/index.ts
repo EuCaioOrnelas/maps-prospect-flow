@@ -14,7 +14,10 @@ const logStep = (step: string, details?: any) => {
 
 // Map price IDs to plan names - includes all historical price IDs
 const PRICE_TO_PLAN: Record<string, string> = {
-  // Current prices (2026-05)
+  // Preços atuais (2026-10): Atendimento R$89 e Growth IA R$129
+  "price_1UNCkyK8CM0R6xMM8QSYPOT8": "start",   // Wiize Atendimento R$89/mês
+  "price_1UNCieK8CM0R6xMMjgjVONVA": "growth",  // Wiize Growth IA R$129/mês
+  // Preços anteriores (2026-05)
   "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",   // R$196/month (legado)
   "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",  // R$396/month (legado, 1.000 oportunidades)
   "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",  // R$696/month (atual)
