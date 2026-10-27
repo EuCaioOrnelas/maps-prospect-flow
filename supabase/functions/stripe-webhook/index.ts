@@ -212,6 +212,32 @@ const BUMP_PRICE_TO_DEF: Record<string, {
   "price_1UNCmEK8CM0R6xMMfGhL369a": { id: "opportunities", column: "extra_opportunities_packs" },
 };
 
+// O cadastro com cartão cancela tentativas antigas (órfãs) do mesmo e-mail e,
+// segundos depois, o Stripe avisa esses cancelamentos. Esse aviso não pode
+// derrubar o teste novo: só rebaixa quando a pessoa não tem outra assinatura viva.
+async function hasOtherLiveSubscription(
+  stripe: Stripe,
+  email: string,
+  excludeSubscriptionId: string,
+): Promise<boolean> {
+  try {
+    const customers = await stripe.customers.list({ email: email.toLowerCase(), limit: 20 });
+    for (const c of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 20 });
+      if (
+        subs.data.some(
+          (s: Stripe.Subscription) => s.id !== excludeSubscriptionId && ["trialing", "active", "past_due"].includes(s.status),
+        )
+      ) {
+        return true;
+      }
+    }
+  } catch (e) {
+    logStep("hasOtherLiveSubscription failed", { error: String(e) });
+  }
+  return false;
+}
+
 async function findUserBySubscription(
   stripe: Stripe,
   supabase: any,
@@ -893,6 +919,13 @@ serve(async (req) => {
                   transitionType,
                 }
               );
+            } else if (
+              ["canceled", "unpaid"].includes(subscription.status) &&
+              (await hasOtherLiveSubscription(stripe, customer.email, subscription.id))
+            ) {
+              logStep("Ignoring cancellation of old/orphan subscription - customer has another live subscription", {
+                subscriptionId: subscription.id,
+              });
             } else if (["canceled", "unpaid"].includes(subscription.status)) {
               await supabaseClient
                 .from("profiles")
@@ -997,6 +1030,14 @@ serve(async (req) => {
             (profile as any).trial_asaas_subscription_id === subscription.id &&
             trialEndsAt > Date.now();
 
+          // Assinatura antiga/órfã (outra tentativa de cadastro) enquanto existe
+          // um teste em andamento com outra assinatura: não mexe na conta.
+          const profileTrialSubId = (profile as any)?.trial_asaas_subscription_id as string | null | undefined;
+          const isOrphanOfRunningTrial =
+            !!profile &&
+            trialEndsAt > Date.now() &&
+            profileTrialSubId !== subscription.id;
+
           if (profile && isTrialSubStillRunning) {
             await supabaseClient
               .from("profiles")
@@ -1008,8 +1049,17 @@ serve(async (req) => {
             logStep("Trial subscription cancelled - access kept until trial end", {
               trialEndsAt: new Date(trialEndsAt).toISOString(),
             });
+          } else if (profile && isOrphanOfRunningTrial) {
+            logStep("Ignoring deletion of orphan subscription - trial still running with another subscription", {
+              deletedSubscriptionId: subscription.id,
+              trialSubscriptionId: profileTrialSubId ?? null,
+            });
           } else if (profile && ((profile as any).admin_assigned_plan || (profile as any).is_custom_subscription)) {
             logStep("Subscription deleted but profile has admin/custom plan - no change");
+          } else if (profile && (await hasOtherLiveSubscription(stripe, customer.email, subscription.id))) {
+            logStep("Ignoring deletion - customer still has another live subscription", {
+              deletedSubscriptionId: subscription.id,
+            });
           } else if (profile) {
             await supabaseClient
               .from("profiles")

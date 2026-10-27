@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     check();
     return () => { cancelled = true; };
-  }, [user?.id, profile?.plan, profile?.subscription_current_period_end, profile?.terms_accepted_at, publicDemo]);
+  }, [user?.id, profile?.plan, profile?.subscription_current_period_end, profile?.terms_accepted_at, profile?.trial_will_charge_at, profile?.trial_end_at, publicDemo]);
 
   const trialStatus = calculateTrialStatus(profile);
   const isTrialExpired = serverAccess === null ? trialStatus.isExpired : !serverAccess;

@@ -474,29 +474,32 @@ function SignupWithCardInner() {
 
     // Completa a ficha (CPF, telefone, endereço, cartão) pelo servidor: o cliente
     // ainda não confirmou o e-mail, então não tem permissão para salvar sozinho.
-    const { data: profRes, error: profErr } = await supabase.functions.invoke("create-stripe-trial", {
-      body: {
-        action: "complete_profile",
-        subscriptionId: trialRes.subscriptionId,
-        setupIntentId: pending.setupIntentId,
-        userId: newUserId,
-        profile: {
-          planKey: pending.planKey || planKey,
-          cpf: cleanTaxId,
-          phone: phone.replace(/\D/g, "") || null,
-          postalCode: cepDigits(postalCode) || null,
-          address: address || null,
-          addressNumber: addressNumber || null,
-          addressComplement: addressComplement.trim() || null,
-          neighborhood: neighborhood || null,
-          city: city || null,
-          state: state || null,
-        },
+    // Essa etapa grava o teste de 7 dias na ficha; tenta até 3 vezes.
+    const completeBody = {
+      action: "complete_profile",
+      subscriptionId: trialRes.subscriptionId,
+      setupIntentId: pending.setupIntentId,
+      userId: newUserId,
+      profile: {
+        planKey: pending.planKey || planKey,
+        cpf: cleanTaxId,
+        phone: phone.replace(/\D/g, "") || null,
+        postalCode: cepDigits(postalCode) || null,
+        address: address || null,
+        addressNumber: addressNumber || null,
+        addressComplement: addressComplement.trim() || null,
+        neighborhood: neighborhood || null,
+        city: city || null,
+        state: state || null,
       },
-    });
-    if (profErr || profRes?.error) {
-      // A conta e o teste já estão ativos; só registra para análise.
-      console.error("[SignupWithCard] complete_profile failed", profErr || profRes?.error);
+    };
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const { data: profRes, error: profErr } = await supabase.functions.invoke("create-stripe-trial", {
+        body: completeBody,
+      });
+      if (!profErr && !profRes?.error) break;
+      console.error(`[SignupWithCard] complete_profile failed (tentativa ${attempt})`, profErr || profRes?.error);
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 1500 * attempt));
     }
 
     sessionStorage.removeItem("trial_plan_chosen");
