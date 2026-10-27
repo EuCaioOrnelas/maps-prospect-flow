@@ -10,3 +10,5 @@
 - Public marketing SectionHeading renders its eyebrow only with explicit showEyebrow opt-in — why: avoids redundant heading decoration while permitting necessary context.
 - Auth account synchronization is single-flight and throttled; repeated SIGNED_IN for the same user is not a new login — why: tab refocus must not duplicate account reads or disrupt page state.
 - Chat startup reads and second-factor status reads have bounded waits with retry; second-factor errors never unlock protected content — why: transient failures must neither leave an endless spinner nor bypass verification.
+- Every Stripe plan/add-on price ID must be mapped in stripe-webhook, check-subscription, get-stripe-mrr and audit-mrr (create-stripe-trial only creates) — why: an unmapped price turns paying customers into "free" on the first charge.
+- Card-trial signup completes the profile (CPF, address, card) through create-stripe-trial action complete_profile with service role and cancels the Stripe subscription if account creation fails — why: before email confirmation the user has no session, and no one may be charged without an account.

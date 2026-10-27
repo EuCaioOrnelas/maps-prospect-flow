@@ -206,6 +206,10 @@ const BUMP_PRICE_TO_DEF: Record<string, {
   "price_1TYdiXK8CM0R6xMMqnhxGM1V": { id: "numbers",       column: "extra_numbers" },
   "price_1TYdkPK8CM0R6xMMXHTfihdw": { id: "contacts",      column: "extra_contacts_packs" },
   "price_1TYdknK8CM0R6xMM9TXjGFf5": { id: "opportunities", column: "extra_opportunities_packs" },
+  // Expansões atuais (R$49 / R$39 / R$99)
+  "price_1UNClcK8CM0R6xMM0uMtVjvX": { id: "numbers",       column: "extra_numbers" },
+  "price_1UNClwK8CM0R6xMMWVap9ge2": { id: "contacts",      column: "extra_contacts_packs" },
+  "price_1UNCmEK8CM0R6xMMfGhL369a": { id: "opportunities", column: "extra_opportunities_packs" },
 };
 
 async function findUserBySubscription(
@@ -222,7 +226,7 @@ async function findUserBySubscription(
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
-      .eq("email", email)
+      .eq("email", String(email).toLowerCase())
       .maybeSingle();
     if (!profile) return null;
     return { userId: profile.id, email };
@@ -349,7 +353,10 @@ async function reconcileBumpsFromSubscription(
 
 // Map price IDs to plan names - includes all historical price IDs
 const PRICE_TO_PLAN: Record<string, string> = {
-  // Current prices (2026-05)
+  // Preços atuais (2026-10): Atendimento R$89 e Growth IA R$129
+  "price_1UNCkyK8CM0R6xMM8QSYPOT8": "start",   // Wiize Atendimento R$89/mês
+  "price_1UNCieK8CM0R6xMMjgjVONVA": "growth",  // Wiize Growth IA R$129/mês
+  // Preços anteriores (2026-05)
   "price_1TYl5KK8CM0R6xMMeHUhKt7s": "start",   // R$196/month (legado)
   "price_1UBNs5K8CM0R6xMMJAnZEQdm": "growth",  // R$396/month (legado, 1.000 oportunidades)
   "price_1TYl6iK8CM0R6xMMd23UBpIz": "growth",  // R$696/month (atual)
@@ -596,7 +603,7 @@ serve(async (req) => {
           const { data: profile, error: profileError } = await supabaseClient
             .from("profiles")
             .select("id, searches_used, searches_limit, plan, created_at")
-            .eq("email", customerEmail)
+            .eq("email", customerEmail.toLowerCase())
             .maybeSingle();
 
           if (profile) {
@@ -795,7 +802,7 @@ serve(async (req) => {
           const { data: profile } = await supabaseClient
             .from("profiles")
             .select("id, searches_used, searches_limit, plan, created_at")
-            .eq("email", customer.email)
+            .eq("email", customer.email.toLowerCase())
             .maybeSingle();
 
           if (profile) {
@@ -976,7 +983,7 @@ serve(async (req) => {
           const { data: profile } = await supabaseClient
             .from("profiles")
             .select("id, plan, searches_limit, searches_used, created_at, trial_asaas_subscription_id, trial_will_charge_at, admin_assigned_plan, is_custom_subscription")
-            .eq("email", customer.email)
+            .eq("email", customer.email.toLowerCase())
             .maybeSingle();
 
           // Cancelamento do teste grátis antes do fim: mantém o acesso só até o
@@ -1100,7 +1107,7 @@ serve(async (req) => {
             const { data: profile } = await supabaseClient
               .from("profiles")
               .select("id, plan, searches_used, searches_limit, created_at")
-              .eq("email", customerEmail)
+              .eq("email", customerEmail.toLowerCase())
               .maybeSingle();
 
             if (profile) {
@@ -1240,7 +1247,7 @@ serve(async (req) => {
             const { data: profile } = await supabaseClient
               .from("profiles")
               .select("id, plan, searches_limit, searches_used, created_at")
-              .eq("email", customer.email)
+              .eq("email", customer.email.toLowerCase())
               .maybeSingle();
 
             const refundAmount = charge.amount_refunded / 100;
@@ -1511,7 +1518,7 @@ serve(async (req) => {
         const { data: profile } = await supabaseClient
           .from("profiles")
           .select("id, plan, searches_limit, searches_used, created_at")
-          .eq("email", customer.email)
+          .eq("email", customer.email.toLowerCase())
           .maybeSingle();
         if (!profile) {
           logStep("Trial: profile not yet found, skipping", { email: customer.email });

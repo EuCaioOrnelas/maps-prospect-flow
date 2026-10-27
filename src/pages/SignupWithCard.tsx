@@ -49,6 +49,35 @@ const PENDING_KEY = "wiize_trial_3ds";
 
 type PendingSetup = { customerId: string; setupIntentId: string; planKey: string };
 
+/** E-mail sempre minúsculo e sem espaços: o Stripe diferencia maiúsculas. */
+const normalizeEmail = (v: string) => v.trim().toLowerCase();
+
+/** Extrai a mensagem real de uma falha da função do servidor. */
+async function readFunctionError(
+  error: unknown,
+  data: { error?: string; message?: string } | null | undefined,
+  fallback: string,
+): Promise<string> {
+  if (data?.message || data?.error) return String(data.message || data.error);
+  const ctx = (error as { context?: Response } | null)?.context;
+  if (ctx && typeof ctx.text === "function") {
+    try {
+      const raw = await ctx.clone().text();
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.message || parsed?.error) return String(parsed.message || parsed.error);
+      } catch {
+        if (raw) return raw.slice(0, 300);
+      }
+    } catch {
+      /* corpo já lido — usa o fallback */
+    }
+  }
+  const msg = (error as { message?: string } | null)?.message;
+  if (msg && !/non-2xx/i.test(msg)) return msg;
+  return fallback;
+}
+
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Atendimento", monthly: 89 },
@@ -360,31 +389,52 @@ function SignupWithCardInner() {
   /** Cria a subscription (só roda com o 3DS já autenticado) e a conta no app. */
   const finalizeTrial = async (pending: PendingSetup) => {
     const cleanTaxId = taxId.replace(/\D/g, "");
+    const cleanEmail = normalizeEmail(email);
 
     const { data: trialRes, error: trialErr } = await supabase.functions.invoke("create-stripe-trial", {
       body: {
         action: "finalize",
         setupIntentId: pending.setupIntentId,
         planKey: pending.planKey || planKey,
-        email,
+        email: cleanEmail,
       },
     });
     if (trialErr || trialRes?.error) {
-      const trialMessage =
-        trialRes?.message ||
-        trialRes?.error ||
-        trialErr?.message ||
-        "Falha ao validar o cartão. Verifique os dados e tente novamente.";
+      const trialMessage = await readFunctionError(
+        trialErr,
+        trialRes,
+        "Falha ao validar o cartão. Verifique os dados e tente novamente.",
+      );
       console.error("[SignupWithCard] finalize failed", trialErr || trialRes?.error);
       throw new Error(trialMessage);
     }
+
+    // Se a conta não puder ser criada, a assinatura é desfeita para o cliente
+    // nunca ser cobrado sem ter acesso ao sistema.
+    const rollbackSubscription = async (reason: string) => {
+      try {
+        await supabase.functions.invoke("create-stripe-trial", {
+          body: {
+            action: "cancel",
+            subscriptionId: trialRes.subscriptionId,
+            setupIntentId: pending.setupIntentId,
+            reason,
+          },
+        });
+      } catch (rbErr) {
+        console.error("[SignupWithCard] rollback failed", rbErr);
+      }
+      localStorage.removeItem(PENDING_KEY);
+      setPendingSetup(null);
+      setAuthStage("idle");
+    };
 
     const [fp, ip] = await Promise.all([generateFingerprint(), getClientIP()]);
 
     // Cria o usuário no app com os metadados do trial já autenticado.
     const redirectUrl = `${window.location.origin}/login?email_confirmed=true`;
     const { data: signupData, error: signupErr } = await supabase.auth.signUp({
-      email,
+      email: cleanEmail,
       password,
       options: {
         emailRedirectTo: redirectUrl,
@@ -405,33 +455,49 @@ function SignupWithCardInner() {
         },
       },
     });
-    if (signupErr) throw signupErr;
-    const newUserId = signupData.user?.id;
-    if (!newUserId) throw new Error("Conta criada, mas ID do usuário não retornado");
+    if (signupErr) {
+      await rollbackSubscription(`signup_error: ${signupErr.message}`);
+      const m = signupErr.message || "";
+      if (/already registered|already exists/i.test(m)) {
+        throw new Error("Este e-mail já tem cadastro. Faça login ou use \"Esqueci minha senha\". Nenhuma cobrança foi feita.");
+      }
+      throw new Error(`Não foi possível criar sua conta: ${m}. Nenhuma cobrança foi feita.`);
+    }
+    // Com confirmação de e-mail ligada, um e-mail já cadastrado volta "sem erro",
+    // porém sem identidades — nesse caso a conta NÃO foi criada.
+    const identities = signupData.user?.identities;
+    if (!signupData.user?.id || (Array.isArray(identities) && identities.length === 0)) {
+      await rollbackSubscription("email_already_registered");
+      throw new Error("Este e-mail já tem cadastro. Faça login ou use \"Esqueci minha senha\". Nenhuma cobrança foi feita.");
+    }
+    const newUserId = signupData.user.id;
 
-    await supabase
-      .from("profiles")
-      .update({
-        trial_card_last4: trialRes.cardLast4,
-        trial_card_brand: trialRes.cardBrand,
-        trial_plan_chosen: planKey,
-        trial_billing_period: "monthly",
-        trial_will_charge_at: new Date(trialRes.nextDueDate).toISOString(),
-        trial_auto_charge_cancelled: false,
-        payment_provider: "stripe",
-        trial_asaas_subscription_id: trialRes.subscriptionId,
-        trial_asaas_customer_id: trialRes.customerId,
-        cpf: cleanTaxId,
-        phone: phone || null,
-        postal_code: cepDigits(postalCode) || null,
-        address: address || null,
-        address_number: addressNumber || null,
-        address_complement: addressComplement.trim() || null,
-        neighborhood: neighborhood || null,
-        city: city || null,
-        state: state || null,
-      })
-      .eq("id", newUserId);
+    // Completa a ficha (CPF, telefone, endereço, cartão) pelo servidor: o cliente
+    // ainda não confirmou o e-mail, então não tem permissão para salvar sozinho.
+    const { data: profRes, error: profErr } = await supabase.functions.invoke("create-stripe-trial", {
+      body: {
+        action: "complete_profile",
+        subscriptionId: trialRes.subscriptionId,
+        setupIntentId: pending.setupIntentId,
+        userId: newUserId,
+        profile: {
+          planKey: pending.planKey || planKey,
+          cpf: cleanTaxId,
+          phone: phone.replace(/\D/g, "") || null,
+          postalCode: cepDigits(postalCode) || null,
+          address: address || null,
+          addressNumber: addressNumber || null,
+          addressComplement: addressComplement.trim() || null,
+          neighborhood: neighborhood || null,
+          city: city || null,
+          state: state || null,
+        },
+      },
+    });
+    if (profErr || profRes?.error) {
+      // A conta e o teste já estão ativos; só registra para análise.
+      console.error("[SignupWithCard] complete_profile failed", profErr || profRes?.error);
+    }
 
     sessionStorage.removeItem("trial_plan_chosen");
     clearPersisted();
@@ -513,7 +579,7 @@ function SignupWithCardInner() {
         if (!cardForm) throw new Error("Os campos do cartão ainda estão carregando. Aguarde um instante.");
         const paymentMethodId = await cardForm.createPaymentMethod({
           name: cardHolder,
-          email,
+          email: normalizeEmail(email),
           phone: phone.replace(/\D/g, ""),
           address: {
             postal_code: cepDigits(postalCode),
@@ -549,8 +615,8 @@ function SignupWithCardInner() {
             planKey,
             paymentMethodId,
             customerData: {
-              name,
-              email,
+              name: name.trim(),
+              email: normalizeEmail(email),
               taxId: cleanTaxId,
               phone: phone.replace(/\D/g, ""),
               postalCode: cepDigits(postalCode),
@@ -564,8 +630,7 @@ function SignupWithCardInner() {
           },
         });
         if (setupErr || setupRes?.error) {
-          const m = setupRes?.error || setupErr?.message || "Falha ao validar o cartão.";
-          throw new Error(m);
+          throw new Error(await readFunctionError(setupErr, setupRes, "Falha ao validar o cartão."));
         }
 
         pending = {
@@ -582,9 +647,14 @@ function SignupWithCardInner() {
       // 2) Desafio 3D Secure, se o banco pedir. O usuário pode sair para o app
       //    do banco e voltar: o SetupIntent fica salvo e a página retoma sozinha.
       if (authStage !== "authenticated") {
-        const { data: statusRes } = await supabase.functions.invoke("create-stripe-trial", {
+        const { data: statusRes, error: statusErr } = await supabase.functions.invoke("create-stripe-trial", {
           body: { action: "status", setupIntentId: pending.setupIntentId },
         });
+        if (statusErr || statusRes?.error) {
+          throw new Error(
+            await readFunctionError(statusErr, statusRes, "Não foi possível consultar o cartão. Tente novamente."),
+          );
+        }
 
         if (statusRes?.requiresAction && statusRes?.clientSecret) {
           if (!stripe) throw new Error("Stripe ainda está carregando, tente novamente em instantes.");

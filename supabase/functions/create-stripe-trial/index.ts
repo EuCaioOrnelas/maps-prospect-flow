@@ -24,6 +24,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,11 +64,59 @@ const log = (step: string, details?: unknown) => {
   console.log(`[CREATE-STRIPE-TRIAL] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-const json = (body: unknown, status = 200) =>
+// Sempre responde 200: quando há falha, o motivo vai no campo "error"/"message".
+// Com status de erro HTTP a tela só recebe "Edge Function returned a non-2xx".
+const json = (body: unknown, _status = 200) =>
   new Response(JSON.stringify(body), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
-    status,
+    status: 200,
   });
+
+const normEmail = (v: unknown) => String(v || "").trim().toLowerCase();
+
+// Traduz os erros mais comuns do cartão para mensagens claras ao cliente.
+function friendlyStripeError(error: unknown): string {
+  const e = error as { type?: string; code?: string; decline_code?: string; message?: string };
+  const code = e?.decline_code || e?.code || "";
+  const map: Record<string, string> = {
+    insufficient_funds: "Cartão sem limite disponível. Tente outro cartão.",
+    card_declined: "O banco recusou o cartão. Tente outro cartão ou fale com seu banco.",
+    generic_decline: "O banco recusou o cartão. Tente outro cartão ou fale com seu banco.",
+    do_not_honor: "O banco recusou o cartão. Tente outro cartão ou fale com seu banco.",
+    expired_card: "Cartão vencido. Confira a validade ou use outro cartão.",
+    incorrect_cvc: "Código de segurança (CVV) incorreto.",
+    invalid_cvc: "Código de segurança (CVV) inválido.",
+    incorrect_number: "Número do cartão incorreto.",
+    invalid_number: "Número do cartão inválido.",
+    invalid_expiry_month: "Mês de validade inválido.",
+    invalid_expiry_year: "Ano de validade inválido.",
+    processing_error: "O banco não conseguiu processar o cartão agora. Tente novamente em instantes.",
+    lost_card: "O banco recusou o cartão. Use outro cartão.",
+    stolen_card: "O banco recusou o cartão. Use outro cartão.",
+    fraudulent: "O banco recusou o cartão. Use outro cartão.",
+    card_not_supported: "Este cartão não aceita este tipo de cobrança. Use outro cartão.",
+    setup_intent_authentication_failure: "A autenticação do cartão no banco não foi concluída. Tente novamente.",
+    authentication_required: "O banco pediu autenticação do cartão. Tente novamente e aprove no app do banco.",
+  };
+  if (map[code]) return map[code];
+  if (e?.type === "StripeCardError") return "O banco recusou o cartão. Tente outro cartão.";
+  return e?.message || String(error);
+}
+
+const adminClient = () =>
+  createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } },
+  );
+
+// Confere que a assinatura foi criada por este cadastro (mesmo SetupIntent).
+async function loadOwnedSubscription(stripe: Stripe, subscriptionId: string, setupIntentId: string) {
+  if (!subscriptionId || !setupIntentId) throw new Error("subscriptionId and setupIntentId are required");
+  const sub = await stripe.subscriptions.retrieve(subscriptionId);
+  if (sub.metadata?.setup_intent_id !== setupIntentId) throw new Error("Assinatura não pertence a este cadastro");
+  return sub;
+}
 
 // Cancela QUALQUER subscription em trialing/active/past_due de qualquer customer
 // com este email no Stripe (exceto a informada em keepId).
@@ -145,10 +194,90 @@ serve(async (req) => {
     }
 
     // ------------------------------------------------------------------
+    // CANCEL — desfaz a assinatura quando a conta não pôde ser criada no app,
+    // para o cliente nunca ser cobrado sem ter acesso.
+    // ------------------------------------------------------------------
+    if (action === "cancel") {
+      const sub = await loadOwnedSubscription(stripe, body.subscriptionId, body.setupIntentId);
+      if (["trialing", "active", "past_due", "incomplete"].includes(sub.status)) {
+        await stripe.subscriptions.cancel(sub.id);
+      }
+      log("Subscription cancelled after signup failure", { id: sub.id, reason: body.reason || null });
+      return json({ success: true });
+    }
+
+    // ------------------------------------------------------------------
+    // COMPLETE_PROFILE — grava CPF, telefone, endereço e dados do teste na
+    // ficha do cliente. Roda no servidor porque, logo após o cadastro, o
+    // cliente ainda não confirmou o e-mail e não tem sessão para salvar.
+    // ------------------------------------------------------------------
+    if (action === "complete_profile") {
+      const { userId, profile: p } = body;
+      if (!userId) throw new Error("userId is required");
+      const sub = await loadOwnedSubscription(stripe, body.subscriptionId, body.setupIntentId);
+      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+      const customer = (await stripe.customers.retrieve(customerId)) as Stripe.Customer;
+
+      const db = adminClient();
+      const { data: prof, error: profErr } = await db
+        .from("profiles")
+        .select("id, email")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profErr) throw new Error(profErr.message);
+      if (!prof) throw new Error("Ficha do cliente não encontrada");
+      if (normEmail(prof.email) !== normEmail(customer.email)) {
+        throw new Error("E-mail da conta não confere com o do cartão");
+      }
+
+      const pmId = typeof sub.default_payment_method === "string"
+        ? sub.default_payment_method
+        : sub.default_payment_method?.id;
+      const card = pmId ? await cardDetails(stripe, pmId) : { cardLast4: "", cardBrand: "" };
+      const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+      const planKey = sub.metadata?.plan_key || p?.planKey || null;
+      const clean = (v: unknown) => {
+        const t = String(v ?? "").trim();
+        return t ? t.slice(0, 200) : null;
+      };
+
+      const update: Record<string, unknown> = {
+        payment_provider: "stripe",
+        trial_plan_chosen: planKey,
+        trial_billing_period: "monthly",
+        trial_auto_charge_cancelled: false,
+        trial_asaas_subscription_id: sub.id,
+        trial_asaas_customer_id: customerId,
+        trial_card_last4: card.cardLast4 || null,
+        trial_card_brand: card.cardBrand || null,
+        cpf: clean(p?.cpf)?.replace(/\D/g, "") || null,
+        phone: clean(p?.phone),
+        postal_code: clean(p?.postalCode),
+        address: clean(p?.address),
+        address_number: clean(p?.addressNumber),
+        address_complement: clean(p?.addressComplement),
+        neighborhood: clean(p?.neighborhood),
+        city: clean(p?.city),
+        state: clean(p?.state),
+      };
+      if (trialEnd) {
+        update.trial_will_charge_at = trialEnd;
+        update.trial_end_at = trialEnd;
+        update.subscription_current_period_end = trialEnd;
+      }
+
+      const { error: upErr } = await db.from("profiles").update(update).eq("id", userId);
+      if (upErr) throw new Error(upErr.message);
+      log("Profile completed", { userId, subscriptionId: sub.id });
+      return json({ success: true });
+    }
+
+    // ------------------------------------------------------------------
     // FINALIZE — cria a subscription só depois do 3DS autenticado.
     // ------------------------------------------------------------------
     if (action === "finalize") {
-      const { setupIntentId, planKey, email } = body;
+      const { setupIntentId, planKey } = body;
+      const email = normEmail(body.email);
       if (!setupIntentId || !planKey) throw new Error("setupIntentId and planKey are required");
 
       const priceId = PLAN_TO_MONTHLY_PRICE[planKey];
@@ -190,7 +319,7 @@ serve(async (req) => {
 
       let subscription = already;
       if (!subscription) {
-        const customerEmail = email || (await stripe.customers.retrieve(customerId) as Stripe.Customer).email;
+        const customerEmail = email || normEmail((await stripe.customers.retrieve(customerId) as Stripe.Customer).email);
         if (customerEmail) await cancelOrphanTrialsForEmail(stripe, customerEmail);
 
         await stripe.customers.update(customerId, {
@@ -257,6 +386,8 @@ serve(async (req) => {
     }
     if (!PLAN_TO_MONTHLY_PRICE[planKey]) throw new Error(`Invalid plan: ${planKey}`);
 
+    customerData.email = normEmail(customerData.email);
+    if (!customerData.email) throw new Error("Informe um e-mail válido.");
     log("Setup request", { planKey, email: customerData.email });
 
     // Reaproveita o customer do mesmo email (evita duplicar no Stripe em retomadas).
@@ -328,8 +459,9 @@ serve(async (req) => {
       authenticated: setupIntent.status === "succeeded",
     });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    log("ERROR", { message: msg });
-    return json({ error: msg }, 400);
+    const raw = error instanceof Error ? error.message : String(error);
+    const msg = friendlyStripeError(error);
+    log("ERROR", { message: raw });
+    return json({ error: msg, detail: raw });
   }
 });
