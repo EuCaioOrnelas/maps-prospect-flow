@@ -49,6 +49,35 @@ const PENDING_KEY = "wiize_trial_3ds";
 
 type PendingSetup = { customerId: string; setupIntentId: string; planKey: string };
 
+/** E-mail sempre minúsculo e sem espaços: o Stripe diferencia maiúsculas. */
+const normalizeEmail = (v: string) => v.trim().toLowerCase();
+
+/** Extrai a mensagem real de uma falha da função do servidor. */
+async function readFunctionError(
+  error: unknown,
+  data: { error?: string; message?: string } | null | undefined,
+  fallback: string,
+): Promise<string> {
+  if (data?.message || data?.error) return String(data.message || data.error);
+  const ctx = (error as { context?: Response } | null)?.context;
+  if (ctx && typeof ctx.text === "function") {
+    try {
+      const raw = await ctx.clone().text();
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.message || parsed?.error) return String(parsed.message || parsed.error);
+      } catch {
+        if (raw) return raw.slice(0, 300);
+      }
+    } catch {
+      /* corpo já lido — usa o fallback */
+    }
+  }
+  const msg = (error as { message?: string } | null)?.message;
+  if (msg && !/non-2xx/i.test(msg)) return msg;
+  return fallback;
+}
+
 
 const PLAN_INFO: Record<string, { name: string; monthly: number }> = {
   start: { name: "Wiize Atendimento", monthly: 89 },
