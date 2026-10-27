@@ -226,7 +226,7 @@ async function hasOtherLiveSubscription(
       const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 20 });
       if (
         subs.data.some(
-          (s) => s.id !== excludeSubscriptionId && ["trialing", "active", "past_due"].includes(s.status),
+          (s: Stripe.Subscription) => s.id !== excludeSubscriptionId && ["trialing", "active", "past_due"].includes(s.status),
         )
       ) {
         return true;
