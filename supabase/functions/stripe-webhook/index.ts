@@ -212,6 +212,32 @@ const BUMP_PRICE_TO_DEF: Record<string, {
   "price_1UNCmEK8CM0R6xMMfGhL369a": { id: "opportunities", column: "extra_opportunities_packs" },
 };
 
+// O cadastro com cartão cancela tentativas antigas (órfãs) do mesmo e-mail e,
+// segundos depois, o Stripe avisa esses cancelamentos. Esse aviso não pode
+// derrubar o teste novo: só rebaixa quando a pessoa não tem outra assinatura viva.
+async function hasOtherLiveSubscription(
+  stripe: Stripe,
+  email: string,
+  excludeSubscriptionId: string,
+): Promise<boolean> {
+  try {
+    const customers = await stripe.customers.list({ email: email.toLowerCase(), limit: 20 });
+    for (const c of customers.data) {
+      const subs = await stripe.subscriptions.list({ customer: c.id, status: "all", limit: 20 });
+      if (
+        subs.data.some(
+          (s) => s.id !== excludeSubscriptionId && ["trialing", "active", "past_due"].includes(s.status),
+        )
+      ) {
+        return true;
+      }
+    }
+  } catch (e) {
+    logStep("hasOtherLiveSubscription failed", { error: String(e) });
+  }
+  return false;
+}
+
 async function findUserBySubscription(
   stripe: Stripe,
   supabase: any,
