@@ -158,6 +158,7 @@ serve(async (req) => {
           503,
         );
       }
+      await assertPriceUsable(stripe, priceId, planKey);
 
       const si = await stripe.setupIntents.retrieve(setupIntentId);
       if (si.status !== "succeeded") {
