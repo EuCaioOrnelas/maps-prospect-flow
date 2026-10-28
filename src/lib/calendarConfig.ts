@@ -6,6 +6,7 @@ import {
   RotateCcw,
   MapPin,
   CircleDot,
+  FolderKanban,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ export type CalendarEventType =
   | "followup"
   | "visit"
   | "google"
+  | "deadline"
   | "other";
 
 export type CalendarEventStatus =
@@ -33,7 +35,7 @@ export type CalendarEventStatus =
   | "cancelled"
   | "no_show";
 
-export type CalendarEventSource = "manual" | "sdr" | "flow" | "import";
+export type CalendarEventSource = "manual" | "sdr" | "flow" | "import" | "project";
 
 export interface CalendarEvent {
   id: string;
@@ -127,6 +129,14 @@ export const EVENT_TYPES: TypeMeta[] = [
     dot: "bg-teal-500",
     chip: "bg-teal-500/10 text-teal-600 dark:text-teal-300 border-teal-500/20",
     bar: "border-l-teal-500 bg-teal-500/5",
+  },
+  {
+    value: "deadline",
+    label: "Entrega de projeto",
+    icon: FolderKanban,
+    dot: "bg-primary",
+    chip: "bg-primary/10 text-primary border-primary/30",
+    bar: "border-l-primary bg-primary/10",
   },
   {
     value: "other",

@@ -100,6 +100,10 @@ export function EventDetailsDialog({
 
 
   const type = getEventType(event.event_type);
+  const navigate = useNavigate();
+  const projectId = (event as any).project_id as string | null | undefined;
+  const projectTaskId = (event as any).project_task_id as string | null | undefined;
+  const projectLink = projectId ? `/projects/${projectId}${projectTaskId ? `?task=${projectTaskId}` : ""}` : null;
   const status = getEventStatus(event.status);
   const TypeIcon = type.icon;
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
