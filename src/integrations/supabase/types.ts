@@ -14844,6 +14844,7 @@ export type Database = {
       }
       project_build_due_digest: { Args: { _user: string }; Returns: undefined }
       project_can_access: { Args: { _project_id: string }; Returns: boolean }
+      project_can_manage: { Args: { _project_id: string }; Returns: boolean }
       project_due_digest_all: { Args: never; Returns: undefined }
       project_due_digest_me: { Args: never; Returns: undefined }
       project_is_manager: { Args: never; Returns: boolean }
