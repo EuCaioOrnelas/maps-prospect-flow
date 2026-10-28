@@ -201,10 +201,13 @@ export default function OpportunitiesManagement() {
 
   // Check company profile on mount
   useEffect(() => {
+    // Durante o tour guiado a tela é apenas demonstrativa — não exigir o
+    // perfil da empresa, senão o modal obrigatório abre por cima do tour.
+    if (guidedTourActive) return;
     if (user || publicDemo) {
       fetchCompanyProfile();
     }
-  }, [user, publicDemo, accountOwnerId]);
+  }, [user, publicDemo, accountOwnerId, guidedTourActive]);
 
   // Cooldown timer
   useEffect(() => {
