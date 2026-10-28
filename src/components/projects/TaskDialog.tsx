@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor, isRichEmpty } from "@/components/projects/RichTextEditor";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +98,7 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
     setSaving(true);
     const payload = {
       title: form.title.trim(),
-      description: form.description.trim() || null,
+      description: isRichEmpty(form.description) ? null : form.description,
       stage_id: form.stage_id === "none" ? null : form.stage_id,
       assignee_id: form.assignee_id === "none" ? null : form.assignee_id,
       due_date: form.due_date || null,
@@ -160,7 +160,7 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
 
   return (
     <Dialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
-      <DialogContent className="max-h-[92vh] gap-0 overflow-hidden p-0 sm:max-w-4xl">
+      <DialogContent className="max-h-[92vh] gap-0 overflow-hidden p-0 sm:max-w-5xl">
         <form onSubmit={submit} className="flex max-h-[92vh] flex-col" noValidate>
           <DialogHeader className="space-y-1 border-b border-border/60 px-5 py-4 text-left sm:px-6">
             <div className="flex items-center gap-2">
@@ -172,9 +172,7 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
             </div>
           </DialogHeader>
 
-          <div className="grid flex-1 overflow-y-auto md:grid-cols-[1fr_300px]">
-            {/* Conteúdo */}
-            <div className="space-y-5 px-5 py-5 sm:px-6">
+          <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
               <div className="space-y-1.5">
                 <Input
                   id="tk-title"
@@ -188,8 +186,52 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
                 />
                 {error && <p className="text-xs text-destructive">{error}</p>}
               </div>
+              <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/60 bg-muted/20 p-3.5 md:grid-cols-4">
+                <Field label="Status">
+                  <Select value={form.status} onValueChange={(v) => set("status", v as TaskStatus)}>
+                    <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(TASK_STATUS).map(([k, m]) => <SelectItem key={k} value={k}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Responsável">
+                  <AssigneePicker members={members} value={form.assignee_id === "none" ? null : form.assignee_id} onChange={(v) => set("assignee_id", v ?? "none")} />
+                </Field>
+                <Field label="Prioridade">
+                  <Select value={form.priority} onValueChange={(v) => set("priority", v as ProjectPriority)}>
+                    <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(PRIORITY).map(([k, m]) => <SelectItem key={k} value={k}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Etapa">
+                  <Select value={form.stage_id} onValueChange={(v) => set("stage_id", v)}>
+                    <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem etapa</SelectItem>
+                      {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Prazo">
+                  <Input id="tk-due" type="date" className="h-10 bg-background" value={form.due_date} onChange={(e) => set("due_date", e.target.value)} />
+                </Field>
+                <Field label="Horário">
+                  <Input id="tk-time" type="time" className="h-10 bg-background" value={form.due_time} disabled={!form.due_date} onChange={(e) => set("due_time", e.target.value)} />
+                </Field>
+                <Field label="Duração">
+                  <Select value={form.duration_minutes} onValueChange={(v) => set("duration_minutes", v)} disabled={!form.due_time}>
+                    <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {[["15","15 min"],["30","30 min"],["60","1 h"],["90","1h30"],["120","2 h"],["180","3 h"],["240","4 h"],["480","8 h"]].map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <p className="col-span-2 flex items-start gap-1.5 self-end text-[11px] leading-relaxed text-muted-foreground md:col-span-1">
+                  <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  Sem horário = dia todo, não ocupa a Agenda.
+                </p>
+              </div>
               <Field label="Descrição">
-                <Textarea id="tk-desc" value={form.description} maxLength={4000} placeholder="Detalhes, contexto e o que precisa ser entregue..." onChange={(e) => set("description", e.target.value)} className="min-h-[90px] resize-y" />
+                <RichTextEditor value={form.description} onChange={(v) => set("description", v)} projectId={projectId} minHeightClass="min-h-[340px]" placeholder="Detalhes, contexto e o que precisa ser entregue… use títulos, negrito, listas, links e imagens." />
               </Field>
 
               <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-3.5">
@@ -244,55 +286,6 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
                   />
                 )}
               </div>
-            </div>
-
-            {/* Propriedades */}
-            <aside className="space-y-4 border-t border-border/60 bg-muted/20 px-5 py-5 md:border-l md:border-t-0 sm:px-6 md:px-5">
-              <Field label="Status">
-                <Select value={form.status} onValueChange={(v) => set("status", v as TaskStatus)}>
-                  <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(TASK_STATUS).map(([k, m]) => <SelectItem key={k} value={k}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field label="Responsável">
-                <AssigneePicker members={members} value={form.assignee_id === "none" ? null : form.assignee_id} onChange={(v) => set("assignee_id", v ?? "none")} />
-              </Field>
-              <Field label="Prioridade">
-                <Select value={form.priority} onValueChange={(v) => set("priority", v as ProjectPriority)}>
-                  <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(PRIORITY).map(([k, m]) => <SelectItem key={k} value={k}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}</SelectContent>
-                </Select>
-              </Field>
-              <Field label="Etapa">
-                <Select value={form.stage_id} onValueChange={(v) => set("stage_id", v)}>
-                  <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem etapa</SelectItem>
-                    {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Prazo">
-                <Input id="tk-due" type="date" className="h-10 bg-background" value={form.due_date} onChange={(e) => set("due_date", e.target.value)} />
-              </Field>
-              <div className="grid grid-cols-2 gap-2">
-                <Field label="Horário">
-                  <Input id="tk-time" type="time" className="h-10 bg-background" value={form.due_time} disabled={!form.due_date} onChange={(e) => set("due_time", e.target.value)} />
-                </Field>
-                <Field label="Duração">
-                  <Select value={form.duration_minutes} onValueChange={(v) => set("duration_minutes", v)} disabled={!form.due_time}>
-                    <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {[["15","15 min"],["30","30 min"],["60","1 h"],["90","1h30"],["120","2 h"],["180","3 h"],["240","4 h"],["480","8 h"]].map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-              <p className="flex gap-1.5 rounded-lg bg-background/60 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
-                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                Sem horário, o prazo fica como dia todo e não ocupa a Agenda. Com horário, bloqueia esse período na Agenda do responsável.
-              </p>
-            </aside>
           </div>
 
           <DialogFooter className="gap-2 border-t border-border/60 px-5 py-3 sm:px-6">

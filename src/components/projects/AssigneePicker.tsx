@@ -93,3 +93,55 @@ export function AssigneePicker({ members, value, onChange, placeholder = "Seleci
     </Popover>
   );
 }
+
+/** Filtro por responsável: "all", "none" ou id do membro, com foto e pesquisa. */
+export function MemberFilterPicker({ members, value, onChange, className, allLabel = "Todos os responsáveis" }: { members: AccountMember[]; value: string; onChange: (v: string) => void; className?: string; allLabel?: string }) {
+  const [open, setOpen] = useState(false);
+  const selected = members.find((m) => m.user_id === value) || null;
+  const pick = (v: string) => { onChange(v); setOpen(false); };
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" role="combobox" aria-expanded={open} className={cn("h-9 w-full justify-between font-normal", className)}>
+          <span className="flex min-w-0 items-center gap-2">
+            {selected ? (<><MemberAvatar member={selected} className="h-5 w-5" /><span className="truncate">{selected.name || selected.email}</span></>)
+              : <span className="truncate">{value === "none" ? "Sem responsável" : allLabel}</span>}
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[260px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Pesquisar por nome ou e-mail" />
+          <CommandList className="max-h-64">
+            <CommandEmpty>Nenhum usuário encontrado.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem value="__all todos" onSelect={() => pick("all")} className="cursor-pointer gap-2">
+                <span className="flex-1 text-sm">{allLabel}</span>
+                <Check className={cn("h-4 w-4 text-primary", value === "all" ? "opacity-100" : "opacity-0")} />
+              </CommandItem>
+              <CommandItem value="__none sem responsavel" onSelect={() => pick("none")} className="cursor-pointer gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted"><UserX className="h-3.5 w-3.5 text-muted-foreground" /></span>
+                <span className="flex-1 text-sm">Sem responsável</span>
+                <Check className={cn("h-4 w-4 text-primary", value === "none" ? "opacity-100" : "opacity-0")} />
+              </CommandItem>
+              {members.map((m) => {
+                const label = m.name || m.email || "Usuário";
+                return (
+                  <CommandItem key={m.user_id} value={`${label} ${m.email || ""}`} onSelect={() => pick(m.user_id)} className="cursor-pointer gap-2">
+                    <MemberAvatar member={m} className="h-7 w-7" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{label}</p>
+                      {m.email && <p className="truncate text-xs text-muted-foreground">{m.email}</p>}
+                    </div>
+                    <Check className={cn("h-4 w-4 text-primary", value === m.user_id ? "opacity-100" : "opacity-0")} />
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
