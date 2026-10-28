@@ -8907,6 +8907,58 @@ export type Database = {
           },
         ]
       }
+      project_task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+          reply_to_id: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          project_id: string
+          reply_to_id?: string | null
+          task_id: string
+          user_id?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          reply_to_id?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_task_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_task_comments_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "project_task_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_tasks: {
         Row: {
           assignee_id: string | null
@@ -8917,6 +8969,8 @@ export type Database = {
           created_by: string | null
           description: string | null
           due_date: string | null
+          due_time: string | null
+          duration_minutes: number
           id: string
           position: number
           priority: string
@@ -8935,6 +8989,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
+          duration_minutes?: number
           id?: string
           position?: number
           priority?: string
@@ -8953,6 +9009,8 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
+          duration_minutes?: number
           id?: string
           position?: number
           priority?: string
@@ -11889,6 +11947,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: string
+          kind: string
+          link: string | null
+          metadata: Json
+          read_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          kind: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          kind?: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           acquisition_source: string | null
@@ -14700,7 +14800,10 @@ export type Database = {
         Args: { _is_active: boolean; _link_id: string }
         Returns: boolean
       }
+      project_build_due_digest: { Args: { _user: string }; Returns: undefined }
       project_can_access: { Args: { _project_id: string }; Returns: boolean }
+      project_due_digest_all: { Args: never; Returns: undefined }
+      project_due_digest_me: { Args: never; Returns: undefined }
       project_is_manager: { Args: never; Returns: boolean }
       project_recount: { Args: { _project_id: string }; Returns: undefined }
       project_task_can_access: { Args: { _task_id: string }; Returns: boolean }

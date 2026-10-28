@@ -267,6 +267,13 @@
       "when": 1793214394041,
       "tag": "0037_projects_module",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793214457251,
+      "tag": "0038_projects_notifications_comments",
+      "breakpoints": true
     }
   ]
 }
