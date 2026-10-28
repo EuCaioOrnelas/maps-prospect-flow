@@ -240,11 +240,16 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
   const [onboardingTick, setOnboardingTick] = useState(0);
   const isPublicDemo = location.pathname === "/tour-guiado";
 
-  // Re-check tour eligibility when onboarding modal closes
+  // Re-check tour eligibility when onboarding modal closes ou quando a troca
+  // obrigatória de senha termina (contas criadas pelo admin).
   useEffect(() => {
     const handler = () => setOnboardingTick((t) => t + 1);
     window.addEventListener("wiize:onboarding-done", handler);
-    return () => window.removeEventListener("wiize:onboarding-done", handler);
+    window.addEventListener("wiize:password-changed", handler);
+    return () => {
+      window.removeEventListener("wiize:onboarding-done", handler);
+      window.removeEventListener("wiize:password-changed", handler);
+    };
   }, []);
 
 
@@ -626,9 +631,6 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       startedRef.current = true;
       return;
     }
-    // Se o usuário ainda precisa redefinir a senha (account_members), espera o fluxo
-    // de senha terminar antes de iniciar o guia para evitar conflito visual.
-    if ((profile as any)?.must_change_password) return;
     if (location.pathname !== "/dashboard") return;
     const LS_KEY = lsKeyFor(userId);
     // One-time migration: clear the legacy global flag so it doesn't block new users
@@ -642,6 +644,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     (async () => {
+      // Lê must_change_password DIRETO do banco: o profile em memória fica
+      // desatualizado após a troca obrigatória de senha (contas criadas pelo
+      // admin), o que impedia o tour de iniciar até o próximo login.
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("must_change_password")
+        .eq("id", userId)
+        .maybeSingle();
+      if (cancelled) return;
+      // Se ainda precisa redefinir a senha, espera o fluxo terminar antes de
+      // iniciar o guia para evitar conflito visual. Não marca startedRef —
+      // re-tenta quando o evento "wiize:password-changed" disparar.
+      if ((prof as any)?.must_change_password) return;
+
       // Aguarda o onboarding (modal inicial) terminar antes de iniciar o tour,
       // senão o guia aparece por cima do onboarding em novos usuários.
       const { data: ob } = await supabase

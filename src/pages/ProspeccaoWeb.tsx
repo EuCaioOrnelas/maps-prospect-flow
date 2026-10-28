@@ -38,6 +38,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { hasSDRAccess } from "@/lib/planAccess";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
 
 type Phase = "idle" | "searching" | "diagnosing" | "done";
@@ -105,8 +106,13 @@ const ProspeccaoWeb = () => {
   const isBusy = phase === "searching" || phase === "diagnosing";
   const hasAccess = hasSDRAccess(profile);
 
+  const { isActive: guidedTourActive } = useGuidedTour();
+
   useEffect(() => {
     if (!user) return;
+    // Durante o tour guiado a busca é apenas simulada — não exigir o perfil
+    // da empresa, senão o modal obrigatório abre por cima do card do tour.
+    if (guidedTourActive) return;
     supabase
       .from("company_profiles")
       .select("*")
@@ -118,7 +124,7 @@ const ProspeccaoWeb = () => {
         // Sem perfil da empresa (ou sem o tipo de atuação): obriga a completar antes de usar a página
         if (!data || isBusinessModelMissing(data)) setShowCompanyOnboarding(true);
       });
-  }, [user, accountOwnerId]);
+  }, [user, accountOwnerId, guidedTourActive]);
 
   const canSubmit = useMemo(
     () => query.trim().length >= 2 && !isBusy,

@@ -52,6 +52,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { buildTourDemoSearchHistory } from "@/lib/publicDemo";
@@ -119,12 +120,17 @@ const Dashboard = () => {
   const [autoApproach, setAutoApproach] = useState<AutoApproachPrefs>({ ...EMPTY_AUTO_APPROACH });
 
 
+  const { isActive: guidedTourActive } = useGuidedTour();
+
   useEffect(() => {
     if (publicDemo) {
       setCompanyProfile({ company_name: "Wiize Demo", target_audience: "Empresas B2B" });
       return;
     }
     if (!user) return;
+    // Durante o tour guiado a busca é apenas simulada — não exigir o perfil
+    // da empresa, senão o modal obrigatório abre por cima do card do tour.
+    if (guidedTourActive) return;
     (async () => {
       const ownerId = accountOwnerId || user.id;
       // aceita o perfil da conta (dono) ou o do próprio usuário (linhas antigas)
@@ -143,7 +149,7 @@ const Dashboard = () => {
         setShowCompanyOnboarding(true);
       }
     })();
-  }, [user, accountOwnerId]);
+  }, [user, accountOwnerId, guidedTourActive]);
 
   const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) + ((((profile as any).extra_opportunities_packs) || 0) * 1000) : 0;  // opportunities remaining (plan + bonus + add-on packs)
   // Perfil ainda carregando não pode ser tratado como "sem oportunidades"

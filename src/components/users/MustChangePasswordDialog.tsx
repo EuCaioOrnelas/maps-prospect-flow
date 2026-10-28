@@ -52,6 +52,8 @@ export const MustChangePasswordDialog = ({ open, onCompleted }: Props) => {
       }
 
       toast({ title: "Senha atualizada com sucesso" });
+      // Avisa o resto do app (ex.: tour guiado) que a troca obrigatória terminou.
+      try { window.dispatchEvent(new Event("wiize:password-changed")); } catch {}
       onCompleted();
     } catch (e: any) {
       toast({ title: "Erro ao atualizar senha", description: e.message, variant: "destructive" });
