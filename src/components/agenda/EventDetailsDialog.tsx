@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { FolderKanban } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +100,10 @@ export function EventDetailsDialog({
 
 
   const type = getEventType(event.event_type);
+  const navigate = useNavigate();
+  const projectId = (event as any).project_id as string | null | undefined;
+  const projectTaskId = (event as any).project_task_id as string | null | undefined;
+  const projectLink = projectId ? `/projects/${projectId}${projectTaskId ? `?task=${projectTaskId}` : ""}` : null;
   const status = getEventStatus(event.status);
   const TypeIcon = type.icon;
   const duration = formatDuration(minutesBetween(event.starts_at, event.ends_at));
@@ -218,6 +224,7 @@ export function EventDetailsDialog({
                     {formatLongDate(new Date(event.starts_at))}
                   </DialogDescription>
                 </div>
+                {projectLink ? null : (
                 <Button
                   type="button"
                   size="icon"
@@ -231,8 +238,24 @@ export function EventDetailsDialog({
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
+                )}
               </div>
             </DialogHeader>
+            {projectLink && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full justify-center gap-2"
+                onClick={() => {
+                  onOpenChange(false);
+                  navigate(projectLink);
+                }}
+              >
+                <FolderKanban className="h-4 w-4" />
+                {(event as any).project_task_id ? "Abrir tarefa no projeto" : "Abrir projeto"}
+              </Button>
+            )}
 
             <div className="space-y-4">
               <div className="flex flex-wrap gap-1.5">
@@ -256,10 +279,16 @@ export function EventDetailsDialog({
 
               <div className="space-y-2 rounded-xl border border-border p-3">
                 <Row icon={Clock}>
-                  <span className="tabular-nums text-foreground">
-                    {formatTime(event.starts_at)} – {formatTime(event.ends_at)}
-                  </span>{" "}
-                  · {duration}
+                  {event.all_day ? (
+                    <span className="text-foreground">Vencimento no dia (sem horário marcado)</span>
+                  ) : (
+                    <>
+                      <span className="tabular-nums text-foreground">
+                        {formatTime(event.starts_at)} – {formatTime(event.ends_at)}
+                      </span>{" "}
+                      · {duration}
+                    </>
+                  )}
                 </Row>
                 {responsible && (
                   <Row icon={User}>

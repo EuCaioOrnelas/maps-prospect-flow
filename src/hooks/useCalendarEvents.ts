@@ -113,8 +113,9 @@ export function useCalendarEvents({ from, to, userFilter }: UseCalendarEventsOpt
         { event: "*", schema: "public", table: "calendar_events", filter: `owner_user_id=eq.${accountOwnerId}` },
         (payload) => {
           invalidate();
-          const row = payload.new as { id?: string; assigned_user_id?: string } | null;
+          const row = payload.new as { id?: string; assigned_user_id?: string; source?: string } | null;
           if (
+            row?.source !== "project" &&
             (payload.eventType === "INSERT" || payload.eventType === "UPDATE") &&
             row?.id &&
             row.assigned_user_id === user?.id
