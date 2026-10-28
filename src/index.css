@@ -2225,3 +2225,12 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
 .dark .wa-quick-replies-fade-left { background: linear-gradient(to right, hsl(var(--background)), transparent); }
 .dark .wa-composer-fade-right { background: linear-gradient(to left, hsl(var(--surface)), transparent); }
 .dark .wa-composer-fade-left { background: linear-gradient(to right, hsl(var(--surface)), transparent); }
+
+/* Editor de descrição (Projetos) */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: hsl(var(--muted-foreground));
+}

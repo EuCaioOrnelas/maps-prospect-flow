@@ -1,3 +1,4 @@
+import { MemberFilterPicker } from "@/components/projects/AssigneePicker";
 import { useMemo, useState } from "react";
 import {
   ArrowDown,
@@ -215,14 +216,7 @@ export function StagesTasksTab({ projectId, stages, tasks, members, onChanged, o
               {Object.entries(TASK_STATUS).map(([s, m]) => <SelectItem key={s} value={s}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-            <SelectTrigger className="h-9 sm:w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os responsáveis</SelectItem>
-              <SelectItem value="none">Sem responsável</SelectItem>
-              {members.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.name || m.email}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <MemberFilterPicker members={members} value={assigneeFilter} onChange={setAssigneeFilter} className="sm:w-52" />
         </div>
         <div className="flex gap-2">
           <div className="flex rounded-md border border-border p-0.5">

@@ -1,3 +1,4 @@
+import { MemberFilterPicker } from "@/components/projects/AssigneePicker";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -633,14 +634,7 @@ export default function ProjectsPage() {
                         </Select>
                       </FilterField>
                       <FilterField label="Responsável">
-                        <Select value={responsible} onValueChange={(v) => setParam({ resp: v })}>
-                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Todos os responsáveis</SelectItem>
-                            <SelectItem value="none">Sem responsável</SelectItem>
-                            {members.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.name || m.email}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <MemberFilterPicker members={members} value={responsible} onChange={(v) => setParam({ resp: v })} />
                       </FilterField>
                       <div className="grid grid-cols-2 gap-2">
                         <FilterField label="Prazo de"><Input type="date" value={dueFrom} onChange={(e) => setParam({ from: e.target.value })} className="h-9" /></FilterField>
