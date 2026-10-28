@@ -32,6 +32,7 @@ import {
   Phone,
   RotateCcw,
   CalendarDays,
+  FolderKanban,
   Globe,
   Plug,
   Settings as SettingsIcon,
@@ -300,6 +301,20 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={currentPath === "/agenda"}
                 isExpanded={isExpanded}
                 tooltip="Agenda"
+              />
+            </li>
+            )}
+
+            {/* Projetos */}
+            {can("crm") && (
+            <li data-tour="sidebar-projetos">
+              <SidebarNavItem
+                title="Projetos"
+                icon={FolderKanban}
+                url="/projects"
+                isActive={currentPath.startsWith("/projects")}
+                isExpanded={isExpanded}
+                tooltip="Projetos"
               />
             </li>
             )}
