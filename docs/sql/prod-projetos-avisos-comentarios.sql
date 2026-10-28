@@ -126,7 +126,7 @@ BEGIN
     v_body := upper(left(v_body, 1)) || substr(v_body, 2);
 
     INSERT INTO public.user_notifications (user_id, kind, title, body, link, dedupe_key, metadata)
-    VALUES (_user, 'project_due_' || v_label, v_title, v_body, '/projects?mine=1',
+    VALUES (_user, 'project_due_' || v_label, v_title, v_body, '/projects',
             'due:' || v_label || ':' || _user || ':' || v_today,
             jsonb_build_object('count', v_total, 'date', v_today))
     ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING;
@@ -215,12 +215,12 @@ FOR EACH ROW EXECUTE FUNCTION public.project_task_comments_before_insert();
 -- Enquanto o aviso não for lido, ele é atualizado ("3 novas mensagens") em vez de duplicar.
 CREATE OR REPLACE FUNCTION public.project_task_comments_notify()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE t record; v_author text; v_uid uuid; v_preview text; v_count integer; v_id uuid;
+DECLARE t record; j jsonb; v_author text; v_uid uuid; v_preview text; v_count integer; v_id uuid;
 BEGIN
   SELECT pt.id, pt.title, pt.assignee_id, pt.project_id INTO t FROM public.project_tasks pt WHERE pt.id = NEW.task_id;
-  SELECT COALESCE(NULLIF(btrim(full_name), ''), split_part(email, '@', 1), 'Alguém') INTO v_author
-  FROM public.profiles WHERE id = NEW.user_id;
-  v_author := COALESCE(v_author, 'Alguém');
+  SELECT to_jsonb(pr) INTO j FROM public.profiles pr WHERE pr.id = NEW.user_id;
+  v_author := COALESCE(NULLIF(btrim(j->>'full_name'), ''), NULLIF(btrim(j->>'name'), ''),
+                       NULLIF(split_part(COALESCE(j->>'email', ''), '@', 1), ''), 'Alguém');
   v_preview := left(NEW.content, 140);
 
   FOR v_uid IN
