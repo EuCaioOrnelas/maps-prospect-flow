@@ -6,6 +6,7 @@ import {
   Archive,
   ArchiveRestore,
   CheckCircle2,
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -17,6 +18,7 @@ import {
   Pencil,
   Plus,
   Search,
+  SlidersHorizontal,
   Timer,
   Trash2,
   X,
@@ -60,16 +62,23 @@ import { useAccountRole } from "@/hooks/useAccountRole";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ProjectFormDialog } from "@/components/projects/ProjectFormDialog";
-import { OverdueBadge, PriorityBadge, ProgressCell, ProjectStatusBadge } from "@/components/projects/ProjectBadges";
+import { OverdueBadge, PriorityBadge, ProgressCell, ProjectStatusBadge, StatusOption, TaskStatusBadge } from "@/components/projects/ProjectBadges";
+import { MemberCell } from "@/components/projects/AssigneePicker";
+import { ColumnsConfig } from "@/components/projects/ColumnsConfig";
+import { useColumnPrefs } from "@/hooks/useColumnPrefs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   PRIORITY,
   PROJECT_STATUS,
+  TASK_STATUS,
   formatDateBR,
   friendlyDbError, deleteProjectCompletely,
   isProjectOverdue,
+  isTaskOverdue,
   todayISO,
   type Project,
   type ProjectStatus,
+  type TaskStatus,
 } from "@/lib/projects";
 
 const db = supabase as any;
@@ -113,6 +122,7 @@ export default function ProjectsPage() {
   const overdueOnly = params.get("overdue") === "1";
   const showArchived = params.get("archived") === "1";
   const sort = (params.get("sort") as Sort) || "due_asc";
+  const view: "projects" | "tasks" = params.get("view") === "tasks" ? "tasks" : "projects";
   const page = Math.max(1, Number(params.get("page") || 1));
   const pageSize = PAGE_SIZES.includes(Number(params.get("size"))) ? Number(params.get("size")) : 10;
 
@@ -135,7 +145,10 @@ export default function ProjectsPage() {
   }, [searchInput]);
 
   const hasFilters = !!(search || status !== "all" || priority !== "all" || responsible !== "all" || dueFrom || dueTo || overdueOnly || showArchived);
-  const clearFilters = () => setParams(new URLSearchParams(), { replace: true });
+  const clearFilters = () => setParams(view === "tasks" ? new URLSearchParams({ view: "tasks" }) : new URLSearchParams(), { replace: true });
+  const activeFilters = [status !== "all", priority !== "all", responsible !== "all", !!dueFrom, !!dueTo, overdueOnly, showArchived].filter(Boolean).length;
+  const projectCols = useColumnPrefs("projects", PROJECT_COLS, ["name"]);
+  const taskCols = useColumnPrefs("project-tasks", TASK_COLS, ["title"]);
 
   // Formulário
   const [formOpen, setFormOpen] = useState(false);
@@ -215,6 +228,7 @@ export default function ProjectsPage() {
   const listKey = ["projects-list", search, status, priority, responsible, dueFrom, dueTo, overdueOnly, showArchived, sort, page, pageSize];
   const list = useQuery({
     queryKey: listKey,
+    enabled: view === "projects",
     placeholderData: (prev: any) => prev,
     queryFn: async () => {
       let q = db.from("projects").select("*, leads(id, contact_name, company_name)", { count: "exact" });
@@ -238,15 +252,43 @@ export default function ProjectsPage() {
     },
   });
 
-  const totalCount = list.data?.count ?? 0;
+  // ===== Tarefas (visão "só tarefas") =====
+  const taskList = useQuery({
+    queryKey: ["projects-task-list", search, status, priority, responsible, dueFrom, dueTo, overdueOnly, showArchived, sort, page, pageSize],
+    enabled: view === "tasks",
+    placeholderData: (prev: any) => prev,
+    queryFn: async () => {
+      let q = db.from("project_tasks").select("id, title, status, priority, assignee_id, due_date, due_time, project_id, created_at, projects!inner(id, name, client_name, archived_at, lead_id)", { count: "exact" });
+      q = showArchived ? q.not("projects.archived_at", "is", null) : q.is("projects.archived_at", null);
+      const term = search.replace(/[%,()]/g, "").trim();
+      if (term) q = q.ilike("title", `%${term}%`);
+      if (status !== "all") q = q.eq("status", status);
+      if (priority !== "all") q = q.eq("priority", priority);
+      if (responsible !== "all") q = responsible === "none" ? q.is("assignee_id", null) : q.eq("assignee_id", responsible);
+      if (dueFrom) q = q.gte("due_date", dueFrom);
+      if (dueTo) q = q.lte("due_date", dueTo);
+      if (overdueOnly) q = q.not("status", "in", "(done,cancelled)").lt("due_date", today);
+      if (sort === "created_desc") q = q.order("created_at", { ascending: false });
+      else if (sort === "name_asc") q = q.order("title", { ascending: true });
+      else q = q.order("due_date", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false });
+      const from = (page - 1) * pageSize;
+      const { data, count, error } = await q.range(from, from + pageSize - 1);
+      if (error) throw error;
+      return { rows: data || [], count: count ?? 0 };
+    },
+  });
+  const current = view === "tasks" ? taskList : list;
+
+  const totalCount = current.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   useEffect(() => {
-    if (!list.isFetching && page > totalPages) setParam({ page: String(totalPages) }, false);
+    if (!current.isFetching && page > totalPages) setParam({ page: String(totalPages) }, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalPages]);
 
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ["projects-list"] });
+    queryClient.invalidateQueries({ queryKey: ["projects-task-list"] });
     queryClient.invalidateQueries({ queryKey: ["projects-kpis"] });
     queryClient.invalidateQueries({ queryKey: ["projects-followup"] });
     queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
@@ -323,6 +365,73 @@ export default function ProjectsPage() {
     { key: "late", label: "Atrasados", value: k?.late, icon: AlertTriangle, onClick: () => setParam({ overdue: "1", status: null, archived: null }), alert: (k?.late ?? 0) > 0 },
     { key: "tasks", label: "Tarefas pendentes", value: k?.tasks, icon: ListTodo },
   ];
+
+  const clientOf = (lead: any, fallback: string | null) => (lead ? lead.company_name || lead.contact_name : fallback);
+  const ClientLink = ({ leadId, label }: { leadId: string | null; label: string | null }) =>
+    leadId && label ? (
+      <button type="button" onClick={(e) => { e.stopPropagation(); openLead(leadId); }} className="inline-flex max-w-[180px] items-center gap-1 truncate text-sm hover:text-primary hover:underline">
+        <span className="truncate">{label}</span>
+        <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
+      </button>
+    ) : (
+      <span className="text-sm text-muted-foreground">{label || "—"}</span>
+    );
+
+  const renderProjectCell = (k: string, p: Project & { leads: any }) => {
+    const overdue = isProjectOverdue(p, today);
+    switch (k) {
+      case "name":
+        return (
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className={cn("h-8 w-1 shrink-0 rounded-full", PROJECT_STATUS[p.status]?.dot)} />
+            <div className="min-w-0">
+              <p className="truncate font-medium">{p.name}</p>
+              {p.archived_at && <p className="text-xs text-muted-foreground">Arquivado</p>}
+            </div>
+          </div>
+        );
+      case "client": return <ClientLink leadId={p.lead_id} label={clientOf(p.leads, p.client_name)} />;
+      case "responsible": return <span className="text-sm"><MemberCell members={members} userId={p.responsible_user_id} /></span>;
+      case "status": return <div className="flex flex-wrap gap-1"><ProjectStatusBadge status={p.status} />{overdue && <OverdueBadge />}</div>;
+      case "progress": return <ProgressCell done={p.tasks_done} total={p.tasks_total} />;
+      case "priority": return <PriorityBadge priority={p.priority} />;
+      case "start": return <span className="whitespace-nowrap text-sm tabular-nums">{formatDateBR(p.start_date)}</span>;
+      case "due": return <span className={cn("whitespace-nowrap text-sm tabular-nums", overdue && "font-medium text-destructive")}>{formatDateBR(p.due_date)}</span>;
+      default: return null;
+    }
+  };
+
+  const renderTaskCell = (k: string, t: any) => {
+    const overdue = isTaskOverdue(t, today);
+    switch (k) {
+      case "title":
+        return (
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className={cn("h-8 w-1 shrink-0 rounded-full", TASK_STATUS[t.status as TaskStatus]?.dot)} />
+            <p className="truncate font-medium">{t.title}</p>
+          </div>
+        );
+      case "project": return <span className="inline-flex max-w-[200px] items-center gap-1.5 truncate text-sm"><FolderKanban className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /><span className="truncate">{t.projects?.name}</span></span>;
+      case "client": return <ClientLink leadId={t.projects?.lead_id} label={t.projects?.client_name} />;
+      case "responsible": return <span className="text-sm"><MemberCell members={members} userId={t.assignee_id} /></span>;
+      case "status": return <div className="flex flex-wrap gap-1"><TaskStatusBadge status={t.status} />{overdue && <OverdueBadge />}</div>;
+      case "priority": return <PriorityBadge priority={t.priority} />;
+      case "due": return <span className={cn("whitespace-nowrap text-sm tabular-nums", overdue && "font-medium text-destructive")}>{formatDateBR(t.due_date)}{t.due_time ? ` · ${String(t.due_time).slice(0, 5)}` : ""}</span>;
+      default: return null;
+    }
+  };
+
+  const memberLabel = (id: string) => (id === "none" ? "Sem responsável" : memberName(id) ?? "Usuário");
+  const statusMap: Record<string, { label: string }> = view === "tasks" ? TASK_STATUS : PROJECT_STATUS;
+  const chips = [
+    status !== "all" && { key: "status", label: `Status: ${statusMap[status]?.label ?? status}`, clear: { status: null } },
+    priority !== "all" && { key: "priority", label: `Prioridade: ${PRIORITY[priority as keyof typeof PRIORITY]?.label ?? priority}`, clear: { priority: null } },
+    responsible !== "all" && { key: "resp", label: `Responsável: ${memberLabel(responsible)}`, clear: { resp: null } },
+    dueFrom && { key: "from", label: `Prazo de ${formatDateBR(dueFrom)}`, clear: { from: null } },
+    dueTo && { key: "to", label: `Prazo até ${formatDateBR(dueTo)}`, clear: { to: null } },
+    overdueOnly && { key: "overdue", label: "Só atrasados", clear: { overdue: null } },
+    showArchived && { key: "archived", label: "Arquivados", clear: { archived: null } },
+  ].filter(Boolean) as { key: string; label: string; clear: Record<string, null> }[];
 
   const statusMax = useMemo(() => Math.max(1, ...(k?.byStatus ?? []).map((s) => s.count)), [k]);
 
@@ -468,81 +577,129 @@ export default function ProjectsPage() {
             </Card>
           </div>
 
-          {/* Filtros */}
-          <Card className="border-border/50 p-3 sm:p-4">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2 md:flex-row">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Buscar por projeto ou cliente..." className="h-9 pl-9" />
-                </div>
+          {/* Barra de ferramentas */}
+          <Card className="overflow-hidden border-border/50">
+            <div className="flex flex-col gap-2 border-b border-border/60 p-3 sm:flex-row sm:items-center sm:p-4">
+              <div className="inline-flex shrink-0 rounded-lg border border-border bg-muted/40 p-0.5">
+                {([["projects", "Projetos", FolderKanban], ["tasks", "Tarefas", ListTodo]] as const).map(([v, label, Icon]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setParam({ view: v === "projects" ? null : v, status: null, sort: null })}
+                    className={cn(
+                      "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors",
+                      view === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />{label}
+                  </button>
+                ))}
+              </div>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder={view === "tasks" ? "Buscar tarefa..." : "Buscar por projeto ou cliente..."} className="h-9 pl-9" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant={activeFilters > 0 ? "secondary" : "outline"} size="sm" className="h-9 gap-1.5">
+                      <SlidersHorizontal className="h-4 w-4" />
+                      Filtros
+                      {activeFilters > 0 && <span className="ml-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">{activeFilters}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-[320px] p-0">
+                    <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                      <p className="text-sm font-semibold">Filtros</p>
+                      {activeFilters > 0 && <button type="button" onClick={clearFilters} className="text-xs font-medium text-primary hover:underline">Limpar tudo</button>}
+                    </div>
+                    <div className="space-y-3 p-4">
+                      <FilterField label="Status">
+                        <Select value={status} onValueChange={(v) => setParam({ status: v })}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os status</SelectItem>
+                            {Object.entries(view === "tasks" ? TASK_STATUS : PROJECT_STATUS).map(([s, m]) => <SelectItem key={s} value={s}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </FilterField>
+                      <FilterField label="Prioridade">
+                        <Select value={priority} onValueChange={(v) => setParam({ priority: v })}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todas as prioridades</SelectItem>
+                            {Object.entries(PRIORITY).map(([s, m]) => <SelectItem key={s} value={s}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </FilterField>
+                      <FilterField label="Responsável">
+                        <Select value={responsible} onValueChange={(v) => setParam({ resp: v })}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os responsáveis</SelectItem>
+                            <SelectItem value="none">Sem responsável</SelectItem>
+                            {members.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.name || m.email}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </FilterField>
+                      <div className="grid grid-cols-2 gap-2">
+                        <FilterField label="Prazo de"><Input type="date" value={dueFrom} onChange={(e) => setParam({ from: e.target.value })} className="h-9" /></FilterField>
+                        <FilterField label="Prazo até"><Input type="date" value={dueTo} onChange={(e) => setParam({ to: e.target.value })} className="h-9" /></FilterField>
+                      </div>
+                      <div className="space-y-2 rounded-lg border border-border/60 p-3">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="flt-overdue" className="text-sm font-normal">Só atrasados</Label>
+                          <Switch id="flt-overdue" checked={overdueOnly} onCheckedChange={(v) => setParam({ overdue: v ? "1" : null })} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="flt-archived" className="text-sm font-normal">{view === "tasks" ? "De projetos arquivados" : "Ver arquivados"}</Label>
+                          <Switch id="flt-archived" checked={showArchived} onCheckedChange={(v) => setParam({ archived: v ? "1" : null })} />
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Select value={sort} onValueChange={(v) => setParam({ sort: v === "due_asc" ? null : v })}>
-                  <SelectTrigger className="h-9 md:w-48"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 w-[150px] sm:w-[170px]"><ArrowUpDown className="mr-1.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" /><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="due_asc">Ordenar: prazo</SelectItem>
-                    <SelectItem value="created_desc">Ordenar: mais recentes</SelectItem>
-                    <SelectItem value="name_asc">Ordenar: nome</SelectItem>
-                    <SelectItem value="priority_desc">Ordenar: prioridade</SelectItem>
+                    <SelectItem value="due_asc">Prazo</SelectItem>
+                    <SelectItem value="created_desc">Mais recentes</SelectItem>
+                    <SelectItem value="name_asc">Nome</SelectItem>
+                    {view === "projects" && <SelectItem value="priority_desc">Prioridade</SelectItem>}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-                <Select value={status} onValueChange={(v) => setParam({ status: v })}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    {Object.entries(PROJECT_STATUS).map(([s, m]) => <SelectItem key={s} value={s}>{m.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={priority} onValueChange={(v) => setParam({ priority: v })}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Prioridade" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as prioridades</SelectItem>
-                    {Object.entries(PRIORITY).map(([s, m]) => <SelectItem key={s} value={s}>{m.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={responsible} onValueChange={(v) => setParam({ resp: v })}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Responsável" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os responsáveis</SelectItem>
-                    <SelectItem value="none">Sem responsável</SelectItem>
-                    {members.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.name || m.email}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <div className="relative"><span className="pointer-events-none absolute -top-2 left-2.5 bg-card px-1 text-[10px] text-muted-foreground">Prazo de</span><Input type="date" aria-label="Prazo a partir de" value={dueFrom} onChange={(e) => setParam({ from: e.target.value })} className="h-9" /></div>
-                <div className="relative"><span className="pointer-events-none absolute -top-2 left-2.5 bg-card px-1 text-[10px] text-muted-foreground">Prazo até</span><Input type="date" aria-label="Prazo até" value={dueTo} onChange={(e) => setParam({ to: e.target.value })} className="h-9" /></div>
-                <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3">
-                  <Label htmlFor="flt-overdue" className="text-xs">Só atrasados</Label>
-                  <Switch id="flt-overdue" checked={overdueOnly} onCheckedChange={(v) => setParam({ overdue: v ? "1" : null })} />
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Switch id="flt-archived" checked={showArchived} onCheckedChange={(v) => setParam({ archived: v ? "1" : null })} />
-                  <Label htmlFor="flt-archived" className="text-xs text-muted-foreground">Ver arquivados</Label>
-                </div>
-                {hasFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8">
-                    <X className="mr-1 h-3.5 w-3.5" /> Limpar filtros
-                  </Button>
-                )}
+                {view === "projects" ? <ColumnsConfig prefs={projectCols} labels={PROJECT_COL_LABELS} /> : <ColumnsConfig prefs={taskCols} labels={TASK_COL_LABELS} />}
               </div>
             </div>
-          </Card>
+            {activeFilters > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 border-b border-border/60 px-3 py-2 sm:px-4">
+                {chips.map((c) => (
+                  <span key={c.key} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 py-0.5 pl-2.5 pr-1 text-xs">
+                    {c.label}
+                    <button type="button" onClick={() => setParam(c.clear)} className="rounded-full p-0.5 hover:bg-muted" aria-label={`Remover filtro ${c.label}`}><X className="h-3 w-3" /></button>
+                  </span>
+                ))}
+                <button type="button" onClick={clearFilters} className="ml-1 text-xs text-muted-foreground hover:text-foreground">Limpar</button>
+              </div>
+            )}
 
-          {/* Tabela */}
-          <Card className="overflow-hidden border-border/50">
-            {list.isError ? (
-              <div className="p-8 text-center text-sm text-destructive">{friendlyDbError(list.error)}</div>
-            ) : list.isLoading ? (
+            {/* Tabela */}
+            {current.isError ? (
+              <div className="p-8 text-center text-sm text-destructive">{friendlyDbError(current.error)}</div>
+            ) : current.isLoading ? (
               <div className="space-y-2 p-4">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
             ) : totalCount === 0 ? (
               <div className="flex flex-col items-center gap-3 px-4 py-14 text-center">
-                <div className="rounded-xl bg-primary/10 p-3"><FolderKanban className="h-6 w-6 text-primary" /></div>
+                <div className="rounded-xl bg-primary/10 p-3">{view === "tasks" ? <ListTodo className="h-6 w-6 text-primary" /> : <FolderKanban className="h-6 w-6 text-primary" />}</div>
                 {hasFilters ? (
                   <>
-                    <p className="font-medium">Nenhum projeto encontrado com esses filtros.</p>
+                    <p className="font-medium">Nada encontrado com esses filtros.</p>
                     <Button variant="outline" size="sm" onClick={clearFilters}>Limpar filtros</Button>
+                  </>
+                ) : view === "tasks" ? (
+                  <>
+                    <p className="font-medium">Nenhuma tarefa ainda.</p>
+                    <p className="max-w-sm text-sm text-muted-foreground">Abra um projeto e crie tarefas para sua equipe; elas aparecem aqui.</p>
                   </>
                 ) : (
                   <>
@@ -554,95 +711,68 @@ export default function ProjectsPage() {
               </div>
             ) : (
               <>
-                <div className={cn("overflow-x-auto", list.isFetching && "opacity-70")}>
+                <div className={cn("overflow-x-auto", current.isFetching && "opacity-70")}>
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[200px]">Projeto</TableHead>
-                        <TableHead className="min-w-[150px]">Cliente</TableHead>
-                        <TableHead className="min-w-[130px]">Responsável</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="min-w-[140px]">Progresso</TableHead>
-                        <TableHead>Prioridade</TableHead>
-                        <TableHead className="whitespace-nowrap">Início</TableHead>
-                        <TableHead className="whitespace-nowrap">Prazo final</TableHead>
-                        <TableHead className="whitespace-nowrap text-center">Tarefas</TableHead>
-                        <TableHead className="w-12 text-right"><span className="sr-only">Ações</span></TableHead>
+                      <TableRow className="bg-muted/30 hover:bg-muted/30">
+                        {(view === "projects" ? projectCols.visible : taskCols.visible).map((k) => (
+                          <TableHead key={k} className={cn("whitespace-nowrap text-[11px] font-semibold uppercase tracking-wider", COL_WIDTH[k])}>
+                            {(view === "projects" ? PROJECT_COL_LABELS : TASK_COL_LABELS)[k]}
+                          </TableHead>
+                        ))}
+                        {view === "projects" && <TableHead className="w-12 text-right"><span className="sr-only">Ações</span></TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {list.data!.rows.map((p) => {
-                        const overdue = isProjectOverdue(p, today);
-                        const clientLabel = p.leads ? p.leads.company_name || p.leads.contact_name : p.client_name;
-                        return (
-                          <TableRow key={p.id}>
-                            <TableCell>
-                              <Link to={`/projects/${p.id}`} className="font-medium hover:text-primary hover:underline">{p.name}</Link>
-                              {p.archived_at && <span className="ml-2 text-xs text-muted-foreground">(arquivado)</span>}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {p.lead_id && clientLabel ? (
-                                <button type="button" onClick={() => openLead(p.lead_id!)} className="inline-flex max-w-[180px] items-center gap-1 truncate hover:text-primary hover:underline">
-                                  <span className="truncate">{clientLabel}</span>
-                                  <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
-                                </button>
-                              ) : (
-                                <span className="text-muted-foreground">{clientLabel || "—"}</span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-sm">{memberName(p.responsible_user_id) ?? <span className="text-muted-foreground">—</span>}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                <ProjectStatusBadge status={p.status} />
-                                {overdue && <OverdueBadge />}
-                              </div>
-                            </TableCell>
-                            <TableCell><ProgressCell done={p.tasks_done} total={p.tasks_total} /></TableCell>
-                            <TableCell><PriorityBadge priority={p.priority} /></TableCell>
-                            <TableCell className="whitespace-nowrap text-sm tabular-nums">{formatDateBR(p.start_date)}</TableCell>
-                            <TableCell className={cn("whitespace-nowrap text-sm tabular-nums", overdue && "font-medium text-destructive")}>{formatDateBR(p.due_date)}</TableCell>
-                            <TableCell className="text-center text-sm tabular-nums">{p.tasks_done}/{p.tasks_total}</TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" disabled={busyId === p.id} aria-label="Ações do projeto">
-                                    {busyId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => navigate(`/projects/${p.id}`)}><FolderKanban className="mr-2 h-4 w-4" />Abrir projeto</DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => { setEditing(p); setFormOpen(true); }}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                                  <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger><Timer className="mr-2 h-4 w-4" />Alterar status</DropdownMenuSubTrigger>
-                                    <DropdownMenuSubContent>
-                                      {Object.entries(PROJECT_STATUS).map(([s, m]) => (
-                                        <DropdownMenuItem key={s} disabled={p.status === s} onClick={() => runUpdate(p, { status: s as ProjectStatus }, "Status atualizado")}>{m.label}</DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuSubContent>
-                                  </DropdownMenuSub>
-                                  <DropdownMenuItem onClick={() => duplicate(p)}><Copy className="mr-2 h-4 w-4" />Duplicar</DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  {p.archived_at ? (
-                                    <DropdownMenuItem onClick={() => runUpdate(p, { archived_at: null }, "Projeto restaurado")}><ArchiveRestore className="mr-2 h-4 w-4" />Restaurar</DropdownMenuItem>
-                                  ) : (
-                                    <DropdownMenuItem onClick={() => runUpdate(p, { archived_at: new Date().toISOString() }, "Projeto arquivado")}><Archive className="mr-2 h-4 w-4" />Arquivar</DropdownMenuItem>
-                                  )}
-                                  {canDelete(p) && (
-                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setToDelete(p)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {view === "projects"
+                        ? list.data!.rows.map((p) => (
+                            <TableRow key={p.id} className="cursor-pointer" onClick={() => navigate(`/projects/${p.id}`)}>
+                              {projectCols.visible.map((k) => <TableCell key={k}>{renderProjectCell(k, p)}</TableCell>)}
+                              <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={busyId === p.id} aria-label="Ações do projeto">
+                                      {busyId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem onClick={() => navigate(`/projects/${p.id}`)}><FolderKanban className="mr-2 h-4 w-4" />Abrir projeto</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => { setEditing(p); setFormOpen(true); }}><Pencil className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                                    <DropdownMenuSub>
+                                      <DropdownMenuSubTrigger><Timer className="mr-2 h-4 w-4" />Alterar status</DropdownMenuSubTrigger>
+                                      <DropdownMenuSubContent>
+                                        {Object.entries(PROJECT_STATUS).map(([s, m]) => (
+                                          <DropdownMenuItem key={s} disabled={p.status === s} onClick={() => runUpdate(p, { status: s as ProjectStatus }, "Status atualizado")}><StatusOption label={m.label} dot={m.dot} /></DropdownMenuItem>
+                                        ))}
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuItem onClick={() => duplicate(p)}><Copy className="mr-2 h-4 w-4" />Duplicar</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    {p.archived_at ? (
+                                      <DropdownMenuItem onClick={() => runUpdate(p, { archived_at: null }, "Projeto restaurado")}><ArchiveRestore className="mr-2 h-4 w-4" />Restaurar</DropdownMenuItem>
+                                    ) : (
+                                      <DropdownMenuItem onClick={() => runUpdate(p, { archived_at: new Date().toISOString() }, "Projeto arquivado")}><Archive className="mr-2 h-4 w-4" />Arquivar</DropdownMenuItem>
+                                    )}
+                                    {canDelete(p) && (
+                                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setToDelete(p)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        : taskList.data!.rows.map((t: any) => (
+                            <TableRow key={t.id} className="cursor-pointer" onClick={() => navigate(`/projects/${t.project_id}?task=${t.id}`)}>
+                              {taskCols.visible.map((k) => <TableCell key={k}>{renderTaskCell(k, t)}</TableCell>)}
+                            </TableRow>
+                          ))}
                     </TableBody>
                   </Table>
                 </div>
                 {/* Paginação */}
                 <div className="flex flex-col items-center justify-between gap-3 border-t border-border p-3 text-sm sm:flex-row">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <span>{totalCount} {totalCount === 1 ? "projeto" : "projetos"}</span>
+                    <span>{totalCount} {view === "tasks" ? (totalCount === 1 ? "tarefa" : "tarefas") : totalCount === 1 ? "projeto" : "projetos"}</span>
                     <span>·</span>
                     <Select value={String(pageSize)} onValueChange={(v) => setParam({ size: v === "10" ? null : v })}>
                       <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
@@ -742,5 +872,26 @@ function FollowList({
         </li>
       ))}
     </ul>
+  );
+}
+
+const PROJECT_COLS = ["name", "client", "responsible", "status", "progress", "priority", "start", "due"];
+const PROJECT_COL_LABELS: Record<string, string> = {
+  name: "Projeto", client: "Cliente", responsible: "Responsável", status: "Status", progress: "Progresso", priority: "Prioridade", start: "Início", due: "Prazo final",
+};
+const TASK_COLS = ["title", "project", "client", "responsible", "status", "priority", "due"];
+const TASK_COL_LABELS: Record<string, string> = {
+  title: "Tarefa", project: "Projeto", client: "Cliente", responsible: "Responsável", status: "Status", priority: "Prioridade", due: "Prazo",
+};
+const COL_WIDTH: Record<string, string> = {
+  name: "min-w-[220px]", title: "min-w-[220px]", client: "min-w-[150px]", project: "min-w-[160px]", responsible: "min-w-[160px]", progress: "min-w-[140px]",
+};
+
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+      {children}
+    </div>
   );
 }
