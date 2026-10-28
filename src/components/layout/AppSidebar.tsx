@@ -106,7 +106,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const isOnOpportunitiesPage = currentPath === "/oportunidades" || currentPath === "/oportunidades/web" || currentPath === "/oportunidades/gestao" || currentPath === "/oportunidades/sdr";
   const isOnCrmPage = currentPath === "/crm" || currentPath === "/crm/inteligencia";
   const isOnAutomationPage = currentPath.startsWith("/fluxos");
-  const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns";
+  const isOnMetaPage = currentPath === "/meta" || currentPath.startsWith("/meta/") || currentPath === "/meta-campaigns" || currentPath.startsWith("/numeros");
 
   // Watch body class to force expand and select active submenu during guided tour
   useEffect(() => {
@@ -308,21 +308,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             </li>
             )}
 
-            {/* Projetos */}
-            {can("crm") && (
-            <li data-tour="sidebar-projetos">
-              <SidebarNavItem
-                title="Projetos"
-                icon={FolderKanban}
-                url="/projects"
-                isActive={currentPath.startsWith("/projects")}
-                isExpanded={isExpanded}
-                tooltip="Projetos"
-              />
-            </li>
-            )}
-
-
             {/* Oportunidades with submenu */}
             {can("oportunidades") && canRole("prospeccao") && (
             <li data-tour="sidebar-oportunidades">
@@ -437,9 +422,10 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                       { title: "Dashboard", url: "/meta", icon: LayoutDashboardIcon, tour: "sidebar-meta-dashboard" },
                       { title: "Campanhas", url: "/meta/campanhas", icon: MegaphoneIcon, tour: "sidebar-meta-campanhas" },
                       { title: "Templates", url: "/meta/templates", icon: MessageSquareIcon, tour: "sidebar-meta-templates" },
+                      { title: "Números", url: "/meta/numeros", icon: Phone, tour: "sidebar-numeros" },
                       { title: "Configurações", url: "/meta/configuracoes", icon: SettingsIcon, tour: "sidebar-meta-configuracoes" },
                     ].map((item) => {
-                      const active = item.url === "/meta" ? currentPath === "/meta" : currentPath === item.url;
+                      const active = item.url === "/meta" ? currentPath === "/meta" : item.url === "/meta/numeros" ? currentPath.startsWith("/meta/numeros") || currentPath.startsWith("/numeros") : currentPath === item.url;
                       return (
                         <li key={item.url} data-tour={item.tour}>
                           <Link
@@ -480,6 +466,21 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
             )}
+
+            {/* Projetos */}
+            {can("crm") && (
+            <li data-tour="sidebar-projetos">
+              <SidebarNavItem
+                title="Projetos"
+                icon={FolderKanban}
+                url="/projects"
+                isActive={currentPath.startsWith("/projects")}
+                isExpanded={isExpanded}
+                tooltip="Projetos"
+              />
+            </li>
+            )}
+
 
             {/* Chat */}
             {can("chat") && (
@@ -527,17 +528,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               />
             </li>
 
-            {/* Números (Atendimento + Marketing) */}
-            <li data-tour="sidebar-numeros">
-              <SidebarNavItem
-                title="Números"
-                icon={Phone}
-                url="/numeros"
-                isActive={currentPath.startsWith("/numeros") || currentPath === "/meta/numeros"}
-                isExpanded={isExpanded}
-                tooltip="Números"
-              />
-            </li>
           </ul>
         </nav>
 
