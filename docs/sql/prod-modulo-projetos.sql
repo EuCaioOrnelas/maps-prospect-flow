@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS public.projects (
   CONSTRAINT projects_name_check CHECK (length(btrim(name)) > 0),
   CONSTRAINT projects_dates_check CHECK (due_date IS NULL OR start_date IS NULL OR due_date >= start_date)
 );
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS priority_rank smallint
+  GENERATED ALWAYS AS (CASE priority WHEN 'urgent' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END) STORED;
 CREATE INDEX IF NOT EXISTS idx_projects_owner_due ON public.projects(owner_user_id, due_date);
 CREATE INDEX IF NOT EXISTS idx_projects_owner_created ON public.projects(owner_user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_projects_owner_status ON public.projects(owner_user_id, status);
