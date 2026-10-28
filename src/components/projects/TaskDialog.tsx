@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import type { AccountMember } from "@/hooks/useAccountMembers";
+import { useTaskComments } from "@/hooks/useTaskComments";
+import { LeadNotesChat } from "@/components/crm/LeadNotesChat";
 import {
   PRIORITY,
   TASK_STATUS,
@@ -44,12 +46,15 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
     stage_id: "none",
     assignee_id: "none",
     due_date: "",
+    due_time: "",
+    duration_minutes: "60",
     priority: "medium" as ProjectPriority,
     status: "todo" as TaskStatus,
   });
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [newItem, setNewItem] = useState("");
   const [itemBusy, setItemBusy] = useState(false);
+  const comments = useTaskComments(open && task ? task.id : null, members);
 
   useEffect(() => {
     if (!open) return;
@@ -61,6 +66,8 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
       stage_id: task?.stage_id ?? defaultStageId ?? "none",
       assignee_id: task?.assignee_id ?? "none",
       due_date: task?.due_date ?? "",
+      due_time: task?.due_time ? task.due_time.slice(0, 5) : "",
+      duration_minutes: String(task?.duration_minutes ?? 60),
       priority: task?.priority ?? "medium",
       status: task?.status ?? "todo",
     });
@@ -84,6 +91,8 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
       stage_id: form.stage_id === "none" ? null : form.stage_id,
       assignee_id: form.assignee_id === "none" ? null : form.assignee_id,
       due_date: form.due_date || null,
+      due_time: form.due_date && form.due_time ? form.due_time : null,
+      duration_minutes: Number(form.duration_minutes) || 60,
       priority: form.priority,
       status: form.status,
     };
@@ -143,7 +152,7 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{task ? "Editar tarefa" : "Nova tarefa"}</DialogTitle>
-          <DialogDescription>O prazo da tarefa aparece na Agenda do responsável como vencimento do dia.</DialogDescription>
+          <DialogDescription>Sem horário, o prazo aparece na Agenda como dia todo e não ocupa horário. Com horário, ocupa a Agenda do responsável e não pode coincidir com outro compromisso dele.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4" noValidate>
           <div className="space-y-1.5">
@@ -179,6 +188,21 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
             <div className="space-y-1.5">
               <Label htmlFor="tk-due">Prazo</Label>
               <Input id="tk-due" type="date" value={form.due_date} onChange={(e) => set("due_date", e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="tk-time">Horário</Label>
+                <Input id="tk-time" type="time" value={form.due_time} disabled={!form.due_date} onChange={(e) => set("due_time", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Duração</Label>
+                <Select value={form.duration_minutes} onValueChange={(v) => set("duration_minutes", v)} disabled={!form.due_time}>
+                  <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[["15","15 min"],["30","30 min"],["60","1 h"],["90","1h30"],["120","2 h"],["180","3 h"],["240","4 h"],["480","8 h"]].map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Prioridade</Label>
@@ -229,6 +253,20 @@ export function TaskDialog({ open, onOpenChange, projectId, task, defaultStageId
                 </div>
                 <p className="text-[11px] text-muted-foreground">Concluir todos os itens não conclui a tarefa automaticamente.</p>
               </>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Conversa da tarefa</Label>
+            {!task ? (
+              <p className="rounded-lg border border-border p-3 text-xs text-muted-foreground">Salve a tarefa para conversar com a equipe sobre ela.</p>
+            ) : (
+              <LeadNotesChat
+                controller={comments}
+                heightClass="h-[280px]"
+                placeholder="Escreva para quem participa desta tarefa..."
+                emptyHint="Nenhuma mensagem ainda. Converse aqui com a equipe sobre esta tarefa; o responsável é avisado no sininho."
+              />
             )}
           </div>
 
