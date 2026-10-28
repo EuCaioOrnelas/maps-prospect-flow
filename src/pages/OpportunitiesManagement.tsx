@@ -46,6 +46,7 @@ import { CRMResponsibleFilter, type ResponsibleFilter } from "@/components/crm/C
 import { OpportunityBulkBar } from "@/components/opportunities/OpportunityBulkBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { canGenerateMessage, sourceLabel, sourceTitle, NO_NUMBER_MESSAGE, displayRating, isDerivedRating } from "@/lib/opportunitySource";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
 
 interface OpportunityLead {
   id: string;
@@ -173,6 +174,7 @@ export default function OpportunitiesManagement() {
   // Company profile & onboarding state
   const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { isActive: guidedTourActive } = useGuidedTour();
   const [profileLoaded, setProfileLoaded] = useState(false);
   const recoveryAttemptedRef = useRef(false);
 
