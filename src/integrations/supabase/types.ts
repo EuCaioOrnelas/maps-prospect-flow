@@ -1589,6 +1589,8 @@ export type Database = {
           metadata: Json
           notes: string | null
           owner_user_id: string
+          project_id: string | null
+          project_task_id: string | null
           reminder_sent_at: string | null
           reminders: Json
           sdr_agent_id: string | null
@@ -1623,6 +1625,8 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           owner_user_id: string
+          project_id?: string | null
+          project_task_id?: string | null
           reminder_sent_at?: string | null
           reminders?: Json
           sdr_agent_id?: string | null
@@ -1657,6 +1661,8 @@ export type Database = {
           metadata?: Json
           notes?: string | null
           owner_user_id?: string
+          project_id?: string | null
+          project_task_id?: string | null
           reminder_sent_at?: string | null
           reminders?: Json
           sdr_agent_id?: string | null
@@ -1673,6 +1679,20 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_project_task_id_fkey"
+            columns: ["project_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -8732,6 +8752,371 @@ export type Database = {
         }
         Relationships: []
       }
+      project_activity: {
+        Row: {
+          action_type: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          project_id: string
+          task_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          project_id: string
+          task_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          project_id?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activity_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string | null
+          project_id: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          mime_type?: string | null
+          project_id: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string | null
+          project_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_stages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          position: number
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          position?: number
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_task_checklist_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_completed: boolean
+          position: number
+          task_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          position?: number
+          task_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          position?: number
+          task_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_task_checklist_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+          reply_to_id: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          project_id: string
+          reply_to_id?: string | null
+          task_id: string
+          user_id?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          reply_to_id?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_task_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_task_comments_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "project_task_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          assignee_id: string | null
+          checklist_done: number
+          checklist_total: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          due_time: string | null
+          duration_minutes: number
+          id: string
+          position: number
+          priority: string
+          project_id: string
+          stage_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          checklist_done?: number
+          checklist_total?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          duration_minutes?: number
+          id?: string
+          position?: number
+          priority?: string
+          project_id: string
+          stage_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          checklist_done?: number
+          checklist_total?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          duration_minutes?: number
+          id?: string
+          position?: number
+          priority?: string
+          project_id?: string
+          stage_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "project_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          archived_at: string | null
+          client_name: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          lead_id: string | null
+          name: string
+          owner_user_id: string
+          priority: string
+          priority_rank: number | null
+          responsible_user_id: string | null
+          start_date: string | null
+          status: string
+          tags: string[]
+          tasks_done: number
+          tasks_open: number
+          tasks_total: number
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          client_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          name: string
+          owner_user_id: string
+          priority?: string
+          priority_rank?: number | null
+          responsible_user_id?: string | null
+          start_date?: string | null
+          status?: string
+          tags?: string[]
+          tasks_done?: number
+          tasks_open?: number
+          tasks_total?: number
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          client_name?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          name?: string
+          owner_user_id?: string
+          priority?: string
+          priority_rank?: number | null
+          responsible_user_id?: string | null
+          start_date?: string | null
+          status?: string
+          tags?: string[]
+          tasks_done?: number
+          tasks_open?: number
+          tasks_total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospecting_search_locks: {
         Row: {
           created_at: string
@@ -11562,6 +11947,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: string
+          kind: string
+          link: string | null
+          metadata: Json
+          read_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          kind: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          kind?: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           acquisition_source: string | null
@@ -14373,6 +14800,13 @@ export type Database = {
         Args: { _is_active: boolean; _link_id: string }
         Returns: boolean
       }
+      project_build_due_digest: { Args: { _user: string }; Returns: undefined }
+      project_can_access: { Args: { _project_id: string }; Returns: boolean }
+      project_due_digest_all: { Args: never; Returns: undefined }
+      project_due_digest_me: { Args: never; Returns: undefined }
+      project_is_manager: { Args: never; Returns: boolean }
+      project_recount: { Args: { _project_id: string }; Returns: undefined }
+      project_task_can_access: { Args: { _task_id: string }; Returns: boolean }
       purge_account_data: { Args: { _user_id: string }; Returns: Json }
       purge_operational_logs: { Args: never; Returns: Json }
       recalc_partner_level: {
@@ -14537,7 +14971,7 @@ export type Database = {
       account_member_status: "active" | "inactive"
       account_role: "owner" | "admin" | "operational"
       app_role: "admin" | "moderator" | "user" | "partner"
-      calendar_event_source: "manual" | "sdr" | "flow" | "import"
+      calendar_event_source: "manual" | "sdr" | "flow" | "import" | "project"
       calendar_event_status:
         | "scheduled"
         | "confirmed"
@@ -14552,6 +14986,7 @@ export type Database = {
         | "visit"
         | "other"
         | "google"
+        | "deadline"
       commission_status:
         | "pending"
         | "review"
@@ -14729,7 +15164,7 @@ export const Constants = {
       account_member_status: ["active", "inactive"],
       account_role: ["owner", "admin", "operational"],
       app_role: ["admin", "moderator", "user", "partner"],
-      calendar_event_source: ["manual", "sdr", "flow", "import"],
+      calendar_event_source: ["manual", "sdr", "flow", "import", "project"],
       calendar_event_status: [
         "scheduled",
         "confirmed",
@@ -14745,6 +15180,7 @@ export const Constants = {
         "visit",
         "other",
         "google",
+        "deadline",
       ],
       commission_status: [
         "pending",

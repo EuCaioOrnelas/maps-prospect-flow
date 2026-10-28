@@ -354,39 +354,56 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        <div className="space-y-6 p-3 sm:p-4 lg:p-6">
+        <div className="space-y-4 p-3 sm:space-y-5 sm:p-4 lg:p-6">
           {/* Indicadores */}
           {kpis.isError ? (
             <Card className="p-4 text-sm text-destructive">{friendlyDbError(kpis.error)}</Card>
           ) : (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              {kpiCards.map((c) => (
-                <Card
-                  key={c.key}
-                  role={c.onClick ? "button" : undefined}
-                  tabIndex={c.onClick ? 0 : undefined}
-                  onClick={c.onClick}
-                  onKeyDown={(e) => c.onClick && (e.key === "Enter" || e.key === " ") && c.onClick()}
-                  className={cn("p-4 transition-colors", c.onClick && "cursor-pointer hover:border-primary/40")}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
-                    <c.icon className={cn("h-4 w-4", c.alert ? "text-destructive" : "text-muted-foreground")} />
-                  </div>
-                  {kpis.isLoading ? (
-                    <Skeleton className="mt-2 h-8 w-14" />
-                  ) : (
-                    <p className={cn("mt-1 text-2xl font-bold tabular-nums", c.alert && "text-destructive")}>{c.value ?? 0}</p>
-                  )}
-                </Card>
-              ))}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
+              {kpiCards.map((c) => {
+                const empty = !kpis.isLoading && !c.value;
+                return (
+                  <Card
+                    key={c.key}
+                    role={c.onClick ? "button" : undefined}
+                    tabIndex={c.onClick ? 0 : undefined}
+                    onClick={c.onClick}
+                    onKeyDown={(e) => c.onClick && (e.key === "Enter" || e.key === " ") && c.onClick()}
+                    className={cn(
+                      "relative overflow-hidden border-border/50 p-4 transition-colors sm:p-5",
+                      c.onClick && "cursor-pointer hover:border-primary/40",
+                      c.alert && "border-destructive/40",
+                    )}
+                  >
+                    {!empty && (
+                      <div className={cn("pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 rounded-full blur-3xl", c.alert ? "bg-destructive/10" : "bg-primary/[0.06]")} />
+                    )}
+                    <div className="relative flex flex-col gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-xl",
+                        empty ? "bg-muted/50" : c.alert ? "bg-destructive/10" : "bg-primary/[0.07] dark:bg-primary/[0.12]",
+                      )}>
+                        <c.icon className={cn("h-[17px] w-[17px]", empty ? "text-muted-foreground/50" : c.alert ? "text-destructive" : "text-primary")} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="mb-1 truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{c.label}</p>
+                        {kpis.isLoading ? (
+                          <Skeleton className="h-9 w-14" />
+                        ) : (
+                          <p className={cn("text-[28px] font-bold leading-tight tabular-nums", c.alert && "text-destructive")}>{c.value ?? 0}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
 
           {/* Acompanhamento */}
           <div className="grid gap-3 lg:grid-cols-3">
-            <Card className="p-4">
-              <h2 className="mb-3 text-sm font-semibold">Entregas nos próximos 14 dias</h2>
+            <Card className="border-border/50 p-4 sm:p-5">
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Entregas nos próximos 14 dias</h2>
               <FollowList
                 loading={followUp.isLoading}
                 empty="Nenhuma entrega próxima."
@@ -403,8 +420,8 @@ export default function ProjectsPage() {
                 </>
               )}
             </Card>
-            <Card className="p-4">
-              <h2 className="mb-3 text-sm font-semibold">Projetos atrasados</h2>
+            <Card className="border-border/50 p-4 sm:p-5">
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Projetos atrasados</h2>
               <FollowList
                 loading={followUp.isLoading}
                 danger
@@ -424,8 +441,8 @@ export default function ProjectsPage() {
                 ))}
               </div>
             </Card>
-            <Card className="p-4">
-              <h2 className="mb-3 text-sm font-semibold">Atividades recentes</h2>
+            <Card className="border-border/50 p-4 sm:p-5">
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Atividades recentes</h2>
               {followUp.isLoading ? (
                 <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-8 w-full" />)}</div>
               ) : (followUp.data?.activity.length ?? 0) === 0 ? (
@@ -452,7 +469,7 @@ export default function ProjectsPage() {
           </div>
 
           {/* Filtros */}
-          <Card className="p-3 sm:p-4">
+          <Card className="border-border/50 p-3 sm:p-4">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2 md:flex-row">
                 <div className="relative flex-1">
@@ -492,8 +509,8 @@ export default function ProjectsPage() {
                     {members.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.name || m.email}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Input type="date" aria-label="Prazo a partir de" value={dueFrom} onChange={(e) => setParam({ from: e.target.value })} className="h-9" />
-                <Input type="date" aria-label="Prazo até" value={dueTo} onChange={(e) => setParam({ to: e.target.value })} className="h-9" />
+                <div className="relative"><span className="pointer-events-none absolute -top-2 left-2.5 bg-card px-1 text-[10px] text-muted-foreground">Prazo de</span><Input type="date" aria-label="Prazo a partir de" value={dueFrom} onChange={(e) => setParam({ from: e.target.value })} className="h-9" /></div>
+                <div className="relative"><span className="pointer-events-none absolute -top-2 left-2.5 bg-card px-1 text-[10px] text-muted-foreground">Prazo até</span><Input type="date" aria-label="Prazo até" value={dueTo} onChange={(e) => setParam({ to: e.target.value })} className="h-9" /></div>
                 <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3">
                   <Label htmlFor="flt-overdue" className="text-xs">Só atrasados</Label>
                   <Switch id="flt-overdue" checked={overdueOnly} onCheckedChange={(v) => setParam({ overdue: v ? "1" : null })} />
@@ -514,7 +531,7 @@ export default function ProjectsPage() {
           </Card>
 
           {/* Tabela */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border-border/50">
             {list.isError ? (
               <div className="p-8 text-center text-sm text-destructive">{friendlyDbError(list.error)}</div>
             ) : list.isLoading ? (
