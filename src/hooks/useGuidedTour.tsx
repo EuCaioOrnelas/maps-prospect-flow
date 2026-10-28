@@ -644,6 +644,20 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     (async () => {
+      // Lê must_change_password DIRETO do banco: o profile em memória fica
+      // desatualizado após a troca obrigatória de senha (contas criadas pelo
+      // admin), o que impedia o tour de iniciar até o próximo login.
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("must_change_password")
+        .eq("id", userId)
+        .maybeSingle();
+      if (cancelled) return;
+      // Se ainda precisa redefinir a senha, espera o fluxo terminar antes de
+      // iniciar o guia para evitar conflito visual. Não marca startedRef —
+      // re-tenta quando o evento "wiize:password-changed" disparar.
+      if ((prof as any)?.must_change_password) return;
+
       // Aguarda o onboarding (modal inicial) terminar antes de iniciar o tour,
       // senão o guia aparece por cima do onboarding em novos usuários.
       const { data: ob } = await supabase
