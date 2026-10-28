@@ -185,6 +185,7 @@ export const EVENT_SOURCE_LABELS: Record<CalendarEventSource, string> = {
   sdr: "Criado pelo SDR Inteligente",
   flow: "Criado por fluxo",
   import: "Importado",
+  project: "Criado pelo módulo de Projetos",
 };
 
 export const DURATION_OPTIONS = [15, 30, 45, 60, 90] as const;
