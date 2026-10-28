@@ -104,7 +104,7 @@ export function ProjectFormDialog({ open, onOpenChange, project, defaultLeadId, 
       if (project) {
         res = await db.from("projects").update(payload).eq("id", project.id).select("*").single();
       } else {
-        const { data: owner } = await supabase.rpc("get_account_owner", { _user_id: user!.id } as any);
+        const { data: owner } = await supabase.rpc("get_account_owner", { _uid: user!.id });
         res = await db
           .from("projects")
           .insert({ ...payload, owner_user_id: (owner as string) || user!.id, created_by: user!.id })
