@@ -354,32 +354,49 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        <div className="space-y-6 p-3 sm:p-4 lg:p-6">
+        <div className="space-y-4 p-3 sm:space-y-5 sm:p-4 lg:p-6">
           {/* Indicadores */}
           {kpis.isError ? (
             <Card className="p-4 text-sm text-destructive">{friendlyDbError(kpis.error)}</Card>
           ) : (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              {kpiCards.map((c) => (
-                <Card
-                  key={c.key}
-                  role={c.onClick ? "button" : undefined}
-                  tabIndex={c.onClick ? 0 : undefined}
-                  onClick={c.onClick}
-                  onKeyDown={(e) => c.onClick && (e.key === "Enter" || e.key === " ") && c.onClick()}
-                  className={cn("p-4 transition-colors", c.onClick && "cursor-pointer hover:border-primary/40")}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-muted-foreground">{c.label}</p>
-                    <c.icon className={cn("h-4 w-4", c.alert ? "text-destructive" : "text-muted-foreground")} />
-                  </div>
-                  {kpis.isLoading ? (
-                    <Skeleton className="mt-2 h-8 w-14" />
-                  ) : (
-                    <p className={cn("mt-1 text-2xl font-bold tabular-nums", c.alert && "text-destructive")}>{c.value ?? 0}</p>
-                  )}
-                </Card>
-              ))}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
+              {kpiCards.map((c) => {
+                const empty = !kpis.isLoading && !c.value;
+                return (
+                  <Card
+                    key={c.key}
+                    role={c.onClick ? "button" : undefined}
+                    tabIndex={c.onClick ? 0 : undefined}
+                    onClick={c.onClick}
+                    onKeyDown={(e) => c.onClick && (e.key === "Enter" || e.key === " ") && c.onClick()}
+                    className={cn(
+                      "relative overflow-hidden border-border/50 p-4 transition-colors sm:p-5",
+                      c.onClick && "cursor-pointer hover:border-primary/40",
+                      c.alert && "border-destructive/40",
+                    )}
+                  >
+                    {!empty && (
+                      <div className={cn("pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 rounded-full blur-3xl", c.alert ? "bg-destructive/10" : "bg-primary/[0.06]")} />
+                    )}
+                    <div className="relative flex flex-col gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-xl",
+                        empty ? "bg-muted/50" : c.alert ? "bg-destructive/10" : "bg-primary/[0.07] dark:bg-primary/[0.12]",
+                      )}>
+                        <c.icon className={cn("h-[17px] w-[17px]", empty ? "text-muted-foreground/50" : c.alert ? "text-destructive" : "text-primary")} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="mb-1 truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{c.label}</p>
+                        {kpis.isLoading ? (
+                          <Skeleton className="h-9 w-14" />
+                        ) : (
+                          <p className={cn("text-[28px] font-bold leading-tight tabular-nums", c.alert && "text-destructive")}>{c.value ?? 0}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
 
