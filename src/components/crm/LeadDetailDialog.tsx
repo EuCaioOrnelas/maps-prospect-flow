@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ChevronDown, FileText, Upload, FolderOpen, Mail } from 'lucide-react';
+import { ChevronDown, FileText, Upload, FolderOpen, Mail, FolderKanban } from 'lucide-react';
+import { LeadProjectsSection } from '@/components/projects/LeadProjectsSection';
 import {
   Dialog,
   DialogContent,
@@ -288,7 +289,7 @@ export const LeadDetailDialog = ({
   const navigate = useNavigate();
   const { user, accountOwnerId } = useAuth();
   const { getScoreForPhone } = useLeadScores();
-  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files'>(
+  const [activeTab, setActiveTab] = useState<'info' | 'intelligence' | 'notes' | 'history' | 'deals' | 'files' | 'projects'>(
     (initialTab === 'history' ? 'notes' : initialTab) || 'info'
   );
   useEffect(() => {
@@ -1016,6 +1017,7 @@ export const LeadDetailDialog = ({
             { id: 'info', label: 'Informações', icon: User },
             { id: 'deals', label: `Vendas (${deals.length})`, icon: DollarSign },
             { id: 'files', label: 'Arquivos', icon: FolderOpen },
+            { id: 'projects', label: 'Projetos', icon: FolderKanban },
             { id: 'intelligence', label: 'Inteligência', icon: Bot },
             { id: 'notes', label: 'Notas e histórico', icon: FileText },
           ].map((tab) => (
@@ -1383,6 +1385,9 @@ export const LeadDetailDialog = ({
                 }}
               />
             )}
+
+            {/* Projetos Tab */}
+            {activeTab === 'projects' && <LeadProjectsSection leadId={lead.id} />}
 
             {/* Arquivos Tab */}
             {activeTab === 'files' && (
