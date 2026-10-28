@@ -13,17 +13,17 @@ import {
 
 export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
   const m = PROJECT_STATUS[status] ?? PROJECT_STATUS.planning;
-  return <Badge variant="outline" className={cn("h-6 whitespace-nowrap text-[11px] font-medium", m.className)}>{m.label}</Badge>;
+  return <Badge variant="outline" className={cn("h-6 gap-1.5 whitespace-nowrap text-[11px] font-medium", m.className)}><span className={cn("h-1.5 w-1.5 rounded-full", m.dot)} />{m.label}</Badge>;
 }
 
 export function TaskStatusBadge({ status }: { status: TaskStatus }) {
   const m = TASK_STATUS[status] ?? TASK_STATUS.todo;
-  return <Badge variant="outline" className={cn("h-6 whitespace-nowrap text-[11px] font-medium", m.className)}>{m.label}</Badge>;
+  return <Badge variant="outline" className={cn("h-6 gap-1.5 whitespace-nowrap text-[11px] font-medium", m.className)}><span className={cn("h-1.5 w-1.5 rounded-full", m.dot)} />{m.label}</Badge>;
 }
 
 export function PriorityBadge({ priority }: { priority: ProjectPriority }) {
   const m = PRIORITY[priority] ?? PRIORITY.medium;
-  return <Badge variant="outline" className={cn("h-6 whitespace-nowrap text-[11px] font-medium", m.className)}>{m.label}</Badge>;
+  return <Badge variant="outline" className={cn("h-6 gap-1.5 whitespace-nowrap text-[11px] font-medium", m.className)}><span className={cn("h-1.5 w-1.5 rounded-full", m.dot)} />{m.label}</Badge>;
 }
 
 export function OverdueBadge() {
@@ -41,4 +41,9 @@ export function ProgressCell({ done, total, className }: { done: number; total: 
       <span className="w-9 text-right text-xs tabular-nums text-muted-foreground">{pct}%</span>
     </div>
   );
+}
+
+/** Bolinha colorida + rótulo, para usar dentro de listas de seleção. */
+export function StatusOption({ label, dot }: { label: string; dot: string }) {
+  return <span className="flex items-center gap-2"><span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />{label}</span>;
 }

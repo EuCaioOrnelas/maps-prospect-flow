@@ -66,30 +66,39 @@ export interface ChecklistItem {
   position: number;
 }
 
-interface Meta { label: string; className: string }
+interface Meta { label: string; className: string; dot: string }
+
+const TONE = {
+  slate: { className: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground" },
+  info: { className: "bg-info/10 text-info border-info/25", dot: "bg-info" },
+  review: { className: "bg-review/10 text-review border-review/25", dot: "bg-review" },
+  success: { className: "bg-success/10 text-success border-success/25", dot: "bg-success" },
+  warning: { className: "bg-warning/15 text-warning border-warning/30", dot: "bg-warning" },
+  danger: { className: "bg-destructive/10 text-destructive border-destructive/25", dot: "bg-destructive" },
+};
 
 export const PROJECT_STATUS: Record<ProjectStatus, Meta> = {
-  planning: { label: "Planejamento", className: "bg-muted text-muted-foreground border-border" },
-  in_progress: { label: "Em andamento", className: "bg-primary/10 text-primary border-primary/20" },
-  review: { label: "Em revisão", className: "bg-accent text-accent-foreground border-border" },
-  completed: { label: "Concluído", className: "bg-primary text-primary-foreground border-primary" },
-  paused: { label: "Pausado", className: "bg-secondary text-secondary-foreground border-border" },
-  cancelled: { label: "Cancelado", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  planning: { label: "Planejamento", ...TONE.slate },
+  in_progress: { label: "Em andamento", ...TONE.info },
+  review: { label: "Em revisão", ...TONE.review },
+  completed: { label: "Concluído", ...TONE.success },
+  paused: { label: "Pausado", ...TONE.warning },
+  cancelled: { label: "Cancelado", ...TONE.danger },
 };
 
 export const TASK_STATUS: Record<TaskStatus, Meta> = {
-  todo: { label: "A fazer", className: "bg-muted text-muted-foreground border-border" },
-  in_progress: { label: "Em andamento", className: "bg-primary/10 text-primary border-primary/20" },
-  review: { label: "Em revisão", className: "bg-accent text-accent-foreground border-border" },
-  done: { label: "Concluída", className: "bg-primary text-primary-foreground border-primary" },
-  cancelled: { label: "Cancelada", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  todo: { label: "A fazer", ...TONE.slate },
+  in_progress: { label: "Em andamento", ...TONE.info },
+  review: { label: "Em revisão", ...TONE.review },
+  done: { label: "Concluída", ...TONE.success },
+  cancelled: { label: "Cancelada", ...TONE.danger },
 };
 
 export const PRIORITY: Record<ProjectPriority, Meta & { rank: number }> = {
-  low: { label: "Baixa", className: "bg-muted text-muted-foreground border-border", rank: 1 },
-  medium: { label: "Média", className: "bg-secondary text-secondary-foreground border-border", rank: 2 },
-  high: { label: "Alta", className: "bg-primary/10 text-primary border-primary/30", rank: 3 },
-  urgent: { label: "Urgente", className: "bg-destructive/10 text-destructive border-destructive/30", rank: 4 },
+  low: { label: "Baixa", ...TONE.slate, rank: 1 },
+  medium: { label: "Média", ...TONE.info, rank: 2 },
+  high: { label: "Alta", ...TONE.warning, rank: 3 },
+  urgent: { label: "Urgente", ...TONE.danger, rank: 4 },
 };
 
 export const OVERDUE_CLASS = "bg-destructive/10 text-destructive border-destructive/30";
