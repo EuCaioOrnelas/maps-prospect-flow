@@ -416,9 +416,10 @@ const App = () => (
                 <Route path="/meta/campanhas" element={<ProtectedRoute><MetaCampanhas /></ProtectedRoute>} />
                 <Route path="/meta/templates" element={<ProtectedRoute><MetaWhatsAppTemplates /></ProtectedRoute>} />
                 <Route path="/meta/modelos-internos" element={<ProtectedRoute><MetaTemplates /></ProtectedRoute>} />
-                <Route path="/numeros" element={<ProtectedRoute><MetaNumeros /></ProtectedRoute>} />
-                <Route path="/numeros/comparativo" element={<ProtectedRoute><NumerosComparativo /></ProtectedRoute>} />
-                <Route path="/meta/numeros" element={<Navigate to="/numeros" replace />} />
+                <Route path="/meta/numeros" element={<ProtectedRoute><MetaNumeros /></ProtectedRoute>} />
+                <Route path="/meta/numeros/comparativo" element={<ProtectedRoute><NumerosComparativo /></ProtectedRoute>} />
+                <Route path="/numeros" element={<Navigate to="/meta/numeros" replace />} />
+                <Route path="/numeros/comparativo" element={<Navigate to="/meta/numeros/comparativo" replace />} />
                 <Route path="/meta/guia-conexao" element={<MetaConnectGuide />} />
                 
                 <Route path="/meta/configuracoes" element={<ProtectedRoute><MetaConfiguracoes /></ProtectedRoute>} />
