@@ -274,6 +274,13 @@
       "when": 1793214457251,
       "tag": "0038_projects_notifications_comments",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793215183345,
+      "tag": "0039_project_chat",
+      "breakpoints": true
     }
   ]
 }

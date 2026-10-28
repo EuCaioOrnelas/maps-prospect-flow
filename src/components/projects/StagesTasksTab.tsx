@@ -19,6 +19,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MemberCell } from "@/components/projects/AssigneePicker";
+import { StatusOption } from "@/components/projects/ProjectBadges";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -210,7 +212,7 @@ export function StagesTasksTab({ projectId, stages, tasks, members, onChanged, o
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>
               <SelectItem value="overdue">Atrasadas</SelectItem>
-              {Object.entries(TASK_STATUS).map(([s, m]) => <SelectItem key={s} value={s}>{m.label}</SelectItem>)}
+              {Object.entries(TASK_STATUS).map(([s, m]) => <SelectItem key={s} value={s}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
@@ -291,12 +293,12 @@ export function StagesTasksTab({ projectId, stages, tasks, members, onChanged, o
                                 <TableCell>
                                   <button type="button" onClick={() => onOpenTask(t)} className={cn("text-left text-sm font-medium hover:text-primary hover:underline", t.status === "cancelled" && "text-muted-foreground line-through")}>{t.title}</button>
                                 </TableCell>
-                                <TableCell className="text-sm">{memberName(t.assignee_id)}</TableCell>
+                                <TableCell className="text-sm"><MemberCell members={members} userId={t.assignee_id} /></TableCell>
                                 <TableCell><PriorityBadge priority={t.priority} /></TableCell>
                                 <TableCell>
                                   <Select value={t.status} onValueChange={(v) => setStatus(t, v as TaskStatus)} disabled={busy === t.id}>
-                                    <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent>{Object.entries(TASK_STATUS).map(([s, m]) => <SelectItem key={s} value={s}>{m.label}</SelectItem>)}</SelectContent>
+                                    <SelectTrigger className={cn("h-8 w-[150px] border text-xs font-medium", TASK_STATUS[t.status]?.className)}><SelectValue /></SelectTrigger>
+                                    <SelectContent>{Object.entries(TASK_STATUS).map(([s, m]) => <SelectItem key={s} value={s}><StatusOption label={m.label} dot={m.dot} /></SelectItem>)}</SelectContent>
                                   </Select>
                                 </TableCell>
                                 <TableCell className={cn("whitespace-nowrap text-sm tabular-nums", late && "font-medium text-destructive")}>{formatDateBR(t.due_date)}</TableCell>

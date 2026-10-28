@@ -12,6 +12,19 @@ const db = supabase as any;
  * sininho o responsável da tarefa e quem já participou (feito pelo banco).
  */
 export function useTaskComments(taskId: string | null | undefined, members: AccountMember[] = []) {
+  return useTeamComments("task", taskId, members);
+}
+
+/** Chat interno do projeto inteiro (mesma tela do chat do CRM). */
+export function useProjectComments(projectId: string | null | undefined, members: AccountMember[] = []) {
+  return useTeamComments("project", projectId, members);
+}
+
+function useTeamComments(scope: "task" | "project", taskId: string | null | undefined, members: AccountMember[]) {
+  const table = scope === "task" ? "project_task_comments" : "project_comments";
+  const fk = scope === "task" ? "task_id" : "project_id";
+  const kind = scope === "task" ? "task_comment" : "project_comment";
+  const metaKey = scope === "task" ? "metadata->>task_id" : "metadata->>project_id";
   const { user } = useAuth();
   const [notes, setNotes] = useState<LeadNoteMessage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,24 +40,24 @@ export function useTaskComments(taskId: string | null | undefined, members: Acco
     if (!taskId) return;
     setLoading(true);
     const { data } = await db
-      .from("project_task_comments")
-      .select("id, task_id, user_id, content, reply_to_id, created_at")
-      .eq("task_id", taskId)
+      .from(table)
+      .select(`id, ${fk}, user_id, content, reply_to_id, created_at`)
+      .eq(fk, taskId)
       .order("created_at", { ascending: true })
       .limit(500);
-    setNotes(((data || []) as any[]).map((r) => ({ ...r, lead_id: r.task_id })));
+    setNotes(((data || []) as any[]).map((r) => ({ ...r, lead_id: r[fk] })));
     setLoading(false);
-  }, [taskId]);
+  }, [taskId, table, fk]);
 
   useEffect(() => {
     if (!taskId) { setNotes([]); return; }
     load();
     const channel = supabase
-      .channel(`task-comments-${taskId}-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "project_task_comments", filter: `task_id=eq.${taskId}` }, () => load())
+      .channel(`${scope}-comments-${taskId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table, filter: `${fk}=eq.${taskId}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [taskId, load]);
+  }, [taskId, load, table, fk, scope]);
 
   // Ao abrir a conversa, o aviso desta tarefa no sininho é marcado como lido.
   useEffect(() => {
@@ -52,11 +65,11 @@ export function useTaskComments(taskId: string | null | undefined, members: Acco
     db.from("user_notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("user_id", user.id)
-      .eq("kind", "task_comment")
+      .eq("kind", kind)
       .is("read_at", null)
-      .eq("metadata->>task_id", taskId)
+      .eq(metaKey, taskId)
       .then(() => undefined);
-  }, [taskId, user, notes.length]);
+  }, [taskId, user, notes.length, kind, metaKey]);
 
   const send = useCallback(async (content: string, replyToId?: string | null) => {
     const text = content.trim();
@@ -64,24 +77,24 @@ export function useTaskComments(taskId: string | null | undefined, members: Acco
     setSending(true);
     try {
       const { data, error } = await db
-        .from("project_task_comments")
-        .insert({ task_id: taskId, user_id: user.id, content: text, reply_to_id: replyToId || null })
-        .select("id, task_id, user_id, content, reply_to_id, created_at")
+        .from(table)
+        .insert({ [fk]: taskId, user_id: user.id, content: text, reply_to_id: replyToId || null })
+        .select(`id, ${fk}, user_id, content, reply_to_id, created_at`)
         .single();
-      if (error) throw new Error(error.message?.includes("row-level") ? "Você não tem acesso a esta tarefa." : "Não foi possível enviar a mensagem.");
-      const note = { ...data, lead_id: data.task_id } as LeadNoteMessage;
+      if (error) throw new Error(error.message?.includes("row-level") ? "Você não tem acesso a esta conversa." : "Não foi possível enviar a mensagem.");
+      const note = { ...data, lead_id: data[fk] } as LeadNoteMessage;
       setNotes((prev) => (prev.some((n) => n.id === note.id) ? prev : [...prev, note]));
       return note;
     } finally {
       setSending(false);
     }
-  }, [taskId, user]);
+  }, [taskId, user, table, fk]);
 
   const remove = useCallback(async (noteId: string) => {
-    const { error } = await db.from("project_task_comments").delete().eq("id", noteId);
+    const { error } = await db.from(table).delete().eq("id", noteId);
     if (error) throw new Error("Não foi possível remover a mensagem.");
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
-  }, []);
+  }, [table]);
 
   return { notes, authors, loading, sending, currentUserId: user?.id || null, send, remove, reload: load };
 }
