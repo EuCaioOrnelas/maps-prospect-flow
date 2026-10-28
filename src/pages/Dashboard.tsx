@@ -149,7 +149,7 @@ const Dashboard = () => {
         setShowCompanyOnboarding(true);
       }
     })();
-  }, [user, accountOwnerId]);
+  }, [user, accountOwnerId, guidedTourActive]);
 
   const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) + ((((profile as any).extra_opportunities_packs) || 0) * 1000) : 0;  // opportunities remaining (plan + bonus + add-on packs)
   // Perfil ainda carregando não pode ser tratado como "sem oportunidades"
