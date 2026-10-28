@@ -402,8 +402,8 @@ export default function ProjectsPage() {
 
           {/* Acompanhamento */}
           <div className="grid gap-3 lg:grid-cols-3">
-            <Card className="p-4">
-              <h2 className="mb-3 text-sm font-semibold">Entregas nos próximos 14 dias</h2>
+            <Card className="border-border/50 p-4 sm:p-5">
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Entregas nos próximos 14 dias</h2>
               <FollowList
                 loading={followUp.isLoading}
                 empty="Nenhuma entrega próxima."
@@ -420,8 +420,8 @@ export default function ProjectsPage() {
                 </>
               )}
             </Card>
-            <Card className="p-4">
-              <h2 className="mb-3 text-sm font-semibold">Projetos atrasados</h2>
+            <Card className="border-border/50 p-4 sm:p-5">
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Projetos atrasados</h2>
               <FollowList
                 loading={followUp.isLoading}
                 danger
@@ -441,8 +441,8 @@ export default function ProjectsPage() {
                 ))}
               </div>
             </Card>
-            <Card className="p-4">
-              <h2 className="mb-3 text-sm font-semibold">Atividades recentes</h2>
+            <Card className="border-border/50 p-4 sm:p-5">
+              <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Atividades recentes</h2>
               {followUp.isLoading ? (
                 <div className="space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-8 w-full" />)}</div>
               ) : (followUp.data?.activity.length ?? 0) === 0 ? (
@@ -469,7 +469,7 @@ export default function ProjectsPage() {
           </div>
 
           {/* Filtros */}
-          <Card className="p-3 sm:p-4">
+          <Card className="border-border/50 p-3 sm:p-4">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2 md:flex-row">
                 <div className="relative flex-1">
@@ -509,8 +509,8 @@ export default function ProjectsPage() {
                     {members.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.name || m.email}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Input type="date" aria-label="Prazo a partir de" value={dueFrom} onChange={(e) => setParam({ from: e.target.value })} className="h-9" />
-                <Input type="date" aria-label="Prazo até" value={dueTo} onChange={(e) => setParam({ to: e.target.value })} className="h-9" />
+                <div className="relative"><span className="pointer-events-none absolute -top-2 left-2.5 bg-card px-1 text-[10px] text-muted-foreground">Prazo de</span><Input type="date" aria-label="Prazo a partir de" value={dueFrom} onChange={(e) => setParam({ from: e.target.value })} className="h-9" /></div>
+                <div className="relative"><span className="pointer-events-none absolute -top-2 left-2.5 bg-card px-1 text-[10px] text-muted-foreground">Prazo até</span><Input type="date" aria-label="Prazo até" value={dueTo} onChange={(e) => setParam({ to: e.target.value })} className="h-9" /></div>
                 <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3">
                   <Label htmlFor="flt-overdue" className="text-xs">Só atrasados</Label>
                   <Switch id="flt-overdue" checked={overdueOnly} onCheckedChange={(v) => setParam({ overdue: v ? "1" : null })} />
@@ -531,7 +531,7 @@ export default function ProjectsPage() {
           </Card>
 
           {/* Tabela */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border-border/50">
             {list.isError ? (
               <div className="p-8 text-center text-sm text-destructive">{friendlyDbError(list.error)}</div>
             ) : list.isLoading ? (
