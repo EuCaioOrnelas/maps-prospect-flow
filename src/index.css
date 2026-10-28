@@ -98,6 +98,7 @@
     --success: 158 72% 38%;
     --warning: 45 93% 47%;
     --info: 200 98% 39%;
+    --review: 262 83% 58%;
 
     /* Chart colors - vibrant colors for dark theme */
     --chart-1: 158 72% 38%;
@@ -142,6 +143,7 @@
     --success: from oklch(0.74 0.16 158) h s l;
     --warning: from oklch(0.82 0.15 78) h s l;
     --info: from oklch(0.72 0.12 236) h s l;
+    --review: 262 70% 72%;
     --destructive: from oklch(0.62 0.2 22) h s l;
     --destructive-foreground: from oklch(0.98 0.005 250) h s l;
     --chart-1: from oklch(0.75 0.16 163) h s l;

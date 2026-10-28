@@ -62,6 +62,7 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        review: "hsl(var(--review))",
         "whatsapp-outgoing": "hsl(var(--whatsapp-outgoing))",
         "whatsapp-outgoing-foreground": "hsl(var(--whatsapp-outgoing-foreground))",
         "whatsapp-read": "hsl(var(--whatsapp-read))",
