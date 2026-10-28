@@ -441,7 +441,7 @@ export function EventDialog({
                   <Select value={form.event_type} onValueChange={(v) => set("event_type", v)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {EVENT_TYPES.map((t) => (
+                      {EVENT_TYPES.filter((t) => t.value !== "deadline").map((t) => (
                         <SelectItem key={t.value} value={t.value}>
                           <span className="flex items-center gap-2">
                             <t.icon className="h-4 w-4" />

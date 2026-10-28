@@ -160,7 +160,7 @@ export function QuickEditDialog({ open, onOpenChange, event, saving, onSave, onO
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {EVENT_TYPES.map((t) => (
+                  {EVENT_TYPES.filter((t) => t.value !== "deadline").map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
                     </SelectItem>
