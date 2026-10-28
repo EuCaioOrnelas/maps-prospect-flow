@@ -3,6 +3,10 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  AlignLeft,
+  History,
+  Layers,
+  Tag,
   Archive,
   ArchiveRestore,
   ArrowLeft,
@@ -56,7 +60,8 @@ import { TaskDialog } from "@/components/projects/TaskDialog";
 import { StagesTasksTab, stageSummary } from "@/components/projects/StagesTasksTab";
 import { ProjectFilesTab } from "@/components/projects/ProjectFilesTab";
 import { OverdueBadge, PriorityBadge, ProgressCell, ProjectStatusBadge, StatusOption } from "@/components/projects/ProjectBadges";
-import { MemberCell } from "@/components/projects/AssigneePicker";
+import { AssigneePicker, MemberAvatar, MemberCell } from "@/components/projects/AssigneePicker";
+import { RichTextView } from "@/components/projects/RichTextEditor";
 import { LeadNotesChat } from "@/components/crm/LeadNotesChat";
 import { useProjectComments } from "@/hooks/useTaskComments";
 import {
@@ -319,7 +324,7 @@ export default function ProjectDetail() {
                 ) : <span className="truncate">{clientLabel}</span>
               ) : <span className="text-muted-foreground">Sem cliente</span>}
             </InfoCell>
-            <InfoCell label="Responsável"><MemberCell members={members} userId={p.responsible_user_id} /></InfoCell>
+            <InfoCell label="Responsável"><AssigneePicker members={members} value={p.responsible_user_id} onChange={(v) => v !== p.responsible_user_id && update({ responsible_user_id: v } as any, "Responsável atualizado")} /></InfoCell>
             <InfoCell label="Período">
               <span className="inline-flex items-center gap-1.5 tabular-nums"><CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />{formatDateBR(p.start_date)} → <span className={cn(overdue && "font-medium text-destructive")}>{formatDateBR(p.due_date)}</span></span>
             </InfoCell>
@@ -352,55 +357,126 @@ export default function ProjectDetail() {
             <TabsTrigger value="tasks">Etapas e tarefas</TabsTrigger>
             <TabsTrigger value="chat" className="gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Chat do projeto</TabsTrigger>
             <TabsTrigger value="files">Arquivos</TabsTrigger>
-            <TabsTrigger value="activity">Atividade</TabsTrigger>
+            <TabsTrigger value="activity" className="gap-1.5"><History className="h-3.5 w-3.5" />Histórico</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-4">
-            <div className="grid gap-3 lg:grid-cols-3">
-              <Card className="space-y-5 border-border/50 p-4 sm:p-5 lg:col-span-2">
-                <div>
-                  <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Descrição</h3>
-                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">{p.description || "Sem descrição."}</p>
-                  {p.tags?.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">{p.tags.map((t) => <span key={t} className="rounded-md bg-muted px-2 py-0.5 text-xs">{t}</span>)}</div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Etapas</h3>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="space-y-4 lg:col-span-2">
+                <Card className="border-border/50">
+                  <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold"><AlignLeft className="h-4 w-4 text-primary" />Sobre o projeto</h3>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setEditOpen(true)}><Pencil className="mr-1.5 h-3.5 w-3.5" />Editar</Button>
+                  </div>
+                  <div className="space-y-4 px-5 py-4">
+                    <RichTextView html={p.description} empty="Nenhuma descrição. Clique em Editar para registrar objetivo, escopo e entregas." />
+                    {p.tags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 border-t border-border/60 pt-3">{p.tags.map((t) => <span key={t} className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/40 px-2 py-0.5 text-xs"><Tag className="h-3 w-3 text-muted-foreground" />{t}</span>)}</div>
+                    )}
+                  </div>
+                </Card>
+
+                <Card className="border-border/50">
+                  <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold"><Layers className="h-4 w-4 text-primary" />Etapas</h3>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setTab("tasks")}>Ver tarefas</Button>
+                  </div>
                   {summary.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhuma etapa criada. <button type="button" className="text-primary hover:underline" onClick={() => setTab("tasks")}>Criar etapas</button></p>
+                    <div className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhuma etapa criada. <button type="button" className="text-primary hover:underline" onClick={() => setTab("tasks")}>Criar etapas</button></div>
                   ) : (
-                    <ul className="space-y-2">
-                      {summary.map((s, i) => (
-                        <li key={s.stage.id} className="flex items-center gap-3">
-                          <span className="w-5 text-xs tabular-nums text-muted-foreground">{i + 1}.</span>
-                          <span className="min-w-0 flex-1 truncate text-sm">{s.stage.name}</span>
-                          <ProgressCell done={s.done} total={s.total} className="w-44" />
-                        </li>
-                      ))}
+                    <ul className="divide-y divide-border/60">
+                      {summary.map((s, i) => {
+                        const pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
+                        const complete = s.total > 0 && s.done === s.total;
+                        return (
+                          <li key={s.stage.id} className="flex items-center gap-4 px-5 py-3">
+                            <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums", complete ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>
+                              {complete ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-1.5 flex items-center justify-between gap-2">
+                                <span className="truncate text-sm font-medium">{s.stage.name}</span>
+                                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{s.done}/{s.total} · {pct}%</span>
+                              </div>
+                              <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full transition-all", complete ? "bg-success" : "bg-primary")} style={{ width: `${pct}%` }} /></div>
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
-                </div>
-                <div>
-                  <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Próximas entregas</h3>
-                  {upcoming.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma tarefa com prazo pendente.</p> : (
-                    <ul className="divide-y divide-border">
-                      {upcoming.map((t) => (
-                        <li key={t.id}>
-                          <button type="button" onClick={() => setTaskDialog({ open: true, task: t })} className="flex w-full items-center justify-between gap-3 py-2 text-left hover:text-primary">
-                            <span className="truncate text-sm">{t.title}</span>
-                            <span className={cn("shrink-0 text-xs tabular-nums", isTaskOverdue(t, today) ? "font-medium text-destructive" : "text-muted-foreground")}>{formatDateBR(t.due_date)}</span>
-                          </button>
-                        </li>
-                      ))}
+                </Card>
+
+                <Card className="border-border/50">
+                  <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold"><CalendarDays className="h-4 w-4 text-primary" />Próximas entregas</h3>
+                    <span className="text-xs text-muted-foreground">{upcoming.length} pendente(s)</span>
+                  </div>
+                  {upcoming.length === 0 ? <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nenhuma tarefa com prazo pendente.</p> : (
+                    <ul className="divide-y divide-border/60">
+                      {upcoming.map((t) => {
+                        const late = isTaskOverdue(t, today);
+                        const st = TASK_STATUS[t.status as keyof typeof TASK_STATUS];
+                        return (
+                          <li key={t.id}>
+                            <button type="button" onClick={() => setTaskDialog({ open: true, task: t })} className="flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-muted/40">
+                              <span className={cn("h-2 w-2 shrink-0 rounded-full", st?.dot)} title={st?.label} />
+                              <span className="min-w-0 flex-1 truncate text-sm font-medium">{t.title}</span>
+                              {t.assignee_id && <MemberAvatar member={members.find((m) => m.user_id === t.assignee_id)} />}
+                              <span className={cn("w-20 shrink-0 text-right text-xs tabular-nums", late ? "font-medium text-destructive" : "text-muted-foreground")}>{formatDateBR(t.due_date)}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
-                </div>
-              </Card>
-              <Card className="border-border/50 p-4 sm:p-5">
-                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Atividades recentes</h3>
-                <ActivityList limit={8} />
-              </Card>
+                </Card>
+              </div>
+
+              <div className="space-y-4">
+                <Card className="border-border/50 p-5">
+                  <h3 className="mb-4 text-sm font-semibold">Progresso geral</h3>
+                  {(() => {
+                    const pct = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
+                    const r = 42, c = 2 * Math.PI * r;
+                    return (
+                      <div className="flex items-center gap-5">
+                        <div className="relative h-28 w-28 shrink-0">
+                          <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+                            <circle cx="50" cy="50" r={r} fill="none" strokeWidth="9" className="stroke-muted" />
+                            <circle cx="50" cy="50" r={r} fill="none" strokeWidth="9" strokeLinecap="round" className="stroke-primary transition-all" strokeDasharray={c} strokeDashoffset={c - (c * pct) / 100} />
+                          </svg>
+                          <span className="absolute inset-0 flex items-center justify-center text-2xl font-bold tabular-nums">{pct}%</span>
+                        </div>
+                        <ul className="min-w-0 flex-1 space-y-2 text-sm">
+                          <li className="flex items-center justify-between"><span className="flex items-center gap-2 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-success" />Concluídas</span><span className="font-semibold tabular-nums">{stats.done}</span></li>
+                          <li className="flex items-center justify-between"><span className="flex items-center gap-2 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-info" />Pendentes</span><span className="font-semibold tabular-nums">{stats.pending}</span></li>
+                          <li className="flex items-center justify-between"><span className="flex items-center gap-2 text-muted-foreground"><span className="h-2 w-2 rounded-full bg-destructive" />Atrasadas</span><span className={cn("font-semibold tabular-nums", stats.late > 0 && "text-destructive")}>{stats.late}</span></li>
+                        </ul>
+                      </div>
+                    );
+                  })()}
+                </Card>
+
+                <Card className="border-border/50 p-5">
+                  <h3 className="mb-3 text-sm font-semibold">Detalhes</h3>
+                  <dl className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between gap-3"><dt className="text-muted-foreground">Status</dt><dd><ProjectStatusBadge status={p.status} /></dd></div>
+                    <div className="flex items-center justify-between gap-3"><dt className="text-muted-foreground">Prioridade</dt><dd><PriorityBadge priority={p.priority} /></dd></div>
+                    <div className="flex items-center justify-between gap-3"><dt className="text-muted-foreground">Início</dt><dd className="tabular-nums">{formatDateBR(p.start_date)}</dd></div>
+                    <div className="flex items-center justify-between gap-3"><dt className="text-muted-foreground">Prazo final</dt><dd className={cn("tabular-nums", overdue && "font-medium text-destructive")}>{formatDateBR(p.due_date)}</dd></div>
+                    <div className="flex items-center justify-between gap-3"><dt className="text-muted-foreground">Criado por</dt><dd><MemberCell members={members} userId={p.created_by} /></dd></div>
+                  </dl>
+                </Card>
+
+                <Card className="border-border/50">
+                  <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold"><History className="h-4 w-4 text-primary" />Histórico recente</h3>
+                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setTab("activity")}>Ver tudo</Button>
+                  </div>
+                  <div className="px-5 py-4"><ActivityList limit={6} /></div>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
