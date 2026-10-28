@@ -245,6 +245,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
               className="h-10 min-h-10 max-h-32 overflow-y-auto border-0 bg-transparent px-3 py-2.5 text-sm leading-5 resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 wa-scrollbar"
           />
           <Button
+            type="button"
             size="icon"
             onClick={handleSend}
             disabled={!draft.trim() || sending || !canWrite}
