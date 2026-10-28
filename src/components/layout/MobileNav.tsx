@@ -21,6 +21,7 @@ import {
   Flame,
   Bell,
   ChevronDown,
+  FolderKanban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -202,6 +203,9 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
                 )}
                 {can("crm") && (
                   <TopLink to="/crm" icon={Users} label="CRM" />
+                )}
+                {can("crm") && (
+                  <TopLink to="/projects" icon={FolderKanban} label="Projetos" />
                 )}
                 <TopLink to="/meta" icon={BarChart3} label="Meta (WhatsApp)" />
                 {isAdmin && (

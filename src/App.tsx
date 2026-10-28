@@ -80,6 +80,8 @@ const CRMRenewalSettings = lazyWithRetry(() => import("./pages/CRMRenewalSetting
 const AgendaEmailSettings = lazyWithRetry(() => import("./pages/AgendaEmailSettings"), "AgendaEmailSettings");
 const CRMInteligencia = lazyWithRetry(() => import("./pages/CRMInteligencia"), "CRMInteligencia");
 const Agenda = lazyWithRetry(() => import("./pages/Agenda"), "Agenda");
+const ProjectsPage = lazyWithRetry(() => import("./pages/projects/ProjectsPage"), "ProjectsPage");
+const ProjectDetail = lazyWithRetry(() => import("./pages/projects/ProjectDetail"), "ProjectDetail");
 const EquipeEmBreve = lazyWithRetry(() => import("./pages/equipe-ia/EquipeEmBreve"), "EquipeEmBreve");
 const Consultoria = lazyWithRetry(() => import("./pages/Consultoria"), "Consultoria");
 const ThankYou = lazyWithRetry(() => import("./pages/ThankYou"), "ThankYou");
@@ -377,6 +379,9 @@ const App = () => (
                 <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
                 <Route path="/crm/vendas" element={<ProtectedRoute><CRMSales /></ProtectedRoute>} />
                 <Route path="/crm/vendas/renovacao" element={<ProtectedRoute><CRMRenewalSettings /></ProtectedRoute>} />
+                <Route path="/projects" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><ProjectsPage /></Suspense></ProtectedRoute>} />
+                <Route path="/projects/new" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><ProjectsPage /></Suspense></ProtectedRoute>} />
+                <Route path="/projects/:id" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><ProjectDetail /></Suspense></ProtectedRoute>} />
                 <Route path="/agenda" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><Agenda /></Suspense></ProtectedRoute>} />
                 <Route path="/agenda/lembretes" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><AgendaEmailSettings /></Suspense></ProtectedRoute>} />
                 <Route path="/crm/vendas/compromissos" element={<Navigate to="/agenda/lembretes" replace />} />

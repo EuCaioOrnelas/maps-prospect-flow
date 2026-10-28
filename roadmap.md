@@ -59,3 +59,7 @@
 - [x] Deixar o card do CRM limpo, igual ao modelo: remover tempo relativo ("há 2 dias"), etiquetas e sugestão de próxima ação.
 - [x] Remover o botão "Criar cobrança" da tabela de Vendas e Receita (mantidos os indicadores de recebimento).
 - [x] Remover o botão "Criar cobrança" do card de venda na aba Vendas do contato (mantidos selos de status e indicadores de recebimento).
+
+- [x] Módulo de Projetos: listagem com indicadores, filtros e paginação no servidor; detalhes com etapas, tarefas, checklist, Kanban, arquivos e histórico; aba Projetos no cliente do CRM; prazos na Agenda.
+- [ ] Ativar o banco do módulo de Projetos (docs/sql/prod-modulo-projetos.sql) e testar de ponta a ponta; bloqueado: banco de testes pausado e produção externa.
+- [ ] Avisos automáticos de projeto (atribuição, prazo próximo); não existe sistema de avisos por usuário para reaproveitar.
