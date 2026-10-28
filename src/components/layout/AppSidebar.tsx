@@ -45,6 +45,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 
 import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
+import { useUserNotifications } from "@/hooks/useUserNotifications";
 import { useChatUnreadBadge } from "@/hooks/useChatUnreadBadge";
 import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 import { SidebarNavItem } from "./SidebarNavItem";
@@ -92,7 +93,9 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
 
-  const { unreadCount: unreadAnnouncements, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
+  const { unreadCount: unreadAnnouncementsBase, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
+  const userNotifications = useUserNotifications();
+  const unreadAnnouncements = unreadAnnouncementsBase + userNotifications.unreadCount;
   const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
@@ -668,6 +671,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
       {/* Announcements Dialog */}
       <AnnouncementsDialog 
+        notifications={userNotifications}
         open={announcementsOpen} 
         onOpenChange={setAnnouncementsOpen}
         disconnectedNumbers={disconnectedNumberAlerts}

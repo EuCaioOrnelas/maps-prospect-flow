@@ -60,7 +60,7 @@ import {
   TASK_STATUS,
   computeProgress,
   formatDateBR,
-  friendlyDbError,
+  friendlyDbError, deleteProjectCompletely,
   isProjectOverdue,
   isTaskOverdue,
   todayISO,
@@ -178,7 +178,7 @@ export default function ProjectDetail() {
   const doDelete = async () => {
     if (!p) return;
     setBusy(true);
-    const { error } = await db.from("projects").delete().eq("id", p.id);
+    const { error } = await deleteProjectCompletely(p.id);
     setBusy(false);
     if (error) return toast.error(friendlyDbError(error));
     toast.success("Projeto excluído");
@@ -429,7 +429,7 @@ export default function ProjectDetail() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
-            <AlertDialogDescription>Etapas, tarefas, checklists, arquivos e histórico serão apagados e os prazos saem da Agenda. Não é possível desfazer. Para só tirar da lista, use “Arquivar”.</AlertDialogDescription>
+            <AlertDialogDescription>Etapas, tarefas, checklists, conversas das tarefas, histórico e todos os arquivos enviados serão apagados, e os prazos saem da Agenda. <strong className="text-foreground">Depois de excluir, não dá para recuperar.</strong> Para só tirar da lista, use “Arquivar”.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

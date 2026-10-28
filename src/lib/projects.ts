@@ -48,6 +48,9 @@ export interface ProjectTask {
   priority: ProjectPriority;
   assignee_id: string | null;
   due_date: string | null;
+  /** Horário opcional (HH:MM:SS). Sem horário = vencimento do dia todo, não ocupa a Agenda. */
+  due_time?: string | null;
+  duration_minutes?: number;
   completed_at: string | null;
   position: number;
   checklist_total: number;
@@ -136,10 +139,34 @@ export function formatDateBR(d?: string | null): string {
 
 export function friendlyDbError(error: unknown): string {
   const msg = (error as { message?: string })?.message || "";
+  if ((error as { code?: string })?.code === "23P01" || msg.includes("calendar_events_no_overlap"))
+    return "Esse horário já está ocupado na Agenda do responsável. Escolha outro horário ou deixe sem horário (dia todo).";
   if (msg.includes("projects_dates_check")) return "O prazo final não pode ser antes da data de início.";
   if (msg.includes("não pertence") || msg.includes("inválida")) return msg;
   if (msg.includes("row-level security") || (error as { code?: string })?.code === "42501")
     return "Você não tem permissão para esta ação.";
   if ((error as { code?: string })?.code === "42P01") return "O módulo de Projetos ainda não foi ativado no banco.";
   return msg || "Não foi possível concluir. Tente novamente.";
+}
+
+/**
+ * Exclui o projeto por completo: primeiro os arquivos guardados, depois o
+ * projeto (etapas, tarefas, checklist, conversas, histórico e prazos da Agenda
+ * saem junto pelo banco). Não há como recuperar.
+ */
+export async function deleteProjectCompletely(projectId: string): Promise<{ error: unknown | null }> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const db = supabase as any;
+  const paths = new Set<string>();
+  const { data: rows } = await db.from("project_files").select("storage_path").eq("project_id", projectId);
+  (rows || []).forEach((r: { storage_path: string }) => r.storage_path && paths.add(r.storage_path));
+  const { data: listed } = await supabase.storage.from("project-files").list(projectId, { limit: 1000 });
+  (listed || []).forEach((f) => f.name && paths.add(`${projectId}/${f.name}`));
+  const all = [...paths];
+  for (let i = 0; i < all.length; i += 100) {
+    const { error } = await supabase.storage.from("project-files").remove(all.slice(i, i + 100));
+    if (error) return { error: new Error("Não foi possível apagar os arquivos do projeto. Nada foi excluído; tente novamente.") };
+  }
+  const { error } = await db.from("projects").delete().eq("id", projectId);
+  return { error };
 }

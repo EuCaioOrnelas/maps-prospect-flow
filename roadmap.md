@@ -63,3 +63,6 @@
 - [x] Módulo de Projetos: listagem com indicadores, filtros e paginação no servidor; detalhes com etapas, tarefas, checklist, Kanban, arquivos e histórico; aba Projetos no cliente do CRM; prazos na Agenda.
 - [ ] Ativar o banco do módulo de Projetos (docs/sql/prod-modulo-projetos.sql) e testar de ponta a ponta; bloqueado: banco de testes pausado e produção externa.
 - [ ] Avisos automáticos de projeto (atribuição, prazo próximo); não existe sistema de avisos por usuário para reaproveitar.
+
+- [x] Projetos: avisos de vencimento e de novas mensagens no sininho, conversa nas tarefas, exclusão total com arquivos, horário de tarefa ocupando a Agenda.
+- [ ] Ativar no banco (`docs/sql/prod-modulo-projetos.sql` e `docs/sql/prod-projetos-avisos-comentarios.sql`); bloqueado: banco de testes pausado, produção é externa.

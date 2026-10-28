@@ -4,7 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Check, Bell, CreditCard, WifiOff, Smartphone } from 'lucide-react';
+import { Check, Bell, CreditCard, WifiOff, Smartphone, CalendarClock, AlertTriangle, MessageSquare } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import type { useUserNotifications, UserNotification } from '@/hooks/useUserNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, differenceInDays } from 'date-fns';
@@ -31,9 +33,17 @@ interface AnnouncementsDialogProps {
   onOpenChange: (open: boolean) => void;
   disconnectedNumbers?: DisconnectedNumberAlert[];
   onDismissDisconnection?: (numberId: string) => void;
+  notifications?: ReturnType<typeof useUserNotifications>;
 }
 
-export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = [], onDismissDisconnection }: AnnouncementsDialogProps) => {
+const notificationStyle = (n: UserNotification) => {
+  if (n.kind === 'task_comment') return { Icon: MessageSquare, tone: 'bg-primary/10 text-primary', tag: 'Conversa' };
+  if (n.kind === 'project_due_overdue') return { Icon: AlertTriangle, tone: 'bg-destructive/10 text-destructive', tag: 'Atrasado' };
+  if (n.kind === 'project_due_today') return { Icon: CalendarClock, tone: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', tag: 'Hoje' };
+  return { Icon: CalendarClock, tone: 'bg-muted text-muted-foreground', tag: 'Amanhã' };
+};
+
+export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = [], onDismissDisconnection, notifications }: AnnouncementsDialogProps) => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -116,7 +126,11 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
       .filter(a => !readIds.has(a.id))
       .map(a => a.id);
     
-    if (unreadIds.length === 0) return;
+    notifications?.markAllRead();
+    if (unreadIds.length === 0) {
+      undismissedDisconnections.forEach(n => handleDismissDisconnection(n.id));
+      return;
+    }
 
     try {
       await supabase
@@ -142,7 +156,16 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
   const undismissedDisconnections = disconnectedNumbers.filter(n => !dismissedDisconnections.has(n.id));
   const unreadCount = announcements.filter(a => !readIds.has(a.id)).length;
   const hasRenewalReminder = subscriptionRenewalInfo !== null;
-  const totalUnread = unreadCount + undismissedDisconnections.length;
+  const personal = notifications?.items ?? [];
+  const totalUnread = unreadCount + undismissedDisconnections.length + (notifications?.unreadCount ?? 0);
+
+  const openNotification = (n: UserNotification) => {
+    notifications?.markRead(n.id);
+    if (n.link) {
+      onOpenChange(false);
+      navigate(n.link);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -216,6 +239,48 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
             </div>
           )}
 
+          {/* Avisos individuais: vencimentos e conversas das tarefas */}
+          {personal.length > 0 && (
+            <div className="mb-4">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Projetos e tarefas</p>
+              <ul className="space-y-1.5">
+                {personal.map(n => {
+                  const { Icon, tone, tag } = notificationStyle(n);
+                  const unread = !n.read_at;
+                  return (
+                    <li key={n.id}>
+                      <button
+                        type="button"
+                        onClick={() => openNotification(n)}
+                        className={cn(
+                          "w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted/50",
+                          unread ? "border-primary/20 bg-primary/5" : "border-border/50 bg-muted/20"
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]", tone)}>
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className={cn("flex-1 truncate text-sm", unread ? "font-semibold" : "font-medium text-muted-foreground")}>{n.title}</p>
+                              {unread && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Não lido" />}
+                            </div>
+                            {n.body && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>}
+                            <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+                              <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{tag}</Badge>
+                              <span>{formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ptBR })}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
           {/* Subscription Renewal Reminder */}
           {subscriptionRenewalInfo && (
             <div className="mb-4 p-4 rounded-lg border bg-amber-500/10 border-amber-500/30">
@@ -243,7 +308,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
-          ) : announcements.length === 0 && !hasRenewalReminder && undismissedDisconnections.length === 0 ? (
+          ) : announcements.length === 0 && !hasRenewalReminder && undismissedDisconnections.length === 0 && personal.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>Nenhum aviso no momento</p>

@@ -16,13 +16,18 @@ interface Props {
   className?: string;
   emptyHint?: string;
   heightClass?: string;
+  /** Fonte alternativa de mensagens (ex.: conversa da tarefa). Mesma tela do chat interno do CRM. */
+  controller?: ReturnType<typeof useLeadNotes>;
+  placeholder?: string;
 }
 
 const authorLabel = (author?: LeadNoteAuthor) =>
   author?.name || author?.email?.split("@")[0] || "Usuário";
 
-export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[420px]" }: Props) {
-  const { notes, authors, loading, sending, currentUserId, send, remove } = useLeadNotes(leadId);
+export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[420px]", controller, placeholder }: Props) {
+  const leadNotes = useLeadNotes(leadId, !controller);
+  const { notes, authors, loading, sending, currentUserId, send, remove } = controller ?? leadNotes;
+  const canWrite = !!controller || !!leadId;
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<LeadNoteMessage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -45,7 +50,7 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
   const handleSend = async () => {
     const text = draft.trim();
     if (!text || sending) return;
-    if (!leadId) {
+    if (!canWrite) {
       toast.error("Salve o contato no CRM antes de escrever notas");
       return;
     }
@@ -234,15 +239,16 @@ export function LeadNotesChat({ leadId, className, emptyHint, heightClass = "h-[
                 handleSend();
               }
             }}
-            placeholder={leadId ? "Escreva para a equipe..." : "Salve o contato no CRM para escrever"}
-            disabled={!leadId}
+            placeholder={canWrite ? (placeholder || "Escreva para a equipe...") : "Salve o contato no CRM para escrever"}
+            disabled={!canWrite}
               rows={1}
               className="h-10 min-h-10 max-h-32 overflow-y-auto border-0 bg-transparent px-3 py-2.5 text-sm leading-5 resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 wa-scrollbar"
           />
           <Button
+            type="button"
             size="icon"
             onClick={handleSend}
-            disabled={!draft.trim() || sending || !leadId}
+            disabled={!draft.trim() || sending || !canWrite}
               className="size-10 shrink-0 rounded-lg"
             aria-label="Enviar nota"
           >
