@@ -288,6 +288,13 @@
       "when": 1793215829501,
       "tag": "0040_projects_security_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793233030640,
+      "tag": "0041_fix_calendar_overlap_all_day",
+      "breakpoints": true
     }
   ]
 }
