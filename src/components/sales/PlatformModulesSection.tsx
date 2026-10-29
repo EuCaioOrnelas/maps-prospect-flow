@@ -39,6 +39,7 @@ import {
   BrainCircuit,
   ClipboardList,
   Link2,
+  FolderKanban,
 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { SectionHeading } from "@/components/landing/SectionHeading";
@@ -1157,6 +1158,90 @@ const FormsMock = () => (
 /* ------------------------------------------------------------------ */
 
 
+const ProjectsMock = () => {
+  const stages = [
+    { n: 1, name: "Briefing", pct: 100 },
+    { n: 2, name: "Execução", pct: 64 },
+    { n: 3, name: "Revisão", pct: 20 },
+    { n: 4, name: "Entrega final", pct: 0 },
+  ];
+  const tasks = [
+    { t: "Aprovar layout com cliente", s: "Em revisão", tone: "info" as const, d: "Hoje", a: 1 },
+    { t: "Configurar automações", s: "Em andamento", tone: "primary" as const, d: "Amanhã", a: 2 },
+    { t: "Treinamento da equipe", s: "A fazer", tone: "muted" as const, d: "05/11", a: 3 },
+  ];
+  return (
+    <MockShell title="Projetos — Implantação Studio Alfa" badge="em andamento">
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className="w-7 h-7 rounded-card bg-primary/12 flex items-center justify-center"><FolderKanban className="w-3.5 h-3.5 text-primary" /></div>
+        <div className="min-w-0">
+          <p className="text-[12px] font-bold text-foreground truncate">Implantação Studio Alfa</p>
+          <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><Building2 className="w-2.5 h-2.5" />Studio Alfa Arquitetura</div>
+        </div>
+        <div className="ml-auto flex items-center gap-1.5"><ContactAvatar index={0} className="w-5 h-5" /><Pill tone="amber">Alta</Pill></div>
+      </div>
+      <div className="grid grid-cols-4 gap-1.5 mb-2.5">
+        {[["Tarefas","24"],["Concluídas","15"],["Em aberto","9"],["Atrasadas","0"]].map(([l,v])=>(
+          <div key={l} className="rounded-card border border-border/60 bg-background/70 px-2 py-1.5">
+            <p className="text-[8px] uppercase tracking-wide text-muted-foreground">{l}</p>
+            <p className="text-[13px] font-bold text-foreground">{v}</p>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-5 gap-2 flex-1">
+        <div className="col-span-3 space-y-2">
+          <Row>
+            <p className="text-[10px] font-semibold text-foreground mb-1.5">Etapas</p>
+            <div className="space-y-1.5">
+              {stages.map((st)=>(
+                <div key={st.n} className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-muted text-[8px] font-bold flex items-center justify-center text-muted-foreground">{st.n}</span>
+                  <span className="text-[10px] text-foreground w-20 truncate">{st.name}</span>
+                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary rounded-full" style={{width:`${st.pct}%`}} /></div>
+                  <span className="text-[9px] text-muted-foreground w-7 text-right">{st.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </Row>
+          <Row>
+            <p className="text-[10px] font-semibold text-foreground mb-1.5">Próximas entregas</p>
+            <div className="space-y-1.5">
+              {tasks.map((tk)=>(
+                <div key={tk.t} className="flex items-center gap-2">
+                  <ContactAvatar index={tk.a} className="w-4 h-4" />
+                  <span className="text-[10px] text-foreground flex-1 truncate">{tk.t}</span>
+                  <Pill tone={tk.tone}>{tk.s}</Pill>
+                  <span className="text-[9px] text-muted-foreground w-10 text-right">{tk.d}</span>
+                </div>
+              ))}
+            </div>
+          </Row>
+        </div>
+        <div className="col-span-2 space-y-2">
+          <Row className="flex flex-col items-center">
+            <p className="text-[10px] font-semibold text-foreground self-start mb-1">Progresso geral</p>
+            <div className="relative w-20 h-20">
+              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                <circle cx="18" cy="18" r="15.9" fill="none" className="stroke-muted" strokeWidth="3" />
+                <circle cx="18" cy="18" r="15.9" fill="none" className="stroke-primary" strokeWidth="3" strokeDasharray="62 100" strokeLinecap="round" />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[14px] font-bold text-foreground">62%</span>
+            </div>
+          </Row>
+          <Row>
+            <p className="text-[10px] font-semibold text-foreground mb-1">Histórico</p>
+            <div className="space-y-1 text-[9px] text-muted-foreground">
+              <p><span className="text-foreground font-medium">Ana</span> concluiu "Briefing"</p>
+              <p><span className="text-foreground font-medium">Lucas</span> comentou em uma tarefa</p>
+              <p className="flex items-center gap-1"><CalendarDays className="w-2.5 h-2.5" />Prazo final: 30/11</p>
+            </div>
+          </Row>
+        </div>
+      </div>
+    </MockShell>
+  );
+};
+
 type ModuleItem = {
   icon: typeof Search;
   eyebrow: string;
@@ -1231,6 +1316,20 @@ const modules: ModuleItem[] = [
       "Conversas, atividades, histórico e etapa comercial ficam organizados sozinhos. Você vê na hora quais oportunidades merecem atenção.",
     benefits: ["Pipeline inteligente", "Intenção e risco por lead", "Histórico completo", "Próxima ação recomendada"],
     mock: CrmMock,
+  },
+  {
+    icon: FolderKanban,
+    eyebrow: "Projetos",
+    title: "Da venda fechada à entrega concluída",
+    description:
+      "Transforme cada venda em um projeto ligado ao cliente do CRM. Organize etapas, distribua tarefas para o time, acompanhe prazos na Agenda e converse sobre cada entrega sem sair da Wiize.",
+    benefits: [
+      "Projeto vinculado ao cliente do CRM",
+      "Etapas, tarefas e checklists com responsáveis",
+      "Prazos sincronizados com a Agenda",
+      "Chat interno e avisos de vencimento",
+    ],
+    mock: ProjectsMock,
   },
   {
     icon: MessageSquare,
@@ -1422,7 +1521,7 @@ export const PlatformModulesSection = () => {
           highlight="reunida em um só lugar"
           highlightFit="tight"
 
-          description="Agora que você viu a visão geral, veja o que existe dentro da plataforma: prospecção, formulários, links rastreados, SDR IA, agenda, campanhas, CRM, atendimento, automação e Wian AI."
+          description="Agora que você viu a visão geral, veja o que existe dentro da plataforma: prospecção, formulários, links rastreados, SDR IA, agenda, campanhas, CRM, projetos, atendimento, automação e Wian AI."
           isVisible={isVisible}
         />
 
