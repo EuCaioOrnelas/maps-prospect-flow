@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import {
-  ArrowLeft, Sparkles, Lightbulb, Users, BrainCircuit, Rocket, Send, ArrowRight, ArrowDown, ShieldCheck, Vote,
+  ArrowLeft, Lightbulb, Users, BrainCircuit, Rocket, Send, ArrowRight, ArrowDown, ShieldCheck, Vote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
