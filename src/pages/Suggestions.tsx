@@ -80,7 +80,7 @@ export default function Suggestions() {
                 Wiize Evolui
               </span>
               <h1 className="font-bold tracking-tight text-foreground leading-[1.05]">
-                <span className="block text-3xl sm:text-4xl lg:text-5xl">A próxima evolução da Wiize</span>
+                <span className="block text-3xl sm:text-4xl lg:text-5xl lg:whitespace-nowrap">A próxima evolução da Wiize</span>
                 <span className="block text-4xl sm:text-5xl lg:text-6xl text-shimmer-highlight mt-2 pb-1">
                   começa com você.
                 </span>
@@ -112,7 +112,7 @@ export default function Suggestions() {
             </div>
 
             <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[420px] lg:mx-0 lg:h-[520px] lg:max-w-none">
-              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[8%] lg:w-[640px]" />
+              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[18%] lg:w-[760px]" />
             </div>
           </section>
 
