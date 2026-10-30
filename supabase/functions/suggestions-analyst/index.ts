@@ -214,11 +214,13 @@ async function scoreGroup(
   metrics: { suggestions: number; users: number; companies: number; votes: number; recent30: number }
 ) {
   // Critérios objetivos (demanda) vêm de dados reais; os subjetivos a IA estima.
+  // Cada sugestão parecida enviada conta como um voto atribuído pela IA:
+  // demanda = votos diretos + envios semelhantes, com o mesmo peso.
+  const demandUnits = metrics.votes + metrics.suggestions;
   const demandRaw =
-    Math.min(metrics.suggestions / 10, 1) * 0.3 +
-    Math.min(metrics.users / 10, 1) * 0.3 +
-    Math.min(metrics.companies / 8, 1) * 0.2 +
-    Math.min(metrics.votes / 30, 1) * 0.2;
+    Math.min(demandUnits / 30, 1) * 0.6 +
+    Math.min(metrics.users / 10, 1) * 0.2 +
+    Math.min(metrics.companies / 8, 1) * 0.2;
   const demandScore = Math.round(demandRaw * 30); // 0-30
 
   const systemPrompt = `Você é um ANALISTA DE PRODUTO da Wiize (plataforma B2B de prospecção e CRM com IA).
@@ -235,7 +237,7 @@ Se faltar informação para um critério, use null nele e explique na justificat
 Problema: ${group.problem || "—"}
 Solução proposta: ${group.solution || "—"}
 Categoria: ${group.category || "—"}
-Dados reais: ${metrics.suggestions} sugestões, ${metrics.users} usuários, ${metrics.companies} empresas, ${metrics.votes} votos, ${metrics.recent30} sugestões nos últimos 30 dias.`;
+Dados reais: ${metrics.suggestions} sugestões, ${metrics.users} usuários, ${metrics.companies} empresas, ${metrics.votes} votos diretos (demanda total = ${metrics.votes + metrics.suggestions}, pois cada sugestão semelhante conta como voto), ${metrics.recent30} sugestões nos últimos 30 dias.`;
 
   const parsed = await callOpenAI(systemPrompt, userPrompt);
   const clamp = (v: any) => (typeof v === "number" && isFinite(v) ? Math.max(0, Math.min(10, Math.round(v))) : null);
