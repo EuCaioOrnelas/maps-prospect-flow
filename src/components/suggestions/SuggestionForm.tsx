@@ -127,7 +127,6 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
       setProblem("");
       setExpectedBehavior("");
       setExpectedBenefit("");
-      setExtraOpen(false);
       setSuccess(true);
       setLimitReached(true);
       onSubmitted?.();
