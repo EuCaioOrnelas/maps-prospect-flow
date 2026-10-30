@@ -102,7 +102,7 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
     setSubmitting(true);
     setSuccess(false);
     try {
-      const { error } = await supabase.from("suggestions").insert({
+      const { data: inserted, error } = await supabase.from("suggestions").insert({
         user_id: user.id,
         account_owner_id: (profile as any)?.parent_owner_id ?? user.id,
         company_name: companyName,
