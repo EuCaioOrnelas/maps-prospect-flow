@@ -62,6 +62,8 @@ const VALID_CATEGORIES = [
 ];
 
 interface IndividualAnalysis {
+  titulo_ideia: string;
+  resumo_ideia: string;
   problema: string;
   funcionalidade: string;
   objetivo: string;
