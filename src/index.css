@@ -2238,3 +2238,17 @@ body.tour-prewarm-lead [data-state="open"][class*="fixed inset-0"] {
   pointer-events: none;
   color: hsl(var(--muted-foreground));
 }
+
+/* ===== Fundo fixo nos modais (aviso de novidade e demais diálogos) =====
+   O travamento do Radix (body[data-scroll-locked]) esconde a barra de rolagem
+   e transforma o body em scroll container, o que desloca o fundo e desancora
+   elementos sticky. Regras fora de @layer para vencer o style injetado da lib. */
+html {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+html body[data-scroll-locked] {
+  overflow: clip !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
