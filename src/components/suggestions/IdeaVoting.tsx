@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronUp, Lightbulb, Loader2, MessageSquarePlus, Search, ChevronLeft, ChevronRight, Flame, Users } from "lucide-react";
+import { ChevronUp, Check, Lightbulb, Loader2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import confetti from "canvas-confetti";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
-  IDEA_STATUS_CLASS, IDEA_STATUS_LABEL, type IdeaPeriod, type IdeaStatus,
+  type IdeaPeriod, type IdeaStatus,
 } from "@/lib/suggestions";
 
 interface Idea {
@@ -83,7 +82,6 @@ export default function IdeaVoting() {
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageIdeas = visible.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const topDemand = visible[0]?.demand ?? 0;
 
   const toggleVote = async (idea: Idea, el: HTMLElement) => {
     if (!user?.id || busy) return;
@@ -111,134 +109,73 @@ export default function IdeaVoting() {
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Pesquisar ideias…"
-            className="h-11 rounded-xl border-border/60 bg-card pl-11"
-            aria-label="Pesquisar ideias"
-          />
-        </div>
-        <div className="inline-flex h-11 shrink-0 items-center rounded-xl border border-border/60 bg-muted/50 p-1">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="flex flex-col gap-4 border-b border-border px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Período das ideias">
           {PERIODS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setPeriod(p.id)}
-              className={cn(
-                "h-full rounded-lg px-3.5 text-xs font-medium transition-all",
-                period === p.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
+            <Button key={p.id} variant="ghost" size="sm" onClick={() => setPeriod(p.id)} aria-pressed={period === p.id}
+              className={cn("h-9 rounded-md px-4 text-xs font-medium shadow-none", period === p.id
+                ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground")}>
               {p.label}
-            </button>
+            </Button>
           ))}
         </div>
+        <div className="relative w-full sm:max-w-xs">
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Pesquisar ideias…"
+            className="h-10 rounded-md border-border bg-background pl-10" aria-label="Pesquisar ideias" />
+        </div>
       </div>
-
-      <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Users size={13} /> Sugestões parecidas viram uma única ideia. Cada envio também conta como interesse.
-      </p>
-
       {loading ? (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 w-full rounded-2xl" />)}
+        <div className="space-y-4 p-6 sm:p-8">
+          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-28 w-full rounded-md" />)}
         </div>
       ) : pageIdeas.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card py-16 text-center space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-            <Lightbulb size={22} className="text-muted-foreground" />
-          </div>
-          <p className="font-semibold text-foreground">
-            {search.trim() ? "Nenhuma ideia encontrada para essa pesquisa." : "Nenhuma ideia neste período."}
-          </p>
-          <p className="text-sm text-muted-foreground">Envie uma sugestão e ela aparecerá aqui depois da análise.</p>
+        <div className="space-y-3 px-6 py-16 text-center">
+          <Lightbulb size={24} className="mx-auto text-muted-foreground" />
+          <p className="font-medium text-foreground">{search.trim() ? "Nenhuma ideia encontrada." : "Nenhuma ideia neste período."}</p>
         </div>
       ) : (
         <>
-          <ul className="space-y-3">
-            {pageIdeas.map((idea, idx) => {
-              const rank = (currentPage - 1) * PAGE_SIZE + idx + 1;
-              const share = topDemand > 0 ? Math.max(6, Math.round((idea.demand / topDemand) * 100)) : 0;
-              return (
-                <li
-                  key={idea.id}
-                  className={cn(
-                    "group relative flex items-stretch gap-4 overflow-hidden rounded-2xl border bg-card p-4 sm:p-5 transition-all duration-300 animate-fade-in",
-                    "hover:-translate-y-0.5 hover:shadow-md",
-                    idea.user_voted ? "border-primary/40" : "border-border/60 hover:border-border",
-                  )}
-                  style={{ animationDelay: `${idx * 40}ms`, animationFillMode: "both" }}
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => toggleVote(idea, e.currentTarget)}
-                    disabled={busy === idea.id}
-                    aria-pressed={idea.user_voted}
+          <div className="hidden grid-cols-[minmax(0,1fr)_112px] gap-8 border-b border-border bg-muted/20 px-7 py-3 sm:grid">
+            <span className="text-xs font-medium text-muted-foreground">Ideias da comunidade</span>
+            <span className="text-center text-xs font-medium text-muted-foreground">Votos</span>
+          </div>
+          <ul className="divide-y divide-border">
+            {pageIdeas.map((idea) => (
+              <li key={idea.id} className={cn(
+                "grid grid-cols-[minmax(0,1fr)_64px] items-center gap-4 px-5 py-7 transition-colors duration-200 motion-reduce:transition-none sm:grid-cols-[minmax(0,1fr)_112px] sm:gap-8 sm:px-7 sm:py-8",
+                idea.user_voted ? "bg-primary/[0.025]" : "hover:bg-muted/20",
+              )}>
+                <div className="min-w-0">
+                  <h3 className="break-words text-base font-semibold leading-snug text-foreground sm:text-lg">{idea.name}</h3>
+                  {idea.description && <p className="mt-3 max-w-3xl whitespace-pre-wrap break-words text-sm leading-7 text-muted-foreground">{idea.description}</p>}
+                </div>
+                <div className="flex justify-center">
+                  <Button type="button" variant="outline" onClick={(e) => toggleVote(idea, e.currentTarget)}
+                    disabled={busy !== null} aria-pressed={idea.user_voted}
                     aria-label={idea.user_voted ? "Remover voto" : "Votar"}
-                    className={cn(
-                      "flex w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border transition-all duration-200 active:scale-90",
-                      idea.user_voted
-                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                        : "border-border bg-background text-foreground hover:border-primary/60 hover:text-primary",
-                      pop === idea.id && "scale-110",
-                    )}
-                  >
-                    {busy === idea.id
-                      ? <Loader2 size={18} className="animate-spin" />
-                      : <ChevronUp size={20} strokeWidth={2.5} className={cn("transition-transform", !idea.user_voted && "group-hover:-translate-y-0.5")} />}
-                    <span className="text-base font-bold tabular-nums leading-none">{idea.community_votes}</span>
-                    <span className="text-[10px] font-medium uppercase tracking-wide opacity-70">
-                      {idea.user_voted ? "Votado" : "Votar"}
-                    </span>
-                  </button>
-
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {rank <= 3 && !search.trim() && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground">
-                          <Flame size={11} className="text-primary" /> #{rank}
-                        </span>
-                      )}
-                      <Badge variant="outline" className={cn("rounded-full text-[11px]", IDEA_STATUS_CLASS[idea.public_status] || "")}>
-                        {IDEA_STATUS_LABEL[idea.public_status] || "Em análise e votação"}
-                      </Badge>
-                      {idea.category && (
-                        <span className="text-[11px] font-medium text-muted-foreground">{idea.category}</span>
-                      )}
-                    </div>
-                    <h3 className="text-base font-semibold leading-snug text-foreground">{idea.name}</h3>
-                    {idea.description && <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">{idea.description}</p>}
-                    <div className="flex items-center gap-3 pt-1">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${share}%` }} />
-                      </div>
-                      <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                        <MessageSquarePlus size={12} /> {idea.suggestions_count} {idea.suggestions_count === 1 ? "pedido" : "pedidos"}
-                        <span className="mx-1 opacity-40">·</span> demanda {idea.demand}
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+                    title={idea.user_voted ? "Remover meu voto" : "Votar nesta ideia"}
+                    className={cn("h-20 w-16 shrink-0 flex-col gap-1 rounded-md px-2 py-3 shadow-none transition-all duration-200 active:scale-95 motion-reduce:transform-none motion-reduce:transition-none sm:w-20",
+                      idea.user_voted ? "border-primary/25 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
+                      pop === idea.id && "scale-105",
+                    )}>
+                    {busy === idea.id ? <Loader2 size={17} className="animate-spin" /> : idea.user_voted ? <Check size={17} /> : <ChevronUp size={19} />}
+                    <span className="text-lg font-semibold leading-none tabular-nums">{idea.community_votes}</span>
+                    <span className="text-[10px] font-medium">{idea.user_voted ? "Votado" : "Votar"}</span>
+                  </Button>
+                </div>
+              </li>
+            ))}
           </ul>
-
           {totalPages > 1 && (
-            <div className="flex items-center justify-between gap-3 pt-1">
-              <p className="text-xs text-muted-foreground">
-                Página {currentPage} de {totalPages} · {visible.length} {visible.length === 1 ? "ideia" : "ideias"}
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4 sm:px-7">
+              <p className="text-xs text-muted-foreground">Página {currentPage} de {totalPages}</p>
               <div className="flex items-center gap-1.5">
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1} aria-label="Página anterior">
-                  <ChevronLeft size={14} /> Anterior
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} aria-label="Próxima página">
-                  Próxima <ChevronRight size={14} />
-                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1} aria-label="Página anterior"><ChevronLeft size={14} /> Anterior</Button>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} aria-label="Próxima página">Próxima <ChevronRight size={14} /></Button>
               </div>
             </div>
           )}
