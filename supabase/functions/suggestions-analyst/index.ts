@@ -334,7 +334,7 @@ Deno.serve(async (req) => {
     let query = svc.from("suggestions").select("*");
     if (ownSuggestionId) {
       query = query.eq("id", ownSuggestionId);
-    } else if (action === "reanalyze" && body?.suggestion_id) {
+    } else if ((action === "reanalyze" || action === "classify_mine") && typeof body?.suggestion_id === "string") {
       query = query.eq("id", body.suggestion_id);
     } else if (action === "process_pending") {
       query = query.in("ai_status", ["pendente", "falha"]).order("created_at", { ascending: true }).limit(limit);
