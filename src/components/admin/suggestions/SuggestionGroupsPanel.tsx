@@ -65,7 +65,7 @@ export default function SuggestionGroupsPanel() {
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     const orderCol =
-      sort === "votadas" ? "votes_total" :
+      sort === "votadas" ? "community_votes" :
       sort === "prioridade" ? "priority_score" :
       sort === "crescimento" ? "last_occurrence" : "users_count";
     const { data, error } = await supabase
@@ -258,7 +258,7 @@ export default function SuggestionGroupsPanel() {
                       <TableCell className="text-center text-sm">{g.suggestions_count}</TableCell>
                       <TableCell className="text-center text-sm">{g.users_count}</TableCell>
                       <TableCell className="text-center text-sm">{g.companies_count}</TableCell>
-                      <TableCell className="text-center text-sm">{g.votes_total}</TableCell>
+                      <TableCell className="text-center text-sm">{(g as any).community_votes ?? 0}</TableCell>
                       <TableCell className="text-center">
                         {g.priority_score !== null ? (
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-semibold">
