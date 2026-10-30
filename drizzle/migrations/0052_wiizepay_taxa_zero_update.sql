@@ -1,0 +1,3 @@
+INSERT INTO public.announcements (id,title,content,category,status,start_at,expires_at,priority,frequency,frequency_days,target_type,target_values,media_type,media_path,button_label,button_destination,button_new_tab)
+VALUES ('7c1e2a90-3b4d-4f5e-8a6b-1c2d3e4f5a60','WiizePay: taxa 0% por 3 meses','Receba pelo Pix e Boleto com taxa 0% nos primeiros 3 meses. Conecte a WiizePay e cobre seus clientes direto pelo CRM da Wiize, de forma simples e automática.','Novidade','published',now(),now()+interval '365 days',5,'30',30,'all','{}','image','7c1e2a90-3b4d-4f5e-8a6b-1c2d3e4f5a60/9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a.jpg','Conhecer a WiizePay','https://wiizepay.com.br',true)
+ON CONFLICT (id) DO NOTHING;
