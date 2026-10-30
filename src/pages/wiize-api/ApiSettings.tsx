@@ -16,7 +16,6 @@ import { PageHeader, SectionCard } from "@/components/wiize-api/WiizeApiUI";
 import { TwoFactorPanel } from "@/components/security/TwoFactorPanel";
 import { useApiKeys } from "@/hooks/useWiizeApi";
 import { supabase } from "@/integrations/supabase/client";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 type PrefKey = "low_balance" | "request_errors" | "monthly_report";
 
@@ -97,7 +96,7 @@ export default function ApiSettings() {
 
       <PageHeader title="Settings" description="Segurança, sessões, aparência e notificações." />
 
-      <ThemeToggle />
+      
 
       <SectionCard title="Segurança" description="Proteja o acesso à sua conta de infraestrutura" icon={ShieldCheck}>
         <div className="rounded-lg border border-border/70 p-4">

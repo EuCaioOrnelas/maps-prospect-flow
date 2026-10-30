@@ -1,3 +1,5 @@
+import { AccountMenu } from "./AccountMenu";
+import { OpportunityUsage } from "./OpportunityUsage";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -46,7 +48,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openSection, setOpenSection] = useState<SectionKey | null>(null);
   const location = useLocation();
-  const { trialDaysRemaining, isTrialing, profile: authProfile } = useAuth();
+  const { trialDaysRemaining, isTrialing, profile: authProfile, signOut } = useAuth();
   const { isAdmin } = useAdminCheck();
   const can = (key: FeatureKey) =>
     isAdmin ||
@@ -147,16 +149,16 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
 
   return (
     <div className="lg:hidden">
-      <button
-        className="p-2 text-muted-foreground hover:text-foreground"
+      <Button variant="outline" size="icon"
+        className="h-10 w-10 bg-background"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Abrir menu"
       >
         {isOpen ? <X size={22} /> : <Menu size={22} />}
-      </button>
+      </Button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full bg-card border-b border-border shadow-xl animate-fade-in z-50 max-h-[calc(100vh-57px)] overflow-y-auto">
+        <div className="fixed inset-x-3 bottom-16 z-[90] max-h-[80dvh] overflow-y-auto overscroll-contain rounded-lg border border-border bg-card shadow-xl">
           <div className="container mx-auto px-3 py-4">
             <div className="flex flex-col gap-3">
               {showTrialIndicator && (
@@ -219,7 +221,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
               </div>
 
               <div className="flex flex-col gap-1 pt-2 border-t border-border">
-                <TopLink to="/profile" icon={Users} label="Meu perfil" />
+                <OpportunityUsage/><AccountMenu/>
                 {(authProfile as any)?.plan?.toLowerCase?.() === "start" && !isLegacyPlanUser(authProfile as any) && (
                   <TopLink to="/upgrade" icon={Crown} label="Fazer Upgrade" highlight />
                 )}

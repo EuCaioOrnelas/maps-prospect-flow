@@ -1,3 +1,7 @@
+import { AccountMenu } from "./AccountMenu";
+import { OpportunityUsage } from "./OpportunityUsage";
+import { Button } from "@/components/ui/button";
+import { PanelLeft } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -71,6 +75,7 @@ interface AppSidebarProps {
 
 export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [tourForceOpen, setTourForceOpen] = useState(false);
   const [tourSection, setTourSection] = useState<string | null>(null);
@@ -136,7 +141,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
       setIsReportsOpen(tourSection === "dashboard");
       return;
     }
-    if (isHovered) {
+    if (isHovered || pinned) {
       expandTimeoutRef.current = setTimeout(() => {
         setIsExpanded(true);
       }, 50);
@@ -151,7 +156,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         clearTimeout(expandTimeoutRef.current);
       }
     };
-  }, [isHovered, tourForceOpen, tourSection]);
+  }, [isHovered, pinned, tourForceOpen, tourSection]);
 
   const getUserInitials = () => {
     if (profile?.name) {
@@ -230,7 +235,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
   return (
     <div
-      className="fixed left-0 top-0 h-screen z-[60] hidden lg:flex"
+      className="fixed left-0 top-0 h-[100dvh] z-[60] hidden lg:flex"
       onMouseEnter={() => {
         if (document.body.classList.contains("tour-active")) return;
         setIsHovered(true);
@@ -245,7 +250,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         className={cn(
           "h-full bg-sidebar border-r border-sidebar-border flex flex-col",
           "transition-[width] duration-300 ease-out overflow-hidden",
-          (isHovered || tourForceOpen) ? "w-[268px]" : "w-[72px]"
+          (isHovered || pinned || tourForceOpen) ? "w-[268px]" : "w-[72px]"
         )}
       >
         {/* Logo area - aligned with navbar height */}
@@ -264,7 +269,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
             <span
               className={cn(
                 "transition-all duration-200 ease-out flex items-center ml-1.5",
-                (isHovered || tourForceOpen)
+                (isHovered || pinned || tourForceOpen)
                   ? "opacity-100 translate-x-0" 
                   : "opacity-0 -translate-x-2 w-0 ml-0 overflow-hidden"
               )}
@@ -275,6 +280,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           </Link>
         </div>
 
+        <Button variant="ghost" size="icon" className="mx-4 h-8 w-10 shrink-0" aria-label={pinned ? "Recolher menu" : "Fixar menu aberto"} onClick={() => setPinned(v => !v)}><PanelLeft className="h-4 w-4" /></Button>
         {/* Main navigation */}
         <nav className="flex-1 py-2 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
@@ -534,7 +540,8 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
         <SidebarDivider className="my-2" />
 
         {/* Bottom navigation */}
-        <div className="py-4">
+        <div className="shrink-0 py-2">
+          <div className="px-4"><OpportunityUsage expanded={isExpanded}/></div>
           <ul className="space-y-1 px-4">
             {/* Upgrade */}
             {/* Upgrade — só para quem tem acesso a assinaturas (esconde para operacional) */}
@@ -609,52 +616,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             )}
 
-            {/* Profile */}
-            <li>
-              <Link
-                to="/profile"
-                className={cn(
-                  "relative flex items-center rounded-hover overflow-hidden transition-[background-color,color,width] duration-300 ease-out",
-                  "h-10 justify-start",
-                  isExpanded ? "w-full pl-12 pr-2.5" : "w-10",
-
-                  currentPath === "/profile"
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-sidebar-foreground/60 hover:text-primary hover:bg-primary/[0.07]"
-                )}
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "absolute left-0 inset-y-0 w-[3px] bg-primary",
-                    "transition-[opacity,transform] duration-300 ease-out origin-left",
-                    currentPath === "/profile" && isExpanded
-                      ? "opacity-100 scale-x-100"
-                      : "opacity-0 scale-x-0"
-                  )}
-                />
-                <span className="absolute left-0 top-0 w-10 h-10 flex items-center justify-center shrink-0">
-                  <Avatar
-                    className="h-8 w-8 rounded-hover overflow-hidden"
-                  >
-                    <AvatarImage
-                      className="h-full w-full object-cover rounded-none"
-                      src={profile?.avatar_url || undefined}
-                      alt={profile?.name || 'Perfil'}
-                    />
-                    <AvatarFallback className="rounded-none bg-primary/10 text-primary text-[11px] font-medium">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                </span>
-
-                {isExpanded && (
-                  <span className="whitespace-nowrap truncate overflow-hidden flex-1">
-                    {profile?.name || 'Meu Perfil'}
-                  </span>
-                )}
-              </Link>
-            </li>
+            <li><AccountMenu expanded={isExpanded}/></li>
           </ul>
         </div>
       </aside>

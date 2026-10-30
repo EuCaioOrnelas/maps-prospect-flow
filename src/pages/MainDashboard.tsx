@@ -1,3 +1,6 @@
+import { useTheme } from "@/contexts/ThemeContext";
+import { Button } from "@/components/ui/button";
+import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccountRole } from "@/hooks/useAccountRole";
@@ -38,6 +41,7 @@ const PERIOD_OPTIONS = [
 
 export default function MainDashboard() {
   const { profile } = useAuth();
+  const {resolvedTheme,toggleTheme}=useTheme();
   const { role: accountRole } = useAccountRole();
   useAutoScoreTracking("main_dashboard");
   const [period, setPeriod] = useState('30');
@@ -153,7 +157,7 @@ export default function MainDashboard() {
                     {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
-                <Select value={period} onValueChange={setPeriod}>
+                <div className="flex items-center gap-2"><Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleTheme} title={resolvedTheme === "light" ? "Ativar tema escuro" : "Ativar tema claro"} aria-label={resolvedTheme === "light" ? "Ativar tema escuro" : "Ativar tema claro"}>{resolvedTheme === "light" ? <Sun className="h-4 w-4"/> : <Moon className="h-4 w-4"/>}</Button><Select value={period} onValueChange={setPeriod}>
                   <SelectTrigger className="w-[170px] h-9 text-xs border-border/50">
                     <Calendar size={13} className="mr-1.5" />
                     <SelectValue />
@@ -163,7 +167,7 @@ export default function MainDashboard() {
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+                </Select></div>
               </div>
 
               <TrialAutoChargeBanner />

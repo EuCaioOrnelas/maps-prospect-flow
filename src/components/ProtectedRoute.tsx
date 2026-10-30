@@ -1,3 +1,4 @@
+import { UpdatesPresenter } from "@/components/updates/UpdatesPresenter";
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -225,6 +226,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     <DashboardThemeProvider>
       <TwoFactorGate>
         {children}
+        {!requireAdmin && needsOnboarding === false && <UpdatesPresenter blocked={mustChangePassword}/>}
         {mustChangePassword && (
           <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
         )}
