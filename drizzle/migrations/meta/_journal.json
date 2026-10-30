@@ -351,6 +351,13 @@
       "when": 1793381555929,
       "tag": "0049_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793381588304,
+      "tag": "0050_migration",
+      "breakpoints": true
     }
   ]
 }
