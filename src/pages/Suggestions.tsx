@@ -148,20 +148,39 @@ export default function Suggestions() {
             </div>
           </section>
 
-          {/* Formulário */}
+          {/* Sugerir / Votar */}
           <section id="enviar-sugestao" className="scroll-mt-6 py-10 sm:py-14 border-t border-border/50">
             <div className="space-y-6">
               <div className="text-center space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Sua ideia</p>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Envie sua sugestão</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  {tab === "suggest" ? "Envie sua sugestão" : "Vote nas ideias da comunidade"}
+                </h2>
                 <p className="text-sm text-muted-foreground">Todos os meses analisamos as ideias com maior potencial.</p>
               </div>
-              <SuggestionForm />
+              <div className="flex justify-center">
+                <div role="tablist" className="inline-flex rounded-xl border border-border/60 bg-muted/60 p-1">
+                  {([
+                    { id: "suggest", label: "Sugerir", icon: Lightbulb },
+                    { id: "vote", label: "Votar", icon: Vote },
+                  ] as const).map((t) => (
+                    <button
+                      key={t.id}
+                      role="tab"
+                      aria-selected={tab === t.id}
+                      onClick={() => setTab(t.id)}
+                      className={`inline-flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium transition-colors ${
+                        tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <t.icon size={15} />
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {tab === "suggest" ? <SuggestionForm /> : <SuggestionExplorer />}
             </div>
-          </section>
-
-          <section id="explorar" className="py-10 sm:py-14 border-t border-border/50">
-            <SuggestionExplorer />
           </section>
 
           <section className="pt-4">
