@@ -1,5 +1,9 @@
 -- Wiize: atualizações 0039 a 0051 em um único SQL (pode rodar mais de uma vez)
 
+-- Cria a pasta de arquivos dos avisos (privada). Sem ela os vídeos não sobem.
+INSERT INTO storage.buckets (id, name, public) VALUES ('wiize-updates','wiize-updates', false) ON CONFLICT (id) DO NOTHING;
+
+
 -- ===================== 0039_project_chat.sql =====================
 CREATE TABLE IF NOT EXISTS public.project_comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -596,9 +600,11 @@ IF NEW.poster_path IS NOT NULL AND NOT EXISTS(SELECT 1 FROM storage.objects WHER
 DROP TRIGGER IF EXISTS updates_validate_media_fields ON public.announcements;
 CREATE TRIGGER updates_validate_media_fields BEFORE INSERT OR UPDATE ON public.announcements FOR EACH ROW EXECUTE FUNCTION public.updates_validate_media_fields();
 -- ===================== 0046_migration.sql =====================
-UPDATE storage.objects SET metadata = jsonb_set(metadata,'{mimetype}','"video/mp4"') WHERE bucket_id='wiize-updates' AND name='11fc2a52-d56c-4e01-af15-f67421e248c3/7a1e0c4b-2f3d-4e5a-9b6c-1d2e3f4a5b6c.mp4';
+UPDATE storage.objects SET metadata = jsonb_set(metadata,'{mimetype}','"video/mp4"') WHERE bucket_id='wiize-updates' AND name='11fc2a52-d56c-4e01-af15-f67421e248c3/5b7e1c2a-8d3f-4e6a-9b1c-2d3e4f5a6b7c.mp4';
 ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS cleared_at timestamptz;
-UPDATE public.announcements SET media_type='video', media_path='11fc2a52-d56c-4e01-af15-f67421e248c3/7a1e0c4b-2f3d-4e5a-9b6c-1d2e3f4a5b6c.mp4', poster_path='11fc2a52-d56c-4e01-af15-f67421e248c3/8b2f1d5c-3e4f-4a6b-8c7d-2e3f4a5b6c7d.jpg' WHERE id='11fc2a52-d56c-4e01-af15-f67421e248c3';
+-- Vídeo do aviso "Novo: Projetos na Wiize". Só aplica se os arquivos já foram enviados
+-- para o bucket wiize-updates (suba os vídeos e rode este script de novo para ativar).
+UPDATE public.announcements SET media_type='video', media_path='11fc2a52-d56c-4e01-af15-f67421e248c3/5b7e1c2a-8d3f-4e6a-9b1c-2d3e4f5a6b7c.mp4', poster_path='11fc2a52-d56c-4e01-af15-f67421e248c3/ad4b3f7e-5a6b-4c8d-8e9f-4a5b6c7d8e9f.jpg' WHERE id='11fc2a52-d56c-4e01-af15-f67421e248c3' AND EXISTS(SELECT 1 FROM storage.objects WHERE bucket_id='wiize-updates' AND name='11fc2a52-d56c-4e01-af15-f67421e248c3/5b7e1c2a-8d3f-4e6a-9b1c-2d3e4f5a6b7c.mp4') AND EXISTS(SELECT 1 FROM storage.objects WHERE bucket_id='wiize-updates' AND name='11fc2a52-d56c-4e01-af15-f67421e248c3/ad4b3f7e-5a6b-4c8d-8e9f-4a5b6c7d8e9f.jpg');
 DELETE FROM public.announcement_user_state WHERE announcement_id='11fc2a52-d56c-4e01-af15-f67421e248c3' AND user_id='62ba5c53-a297-49cd-9ca3-b44302fc59f4';
 UPDATE public.user_notifications SET read_at=NULL, cleared_at=NULL WHERE user_id='62ba5c53-a297-49cd-9ca3-b44302fc59f4' AND dedupe_key='update:11fc2a52-d56c-4e01-af15-f67421e248c3:62ba5c53-a297-49cd-9ca3-b44302fc59f4';
 -- ===================== 0047_migration.sql =====================
@@ -616,6 +622,5 @@ DELETE FROM public.announcement_user_state WHERE announcement_id='11fc2a52-d56c-
 -- ===================== 0050_migration.sql =====================
 DELETE FROM public.announcement_user_state WHERE announcement_id='11fc2a52-d56c-4e01-af15-f67421e248c3' AND user_id='62ba5c53-a297-49cd-9ca3-b44302fc59f4';
 -- ===================== 0051_migration.sql =====================
-UPDATE storage.objects SET metadata = jsonb_set(metadata,'{mimetype}','"video/mp4"') WHERE bucket_id='wiize-updates' AND name='11fc2a52-d56c-4e01-af15-f67421e248c3/9c3a2e6d-4f5a-4b7c-9d8e-3f4a5b6c7d8e.mp4';
-UPDATE public.announcements SET media_type='video', media_path='11fc2a52-d56c-4e01-af15-f67421e248c3/9c3a2e6d-4f5a-4b7c-9d8e-3f4a5b6c7d8e.mp4', poster_path='11fc2a52-d56c-4e01-af15-f67421e248c3/ad4b3f7e-5a6b-4c8d-8e9f-4a5b6c7d8e9f.jpg' WHERE id='11fc2a52-d56c-4e01-af15-f67421e248c3';
+-- 0051: o vídeo da WiizePay tem aviso próprio (7c1e2a90), não pertence mais ao aviso de Projetos.
 DELETE FROM public.announcement_user_state WHERE announcement_id='11fc2a52-d56c-4e01-af15-f67421e248c3' AND user_id='62ba5c53-a297-49cd-9ca3-b44302fc59f4';
