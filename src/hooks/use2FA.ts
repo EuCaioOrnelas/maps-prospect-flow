@@ -15,9 +15,17 @@ export async function call2FA<T = any>(action: string, payload: Record<string, u
   if (!sessionData.session) {
     return { data: null as T | null, error: "unauthorized" as string | null };
   }
-  const { data, error } = await supabase.functions.invoke("security-2fa", {
+  const invoke = (token: string) => supabase.functions.invoke("security-2fa", {
     body: { action, ...payload },
+    headers: { Authorization: `Bearer ${token}` },
   });
+  let { data, error } = await invoke(sessionData.session.access_token);
+  if (error && (error as any).context?.status === 401) {
+    // Token vencido (ex.: aba voltou do segundo plano): renova a sessão e tenta uma vez.
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    if (!refreshed.session) return { data: null as T | null, error: "unauthorized" as string | null };
+    ({ data, error } = await invoke(refreshed.session.access_token));
+  }
   if (error) {
     // A edge function retorna erros de negócio no corpo; tenta extrair
     const ctx: any = (error as any).context;
