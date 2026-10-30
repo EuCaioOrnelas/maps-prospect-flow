@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import {
-  ArrowLeft, Sparkles, Lightbulb, Users, BrainCircuit, Rocket, Send, ArrowRight, ArrowDown, ShieldCheck, Vote,
+  ArrowLeft, Lightbulb, Users, BrainCircuit, Rocket, Send, ArrowRight, ArrowDown, ShieldCheck, Vote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -76,10 +76,6 @@ export default function Suggestions() {
           {/* Hero: texto à esquerda, globo à direita */}
           <section className="relative grid items-center gap-10 lg:grid-cols-[1.25fr_1fr] pt-10 sm:pt-16 pb-12 sm:pb-20">
             <div className="space-y-7 text-center lg:text-left">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                <Sparkles size={13} />
-                Wiize Evolui
-              </span>
               <h1 className="font-bold tracking-tight text-foreground leading-[1.05]">
                 <span className="block text-3xl sm:text-4xl lg:text-5xl lg:whitespace-nowrap">A próxima evolução da Wiize</span>
                 <span className="block text-4xl sm:text-5xl lg:text-6xl text-shimmer-highlight mt-2 pb-1">
@@ -104,16 +100,30 @@ export default function Suggestions() {
                 ))}
               </div>
 
-              <div className="flex justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3">
                 <Button size="lg" onClick={scrollToForm} className="w-full sm:w-auto h-12 px-7">
                   <Send size={16} className="mr-2" />
                   Enviar uma sugestão
                 </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => {
+                    setTab("vote");
+                    setTimeout(() => {
+                      document.getElementById("enviar-sugestao")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 50);
+                  }}
+                  className="w-full sm:w-auto h-12 px-7 bg-white text-foreground border-border/60 hover:bg-white/90"
+                >
+                  <Vote size={16} className="mr-2" />
+                  Votar em melhorias
+                </Button>
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[420px] lg:mx-0 lg:h-[520px] lg:max-w-none">
-              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[22%] lg:w-[700px]" />
+            <div className="relative mx-auto w-full max-w-[320px] sm:max-w-[440px] lg:mx-0 lg:h-[560px] lg:max-w-none">
+              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[2%] lg:w-[820px]" />
             </div>
           </section>
 
