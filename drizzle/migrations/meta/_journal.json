@@ -295,6 +295,13 @@
       "when": 1793233030640,
       "tag": "0041_fix_calendar_overlap_all_day",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793364816178,
+      "tag": "0042_wiize_evolui_suggestions_hub",
+      "breakpoints": true
     }
   ]
 }
