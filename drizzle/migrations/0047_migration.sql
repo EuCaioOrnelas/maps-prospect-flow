@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION public.updates_list_due()
+ RETURNS SETOF announcements LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public'
+AS $f$ SELECT a.* FROM public.announcements a LEFT JOIN public.announcement_user_state s ON s.announcement_id=a.id AND s.user_id=auth.uid() WHERE auth.uid() IS NOT NULL AND public.update_is_available(a,auth.uid()) AND public.update_is_due(a,s,coalesce(auth.jwt()->>'session_id',auth.jwt()->>'iat','')) ORDER BY a.priority DESC,a.start_at DESC LIMIT 50 $f$;
+DELETE FROM public.announcement_user_state WHERE announcement_id='11fc2a52-d56c-4e01-af15-f67421e248c3' AND user_id='62ba5c53-a297-49cd-9ca3-b44302fc59f4';
