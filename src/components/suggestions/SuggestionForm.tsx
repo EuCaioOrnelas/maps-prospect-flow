@@ -14,9 +14,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -58,7 +55,6 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
   const [problem, setProblem] = useState("");
   const [expectedBehavior, setExpectedBehavior] = useState("");
   const [expectedBenefit, setExpectedBenefit] = useState("");
-  const [extraOpen, setExtraOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [companyName, setCompanyName] = useState<string | null>(null);
@@ -131,7 +127,6 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
       setProblem("");
       setExpectedBehavior("");
       setExpectedBenefit("");
-      setExtraOpen(false);
       setSuccess(true);
       setLimitReached(true);
       onSubmitted?.();
@@ -336,14 +331,8 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
           </div>
 
           {/* Campos progressivos (opcionais) */}
-          <Collapsible open={extraOpen} onOpenChange={setExtraOpen}>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="ghost" size="sm" className="text-muted-foreground -ml-2">
-                <ChevronDown size={15} className={`mr-1.5 transition-transform ${extraOpen ? "rotate-180" : ""}`} />
-                {extraOpen ? "Ocultar detalhes opcionais" : "Adicionar mais detalhes (opcional)"}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-5 pt-3">
+          <div className="space-y-5 rounded-xl border border-border/60 bg-muted/30 p-4 sm:p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Detalhes opcionais</p>
               <div className="space-y-2">
                 <Label htmlFor="suggestion-problem" className="flex items-center gap-2">
                   <HelpCircle size={14} className="text-primary" />
@@ -392,8 +381,7 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
                   className="resize-none text-sm leading-relaxed"
                 />
               </div>
-            </CollapsibleContent>
-          </Collapsible>
+            </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
             <p className="text-[11px] text-muted-foreground break-words">
