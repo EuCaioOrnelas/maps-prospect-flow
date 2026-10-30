@@ -40,6 +40,7 @@ const notificationStyle = (n: UserNotification) => {
   if ((n.kind === 'task_comment' || n.kind === 'project_comment')) return { Icon: MessageSquare, tone: 'bg-primary/10 text-primary', tag: 'Conversa' };
   if (n.kind === 'project_due_overdue') return { Icon: AlertTriangle, tone: 'bg-destructive/10 text-destructive', tag: 'Atrasado' };
   if (n.kind === 'project_due_today') return { Icon: CalendarClock, tone: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', tag: 'Hoje' };
+  if (n.kind === 'suggestion_status') return { Icon: Lightbulb, tone: 'bg-primary/10 text-primary', tag: 'Wiize Evolui' };
   return { Icon: CalendarClock, tone: 'bg-muted text-muted-foreground', tag: 'Amanhã' };
 };
 
