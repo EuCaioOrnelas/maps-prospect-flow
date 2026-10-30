@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { SidebarNavItem } from "@/components/layout/SidebarNavItem";
-import ThemeSwitch from "@/components/ui/theme-switch";
 import logoIconNew from "@/assets/logo-icon-new.png";
 import logoWordmark from "@/assets/logo-wordmark.png";
 import logoWordmarkWhite from "@/assets/logo-wordmark-white.png";
@@ -155,7 +154,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Admin",
     icon: Shield,
     items: [
-      { title: "Avisos", url: "/admin/announcements", icon: Bell },
+      { title: "Novidades e comunicados", url: "/admin/announcements", icon: Bell },
       { title: "Termos", url: "/admin/termos", icon: ScrollText },
       { title: "Tags & Rastreamento", url: "/admin/tags", icon: Tags },
       { title: "Auditoria", url: "/admin/auditoria", icon: Lock },
@@ -317,16 +316,6 @@ export function AdminSidebar() {
         {/* Bottom */}
         <div className="py-4 border-t border-sidebar-border">
           <ul className="space-y-1 px-4">
-            <li className="flex items-center justify-center px-2.5 py-1">
-              {isExpanded ? (
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Tema</span>
-                  <ThemeSwitch />
-                </div>
-              ) : (
-                <ThemeSwitch className="[&_[role=switch]]:h-6 [&_[role=switch]]:w-10 [&_[role=switch]>span]:h-5 [&_[role=switch]>span]:w-5 [&_[role=switch]]:data-[state=checked]:[&>span]:translate-x-[16px] [&_.absolute]:hidden" />
-              )}
-            </li>
             <li>
               <SidebarNavItem
                 title="Voltar ao app"

@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Input } from "@/components/ui/input";
 import { useCompanyServices } from "@/hooks/useCompanyServices";
 import { Label } from "@/components/ui/label";
@@ -1314,7 +1313,7 @@ const Profile = () => {
           </Card>
 
           {/* Theme Toggle */}
-          <ThemeToggle />
+          
 
            <section aria-labelledby="profile-resources-title" className="space-y-3">
              <div>

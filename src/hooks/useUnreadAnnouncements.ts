@@ -36,7 +36,8 @@ export const useUnreadAnnouncements = () => {
           .eq('user_id', user.id);
 
         const readIds = new Set(reads?.map(r => r.announcement_id) || []);
-        const unreadAnnouncements = announcements?.filter(a => !readIds.has(a.id)).length || 0;
+        // Announcements are delivered through user_notifications; count only connection alerts here.
+        const unreadAnnouncements = 0;
 
         // Get disconnected Meta WABA numbers (anything other than 'active' is a problem)
         const { data: wabaData } = await supabase

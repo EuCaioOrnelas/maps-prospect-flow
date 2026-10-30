@@ -37,6 +37,7 @@ interface AnnouncementsDialogProps {
 }
 
 const notificationStyle = (n: UserNotification) => {
+  if (n.kind === 'wiize_update') return { Icon: Bell, tone: 'bg-primary/10 text-primary', tag: 'Novidade' };
   if ((n.kind === 'task_comment' || n.kind === 'project_comment')) return { Icon: MessageSquare, tone: 'bg-primary/10 text-primary', tag: 'Conversa' };
   if (n.kind === 'project_due_overdue') return { Icon: AlertTriangle, tone: 'bg-destructive/10 text-destructive', tag: 'Atrasado' };
   if (n.kind === 'project_due_today') return { Icon: CalendarClock, tone: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', tag: 'Hoje' };
@@ -97,7 +98,8 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
         .select('announcement_id')
         .eq('user_id', user.id);
 
-      setAnnouncements(announcementsData || []);
+      // Updates already appear once in the individual notification stream.
+      setAnnouncements([]);
       setReadIds(new Set(readsData?.map(r => r.announcement_id) || []));
     } catch (error) {
       console.error('Error fetching announcements:', error);
@@ -162,6 +164,11 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
 
   const openNotification = (n: UserNotification) => {
     notifications?.markRead(n.id);
+    if (n.kind === 'wiize_update' && typeof n.metadata.announcement_id === 'string') {
+      onOpenChange(false);
+      window.setTimeout(()=>window.dispatchEvent(new CustomEvent('wiize:open-update',{detail:n.metadata.announcement_id})),250);
+      return;
+    }
     if (n.link) {
       onOpenChange(false);
       navigate(n.link);
@@ -170,8 +177,8 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+      <DialogContent className="max-w-md h-[80dvh] max-h-[80dvh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
               <Bell className="w-5 h-5 text-primary" />
@@ -186,7 +193,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-6 py-4">
           {/* Disconnected Numbers Alerts */}
           {undismissedDisconnections.length > 0 && (
             <div className="space-y-3 mb-4">
@@ -243,7 +250,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
           {/* Avisos individuais: vencimentos e conversas das tarefas */}
           {personal.length > 0 && (
             <div className="mb-4">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Projetos e tarefas</p>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Suas notificações</p>
               <ul className="space-y-1.5">
                 {personal.map(n => {
                   const { Icon, tone, tag } = notificationStyle(n);
@@ -279,6 +286,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
                   );
                 })}
               </ul>
+              {notifications?.hasMore && <Button variant="ghost" className="mt-3 w-full" onClick={notifications.loadMore}>Carregar mais avisos</Button>}
             </div>
           )}
 
@@ -360,7 +368,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
