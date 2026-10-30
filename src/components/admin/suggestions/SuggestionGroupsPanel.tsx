@@ -20,6 +20,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { IDEA_STATUS_LABEL, IDEA_STATUS_OPTIONS, type IdeaStatus } from "@/lib/suggestions";
 import { useToast } from "@/hooks/use-toast";
 import {
   SUGGESTION_ALL_CATEGORIES,
@@ -64,7 +65,7 @@ export default function SuggestionGroupsPanel() {
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     const orderCol =
-      sort === "votadas" ? "votes_total" :
+      sort === "votadas" ? "community_votes" :
       sort === "prioridade" ? "priority_score" :
       sort === "crescimento" ? "last_occurrence" : "users_count";
     const { data, error } = await supabase
@@ -236,10 +237,11 @@ export default function SuggestionGroupsPanel() {
                     <TableHead className="text-center">Sugestões</TableHead>
                     <TableHead className="text-center">Usuários</TableHead>
                     <TableHead className="text-center">Empresas</TableHead>
-                    <TableHead className="text-center">Votos</TableHead>
+                    <TableHead className="text-center">Votos (comunidade)</TableHead>
                     <TableHead className="text-center">Prioridade IA</TableHead>
                     <TableHead>Confiança</TableHead>
                     <TableHead>Situação</TableHead>
+                    <TableHead>Status para usuários</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -256,7 +258,7 @@ export default function SuggestionGroupsPanel() {
                       <TableCell className="text-center text-sm">{g.suggestions_count}</TableCell>
                       <TableCell className="text-center text-sm">{g.users_count}</TableCell>
                       <TableCell className="text-center text-sm">{g.companies_count}</TableCell>
-                      <TableCell className="text-center text-sm">{g.votes_total}</TableCell>
+                      <TableCell className="text-center text-sm">{(g as any).community_votes ?? 0}</TableCell>
                       <TableCell className="text-center">
                         {g.priority_score !== null ? (
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-semibold">
@@ -272,6 +274,19 @@ export default function SuggestionGroupsPanel() {
                           {g.status === "revisao" && <AlertTriangle size={11} className="mr-1" />}
                           {GROUP_STATUS_LABEL[g.status] || g.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={((g as any).public_status as IdeaStatus) || "em_votacao"}
+                          onValueChange={(v) => updateGroup(g.id, { public_status: v }, "alterar_status_publico")}
+                        >
+                          <SelectTrigger className="h-8 w-48 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {IDEA_STATUS_OPTIONS.map((st) => (
+                              <SelectItem key={st} value={st}>{IDEA_STATUS_LABEL[st]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" onClick={() => openGroup(g)}>

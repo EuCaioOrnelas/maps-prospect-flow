@@ -271,7 +271,8 @@ async function refreshGroupTotals(svc: any, groupId: string) {
   const list = members || [];
   const users = new Set(list.map((m: any) => m.user_id)).size;
   const companies = new Set(list.map((m: any) => m.account_owner_id).filter(Boolean)).size;
-  const votes = list.reduce((acc: number, m: any) => acc + (m.vote_count || 0), 0);
+  const { data: g } = await svc.from("suggestion_groups").select("community_votes").eq("id", groupId).maybeSingle();
+  const votes = list.reduce((acc: number, m: any) => acc + (m.vote_count || 0), 0) + (g?.community_votes || 0);
   const dates = list.map((m: any) => m.created_at).sort();
   await svc
     .from("suggestion_groups")
@@ -311,19 +312,29 @@ Deno.serve(async (req) => {
     const { data: roleRow } = await authClient
       .from("user_roles").select("role")
       .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
-    if (!roleRow) return json({ error: "forbidden" }, 403);
-
     const svc = createClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
     const body = await req.json().catch(() => ({}));
     const action = body?.action || "process_pending";
+    // Autor pode pedir a classificação imediata da própria sugestão recém-enviada
+    let ownSuggestionId: string | null = null;
+    if (!roleRow) {
+      if (action !== "classify_mine" || typeof body?.suggestion_id !== "string") return json({ error: "forbidden" }, 403);
+      const { data: own } = await svc.from("suggestions").select("id, user_id, ai_status")
+        .eq("id", body.suggestion_id).maybeSingle();
+      if (!own || own.user_id !== userData.user.id) return json({ error: "forbidden" }, 403);
+      if (!["pendente", "falha"].includes(own.ai_status)) return json({ processed: 0 });
+      ownSuggestionId = own.id;
+    }
     const limit = Math.min(Math.max(Number(body?.limit) || 10, 1), 25);
 
     // Seleciona sugestões a processar
     let query = svc.from("suggestions").select("*");
-    if (action === "reanalyze" && body?.suggestion_id) {
+    if (ownSuggestionId) {
+      query = query.eq("id", ownSuggestionId);
+    } else if (action === "reanalyze" && body?.suggestion_id) {
       query = query.eq("id", body.suggestion_id);
     } else if (action === "process_pending") {
       query = query.in("ai_status", ["pendente", "falha"]).order("created_at", { ascending: true }).limit(limit);
@@ -354,7 +365,7 @@ Deno.serve(async (req) => {
         .from("suggestions")
         .update({ ai_status: "processando" })
         .eq("id", s.id)
-        .in("ai_status", action === "reanalyze" ? ["pendente", "falha", "analisada", "revisao", "processando"] : ["pendente", "falha"])
+        .in("ai_status", action === "reanalyze" && !ownSuggestionId ? ["pendente", "falha", "analisada", "revisao", "processando"] : ["pendente", "falha"])
         .select("id");
       if (!claimed || claimed.length === 0) continue;
 

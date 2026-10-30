@@ -10534,10 +10534,40 @@ export type Database = {
         }
         Relationships: []
       }
+      suggestion_group_votes: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_group_votes_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestion_groups: {
         Row: {
           admin_locked: boolean
           category: string | null
+          community_votes: number
           companies_count: number
           confidence: string | null
           created_at: string
@@ -10550,6 +10580,7 @@ export type Database = {
           priority_reason: string | null
           priority_score: number | null
           problem: string | null
+          public_status: string
           solution: string | null
           status: string
           suggestions_count: number
@@ -10560,6 +10591,7 @@ export type Database = {
         Insert: {
           admin_locked?: boolean
           category?: string | null
+          community_votes?: number
           companies_count?: number
           confidence?: string | null
           created_at?: string
@@ -10572,6 +10604,7 @@ export type Database = {
           priority_reason?: string | null
           priority_score?: number | null
           problem?: string | null
+          public_status?: string
           solution?: string | null
           status?: string
           suggestions_count?: number
@@ -10582,6 +10615,7 @@ export type Database = {
         Update: {
           admin_locked?: boolean
           category?: string | null
+          community_votes?: number
           companies_count?: number
           confidence?: string | null
           created_at?: string
@@ -10594,6 +10628,7 @@ export type Database = {
           priority_reason?: string | null
           priority_score?: number | null
           problem?: string | null
+          public_status?: string
           solution?: string | null
           status?: string
           suggestions_count?: number
@@ -15052,6 +15087,21 @@ export type Database = {
       is_member_available: { Args: { _user_id: string }; Returns: boolean }
       is_my_account_member: { Args: { _uid: string }; Returns: boolean }
       is_user_blocked: { Args: { p_user_id: string }; Returns: boolean }
+      list_suggestion_ideas: {
+        Args: { _period?: string }
+        Returns: {
+          category: string
+          community_votes: number
+          demand: number
+          description: string
+          id: string
+          last_activity: string
+          name: string
+          public_status: string
+          suggestions_count: number
+          user_voted: boolean
+        }[]
+      }
       log_plan_downgrade: {
         Args: {
           _metadata?: Json

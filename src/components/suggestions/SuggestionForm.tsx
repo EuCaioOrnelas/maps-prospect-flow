@@ -102,7 +102,7 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
     setSubmitting(true);
     setSuccess(false);
     try {
-      const { error } = await supabase.from("suggestions").insert({
+      const { data: inserted, error } = await supabase.from("suggestions").insert({
         user_id: user.id,
         account_owner_id: (profile as any)?.parent_owner_id ?? user.id,
         company_name: companyName,
@@ -118,8 +118,14 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
         problem: problem.trim() ? problem.trim().slice(0, SUGGESTION_FIELD_MAX) : null,
         expected_behavior: expectedBehavior.trim() ? expectedBehavior.trim().slice(0, SUGGESTION_FIELD_MAX) : null,
         expected_benefit: expectedBenefit.trim() ? expectedBenefit.trim().slice(0, SUGGESTION_FIELD_MAX) : null,
-      } as any);
+      } as any).select("id").maybeSingle();
       if (error) throw error;
+      // A IA agrupa a sugestão em uma ideia de votação (em segundo plano, sem travar o envio)
+      if ((inserted as any)?.id) {
+        supabase.functions
+          .invoke("suggestions-analyst", { body: { action: "classify_mine", suggestion_id: (inserted as any).id } })
+          .catch(() => undefined);
+      }
       setTitle("");
       setCategory("");
       setImportance("");

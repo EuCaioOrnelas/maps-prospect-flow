@@ -330,3 +330,20 @@ export function formatSuggestionDateShort(value: string | null | undefined) {
     return "—";
   }
 }
+
+// ===== Ideias de votação (grupos unificados pela IA) =====
+export type IdeaStatus = "em_votacao" | "em_desenvolvimento" | "lancada" | "publicada";
+export const IDEA_STATUS_OPTIONS: IdeaStatus[] = ["em_votacao", "em_desenvolvimento", "lancada", "publicada"];
+export const IDEA_STATUS_LABEL: Record<IdeaStatus, string> = {
+  em_votacao: "Em análise e votação",
+  em_desenvolvimento: "Em desenvolvimento",
+  lancada: "Lançada",
+  publicada: "Publicada",
+};
+export const IDEA_STATUS_CLASS: Record<IdeaStatus, string> = {
+  em_votacao: "bg-muted text-muted-foreground border-border",
+  em_desenvolvimento: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  lancada: "bg-primary/10 text-primary border-primary/20",
+  publicada: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+};
+export type IdeaPeriod = "month" | "year" | "all";
