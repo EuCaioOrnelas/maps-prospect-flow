@@ -204,18 +204,20 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
 
   return (
     <Card className="border-border/60 overflow-hidden">
-      <div className="relative border-b border-border/60 px-4 sm:px-6 py-4 flex items-center gap-3 bg-gradient-to-b from-primary/15 via-primary/5 to-transparent">
-        <div className="h-10 w-10 rounded-xl bg-primary border border-primary flex items-center justify-center shrink-0">
-          <Lightbulb size={20} className="text-white" />
+      <div className="flex items-center justify-between gap-4 border-b border-border/60 px-5 sm:px-7 py-5">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="h-11 w-11 rounded-2xl bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center shrink-0">
+            <Lightbulb size={20} className="text-primary" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">Nova sugestão</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground">Quanto mais detalhes, maior a chance de priorizarmos rápido.</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h2 className="text-base sm:text-lg font-semibold text-foreground">
-            Sugestão de melhoria
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Quanto mais detalhes, maior a chance de priorizarmos rápido.
-          </p>
-        </div>
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-[11px] font-medium text-muted-foreground shrink-0">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          Leva menos de 2 minutos
+        </span>
       </div>
 
       <CardContent className="p-4 sm:p-6 space-y-5">
