@@ -32,7 +32,7 @@ export function GlobePulse({ className = "" }: { className?: string }) {
         theta: 0.25,
         dark: dark ? 1 : 0,
         diffuse: 1.2,
-        mapSamples: 12000,
+        mapSamples: 0,
         mapBrightness: 0,
         baseColor: dark ? [0.3, 0.3, 0.3] : [1, 1, 1],
         markerColor: dark ? [0.85, 0.85, 0.85] : [0.15, 0.15, 0.15],
