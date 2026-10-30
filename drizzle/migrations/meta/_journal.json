@@ -372,6 +372,13 @@
       "when": 1793387490687,
       "tag": "0052_wiizepay_taxa_zero_update",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793388194598,
+      "tag": "0053_wiizepay_update_audience_and_rotation",
+      "breakpoints": true
     }
   ]
 }
