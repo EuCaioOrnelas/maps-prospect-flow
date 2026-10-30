@@ -1,0 +1,3 @@
+UPDATE storage.objects SET metadata = jsonb_set(metadata,'{mimetype}','"video/mp4"') WHERE bucket_id='wiize-updates' AND name='11fc2a52-d56c-4e01-af15-f67421e248c3/9c3a2e6d-4f5a-4b7c-9d8e-3f4a5b6c7d8e.mp4';
+UPDATE public.announcements SET media_type='video', media_path='11fc2a52-d56c-4e01-af15-f67421e248c3/9c3a2e6d-4f5a-4b7c-9d8e-3f4a5b6c7d8e.mp4', poster_path='11fc2a52-d56c-4e01-af15-f67421e248c3/ad4b3f7e-5a6b-4c8d-8e9f-4a5b6c7d8e9f.jpg' WHERE id='11fc2a52-d56c-4e01-af15-f67421e248c3';
+DELETE FROM public.announcement_user_state WHERE announcement_id='11fc2a52-d56c-4e01-af15-f67421e248c3' AND user_id='62ba5c53-a297-49cd-9ca3-b44302fc59f4';
