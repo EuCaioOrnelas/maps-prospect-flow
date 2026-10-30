@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import SuggestionForm from "@/components/suggestions/SuggestionForm";
-import SuggestionExplorer from "@/components/suggestions/SuggestionExplorer";
+import IdeaVoting from "@/components/suggestions/IdeaVoting";
 import { GlobePulse } from "@/components/suggestions/GlobePulse";
 import SuggestionReleases from "@/components/suggestions/SuggestionReleases";
 
@@ -113,7 +113,7 @@ export default function Suggestions() {
             </div>
 
             <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[420px] lg:mx-0 lg:h-[520px] lg:max-w-none">
-              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[40%] lg:w-[600px]" />
+              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[22%] lg:w-[700px]" />
             </div>
           </section>
 
@@ -180,7 +180,7 @@ export default function Suggestions() {
                   ))}
                 </div>
               </div>
-              {tab === "suggest" ? <SuggestionForm /> : <SuggestionExplorer />}
+              {tab === "suggest" ? <SuggestionForm /> : <IdeaVoting />}
             </div>
           </section>
 
