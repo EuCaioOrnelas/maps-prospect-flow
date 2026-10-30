@@ -1206,28 +1206,182 @@ export type Database = {
           },
         ]
       }
+      announcement_admin_audit: {
+        Row: {
+          action: string
+          announcement_id: string
+          created_at: string
+          id: string
+          record: Json
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          announcement_id: string
+          created_at?: string
+          id?: string
+          record: Json
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          announcement_id?: string
+          created_at?: string
+          id?: string
+          record?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      announcement_events: {
+        Row: {
+          announcement_id: string
+          created_at: string
+          event_type: string
+          id: string
+          presentation_id: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          presentation_id: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          presentation_id?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_events_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcement_user_state: {
+        Row: {
+          announcement_id: string
+          click_count: number
+          dismissed_at: string | null
+          first_viewed_at: string | null
+          last_session_id: string | null
+          last_viewed_at: string | null
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          announcement_id: string
+          click_count?: number
+          dismissed_at?: string | null
+          first_viewed_at?: string | null
+          last_session_id?: string | null
+          last_viewed_at?: string | null
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          announcement_id?: string
+          click_count?: number
+          dismissed_at?: string | null
+          first_viewed_at?: string | null
+          last_session_id?: string | null
+          last_viewed_at?: string | null
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_user_state_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcements: {
         Row: {
+          button_destination: string | null
+          button_label: string | null
+          button_new_tab: boolean
+          category: string
           content: string
           created_at: string
+          created_by: string | null
+          deleted_at: string | null
           expires_at: string
+          frequency: string
+          frequency_days: number
           id: string
+          media_path: string | null
+          media_type: string
+          poster_path: string | null
+          priority: number
+          start_at: string
+          status: string
+          target_type: string
+          target_values: string[]
           title: string
           updated_at: string
         }
         Insert: {
+          button_destination?: string | null
+          button_label?: string | null
+          button_new_tab?: boolean
+          category?: string
           content: string
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           expires_at: string
+          frequency?: string
+          frequency_days?: number
           id?: string
+          media_path?: string | null
+          media_type?: string
+          poster_path?: string | null
+          priority?: number
+          start_at?: string
+          status?: string
+          target_type?: string
+          target_values?: string[]
           title: string
           updated_at?: string
         }
         Update: {
+          button_destination?: string | null
+          button_label?: string | null
+          button_new_tab?: boolean
+          category?: string
           content?: string
           created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
           expires_at?: string
+          frequency?: string
+          frequency_days?: number
           id?: string
+          media_path?: string | null
+          media_type?: string
+          poster_path?: string | null
+          priority?: number
+          start_at?: string
+          status?: string
+          target_type?: string
+          target_values?: string[]
           title?: string
           updated_at?: string
         }
@@ -15304,10 +15458,76 @@ export type Database = {
         Returns: boolean
       }
       unaccent_simple: { Args: { input: string }; Returns: string }
+      update_audience_matches: {
+        Args: {
+          a: Database["public"]["Tables"]["announcements"]["Row"]
+          u: string
+        }
+        Returns: boolean
+      }
+      update_is_available: {
+        Args: {
+          a: Database["public"]["Tables"]["announcements"]["Row"]
+          u: string
+        }
+        Returns: boolean
+      }
+      update_is_due: {
+        Args: {
+          a: Database["public"]["Tables"]["announcements"]["Row"]
+          s: Database["public"]["Tables"]["announcement_user_state"]["Row"]
+          sid: string
+        }
+        Returns: boolean
+      }
       update_partner_goal_progress: {
         Args: { p_partner_id: string }
         Returns: undefined
       }
+      updates_list_due: {
+        Args: never
+        Returns: {
+          button_destination: string | null
+          button_label: string | null
+          button_new_tab: boolean
+          category: string
+          content: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          expires_at: string
+          frequency: string
+          frequency_days: number
+          id: string
+          media_path: string | null
+          media_type: string
+          poster_path: string | null
+          priority: number
+          start_at: string
+          status: string
+          target_type: string
+          target_values: string[]
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "announcements"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      updates_metrics: { Args: { _from: string; _to: string }; Returns: Json }
+      updates_record_event: {
+        Args: {
+          _automatic?: boolean
+          _event: string
+          _id: string
+          _presentation: string
+        }
+        Returns: boolean
+      }
+      updates_sync_me: { Args: never; Returns: undefined }
       user_has_real_payment: { Args: { _user_id: string }; Returns: boolean }
       validate_partner_referral_code: { Args: { _code: string }; Returns: Json }
       verify_partner_public: {
