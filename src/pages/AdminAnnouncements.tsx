@@ -15,7 +15,7 @@ import { UpdateModal } from '@/components/updates/UpdateModal';
 import { frequencyLabels,statusLabels,safeUpdateDestination,validateUpdateFile,type WiizeUpdate } from '@/lib/updates';
 import { toast } from 'sonner';
 const db=supabase as any;
-const targets:Record<string,string>={all:'Todos os usuários',free:'Usuários gratuitos',plans:'Planos',companies:'Empresas',users:'Usuários',roles:'Funções da conta'};
+const targets:Record<string,string>={all:'Todos os usuários',free:'Usuários gratuitos',plans:'Planos',companies:'Empresas',users:'Usuários',roles:'Funções da conta',no_wiizepay:'Sem conta na WiizePay'};
 function localDate(value:string){return new Date(new Date(value).getTime()-3*3600000).toISOString().slice(0,16);}
 function toUTC(value:string){return new Date(value+':00-03:00').toISOString();}
 function initial():WiizeUpdate{return {id:crypto.randomUUID(),title:'',content:'',category:'Nova funcionalidade',status:'draft',start_at:new Date().toISOString(),expires_at:new Date(Date.now()+30*86400000).toISOString(),priority:0,frequency:'once',frequency_days:7,target_type:'all',target_values:[],media_type:'none',media_path:null,poster_path:null,button_label:null,button_destination:null,button_new_tab:false,deleted_at:null};}
