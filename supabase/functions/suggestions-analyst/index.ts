@@ -137,6 +137,8 @@ ${s.expected_benefit ? `BENEFÍCIO ESPERADO: ${sanitize(s.expected_benefit, 600)
 
   const parsed = await callOpenAI(systemPrompt, userPrompt);
   return {
+    titulo_ideia: sanitize(parsed.titulo_ideia, 90),
+    resumo_ideia: sanitize(parsed.resumo_ideia, 600),
     problema: sanitize(parsed.problema, 500),
     funcionalidade: sanitize(parsed.funcionalidade, 500),
     objetivo: sanitize(parsed.objetivo, 500),
@@ -157,8 +159,8 @@ async function matchGroup(
     return {
       group_id: null,
       new_group: {
-        name: analysis.funcionalidade.slice(0, 120),
-        description: analysis.objetivo,
+        name: (analysis.titulo_ideia || analysis.funcionalidade).slice(0, 120),
+        description: analysis.resumo_ideia || analysis.objetivo,
         problem: analysis.problema,
         solution: analysis.funcionalidade,
         category: analysis.categoria,
@@ -172,8 +174,9 @@ RETORNE APENAS JSON VÁLIDO:
 {
   "group_id": "id do grupo existente" ou null,
   "confidence": "alta" | "media" | "baixa",
-  "new_group": null ou { "name": "...", "description": "...", "problem": "...", "solution": "...", "category": "..." }
+  "new_group": null ou { "name": "título curto e específico (máx. 70 caracteres)", "description": "2 frases claras para votação", "problem": "...", "solution": "...", "category": "..." }
 }
+Ao criar new_group, PRESERVE canal e detalhes específicos (ex.: e-mail, WhatsApp, Instagram). Ideias com o mesmo objetivo mas canais diferentes (ex.: follow-up por e-mail vs. por WhatsApp) são NECESSIDADES DIFERENTES.
 Regras: só vincule a um grupo se a NECESSIDADE for a mesma (não basta palavras parecidas com objetivos diferentes). Se houver dúvida, use confidence "baixa" e group_id null com new_group preenchido.`;
 
   const groupsSummary = groups
@@ -182,6 +185,8 @@ Regras: só vincule a um grupo se a NECESSIDADE for a mesma (não basta palavras
     .slice(0, 6000);
 
   const userPrompt = `SUGESTÃO ANALISADA:
+Título sugerido: ${analysis.titulo_ideia}
+Resumo: ${analysis.resumo_ideia}
 Funcionalidade: ${analysis.funcionalidade}
 Problema: ${analysis.problema}
 Objetivo: ${analysis.objetivo}
@@ -200,8 +205,8 @@ ${groupsSummary}`;
     group_id: null,
     new_group: ng
       ? {
-          name: sanitize(ng.name, 120) || analysis.funcionalidade.slice(0, 120),
-          description: sanitize(ng.description, 600),
+          name: sanitize(ng.name, 120) || analysis.titulo_ideia || analysis.funcionalidade.slice(0, 120),
+          description: sanitize(ng.description, 600) || analysis.resumo_ideia,
           problem: sanitize(ng.problem, 600),
           solution: sanitize(ng.solution, 600),
           category: VALID_CATEGORIES.includes(ng.category) ? ng.category : analysis.categoria,
