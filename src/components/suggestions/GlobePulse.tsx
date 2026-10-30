@@ -31,14 +31,14 @@ export function GlobePulse({ className = "" }: { className?: string }) {
         phi,
         theta: 0.25,
         dark: dark ? 1 : 0,
-        diffuse: 1.4,
-        mapSamples: 16000,
-        mapBrightness: dark ? 6 : 1.4,
-        baseColor: dark ? [0.25, 0.3, 0.28] : [1, 1, 1],
-        markerColor: [0.1, 0.65, 0.42],
-        glowColor: dark ? [0.05, 0.25, 0.16] : [0.82, 0.95, 0.88],
-        markers: MARKERS.map((location) => ({ location, size: 0.06 })),
-        opacity: 0.9,
+        diffuse: 1.2,
+        mapSamples: 12000,
+        mapBrightness: dark ? 4 : 2.2,
+        baseColor: dark ? [0.3, 0.3, 0.3] : [1, 1, 1],
+        markerColor: dark ? [0.85, 0.85, 0.85] : [0.15, 0.15, 0.15],
+        glowColor: dark ? [0.18, 0.18, 0.18] : [0.92, 0.92, 0.92],
+        markers: MARKERS.map((location) => ({ location, size: 0.04 })),
+        opacity: 0.85,
       } as any);
       const animate = () => {
         if (drag.current === null) phi += 0.0035;
@@ -78,8 +78,7 @@ export function GlobePulse({ className = "" }: { className?: string }) {
 
   return (
     <div className={`relative aspect-square select-none ${className}`}>
-      <div aria-hidden className="absolute inset-[12%] rounded-full bg-primary/20 blur-3xl" />
-      <canvas
+            <canvas
         ref={canvasRef}
         onPointerDown={(e) => {
           drag.current = e.clientX;

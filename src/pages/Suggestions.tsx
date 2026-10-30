@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import SuggestionForm from "@/components/suggestions/SuggestionForm";
+import SuggestionExplorer from "@/components/suggestions/SuggestionExplorer";
 import { GlobePulse } from "@/components/suggestions/GlobePulse";
 import SuggestionReleases from "@/components/suggestions/SuggestionReleases";
 
@@ -72,15 +73,14 @@ export default function Suggestions() {
 
         <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
           {/* Hero: texto à esquerda, globo à direita */}
-          <section className="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] pt-10 sm:pt-16 pb-12 sm:pb-20">
+          <section className="relative grid items-center gap-10 lg:grid-cols-[1.25fr_1fr] pt-10 sm:pt-16 pb-12 sm:pb-20">
             <div className="space-y-7 text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                 <Sparkles size={13} />
                 Wiize Evolui
               </span>
               <h1 className="font-bold tracking-tight text-foreground leading-[1.05]">
-                <span className="block text-3xl sm:text-4xl lg:text-5xl">A próxima evolução</span>
-                <span className="block text-3xl sm:text-4xl lg:text-5xl">da Wiize</span>
+                <span className="block text-3xl sm:text-4xl lg:text-5xl lg:whitespace-nowrap">A próxima evolução da Wiize</span>
                 <span className="block text-4xl sm:text-5xl lg:text-6xl text-shimmer-highlight mt-2 pb-1">
                   começa com você.
                 </span>
@@ -111,8 +111,8 @@ export default function Suggestions() {
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[420px] lg:max-w-[500px]">
-              <GlobePulse />
+            <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[420px] lg:mx-0 lg:h-[520px] lg:max-w-none">
+              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[18%] lg:w-[760px]" />
             </div>
           </section>
 
@@ -150,7 +150,7 @@ export default function Suggestions() {
 
           {/* Formulário */}
           <section id="enviar-sugestao" className="scroll-mt-6 py-10 sm:py-14 border-t border-border/50">
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div className="space-y-6">
               <div className="text-center space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Sua ideia</p>
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Envie sua sugestão</h2>
@@ -158,6 +158,10 @@ export default function Suggestions() {
               </div>
               <SuggestionForm />
             </div>
+          </section>
+
+          <section id="explorar" className="py-10 sm:py-14 border-t border-border/50">
+            <SuggestionExplorer />
           </section>
 
           <section className="pt-4">
