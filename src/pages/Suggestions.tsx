@@ -113,7 +113,7 @@ export default function Suggestions() {
             </div>
 
             <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[420px] lg:mx-0 lg:h-[520px] lg:max-w-none">
-              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[18%] lg:w-[760px]" />
+              <GlobePulse className="lg:absolute lg:top-1/2 lg:-translate-y-1/2 lg:left-[26%] lg:w-[580px]" />
             </div>
           </section>
 
