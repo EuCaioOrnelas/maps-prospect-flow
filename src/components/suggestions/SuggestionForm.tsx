@@ -219,7 +219,6 @@ export default function SuggestionForm({ onSubmitted }: { onSubmitted?: () => vo
           Leva menos de 2 minutos
         </span>
       </div>
-      </div>
 
       <CardContent className="p-4 sm:p-6 space-y-5">
         {limitReached && (
