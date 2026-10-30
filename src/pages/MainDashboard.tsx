@@ -26,7 +26,6 @@ import { ForecastChart } from "@/components/dashboard/v2/ForecastChart";
 import { QuickActions } from "@/components/dashboard/v2/QuickActions";
 
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
-import { WiizePayPromo } from "@/components/crm/WiizePayPromo";
 import { TrialAutoChargeBanner } from "@/components/dashboard/TrialAutoChargeBanner";
 import { ExpiredSubscriptionDialog } from "@/components/ExpiredSubscriptionDialog";
 // Checklist e modal de onboarding removidos — somente o tour guiado orienta o usuário.
@@ -144,7 +143,6 @@ export default function MainDashboard() {
           <AppHeader profile={profile} />
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             <ExpiredSubscriptionDialog />
-            <WiizePayPromo variant="modal" dismissible />
             
             <div className="max-w-7xl mx-auto space-y-6 relative z-10">
               {/* Header */}
