@@ -39,6 +39,7 @@ const HOW_IT_WORKS = [
 ];
 
 export default function Suggestions() {
+  const [tab, setTab] = useState<"suggest" | "vote">("suggest");
   const scrollToForm = () =>
     document.getElementById("enviar-sugestao")?.scrollIntoView({ behavior: "smooth", block: "start" });
 

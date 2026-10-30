@@ -37,7 +37,7 @@ export function GlobePulse({ className = "" }: { className?: string }) {
         baseColor: dark ? [0.3, 0.3, 0.3] : [1, 1, 1],
         markerColor: dark ? [0.85, 0.85, 0.85] : [0.15, 0.15, 0.15],
         glowColor: dark ? [0.18, 0.18, 0.18] : [0.92, 0.92, 0.92],
-        markers: MARKERS.map((location) => ({ location, size: 0.04 })),
+        markers: [],
         opacity: 0.85,
       } as any);
       const animate = () => {
