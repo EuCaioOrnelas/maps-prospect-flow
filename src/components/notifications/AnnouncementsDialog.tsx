@@ -264,12 +264,12 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
                   const { Icon, tone, tag } = notificationStyle(n);
                   const unread = !n.read_at;
                   return (
-                    <li key={n.id}>
+                    <li key={n.id} className="group relative">
                       <button
                         type="button"
                         onClick={() => openNotification(n)}
                         className={cn(
-                          "w-full rounded-lg border p-3 text-left transition-colors hover:bg-muted/50",
+                          "w-full rounded-lg border p-3 pr-16 text-left transition-colors hover:bg-muted/50",
                           unread ? "border-primary/20 bg-primary/5" : "border-border/50 bg-muted/20"
                         )}
                       >
@@ -290,6 +290,16 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
                           </div>
                         </div>
                       </button>
+                      <div className="absolute right-2 top-2 flex gap-0.5">
+                        {unread && (
+                          <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Marcar como lida" aria-label="Marcar como lida" onClick={() => notifications?.markRead(n.id)}>
+                            <Check className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button type="button" size="icon" variant="ghost" className="h-7 w-7 hover:text-destructive" title="Excluir" aria-label="Excluir notificação" onClick={() => notifications?.clearOne(n.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </li>
                   );
                 })}

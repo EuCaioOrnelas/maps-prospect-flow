@@ -95,5 +95,12 @@ export function useUserNotifications() {
     load();
   }, [user, load]);
 
-  return { items, unreadCount, markRead, markAllRead, clearAll, reload: load,loadMore:()=>setLimit(v=>v+50),hasMore:items.length===limit };
+  const clearOne = useCallback(async (id: string) => {
+    const now = new Date().toISOString();
+    setItems((l) => l.filter((n) => n.id !== id));
+    await db.from("user_notifications").update({ cleared_at: now, read_at: now }).eq("id", id);
+    load();
+  }, [load]);
+
+  return { items, unreadCount, markRead, markAllRead, clearAll, clearOne, reload: load,loadMore:()=>setLimit(v=>v+50),hasMore:items.length===limit };
 }
