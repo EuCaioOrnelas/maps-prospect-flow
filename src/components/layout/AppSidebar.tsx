@@ -544,7 +544,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
 
         {/* Bottom navigation */}
         <div className="shrink-0 py-2">
-          <div className="px-4"><OpportunityUsage expanded={isExpanded}/></div>
+          {isExpanded && <div className="px-4 mb-3"><OpportunityUsage expanded={isExpanded}/></div>}
           <ul className="space-y-1 px-4">
             {/* Upgrade */}
             {/* Upgrade — só para quem tem acesso a assinaturas (esconde para operacional) */}
