@@ -18,7 +18,7 @@ export function GlobePulse({ className = "" }: { className?: string }) {
     if (!canvas) return;
     let globe: ReturnType<typeof createGlobe> | null = null;
     let raf = 0;
-    let phi = 4.4;
+    let phi = 3.3;
     const dark = document.documentElement.classList.contains("dark");
 
     const init = () => {
