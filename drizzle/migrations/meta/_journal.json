@@ -302,6 +302,13 @@
       "when": 1793364816178,
       "tag": "0042_wiize_evolui_suggestions_hub",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793367753062,
+      "tag": "0043_suggestion_ideas_voting",
+      "breakpoints": true
     }
   ]
 }
