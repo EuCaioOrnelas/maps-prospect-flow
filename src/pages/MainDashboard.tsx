@@ -41,7 +41,7 @@ const PERIOD_OPTIONS = [
 
 export default function MainDashboard() {
   const { profile } = useAuth();
-  const {resolvedTheme,toggleTheme}=useTheme();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const { role: accountRole } = useAccountRole();
   useAutoScoreTracking("main_dashboard");
   const [period, setPeriod] = useState('30');

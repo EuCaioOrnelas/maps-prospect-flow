@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { opportunityQuota } from "@/lib/opportunityQuota";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,7 +152,7 @@ const Dashboard = () => {
     })();
   }, [user, accountOwnerId, guidedTourActive]);
 
-  const searchesRemaining = profile ? (profile.searches_limit - profile.searches_used) + (((profile as any).bonus_searches) || 0) + ((((profile as any).extra_opportunities_packs) || 0) * 1000) : 0;  // opportunities remaining (plan + bonus + add-on packs)
+  const searchesRemaining = opportunityQuota(profile)?.remaining ?? 0;
   // Perfil ainda carregando não pode ser tratado como "sem oportunidades"
   const profileReady = !!profile && !authLoading;
   const limitReached = profileReady && searchesRemaining <= 0;

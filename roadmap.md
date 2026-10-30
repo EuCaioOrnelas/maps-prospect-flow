@@ -10,9 +10,10 @@
 
 ## Wiize Updates e navegação
 
-- [ ] Auditar avisos, notificações, navegação e regras existentes; apresentar plano.
-- [ ] Ampliar novidades com público, frequência individual, histórico e métricas seguras.
-- [ ] Administração, mídia e pré-visualização de novidades.
-- [ ] Fila após login e integração com notificações existentes.
-- [ ] Remover header global; mover oportunidades e perfil ao sidebar; tema apenas no Dashboard.
-- [ ] Testar regras, isolamento, fluxo autenticado e telas de diferentes tamanhos.
+- [x] Auditar avisos, notificações, navegação e regras existentes; apresentar plano.
+- [x] Ampliar novidades com público, frequência individual, histórico e métricas seguras.
+- [x] Administração, mídia e pré-visualização de novidades.
+- [x] Fila após login e integração com notificações existentes.
+- [x] Remover header global; mover oportunidades e perfil ao sidebar; tema apenas no Dashboard.
+- [x] Testar regras (14 testes), criação/publicação autenticada, menu, tema, avisos e telas de diferentes tamanhos.
+- [ ] Validação completa de popup, frequência por sessão, mídia e isolamento com duas contas: bloqueada pela sessão injetada sem session_id e ausência de conta do solicitante para gerar sessão completa; requer login real na prévia.
