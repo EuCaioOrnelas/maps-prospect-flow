@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Check, Bell, CreditCard, WifiOff, Smartphone, CalendarClock, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Check, Bell, CreditCard, WifiOff, Smartphone, CalendarClock, AlertTriangle, MessageSquare, Lightbulb } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { useUserNotifications, UserNotification } from '@/hooks/useUserNotifications';
 import { supabase } from '@/integrations/supabase/client';
