@@ -8,7 +8,7 @@ export function OpportunityUsage({expanded=true}:{expanded?:boolean}) {
  const {profile,isTrialing,trialDaysRemaining}=useAuth(); const quota=opportunityQuota(profile);
  // Menu recolhido: nenhum bloco aparece — os ícones soltos não correspondem aos itens de navegação.
  if (!expanded) return null;
- return <div className="w-full min-w-0 space-y-2 px-1">
+ return <div className="w-full min-w-0 space-y-2">
   {hasOpportunitiesAccess(profile) && <Link to="/oportunidades" title="Oportunidades" className="block w-full min-w-0 py-2 text-muted-foreground">
    <div className="flex items-center gap-2 min-w-0"><Search className="h-4 w-4 shrink-0"/><span className="text-xs font-medium min-w-0">Oportunidades</span></div>
    <div className="mt-2 space-y-2 min-w-0">
