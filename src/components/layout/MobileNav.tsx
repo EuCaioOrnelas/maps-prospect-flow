@@ -29,7 +29,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { profileHasFeature, type FeatureKey } from "@/lib/featurePermissions";
-import { planHasFeature, isLegacyPlanUser } from "@/lib/planAccess";
+import { planHasFeature, isLegacyPlanUser, getPlanDisplayName } from "@/lib/planAccess";
 
 import { cn } from "@/lib/utils";
 
@@ -191,7 +191,7 @@ export const MobileNav = ({ profile, onWhatsAppClick }: MobileNavProps) => {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Plano:</span>
                 <span className="font-medium text-foreground">
-                  {getPlanName(profile?.plan || "free")}
+                  {getPlanDisplayName(authProfile)}
                 </span>
               </div>
 

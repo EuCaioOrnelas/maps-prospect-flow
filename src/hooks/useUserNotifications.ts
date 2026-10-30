@@ -47,6 +47,7 @@ export function useUserNotifications() {
     }
     let cancelled = false;
     (async () => {
+      try { await db.rpc('updates_sync_me'); } catch { /* Retry on the next open. */ }
       // Gera o resumo de vencimentos do dia uma vez por sessão/dia (o banco evita duplicar).
       const today = new Date().toISOString().slice(0, 10);
       if (digestDoneRef.current !== `${user.id}:${today}`) {

@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@media (min-width: 1024px) {
+  body.wiize-sidebar-pinned .lg\:pl-\[72px\] { padding-left: 268px; }
+}
+
 @layer base {
   :root {
     --background: 220 20% 4%;

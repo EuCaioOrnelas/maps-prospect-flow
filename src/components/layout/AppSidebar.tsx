@@ -76,6 +76,10 @@ interface AppSidebarProps {
 export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [pinned, setPinned] = useState(false); // Keyboard-accessible persistent expansion.
+  useEffect(() => {
+    document.body.classList.toggle('wiize-sidebar-pinned',pinned);
+    return () => document.body.classList.remove('wiize-sidebar-pinned');
+  },[pinned]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [tourForceOpen, setTourForceOpen] = useState(false);
   const [tourSection, setTourSection] = useState<string | null>(null);
