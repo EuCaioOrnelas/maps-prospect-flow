@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Check, Bell, CreditCard, WifiOff, Smartphone, CalendarClock, AlertTriangle, MessageSquare, Lightbulb } from 'lucide-react';
+import { Check, Bell, CreditCard, WifiOff, Smartphone, CalendarClock, AlertTriangle, MessageSquare, Lightbulb, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { useUserNotifications, UserNotification } from '@/hooks/useUserNotifications';
 import { supabase } from '@/integrations/supabase/client';
@@ -184,12 +184,20 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
               <Bell className="w-5 h-5 text-primary" />
               Avisos
             </DialogTitle>
-            {totalUnread > 0 && (
-              <Button size="sm" variant="ghost" onClick={markAllAsRead}>
-                <Check className="w-4 h-4 mr-1" />
-                Marcar todas como lidas
-              </Button>
-            )}
+            <div className="flex items-center gap-1">
+              {totalUnread > 0 && (
+                <Button size="sm" variant="ghost" onClick={markAllAsRead}>
+                  <Check className="w-4 h-4 mr-1" />
+                  Marcar como lidas
+                </Button>
+              )}
+              {personal.length > 0 && (
+                <Button size="sm" variant="ghost" onClick={() => notifications?.clearAll()}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Limpar
+                </Button>
+              )}
+            </div>
           </div>
         </DialogHeader>
 

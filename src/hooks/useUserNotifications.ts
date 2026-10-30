@@ -32,10 +32,11 @@ export function useUserNotifications() {
       .from("user_notifications")
       .select("id, kind, title, body, link, metadata, read_at, created_at")
       .eq("user_id", user.id)
+      .is("cleared_at", null)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (!error) setItems((data || []) as UserNotification[]);
-    const {count}=await db.from('user_notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null);
+    const {count}=await db.from('user_notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null).is('cleared_at',null);
     setUnreadCount(count ?? 0);
   }, [user,limit]);
 
@@ -86,5 +87,13 @@ export function useUserNotifications() {
     load();
   }, [user,load]);
 
-  return { items, unreadCount, markRead, markAllRead, reload: load,loadMore:()=>setLimit(v=>v+50),hasMore:items.length===limit };
+  const clearAll = useCallback(async () => {
+    if (!user) return;
+    const now = new Date().toISOString();
+    setItems([]); setUnreadCount(0);
+    await db.from("user_notifications").update({ cleared_at: now, read_at: now }).eq("user_id", user.id).is("cleared_at", null);
+    load();
+  }, [user, load]);
+
+  return { items, unreadCount, markRead, markAllRead, clearAll, reload: load,loadMore:()=>setLimit(v=>v+50),hasMore:items.length===limit };
 }

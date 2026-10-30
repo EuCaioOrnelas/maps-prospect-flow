@@ -12511,6 +12511,7 @@ export type Database = {
       user_notifications: {
         Row: {
           body: string | null
+          cleared_at: string | null
           created_at: string
           dedupe_key: string | null
           id: string
@@ -12524,6 +12525,7 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          cleared_at?: string | null
           created_at?: string
           dedupe_key?: string | null
           id?: string
@@ -12537,6 +12539,7 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          cleared_at?: string | null
           created_at?: string
           dedupe_key?: string | null
           id?: string
