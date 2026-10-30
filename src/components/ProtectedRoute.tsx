@@ -226,7 +226,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
     <DashboardThemeProvider>
       <TwoFactorGate>
         {children}
-        {!requireAdmin && needsOnboarding === false && <UpdatesPresenter blocked={mustChangePassword}/>}
+        {!requireAdmin && needsOnboarding === false && <UpdatesPresenter blocked={mustChangePassword} />}
         {mustChangePassword && (
           <MustChangePasswordDialog open={true} onCompleted={() => setMustChangePassword(false)} />
         )}
