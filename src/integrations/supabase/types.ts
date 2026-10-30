@@ -10417,56 +10417,386 @@ export type Database = {
         }
         Relationships: []
       }
+      suggestion_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          entity: string
+          entity_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity: string
+          entity_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity?: string
+          entity_id?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      suggestion_cycle_items: {
+        Row: {
+          created_at: string
+          cycle_id: string
+          due_date: string | null
+          group_id: string | null
+          id: string
+          justification: string | null
+          responsible: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_id: string
+          due_date?: string | null
+          group_id?: string | null
+          id?: string
+          justification?: string | null
+          responsible?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cycle_id?: string
+          due_date?: string | null
+          group_id?: string | null
+          id?: string
+          justification?: string | null
+          responsible?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_cycle_items_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestion_cycle_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suggestion_cycles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          month_label: string
+          notes: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month_label: string
+          notes?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month_label?: string
+          notes?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      suggestion_groups: {
+        Row: {
+          admin_locked: boolean
+          category: string | null
+          companies_count: number
+          confidence: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          first_occurrence: string | null
+          id: string
+          last_occurrence: string | null
+          name: string
+          priority_reason: string | null
+          priority_score: number | null
+          problem: string | null
+          solution: string | null
+          status: string
+          suggestions_count: number
+          updated_at: string
+          users_count: number
+          votes_total: number
+        }
+        Insert: {
+          admin_locked?: boolean
+          category?: string | null
+          companies_count?: number
+          confidence?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          first_occurrence?: string | null
+          id?: string
+          last_occurrence?: string | null
+          name: string
+          priority_reason?: string | null
+          priority_score?: number | null
+          problem?: string | null
+          solution?: string | null
+          status?: string
+          suggestions_count?: number
+          updated_at?: string
+          users_count?: number
+          votes_total?: number
+        }
+        Update: {
+          admin_locked?: boolean
+          category?: string | null
+          companies_count?: number
+          confidence?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          first_occurrence?: string | null
+          id?: string
+          last_occurrence?: string | null
+          name?: string
+          priority_reason?: string | null
+          priority_score?: number | null
+          problem?: string | null
+          solution?: string | null
+          status?: string
+          suggestions_count?: number
+          updated_at?: string
+          users_count?: number
+          votes_total?: number
+        }
+        Relationships: []
+      }
+      suggestion_releases: {
+        Row: {
+          benefit: string | null
+          category: string | null
+          created_at: string
+          cycle_item_id: string | null
+          description: string | null
+          doc_url: string | null
+          expected_date: string | null
+          id: string
+          image_url: string | null
+          problem: string | null
+          published: boolean
+          released_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          benefit?: string | null
+          category?: string | null
+          created_at?: string
+          cycle_item_id?: string | null
+          description?: string | null
+          doc_url?: string | null
+          expected_date?: string | null
+          id?: string
+          image_url?: string | null
+          problem?: string | null
+          published?: boolean
+          released_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          benefit?: string | null
+          category?: string | null
+          created_at?: string
+          cycle_item_id?: string | null
+          description?: string | null
+          doc_url?: string | null
+          expected_date?: string | null
+          id?: string
+          image_url?: string | null
+          problem?: string | null
+          published?: boolean
+          released_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_releases_cycle_item_id_fkey"
+            columns: ["cycle_item_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_cycle_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suggestion_votes: {
+        Row: {
+          created_at: string
+          id: string
+          suggestion_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          suggestion_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          suggestion_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_votes_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestions: {
         Row: {
           account_owner_id: string | null
+          admin_notes: string | null
+          ai_analyzed_at: string | null
+          ai_category: string | null
+          ai_group_id: string | null
+          ai_priority_reason: string | null
+          ai_priority_score: number | null
+          ai_status: string
+          ai_summary: string | null
           category: string
           company_name: string | null
           created_at: string
           description: string
+          expected_behavior: string | null
+          expected_benefit: string | null
           id: string
+          implementation_notes: string | null
+          implemented_at: string | null
           importance: string
+          is_public: boolean
           metadata: Json
+          problem: string | null
           status: string
           title: string
           updated_at: string
           user_email: string | null
           user_id: string
           user_name: string | null
+          vote_count: number
         }
         Insert: {
           account_owner_id?: string | null
+          admin_notes?: string | null
+          ai_analyzed_at?: string | null
+          ai_category?: string | null
+          ai_group_id?: string | null
+          ai_priority_reason?: string | null
+          ai_priority_score?: number | null
+          ai_status?: string
+          ai_summary?: string | null
           category: string
           company_name?: string | null
           created_at?: string
           description: string
+          expected_behavior?: string | null
+          expected_benefit?: string | null
           id?: string
+          implementation_notes?: string | null
+          implemented_at?: string | null
           importance: string
+          is_public?: boolean
           metadata?: Json
+          problem?: string | null
           status?: string
           title: string
           updated_at?: string
           user_email?: string | null
           user_id: string
           user_name?: string | null
+          vote_count?: number
         }
         Update: {
           account_owner_id?: string | null
+          admin_notes?: string | null
+          ai_analyzed_at?: string | null
+          ai_category?: string | null
+          ai_group_id?: string | null
+          ai_priority_reason?: string | null
+          ai_priority_score?: number | null
+          ai_status?: string
+          ai_summary?: string | null
           category?: string
           company_name?: string | null
           created_at?: string
           description?: string
+          expected_behavior?: string | null
+          expected_benefit?: string | null
           id?: string
+          implementation_notes?: string | null
+          implemented_at?: string | null
           importance?: string
+          is_public?: boolean
           metadata?: Json
+          problem?: string | null
           status?: string
           title?: string
           updated_at?: string
           user_email?: string | null
           user_id?: string
           user_name?: string | null
+          vote_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_ai_group_fk"
+            columns: ["ai_group_id"]
+            isOneToOne: false
+            referencedRelation: "suggestion_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_incidents: {
         Row: {
