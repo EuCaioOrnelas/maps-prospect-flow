@@ -40,7 +40,7 @@ const TAB_TITLE_RULES: TabTitleRule[] = [
   { pattern: /^\/reports\/prospeccao\/?$/, label: "Relatórios de Prospecção" },
   { pattern: /^\/profile\/?$/, label: "Meu Perfil" },
   { pattern: /^\/usuarios\/?$/, label: "Usuários" },
-  { pattern: /^\/sugestoes\/?$/, label: "Sugestões" },
+  { pattern: /^\/sugestoes\/?$/, label: "Wiize Evolui" },
   { pattern: /^\/minha-assinatura\/?$/, label: "Minha Assinatura" },
   { pattern: /^\/trial-expired\/?$/, label: "Trial Expirado" },
 
