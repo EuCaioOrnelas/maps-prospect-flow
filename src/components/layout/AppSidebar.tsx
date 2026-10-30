@@ -284,7 +284,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
           </Link>
         </div>
 
-        <Button variant="ghost" size="icon" className="mx-4 h-8 w-10 shrink-0" aria-label={pinned ? "Recolher menu" : "Fixar menu aberto"} onClick={() => setPinned(v => !v)}><PanelLeft className="h-4 w-4" /></Button>
         {/* Main navigation */}
         <nav className="flex-1 py-2 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1 px-4">
@@ -620,7 +619,7 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             )}
 
-            <li><AccountMenu expanded={isExpanded}/></li>
+            <li><AccountMenu expanded={isExpanded} onOpenChange={(open) => { setPinned(open); if (!open) setIsHovered(false); }}/></li>
           </ul>
         </div>
       </aside>
