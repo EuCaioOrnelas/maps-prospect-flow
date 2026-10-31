@@ -1,9 +1,10 @@
 # Roadmap — Wiize Evolui
 
 ## Abertura de avisos e notificações de tarefas
-- [ ] Corrigir reabertura de novidades pelo sininho, inclusive no painel administrativo.
-- [ ] Deixar notificações de tarefas compactas e ocultar tarefas concluídas ou canceladas.
-- [ ] Testar as regras e verificar o fluxo autenticado.
+- [x] Corrigir reabertura de novidades pelo sininho, inclusive no painel administrativo; reabertura manual não bloqueada por visualização automática recente.
+- [x] Deixar notificações de tarefas compactas e ocultar tarefas concluídas ou canceladas; migration 0056 aplicada e SQL preparado para a cópia de produção.
+- [x] Testar as regras: 25 testes passaram; teste no banco com conclusão, cancelamento e preservação da tarefa ativa passou e foi desfeito.
+- [ ] Verificar o clique e a aparência com login real: bloqueado porque não há sessão injetada nem conta correspondente ao solicitante na prévia.
 
 ## Envio de vídeos dos avisos
 - [x] Identificar “Bucket not found” no print; pasta wiize-updates confirmada no ambiente conectado da Lovable.
