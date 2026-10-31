@@ -1,5 +1,9 @@
 # Roadmap — Wiize Evolui
 
+## Correção solicitada: administração e primeiro acesso
+- [x] Conferir a ligação da página nova de avisos: App.tsx liga AdminAnnouncements; campo MP4 confirmado com sessão autenticada.
+- [x] Bloquear novidades no login do onboarding/tour e liberar somente em login posterior; 15 testes passaram. Teste com conta recém-criada em produção não disponível.
+
 - [x] Etapa 1: Migration do banco (colunas novas em suggestions, votes, groups, cycles, releases, audit log, triggers de votos e notificações) — drizzle/migrations/0042
 - [x] Etapa 2: Página pública /sugestoes (hero, como funciona, formulário preservado + campos progressivos, explorar com votos, releases)
 - [x] Etapa 3: Edge function suggestions-analyst (análise GPT, agrupamento, pontuação 0-100) — publicada

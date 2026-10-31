@@ -694,14 +694,8 @@ export function GuidedTourProvider({ children }: { children: ReactNode }) {
       // Mark started + persist BEFORE firing so refresh mid-tour doesn't restart it.
       startedRef.current = true;
       localStorage.setItem(LS_KEY, "1");
-      try {
-        await supabase
-          .from("user_onboarding")
-          .update({ tour_completed_at: new Date().toISOString() })
-          .eq("user_id", userId);
-      } catch (e) {
-        console.error("[tour] mark-shown error", e);
-      }
+      // tour_completed_at is written by persistCompletion only when finished.
+      // Starting the guide is not completion and must not enable updates.
 
       window.setTimeout(() => {
         if (cancelled || window.location.pathname !== "/dashboard") return;
