@@ -18,3 +18,7 @@ As migrations 0044 e 0045 e o SQL consolidado 0039–0051 configuram as permiss�
 Se a pasta já existe, confira se seu site local/produção está conectado ao mesmo ambiente onde você a criou. Criá-la aqui na Lovable não cria a pasta automaticamente em uma cópia com outro ambiente.
 
 Depois de configurar, entre como administrador, escolha novamente o vídeo em **Mídia → Vídeo**, aguarde **Mídia enviada** e salve a publicação. Se aparecer outro erro, ele precisa ser verificado separadamente; não torne a pasta pública nem remova as permissões de segurança.
+
+## Erro de permissão após configurar a pasta
+
+Foi corrigida também uma regra antiga que exigia informações completas do arquivo antes de o armazenamento terminar o envio. Na sua cópia, execute `docs/sql/prod-corrigir-upload-avisos.sql` depois de configurar a pasta privada com limite de 50 MB. O envio continua restrito aos administradores; a validação da mídia ao salvar a publicação permanece ativa.
