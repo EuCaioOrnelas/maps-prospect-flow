@@ -1,5 +1,10 @@
 # Roadmap — Wiize Evolui
 
+## Envio de vídeos dos avisos
+- [x] Identificar “Bucket not found” no print; pasta wiize-updates confirmada no ambiente conectado da Lovable.
+- [x] Corrigir orientação do SQL consolidado e mensagem de falha no envio; documentar configuração privada por ambiente.
+- [ ] Configurar a pasta na cópia de produção do usuário: bloqueado por falta de acesso ao ambiente externo dessa cópia.
+
 ## Correção solicitada: administração e primeiro acesso
 - [x] Conferir a ligação da página nova de avisos: App.tsx liga AdminAnnouncements; campo MP4 confirmado com sessão autenticada.
 - [x] Bloquear novidades no login do onboarding/tour e liberar somente em login posterior; 15 testes passaram. Teste com conta recém-criada em produção não disponível.
