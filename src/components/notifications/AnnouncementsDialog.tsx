@@ -260,7 +260,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
           {personal.length > 0 && (
             <div className="mb-4">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Suas notificações</p>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {personal.map(n => {
                   const { Icon, tone, tag } = notificationStyle(n);
                   const unread = !n.read_at;
@@ -271,8 +271,10 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
                         variant="ghost"
                         onClick={() => openNotification(n)}
                         className={cn(
-                          "h-auto w-full justify-start whitespace-normal rounded-md border-0 px-2 py-2.5 pr-16 text-left shadow-none transition-colors hover:bg-muted/50",
-                          unread ? "bg-primary/5" : "bg-transparent"
+                          "h-auto w-full justify-start whitespace-normal rounded-lg border px-3 py-2.5 pr-16 text-left shadow-none transition-colors hover:border-border",
+                          unread
+                            ? "border-primary/25 bg-primary/[0.04] hover:bg-primary/[0.07]"
+                            : "border-border/70 bg-card/70 hover:bg-muted/50"
                         )}
                       >
                         <div className="flex w-full items-start gap-2.5">
@@ -292,7 +294,7 @@ export const AnnouncementsDialog = ({ open, onOpenChange, disconnectedNumbers = 
                           </div>
                         </div>
                       </Button>
-                      <div className="absolute right-2 top-2 flex gap-0.5">
+                      <div className="absolute right-2.5 top-2.5 flex gap-0.5">
                         {unread && (
                           <Button type="button" size="icon" variant="ghost" className="h-7 w-7" title="Marcar como lida" aria-label="Marcar como lida" onClick={() => notifications?.markRead(n.id)}>
                             <Check className="h-3.5 w-3.5" />
