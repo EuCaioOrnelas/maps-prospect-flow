@@ -27,12 +27,12 @@ describe('manual update reopening', () => {
     expect(mocks.rpc).toHaveBeenCalledWith('updates_record_event', expect.objectContaining({ _event: 'reopen' }));
     expect(mocks.rpc).not.toHaveBeenCalledWith('updates_list_due');
   });
-  it('does not open when the server rejects the view', async () => {
+  it('still opens on bell click when the automatic rule rejects the view', async () => {
     mocks.rpc.mockResolvedValue({ data: false, error: null });
     render(<MemoryRouter><UpdatesPresenter automaticDisabled /></MemoryRouter>);
     await act(async () => { window.dispatchEvent(new CustomEvent('wiize:open-update', { detail: 'notice' })); });
-    await waitFor(() => expect(mocks.error).toHaveBeenCalled());
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Projetos');
+    expect(mocks.error).not.toHaveBeenCalled();
   });
   it('reports an unavailable notice instead of silently ignoring the click', async () => {
     mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
