@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({ rpc: vi.fn(), maybeSingle: vi.fn(), error: vi.
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'user' }, session: null }) }));
 vi.mock('@/hooks/useGuidedTour', () => ({ useGuidedTour: () => ({ isActive: false }) }));
 vi.mock('sonner', () => ({ toast: { error: mocks.error, info: mocks.info } }));
+vi.mock('@/lib/updateMedia', () => ({ clearUpdateMediaCache: vi.fn(), prepareUpdateMedia: vi.fn().mockResolvedValue(undefined), waitForUpdateMedia: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   rpc: mocks.rpc,
   from: () => ({ select: () => ({ eq: () => ({ maybeSingle: mocks.maybeSingle }) }) }),

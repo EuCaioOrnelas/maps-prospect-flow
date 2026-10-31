@@ -1,5 +1,10 @@
 # Roadmap — Wiize Evolui
 
+## Carregamento antecipado das novidades
+- [x] Antecipar somente a mídia da próxima novidade elegível e reutilizar os endereços privados, sem alterar público ou frequência.
+- [x] Validar cache, limite de espera e regras: 19 testes passaram; endereços da mídia real reaproveitados sem nova espera com sessão autenticada.
+- [ ] Confirmar reprodução do vídeo e abertura automática na tela do usuário: navegador de teste retornou formato não suportado para o vídeo real; abertura automática não pôde ser confirmada nesta sessão.
+
 ## Abertura de avisos e notificações de tarefas
 - [x] Corrigir reabertura de novidades pelo sininho, inclusive no painel administrativo; reabertura manual não bloqueada por visualização automática recente.
 - [x] Deixar notificações de tarefas compactas e ocultar tarefas concluídas ou canceladas; migration 0056 aplicada e SQL preparado para a cópia de produção.
