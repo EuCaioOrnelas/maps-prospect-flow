@@ -1087,6 +1087,18 @@
   box-decoration-break: clone;
 }
 
+/* Dark theme: base greens are too dark on dark surfaces — lift the gradient */
+.dark:not(.landing-light) .text-shimmer-highlight {
+  background: linear-gradient(
+    90deg,
+    hsl(158 60% 55%) 0%,
+    hsl(158 60% 55%) 45%,
+    hsl(158 70% 72%) 50%,
+    hsl(158 60% 55%) 55%,
+    hsl(158 60% 55%) 100%
+  );
+}
+
 /* Static version - same look, no animation */
 .text-highlight-static {
   background: linear-gradient(
