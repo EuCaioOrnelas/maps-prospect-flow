@@ -1,5 +1,9 @@
 # Roadmap — Wiize Evolui
 
+## Carregamento antecipado das novidades
+- [x] Antecipar somente a mídia da próxima novidade elegível e reutilizar os endereços privados, sem alterar público ou frequência.
+- [ ] Testar cache, limite de espera e abertura autenticada com mídia.
+
 ## Abertura de avisos e notificações de tarefas
 - [x] Corrigir reabertura de novidades pelo sininho, inclusive no painel administrativo; reabertura manual não bloqueada por visualização automática recente.
 - [x] Deixar notificações de tarefas compactas e ocultar tarefas concluídas ou canceladas; migration 0056 aplicada e SQL preparado para a cópia de produção.
