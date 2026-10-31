@@ -114,7 +114,7 @@ export default function Suggestions() {
                       document.getElementById("enviar-sugestao")?.scrollIntoView({ behavior: "smooth", block: "start" });
                     }, 50);
                   }}
-                  className="w-full sm:w-auto h-12 px-7 bg-white text-foreground border-border/60 hover:bg-white/90"
+                  className="w-full sm:w-auto h-12 px-7 bg-white text-zinc-950 border-border/60 hover:bg-white/90 dark:hover:bg-white/80"
                 >
                   <Vote size={16} className="mr-2" />
                   Votar em melhorias
