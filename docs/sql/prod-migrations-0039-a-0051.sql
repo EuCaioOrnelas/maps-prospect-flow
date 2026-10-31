@@ -1,7 +1,10 @@
 -- Wiize: atualizações 0039 a 0051 em um único SQL (pode rodar mais de uma vez)
 
--- Cria a pasta de arquivos dos avisos (privada). Sem ela os vídeos não sobem.
-INSERT INTO storage.buckets (id, name, public) VALUES ('wiize-updates','wiize-updates', false) ON CONFLICT (id) DO NOTHING;
+-- PRÉ-REQUISITO: configure no armazenamento do ambiente de produção um bucket
+-- privado chamado exatamente wiize-updates, com limite de arquivo de 50 MB.
+-- Buckets são criados pela API/tela de armazenamento, não por migration SQL.
+-- Este script cria as permissões dos arquivos, mas NÃO cria o bucket.
+-- Sem esse pré-requisito o envio retorna "Bucket not found".
 
 
 -- ===================== 0039_project_chat.sql =====================
