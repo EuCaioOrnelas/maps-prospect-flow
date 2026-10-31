@@ -393,6 +393,13 @@
       "when": 1793446358564,
       "tag": "0055_updates_media_upload_admin_folder",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1793446850724,
+      "tag": "0056_notifications_task_lifecycle_and_manual_updates",
+      "breakpoints": true
     }
   ]
 }

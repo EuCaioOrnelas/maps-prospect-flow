@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,10 +24,10 @@ export function useUserNotifications() {
   const [items, setItems] = useState<UserNotification[]>([]);
   const [unreadCount,setUnreadCount]=useState(0);
   const [limit,setLimit]=useState(50);
-  const digestDoneRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
+    try { await db.rpc('project_due_digest_me'); } catch { /* Existing notifications remain available during a transient failure. */ }
     const { data, error } = await db
       .from("user_notifications")
       .select("id, kind, title, body, link, metadata, read_at, created_at")
@@ -49,12 +49,7 @@ export function useUserNotifications() {
     let cancelled = false;
     (async () => {
       try { await db.rpc('updates_sync_me'); } catch { /* Retry on the next open. */ }
-      // Gera o resumo de vencimentos do dia uma vez por sessão/dia (o banco evita duplicar).
-      const today = new Date().toISOString().slice(0, 10);
-      if (digestDoneRef.current !== `${user.id}:${today}`) {
-        digestDoneRef.current = `${user.id}:${today}`;
-        try { await db.rpc("project_due_digest_me"); } catch { /* módulo ainda não ativado */ }
-      }
+      // O carregamento atualiza o resumo sem duplicar os avisos do dia.
       if (!cancelled) load();
     })();
 
