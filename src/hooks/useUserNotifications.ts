@@ -28,6 +28,7 @@ export function useUserNotifications() {
 
   const load = useCallback(async () => {
     if (!user) return;
+    await db.rpc('project_due_digest_me');
     const { data, error } = await db
       .from("user_notifications")
       .select("id, kind, title, body, link, metadata, read_at, created_at")
@@ -50,11 +51,6 @@ export function useUserNotifications() {
     (async () => {
       try { await db.rpc('updates_sync_me'); } catch { /* Retry on the next open. */ }
       // Gera o resumo de vencimentos do dia uma vez por sessão/dia (o banco evita duplicar).
-      const today = new Date().toISOString().slice(0, 10);
-      if (digestDoneRef.current !== `${user.id}:${today}`) {
-        digestDoneRef.current = `${user.id}:${today}`;
-        try { await db.rpc("project_due_digest_me"); } catch { /* módulo ainda não ativado */ }
-      }
       if (!cancelled) load();
     })();
 
