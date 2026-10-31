@@ -15386,6 +15386,10 @@ export type Database = {
       project_due_digest_me: { Args: never; Returns: undefined }
       project_is_manager: { Args: never; Returns: boolean }
       project_recount: { Args: { _project_id: string }; Returns: undefined }
+      project_refresh_notifications: {
+        Args: { _user: string }
+        Returns: undefined
+      }
       project_task_can_access: { Args: { _task_id: string }; Returns: boolean }
       purge_account_data: { Args: { _user_id: string }; Returns: Json }
       purge_operational_logs: { Args: never; Returns: Json }
