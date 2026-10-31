@@ -1,5 +1,9 @@
 # Roadmap — Wiize Evolui
 
+## Correção solicitada: administração e primeiro acesso
+- [ ] Conferir a ligação da página nova de avisos e informar os arquivos necessários na produção.
+- [ ] Bloquear novidades no login do onboarding/tour, liberar somente em login posterior e testar a regra.
+
 - [x] Etapa 1: Migration do banco (colunas novas em suggestions, votes, groups, cycles, releases, audit log, triggers de votos e notificações) — drizzle/migrations/0042
 - [x] Etapa 2: Página pública /sugestoes (hero, como funciona, formulário preservado + campos progressivos, explorar com votos, releases)
 - [x] Etapa 3: Edge function suggestions-analyst (análise GPT, agrupamento, pontuação 0-100) — publicada
