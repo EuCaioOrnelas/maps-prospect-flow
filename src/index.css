@@ -1091,12 +1091,15 @@
 .dark:not(.landing-light) .text-shimmer-highlight {
   background: linear-gradient(
     90deg,
-    hsl(158 60% 55%) 0%,
-    hsl(158 60% 55%) 45%,
-    hsl(158 70% 72%) 50%,
-    hsl(158 60% 55%) 55%,
-    hsl(158 60% 55%) 100%
+    hsl(158 55% 58%) 0%,
+    hsl(158 55% 58%) 45%,
+    hsl(158 65% 74%) 50%,
+    hsl(158 55% 58%) 55%,
+    hsl(158 55% 58%) 100%
   );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Static version - same look, no animation */
