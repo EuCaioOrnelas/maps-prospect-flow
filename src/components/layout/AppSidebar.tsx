@@ -1,4 +1,5 @@
 import { AccountMenu } from "./AccountMenu";
+import { Lightbulb } from "lucide-react";
 import { OpportunityUsage } from "./OpportunityUsage";
 import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
@@ -618,6 +619,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 />
               </li>
             )}
+
+            {/* Sugestões */}
+            <li>
+              <SidebarNavItem
+                title="Sugestões"
+                icon={Lightbulb}
+                url="/sugestoes"
+                isActive={currentPath === "/sugestoes"}
+                isExpanded={isExpanded}
+                tooltip="Sugestões e votação"
+              />
+            </li>
 
             <li><AccountMenu expanded={isExpanded} onOpenChange={(open) => { setPinned(open); if (!open) setIsHovered(false); }}/></li>
           </ul>
