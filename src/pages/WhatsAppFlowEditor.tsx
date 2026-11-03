@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ChatWebEditorBadge } from "@/components/chatweb/ChatWebEditorBadge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -817,6 +818,7 @@ export default function WhatsAppFlowEditor() {
           <MessageSquare size={12} className="text-emerald-500" />
           <span className="text-[11px] font-medium text-muted-foreground">WhatsApp</span>
         </div>
+        <ChatWebEditorBadge flowId={id} nodes={nodes} />
 
 
         {hasChanges && (
