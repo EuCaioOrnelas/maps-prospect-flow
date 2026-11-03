@@ -719,6 +719,35 @@ async function resolveStageId(ownerId: string, value: string): Promise<string | 
   return data?.id || null;
 }
 
+/** ChatWeb → CRM: localiza o lead por telefone/e-mail coletados; cria com origem "ChatWeb" quando pedido. */
+async function chatwebEnsureLead(ctx: ExecCtx, vars: Record<string, string>, create: boolean): Promise<string | null> {
+  const ownerId = ctx.execution.owner_user_id || ctx.execution.user_id;
+  const phone = digits(vars.telefone_coletado || vars.whatsapp || vars.celular || vars.phone || "");
+  const email = String(vars.email || vars["e-mail"] || "").trim().toLowerCase();
+  let leadId: string | null = null;
+  if (phone.length >= 8) {
+    const { data } = await supabase.from("leads").select("id").eq("owner_user_id", ownerId).ilike("phone", `%${phone.slice(-8)}`).limit(1).maybeSingle();
+    leadId = data?.id || null;
+  }
+  if (!leadId && email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    const { data } = await supabase.from("leads").select("id").eq("owner_user_id", ownerId).ilike("email", email).limit(1).maybeSingle();
+    leadId = data?.id || null;
+  }
+  if (!leadId && create && (phone.length >= 8 || email)) {
+    const { data } = await supabase.from("leads").insert({
+      user_id: ownerId, owner_user_id: ownerId, created_by_user_id: ownerId,
+      phone: phone || null, email: email || null,
+      contact_name: vars.nome || vars.name || null,
+      origin: "ChatWeb", source: "chatweb",
+    }).select("id").maybeSingle();
+    leadId = data?.id || null;
+  }
+  if (leadId && ctx.send.chatwebSessionId) {
+    await supabase.from("chatweb_sessions").update({ lead_id: leadId }).eq("id", ctx.send.chatwebSessionId);
+  }
+  return leadId;
+}
+
 async function runActions(
   cfg: Record<string, any>,
   leadId: string | null,
@@ -1021,6 +1050,9 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
       }
 
       case "action": {
+        if (ctx.send.channel === "chatweb" && !ctx.leadId) {
+          ctx.leadId = await chatwebEnsureLead(ctx, runtime.vars, (cfg.actions || []).some((x: any) => x?.type === "send_to_crm") || cfg.action_type === "send_to_crm");
+        }
         const newLeadId = await runActions(
           cfg,
           ctx.leadId,
