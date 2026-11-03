@@ -536,6 +536,7 @@ export type Database = {
       }
       ai_usage_logs: {
         Row: {
+          channel: string | null
           cost_usd: number
           created_at: string
           feature: string
@@ -547,6 +548,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          channel?: string | null
           cost_usd?: number
           created_at?: string
           feature: string
@@ -558,6 +560,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          channel?: string | null
           cost_usd?: number
           created_at?: string
           feature?: string
@@ -2613,6 +2616,209 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_configurations: {
+        Row: {
+          allowed_domains: string[]
+          avatar_path: string | null
+          created_at: string
+          description: string | null
+          disable_policy: string
+          display_name: string
+          embed_mode: string
+          enabled: boolean
+          flow_id: string
+          id: string
+          input_placeholder: string | null
+          owner_user_id: string
+          session_ttl_minutes: number
+          slug: string
+          theme_config: Json
+          updated_at: string
+          user_id: string
+          welcome_message: string | null
+          widget_config: Json
+        }
+        Insert: {
+          allowed_domains?: string[]
+          avatar_path?: string | null
+          created_at?: string
+          description?: string | null
+          disable_policy?: string
+          display_name?: string
+          embed_mode?: string
+          enabled?: boolean
+          flow_id: string
+          id?: string
+          input_placeholder?: string | null
+          owner_user_id: string
+          session_ttl_minutes?: number
+          slug: string
+          theme_config?: Json
+          updated_at?: string
+          user_id: string
+          welcome_message?: string | null
+          widget_config?: Json
+        }
+        Update: {
+          allowed_domains?: string[]
+          avatar_path?: string | null
+          created_at?: string
+          description?: string | null
+          disable_policy?: string
+          display_name?: string
+          embed_mode?: string
+          enabled?: boolean
+          flow_id?: string
+          id?: string
+          input_placeholder?: string | null
+          owner_user_id?: string
+          session_ttl_minutes?: number
+          slug?: string
+          theme_config?: Json
+          updated_at?: string
+          user_id?: string
+          welcome_message?: string | null
+          widget_config?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_configurations_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: true
+            referencedRelation: "wa_automation_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          message_type: string
+          metadata: Json
+          owner_user_id: string
+          sender_type: string
+          session_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json
+          owner_user_id: string
+          sender_type: string
+          session_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json
+          owner_user_id?: string
+          sender_type?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chatweb_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_sessions: {
+        Row: {
+          config_id: string
+          context: Json
+          ended_at: string | null
+          execution_id: string | null
+          expires_at: string
+          flow_id: string
+          id: string
+          last_activity_at: string
+          lead_id: string | null
+          origin: string | null
+          owner_user_id: string
+          session_token_hash: string
+          started_at: string
+          status: string
+          visitor_id: string
+        }
+        Insert: {
+          config_id: string
+          context?: Json
+          ended_at?: string | null
+          execution_id?: string | null
+          expires_at: string
+          flow_id: string
+          id?: string
+          last_activity_at?: string
+          lead_id?: string | null
+          origin?: string | null
+          owner_user_id: string
+          session_token_hash: string
+          started_at?: string
+          status?: string
+          visitor_id: string
+        }
+        Update: {
+          config_id?: string
+          context?: Json
+          ended_at?: string | null
+          execution_id?: string | null
+          expires_at?: string
+          flow_id?: string
+          id?: string
+          last_activity_at?: string
+          lead_id?: string | null
+          origin?: string | null
+          owner_user_id?: string
+          session_token_hash?: string
+          started_at?: string
+          status?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_sessions_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "chatweb_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_slug_history: {
+        Row: {
+          config_id: string | null
+          retired_at: string
+          slug: string
+        }
+        Insert: {
+          config_id?: string | null
+          retired_at?: string
+          slug: string
+        }
+        Update: {
+          config_id?: string | null
+          retired_at?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_slug_history_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "chatweb_configurations"
             referencedColumns: ["id"]
           },
         ]
@@ -13106,6 +13312,7 @@ export type Database = {
           awaiting_node_id: string | null
           channel: string
           channel_account_id: string | null
+          chatweb_session_id: string | null
           collected_data: Json | null
           completed_at: string | null
           contact_ref: string | null
@@ -13137,6 +13344,7 @@ export type Database = {
           awaiting_node_id?: string | null
           channel?: string
           channel_account_id?: string | null
+          chatweb_session_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
           contact_ref?: string | null
@@ -13168,6 +13376,7 @@ export type Database = {
           awaiting_node_id?: string | null
           channel?: string
           channel_account_id?: string | null
+          chatweb_session_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
           contact_ref?: string | null
@@ -15093,6 +15302,24 @@ export type Database = {
           p_reason?: string
         }
         Returns: Json
+      }
+      chatweb_flow_stats: {
+        Args: { _from: string; _owner: string; _to: string }
+        Returns: {
+          abandoned: number
+          avg_seconds: number
+          channel: string
+          completed: number
+          flow_id: string
+          in_progress: number
+          leads: number
+          sessions: number
+        }[]
+      }
+      chatweb_reserved_slug: { Args: { _slug: string }; Returns: boolean }
+      chatweb_slug_available: {
+        Args: { _config_id?: string; _slug: string }
+        Returns: boolean
       }
       check_and_reset_monthly_searches: {
         Args: { user_id: string }
