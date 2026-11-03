@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { ActivateChatWebDialog } from "./ActivateChatWebDialog";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Globe, AlertTriangle } from "lucide-react";
@@ -8,9 +9,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { chatwebIssues } from "@/lib/chatweb";
 
 /** Selo no construtor: mostra que o fluxo também roda no ChatWeb e avisa blocos incompatíveis. */
-export function ChatWebEditorBadge({ flowId, nodes }: { flowId?: string; nodes: any[] }) {
+export function ChatWebEditorBadge({ flowId, nodes, flowName }: { flowId?: string; nodes: any[]; flowName?: string }) {
   const navigate = useNavigate();
-  const { data: cfg } = useQuery({
+  const [open, setOpen] = useState(false);
+  const { data: flowRow } = useQuery({
+    queryKey: ["chatweb-editor-flow", flowId],
+    enabled: !!flowId,
+    queryFn: async () => (await supabase.from("wa_automation_flows" as any).select("id,name,user_id,owner_user_id").eq("id", flowId!).maybeSingle()).data as any,
+  });
+  const { data: cfg, refetch } = useQuery({
     queryKey: ["chatweb-editor", flowId],
     enabled: !!flowId,
     queryFn: async () => (await supabase.from("chatweb_configurations").select("id,enabled,slug").eq("flow_id", flowId!).maybeSingle()).data,
@@ -19,7 +26,23 @@ export function ChatWebEditorBadge({ flowId, nodes }: { flowId?: string; nodes: 
     () => chatwebIssues(nodes.map((n) => ({ id: n.id, node_type: String(n.type), name: n.data?.label || n.data?.name, config: n.data?.config }))),
     [nodes],
   );
-  if (!cfg?.enabled) return null;
+  if (!flowId) return null;
+  if (!cfg?.enabled) {
+    return (
+      <>
+        <button onClick={() => setOpen(true)} disabled={!flowRow} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dashed border-border shrink-0 hover:bg-muted text-muted-foreground disabled:opacity-50">
+          <Globe size={12} className="text-primary" />
+          <span className="text-[11px] font-medium">Transformar em ChatWeb</span>
+        </button>
+        <ActivateChatWebDialog
+          flow={open && flowRow ? { ...flowRow, name: flowName || flowRow.name } : null}
+          existing={cfg ? { id: cfg.id, enabled: cfg.enabled } : null}
+          onOpenChange={(o) => { if (!o) setOpen(false); }}
+          onDone={() => refetch()}
+        />
+      </>
+    );
+  }
   return (
     <Popover>
       <PopoverTrigger asChild>
