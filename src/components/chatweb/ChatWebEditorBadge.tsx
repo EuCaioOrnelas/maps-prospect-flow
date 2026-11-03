@@ -30,9 +30,9 @@ export function ChatWebEditorBadge({ flowId, nodes, flowName }: { flowId?: strin
   if (!cfg?.enabled) {
     return (
       <>
-        <button onClick={() => setOpen(true)} disabled={!flowRow} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dashed border-border shrink-0 hover:bg-muted text-muted-foreground disabled:opacity-50">
-          <Globe size={12} className="text-primary" />
-          <span className="text-[11px] font-medium">Transformar em ChatWeb</span>
+        <button onClick={() => setOpen(true)} disabled={!flowRow} className="h-9 flex items-center gap-1.5 px-3 rounded-full border border-dashed border-input bg-background text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent shrink-0 transition-colors disabled:opacity-50">
+          <Globe size={14} className="text-primary" />
+          Transformar em ChatWeb
         </button>
         <ActivateChatWebDialog
           flow={open && flowRow ? { ...flowRow, name: flowName || flowRow.name } : null}
@@ -46,10 +46,10 @@ export function ChatWebEditorBadge({ flowId, nodes, flowName }: { flowId?: strin
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted border border-border shrink-0 hover:bg-muted/70">
-          <Globe size={12} className="text-primary" />
-          <span className="text-[11px] font-medium text-muted-foreground">ChatWeb</span>
-          {issues.length > 0 && <AlertTriangle size={12} className="text-destructive" aria-label={`${issues.length} avisos`} />}
+        <button className="h-9 flex items-center gap-1.5 px-3 rounded-full border border-input bg-background text-sm font-medium text-foreground hover:bg-accent shrink-0 transition-colors">
+          <Globe size={14} className="text-primary" />
+          ChatWeb
+          {issues.length > 0 && <AlertTriangle size={14} className="text-destructive" aria-label={`${issues.length} avisos`} />}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-80 space-y-3">
