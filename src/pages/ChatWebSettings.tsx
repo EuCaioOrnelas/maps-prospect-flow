@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChatWebWindow, type ChatWebMessage } from "@/components/chatweb/ChatWebWindow";
 import {
-  chatwebLink, chatwebIssues, inlineEmbedCode, normalizeSlug, optimizeAvatar, readTheme, slugProblem, widgetEmbedCode,
+  chatwebLink, chatwebIssues, DEFAULT_THEME, inlineEmbedCode, normalizeSlug, optimizeAvatar, readTheme, slugProblem, widgetEmbedCode,
   type ChatWebTheme, type InlineEmbedOptions, type WidgetEmbedOptions,
 } from "@/lib/chatweb";
 import { cn } from "@/lib/utils";
@@ -346,7 +346,22 @@ export default function ChatWebSettings() {
                   {colorField("receivedBubble", "Balões recebidos")}
                   {colorField("text", "Textos")}
                   {colorField("background", "Fundo")}
+                  {colorField("inputBackground", "Campo de digitação")}
                 </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Estilo dos botões</Label>
+                    <Select value={draft.theme.optionStyle} onValueChange={(v: any) => setDraft({ ...draft, theme: { ...draft.theme, optionStyle: v } })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="whatsapp">Igual WhatsApp (empilhados)</SelectItem><SelectItem value="pill">Arredondados lado a lado</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Fundo com desenhos</Label>
+                    <div className="flex items-center gap-2 h-10"><Switch checked={draft.theme.pattern} onCheckedChange={(v) => setDraft({ ...draft, theme: { ...draft.theme, pattern: v } })} /><span className="text-sm text-muted-foreground">Estampa estilo WhatsApp</span></div>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" className="w-fit" onClick={() => setDraft({ ...draft, theme: { ...DEFAULT_THEME, whatsapp: draft.theme.whatsapp } })}>Restaurar visual padrão</Button>
                 <div className="space-y-1.5">
                   <Label>Ícone do chat</Label>
                   <Select value={draft.theme.icon} onValueChange={(v: any) => setDraft({ ...draft, theme: { ...draft.theme, icon: v } })}>

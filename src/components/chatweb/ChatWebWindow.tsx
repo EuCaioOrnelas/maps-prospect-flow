@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Smile, X, Check, CheckCheck, AlertCircle, MessageCircle, Sparkles, Headset, FileText, RotateCcw } from "lucide-react";
+import { Send, Smile, X, Check, CheckCheck, AlertCircle, MessageCircle, Sparkles, Headset, FileText, RotateCcw, Reply } from "lucide-react";
 import { format, isSameDay, isToday, isYesterday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -117,12 +117,12 @@ export function ChatWebWindow(p: Props) {
         )}
       </header>
 
-      <div className="relative flex-1 min-h-0">
-      <div aria-hidden className="pointer-events-none absolute inset-0" style={{
+      <div className="relative flex-1 min-h-0 flex flex-col">
+      {t.pattern && <div aria-hidden className="pointer-events-none absolute inset-0" style={{
         backgroundColor: contrastText(t.background), opacity: contrastText(t.background) === "#ffffff" ? 0.06 : 0.07,
         WebkitMaskImage: `url(${doodle})`, maskImage: `url(${doodle})`, WebkitMaskSize: "360px", maskSize: "360px",
-      }} />
-      <div ref={scroller} className="relative h-full overflow-y-auto px-3 py-4 space-y-1.5" role="log" aria-live="polite">
+      }} />}
+      <div ref={scroller} className="relative flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1.5" role="log" aria-live="polite">
         {p.messages.map((m, i) => {
           const d = new Date(m.created_at);
           const prev = p.messages[i - 1];
@@ -142,24 +142,26 @@ export function ChatWebWindow(p: Props) {
               ) : (
                 <div className={cn("flex animate-in fade-in slide-in-from-bottom-1 duration-200", mine ? "justify-end" : "justify-start")}>
                   <div
-                    className={cn("max-w-[82%] rounded-2xl px-3 py-2 text-sm shadow-sm", mine ? "rounded-br-md" : "rounded-bl-md")}
+                    className={cn("max-w-[82%] rounded-xl text-[14px] leading-snug shadow-[0_1px_0.5px_rgba(0,0,0,0.13)]", mine ? "rounded-tr-sm" : "rounded-tl-sm", ["image", "video"].includes(m.message_type) ? "p-1" : "px-2.5 py-1.5")}
                     style={{ background: bg, color: fg }}
                   >
                     {m.metadata?.header && <p className="font-semibold mb-1">{m.metadata.header}</p>}
                     {m.message_type === "image" && safeUrl(m.metadata?.url) && (
-                      <img src={safeUrl(m.metadata?.url)!} alt="" loading="lazy" className="rounded-lg mb-1 max-h-64 object-cover" />
+                      <a href={safeUrl(m.metadata?.url)!} target="_blank" rel="noopener noreferrer" className="block">
+                        <img src={safeUrl(m.metadata?.url)!} alt="" loading="lazy" className="rounded-lg w-full max-w-[280px] max-h-72 object-cover bg-black/5" />
+                      </a>
                     )}
                     {m.message_type === "video" && safeUrl(m.metadata?.url) && (
-                      <video src={safeUrl(m.metadata?.url)!} controls preload="metadata" className="rounded-lg mb-1 max-h-64" />
+                      <video src={safeUrl(m.metadata?.url)!} controls preload="metadata" className="rounded-lg w-full max-w-[280px] max-h-72 bg-black" />
                     )}
                     {(m.message_type === "document" || m.message_type === "audio") && safeUrl(m.metadata?.url) && (
                       <a href={safeUrl(m.metadata?.url)!} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline mb-1">
                         <FileText size={16} /> {m.metadata?.filename || "Abrir arquivo"}
                       </a>
                     )}
-                    {m.content && <p className="whitespace-pre-wrap break-words"><Linkified text={m.content} /></p>}
+                    {m.content && <p className={cn("whitespace-pre-wrap break-words", ["image", "video"].includes(m.message_type) && "px-1.5 pt-1")}><Linkified text={m.content} /></p>}
                     {m.metadata?.footer && <p className="text-xs opacity-70 mt-1">{m.metadata.footer}</p>}
-                    <div className="flex items-center justify-end gap-1 mt-0.5 text-[10px] opacity-70">
+                    <div className={cn("flex items-center justify-end gap-1 mt-0.5 text-[10px] opacity-60", ["image", "video"].includes(m.message_type) && "px-1.5 pb-0.5")}>
                       {format(d, "HH:mm")}
                       {mine && (m.local_status === "sending" ? <Check size={12} /> : m.local_status === "error" ? <AlertCircle size={12} /> : <CheckCheck size={12} />)}
                     </div>
@@ -167,20 +169,27 @@ export function ChatWebWindow(p: Props) {
                 </div>
               )}
               {m.message_type === "options" && m.metadata?.options?.length ? (
-                <div className="flex flex-wrap gap-2 mt-2 mb-1 pl-1">
-                  {m.metadata.options.map((o) => (
-                    <button
-                      key={o.id}
-                      disabled={m.id !== activeOptionsId || p.disabled || !!ended}
-                      onClick={() => p.onOption?.(o)}
-                      className="text-sm px-3.5 py-2 rounded-full border transition-all hover:-translate-y-px disabled:opacity-50 disabled:hover:translate-y-0 text-left"
-                      style={{ borderColor: t.primary, color: t.primary, background: t.receivedBubble }}
-                      title={o.description || undefined}
-                    >
-                      {o.title}
-                    </button>
-                  ))}
-                </div>
+                t.optionStyle === "whatsapp" ? (
+                  <div className="flex flex-col gap-[3px] mt-[3px] mb-1 max-w-[82%] min-w-[200px] w-fit">
+                    {m.metadata.options.map((o) => (
+                      <button key={o.id} disabled={m.id !== activeOptionsId || p.disabled || !!ended} onClick={() => p.onOption?.(o)} title={o.description || undefined}
+                        className="flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-[14px] font-medium shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] transition-all hover:brightness-[0.97] active:scale-[0.99] disabled:opacity-55 disabled:cursor-default"
+                        style={{ background: t.receivedBubble, color: t.primary }}>
+                        <Reply size={15} className="opacity-80" />{o.title}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-2 mb-1 pl-1">
+                    {m.metadata.options.map((o) => (
+                      <button key={o.id} disabled={m.id !== activeOptionsId || p.disabled || !!ended} onClick={() => p.onOption?.(o)} title={o.description || undefined}
+                        className="text-sm px-3.5 py-2 rounded-full border font-medium transition-all hover:-translate-y-px disabled:opacity-50 disabled:hover:translate-y-0 text-left"
+                        style={{ borderColor: t.primary, color: t.primary, background: t.receivedBubble }}>
+                        {o.title}
+                      </button>
+                    ))}
+                  </div>
+                )
               ) : null}
             </div>
           );
@@ -195,10 +204,9 @@ export function ChatWebWindow(p: Props) {
           </div>
         )}
       </div>
-      </div>
 
       {ended ? (
-        <div className="p-3 text-center text-sm border-t border-black/5 shrink-0" style={{ background: t.receivedBubble, color: contrastText(t.receivedBubble) }}>
+        <div className="relative m-3 mt-1 p-3 text-center text-sm rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] shrink-0" style={{ background: t.inputBackground, color: contrastText(t.inputBackground) }}>
           <p className="opacity-80">Este atendimento foi encerrado.</p>
           {t.whatsapp && (
             <a href={`https://wa.me/${t.whatsapp}`} target="_blank" rel="noopener noreferrer"
@@ -215,10 +223,11 @@ export function ChatWebWindow(p: Props) {
           )}
         </div>
       ) : (
-        <div className="flex items-end gap-2 p-2.5 border-t border-black/5 shrink-0" style={{ background: t.receivedBubble }}>
+        <div className="relative flex items-end gap-2 px-3 pb-3 pt-1 shrink-0">
+          <div className="flex-1 flex items-end gap-1 rounded-[24px] pl-1.5 pr-3 min-h-[46px] shadow-[0_1px_2px_rgba(0,0,0,0.08),0_2px_8px_-2px_rgba(0,0,0,0.06)]" style={{ background: t.inputBackground }}>
           <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
             <PopoverTrigger asChild>
-              <button aria-label="Emojis" className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center opacity-70 hover:opacity-100" style={{ color: contrastText(t.receivedBubble) }}>
+              <button aria-label="Emojis" className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center opacity-70 hover:opacity-100" style={{ color: contrastText(t.inputBackground) }}>
                 <Smile size={20} />
               </button>
             </PopoverTrigger>
@@ -239,20 +248,22 @@ export function ChatWebWindow(p: Props) {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
             placeholder={p.placeholder || "Digite sua mensagem..."}
             className="flex-1 resize-none bg-transparent outline-none text-sm py-2.5 max-h-32"
-            style={{ color: contrastText(t.receivedBubble) }}
+            style={{ color: contrastText(t.inputBackground) }}
             aria-label="Mensagem"
           />
+          </div>
           <button
             onClick={submit}
             disabled={!text.trim() || p.disabled}
             aria-label="Enviar"
-            className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40"
+            className="h-[46px] w-[46px] shrink-0 rounded-full flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all hover:brightness-105 active:scale-95 disabled:opacity-60"
             style={{ background: t.primary, color: contrastText(t.primary) }}
           >
-            <Send size={17} />
+            <Send size={18} className="ml-0.5" />
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
