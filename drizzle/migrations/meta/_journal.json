@@ -400,6 +400,20 @@
       "when": 1793446850724,
       "tag": "0056_notifications_task_lifecycle_and_manual_updates",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1793717020669,
+      "tag": "0057_chatweb_channel",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793717041123,
+      "tag": "0058_chatweb_avatar_read_members",
+      "breakpoints": true
     }
   ]
 }
