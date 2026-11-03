@@ -121,15 +121,19 @@ export function widgetEmbedCode(slug: string, o: WidgetEmbedOptions, base = chat
 // ---------- Tema ----------
 export interface ChatWebTheme {
   primary: string; secondary: string; sentBubble: string; receivedBubble: string; text: string; background: string; icon: "message" | "sparkles" | "headset"; whatsapp?: string;
+  inputBackground: string; optionStyle: "whatsapp" | "pill"; pattern: boolean;
 }
 export const DEFAULT_THEME: ChatWebTheme = {
-  primary: "#16a34a", secondary: "#0f172a", sentBubble: "#16a34a", receivedBubble: "#ffffff", text: "#0f172a", background: "#f1f5f9", icon: "message",
+  primary: "#16a34a", secondary: "#0f172a", sentBubble: "#d9fdd3", receivedBubble: "#ffffff", text: "#0f172a", background: "#efeae2", icon: "message",
+  inputBackground: "#ffffff", optionStyle: "whatsapp", pattern: true,
 };
 export function readTheme(t: any): ChatWebTheme {
   const out = { ...DEFAULT_THEME };
   for (const k of [...Object.keys(DEFAULT_THEME), "whatsapp"] as (keyof ChatWebTheme)[]) {
     const v = t?.[k];
-    if (k === "icon") { if (["message", "sparkles", "headset"].includes(v)) out.icon = v; }
+    if (k === "optionStyle") { if (v === "pill" || v === "whatsapp") out.optionStyle = v; }
+    else if (k === "pattern") { if (typeof v === "boolean") out.pattern = v; }
+    else if (k === "icon") { if (["message", "sparkles", "headset"].includes(v)) out.icon = v; }
     else if (k === "whatsapp") { const d = String(v || "").replace(/\D/g, ""); if (d.length >= 10 && d.length <= 15) out.whatsapp = d; }
     else if (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v)) (out as any)[k] = v;
   }
