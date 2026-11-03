@@ -1629,7 +1629,7 @@ async function handleInbound(body: Record<string, any>) {
     lastUserText: text,
     lastButtonId: String(body.button_id || ""),
     lastButtonTitle: String(body.button_title || ""),
-    hasFreshUserInput: true,
+    hasFreshUserInput: !(isWeb && body.chatweb_start === true),
     vars: {},
   };
 
