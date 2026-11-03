@@ -99,6 +99,8 @@ const SDRInteligente = lazyWithRetry(() => import("./pages/SDRInteligente"), "SD
 const SDRWizardPage = lazyWithRetry(() => import("./pages/SDRWizardPage"), "SDRWizardPage");
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
 const ChatComingSoonGate = lazyWithRetry(() => import("./components/chat/ChatComingSoonGate").then((m) => ({ default: m.ChatComingSoonGate })), "ChatComingSoonGate");
+const ChatWebSettings = lazyWithRetry(() => import("./pages/ChatWebSettings"), "ChatWebSettings");
+const ChatWebPublic = lazyWithRetry(() => import("./pages/ChatWebPublic"), "ChatWebPublic");
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
 const CreateFlowAI = lazyWithRetry(() => import("./pages/CreateFlowAI"), "CreateFlowAI");
@@ -341,6 +343,7 @@ const App = () => (
                 <Route path="/refund-policy" element={<LightThemeWrapper><RefundPolicy /></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
+                <Route path="/c/:slug" element={<Suspense fallback={<PageLoader />}><ChatWebPublic /></Suspense>} />
                 <Route path="/form/:slug" element={<LightThemeWrapper><PublicForm /></LightThemeWrapper>} />
                 <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
@@ -404,6 +407,7 @@ const App = () => (
                 <Route path="/ai-workforce/*" element={<Navigate to="/equipe-ia" replace />} />
                 <Route path="/fluxos" element={<ProtectedRoute><WhatsAppAutomations /></ProtectedRoute>} />
                 <Route path="/fluxos/novo" element={<ProtectedRoute><CreateFlowAI /></ProtectedRoute>} />
+                <Route path="/fluxos/:id/chatweb" element={<ProtectedRoute><Suspense fallback={<PageLoader />}><ChatWebSettings /></Suspense></ProtectedRoute>} />
                 <Route path="/fluxos/:id" element={<ProtectedRoute><WhatsAppFlowEditor /></ProtectedRoute>} />
                 <Route path="/consultoria" element={<ProtectedRoute><Consultoria /></ProtectedRoute>} />
                 {/* Meta Platforms */}
