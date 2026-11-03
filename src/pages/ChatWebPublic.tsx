@@ -47,6 +47,7 @@ export default function ChatWebPublic() {
   const [status, setStatus] = useState("active");
   const [typing, setTyping] = useState(false);
   const tokenRef = useRef<string | null>(null);
+  const fastUntil = useRef(0);
   const lastAt = useRef<string | null>(null);
 
   const merge = useCallback((incoming: ChatWebMessage[]) => {
@@ -67,6 +68,7 @@ export default function ChatWebPublic() {
       localStorage.setItem(storeKey(slug), r.token);
       setMessages([]); lastAt.current = null; setStatus(r.status);
       merge(r.messages);
+      fastUntil.current = Date.now() + 15000;
     } catch (e: any) {
       setError(e.code === "disabled" ? "Este atendimento está indisponível no momento." : e.code === "rate_limited" ? "Muitas tentativas. Aguarde alguns minutos." : "Não foi possível iniciar o atendimento.");
     } finally { setTyping(false); }
@@ -76,19 +78,16 @@ export default function ChatWebPublic() {
     document.title = "Atendimento";
     (async () => {
       try {
-        const r = await api({ action: "config", slug, host_origin: host });
+        // Uma única chamada: configuração + retomada (ou início) da conversa.
+        const saved = localStorage.getItem(storeKey(slug));
+        const r = await api({ action: "boot", slug, host_origin: host, token: saved, visitor_id: visitorId() });
         setCfg(r.config);
         if (r.config.display_name) document.title = r.config.display_name;
-        const saved = localStorage.getItem(storeKey(slug));
-        if (saved) {
-          try {
-            const s = await api({ action: "resume", token: saved, slug });
-            tokenRef.current = saved; setStatus(s.status); merge(s.messages);
-            return;
-          } catch { localStorage.removeItem(storeKey(slug)); }
-        }
-        if (r.config.enabled) await start();
-        else setError("Este atendimento está indisponível no momento.");
+        if (r.token) { tokenRef.current = r.token; localStorage.setItem(storeKey(slug), r.token); }
+        else localStorage.removeItem(storeKey(slug));
+        if (r.status) { setStatus(r.status); merge(r.messages || []); if (r.started) fastUntil.current = Date.now() + 15000; return; }
+        if (!r.config.enabled) setError("Este atendimento está indisponível no momento.");
+        else if (r.error === "rate_limited") setError("Muitas tentativas. Aguarde alguns minutos.");
       } catch (e: any) {
         setError(e.code === "domain_not_allowed" ? "Este chat não está autorizado neste site." : "Atendimento não encontrado.");
       }
@@ -98,14 +97,21 @@ export default function ChatWebPublic() {
   // Recebe respostas que chegam depois (esperas, atendente humano).
   useEffect(() => {
     if (!tokenRef.current || !["active", "handoff"].includes(status)) return;
-    const id = setInterval(async () => {
-      if (document.hidden || !tokenRef.current) return;
-      try {
-        const r = await api({ action: "poll", token: tokenRef.current, slug, since: lastAt.current });
-        setStatus(r.status); merge(r.messages);
-      } catch { /* tenta de novo */ }
-    }, 4000);
-    return () => clearInterval(id);
+    let stop = false; let timer: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      if (stop) return;
+      if (!document.hidden && tokenRef.current) {
+        try {
+          const r = await api({ action: "poll", token: tokenRef.current, slug, since: lastAt.current });
+          if (r.messages?.length) setTyping(false);
+          setStatus(r.status); merge(r.messages);
+        } catch { /* tenta de novo */ }
+      }
+      // Logo após iniciar/responder, consulta rápido; depois volta ao ritmo normal.
+      timer = setTimeout(tick, Date.now() < fastUntil.current ? 1000 : 4000);
+    };
+    timer = setTimeout(tick, Date.now() < fastUntil.current ? 700 : 4000);
+    return () => { stop = true; clearTimeout(timer); };
   }, [status, slug, merge]);
 
   const send = async (text: string, option?: ChatWebOption) => {
@@ -118,6 +124,7 @@ export default function ChatWebPublic() {
       const r = await api({ action: "send", token: tokenRef.current, slug, text: option ? "" : text, button_id: option?.id, button_title: option?.title });
       setMessages((m) => m.filter((x) => x.id !== localId));
       merge(r.messages); setStatus(r.status);
+      fastUntil.current = Date.now() + 8000;
     } catch (e: any) {
       setMessages((m) => m.map((x) => (x.id === localId ? { ...x, local_status: "error" } : x)));
       if (e.code === "session_closed") setStatus("completed");
@@ -132,9 +139,9 @@ export default function ChatWebPublic() {
   if (!cfg) return <div className="h-[100dvh] flex items-center justify-center bg-background"><Loader2 className="animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className={embed ? "h-[100dvh]" : "h-[100dvh] sm:p-6 bg-muted flex items-center justify-center"}>
+    <div className={embed ? "h-[100dvh]" : "h-[100dvh] sm:p-8 bg-muted flex items-center justify-center"}>
       <ChatWebWindow
-        className={embed ? "" : "sm:max-w-[440px] sm:h-[min(760px,100%)] sm:rounded-2xl sm:shadow-xl sm:border sm:border-border"}
+        className={embed ? "" : "sm:max-w-[420px] sm:h-[min(720px,100%)] sm:rounded-[20px] sm:ring-1 sm:ring-foreground/10 sm:shadow-[0_1px_2px_hsl(var(--foreground)/0.06),0_12px_40px_-12px_hsl(var(--foreground)/0.18)]"}
         name={cfg.display_name}
         description={cfg.description}
         avatarUrl={cfg.avatar_url}
