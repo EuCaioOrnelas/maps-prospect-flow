@@ -7,7 +7,7 @@ type Props = { flowId: string; from?: Date; to?: Date; channel?: "chatweb" | "wh
 /** Resumo das avaliações (nó "Avaliação") de um fluxo. Só aparece quando há respostas. */
 export function FlowRatingsSummary({ flowId, from, to, channel = "all", className }: Props) {
   const { data: rows = [] } = useQuery({
-    queryKey: ["flow-ratings", flowId, from?.toISOString(), to?.toISOString(), channel],
+    queryKey: ["flow-ratings", flowId, from ? Math.floor(from.getTime() / 3600000) : 0, to ? Math.floor(to.getTime() / 3600000) : 0, channel],
     queryFn: async () => {
       let q = supabase
         .from("wa_flow_ratings")

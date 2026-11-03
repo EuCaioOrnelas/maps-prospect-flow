@@ -580,7 +580,7 @@ export default function ChatWebSettings() {
                     ))}
                   </CardContent></Card>
                 </div>
-                <FlowRatingsSummary flowId={flowId!} from={subDays(new Date(), Number(period))} channel="chatweb" />
+                <FlowRatingsSummary flowId={flowId} from={subDays(new Date(), Number(period))} channel="chatweb" />
                 <div className="grid lg:grid-cols-2 gap-4">
                   <Card><CardContent className="p-5 space-y-3">
                     <p className="font-medium">De onde vêm os visitantes</p>
