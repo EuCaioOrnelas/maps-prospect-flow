@@ -1,3 +1,4 @@
+import { FlowRatingsSummary } from "./FlowRatingsSummary";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -250,6 +251,8 @@ export function FlowResultsDialog({ open, onOpenChange, flowId, flowName }: Flow
             <FlowFunnel total={stats.total} active={stats.active} completed={stats.completed} abandoned={stats.abandoned} />
           </div>
         )}
+
+        <FlowRatingsSummary flowId={flowId} from={dateFrom} to={dateTo} className="mx-6 my-4 shrink-0" />
 
         {/* Toolbar */}
         <div className="flex items-center gap-2 px-6 py-3 border-b border-border shrink-0">

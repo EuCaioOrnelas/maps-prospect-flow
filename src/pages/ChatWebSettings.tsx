@@ -1,3 +1,4 @@
+import { FlowRatingsSummary } from "@/components/wa-flow/FlowRatingsSummary";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -579,6 +580,7 @@ export default function ChatWebSettings() {
                     ))}
                   </CardContent></Card>
                 </div>
+                <FlowRatingsSummary flowId={flowId!} from={subDays(new Date(), Number(period))} channel="chatweb" />
                 <div className="grid lg:grid-cols-2 gap-4">
                   <Card><CardContent className="p-5 space-y-3">
                     <p className="font-medium">De onde vêm os visitantes</p>
