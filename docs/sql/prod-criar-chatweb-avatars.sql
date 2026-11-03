@@ -10,27 +10,37 @@ on conflict (id) do update
   set public = false,
       file_size_limit = 1048576;
 
--- 2) Regras de acesso (apenas a própria conta lê, envia e apaga suas fotos)
+-- 2) Regras de acesso: cada conta só lê, envia e apaga as próprias fotos
+--    (o visitante do ChatWeb recebe a foto por link temporado gerado
+--    pelo sistema, então não precisa de acesso público aqui)
 drop policy if exists chatweb_avatars_read on storage.objects;
 create policy chatweb_avatars_read on storage.objects
   for select
-  using (bucket_id = 'chatweb-avatars');
+  using (
+    bucket_id = 'chatweb-avatars'
+    and public.is_account_member(((storage.foldername(name))[1])::uuid)
+  );
 
 drop policy if exists chatweb_avatars_insert on storage.objects;
 create policy chatweb_avatars_insert on storage.objects
   for insert
-  with check (bucket_id = 'chatweb-avatars');
+  with check (
+    bucket_id = 'chatweb-avatars'
+    and public.is_account_member(((storage.foldername(name))[1])::uuid)
+  );
 
 drop policy if exists chatweb_avatars_update on storage.objects;
 create policy chatweb_avatars_update on storage.objects
   for update
-  using (bucket_id = 'chatweb-avatars');
+  using (
+    bucket_id = 'chatweb-avatars'
+    and public.is_account_member(((storage.foldername(name))[1])::uuid)
+  );
 
 drop policy if exists chatweb_avatars_delete on storage.objects;
 create policy chatweb_avatars_delete on storage.objects
   for delete
-  using (bucket_id = 'chatweb-avatars');
-
--- 3) Qualquer usuário logado pode usar a pasta (as fotos são do ChatWeb,
---    não de arquivos pessoais)
-grant all on storage.objects to authenticated;
+  using (
+    bucket_id = 'chatweb-avatars'
+    and public.is_account_member(((storage.foldername(name))[1])::uuid)
+  );
