@@ -814,9 +814,9 @@ export default function WhatsAppFlowEditor() {
           onChange={(e) => { setFlowName(e.target.value); setHasChanges(true); }}
           className="max-w-[220px] h-9 text-sm font-medium bg-transparent border-transparent hover:border-border focus:border-border"
         />
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted border border-border shrink-0">
-          <MessageSquare size={12} className="text-emerald-500" />
-          <span className="text-[11px] font-medium text-muted-foreground">WhatsApp</span>
+        <div className="h-9 flex items-center gap-1.5 px-3 rounded-full border border-input bg-background text-sm font-medium text-foreground shrink-0" title="Canal ativo">
+          <MessageSquare size={14} className="text-primary" />
+          WhatsApp
         </div>
         <ChatWebEditorBadge flowId={id} nodes={nodes} flowName={flowName} />
 
