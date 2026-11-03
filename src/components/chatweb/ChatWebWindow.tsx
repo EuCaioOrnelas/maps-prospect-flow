@@ -310,7 +310,7 @@ export function ChatWebWindow(p: Props) {
             onClick={submit}
             disabled={!text.trim() || p.disabled}
             aria-label="Enviar"
-            className="h-[46px] w-[46px] shrink-0 rounded-full flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all hover:brightness-105 active:scale-95 disabled:opacity-60"
+            className="h-[46px] w-[46px] shrink-0 rounded-full flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all hover:brightness-105 active:scale-95 disabled:opacity-90"
             style={{ background: t.primary, color: contrastText(t.primary) }}
           >
             <Send size={18} className="ml-0.5" />
