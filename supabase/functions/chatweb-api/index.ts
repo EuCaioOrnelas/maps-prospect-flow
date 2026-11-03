@@ -17,7 +17,7 @@ const VISITOR_RE = /^[A-Za-z0-9_-]{8,64}$/;
 const MAX_TEXT = 2000;
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" } });
 }
 
 function cleanText(v: unknown): string {
@@ -59,9 +59,13 @@ async function loadConfig(slug: string) {
   return data;
 }
 
+const avatarCache = new Map<string, { url: string; exp: number }>();
 async function avatarUrl(path: string | null) {
   if (!path) return null;
+  const hit = avatarCache.get(path);
+  if (hit && hit.exp > Date.now()) return hit.url;
   const { data } = await db.storage.from("chatweb-avatars").createSignedUrl(path, 60 * 60 * 24);
+  if (data?.signedUrl) { if (avatarCache.size > 500) avatarCache.clear(); avatarCache.set(path, { url: data.signedUrl, exp: Date.now() + 6 * 3600_000 }); }
   return data?.signedUrl || null;
 }
 
@@ -121,6 +125,26 @@ async function callRunner(cfg: any, sess: any, extra: Record<string, unknown>) {
   if (!res.ok) console.error("[chatweb-api] runner", res.status, await res.text());
 }
 
+async function startSession(cfg: any, rawVisitor: unknown, ip: string, hostOrigin: string | null): Promise<{ error: string } | { token: string; visitor_id: string; status: string; messages: any[] }> {
+  const visitorId = VISITOR_RE.test(String(rawVisitor || "")) ? String(rawVisitor) : crypto.randomUUID().replace(/-/g, "");
+  if (!(await rateLimit(`ip:${ip}`, "chatweb-start", 10, 600))) return { error: "rate_limited" };
+  const token = newToken();
+  const { data: sess, error } = await db.from("chatweb_sessions").insert({
+    config_id: cfg.id, owner_user_id: cfg.owner_user_id, flow_id: cfg.flow_id, visitor_id: visitorId,
+    session_token_hash: await sha256(token), origin: hostOrigin ? hostOf(hostOrigin) : "link",
+    expires_at: new Date(Date.now() + cfg.session_ttl_minutes * 60_000).toISOString(),
+  }).select("*").single();
+  if (error || !sess) return { error: "start_failed" };
+  if (cfg.welcome_message) {
+    await db.from("chatweb_messages").insert({ session_id: sess.id, owner_user_id: cfg.owner_user_id, sender_type: "bot", content: cleanText(cfg.welcome_message), metadata: { welcome: true } });
+  }
+  // O fluxo roda em segundo plano: o visitante já vê o chat e as respostas chegam pela consulta rápida.
+  const run = callRunner(cfg, sess, { incoming_text: "", chatweb_start: true }).catch((e) => console.error("[chatweb-api] runner", e));
+  const rt = (globalThis as any).EdgeRuntime;
+  if (rt?.waitUntil) rt.waitUntil(run); else await run;
+  return { token, visitor_id: visitorId, status: "active", messages: await messagesSince(sess.id) };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -139,11 +163,33 @@ Deno.serve(async (req) => {
       return json({ config: await publicConfig(cfg) });
     }
 
+    if (action === "boot") {
+      // Configuração + retomada/início numa única ida ao servidor (abre mais rápido).
+      const cfg = await loadConfig(String(body.slug || "").toLowerCase());
+      if (!cfg) return json({ error: "not_found" }, 404);
+      if (!domainAllowed(cfg, hostOrigin)) return json({ error: "domain_not_allowed" }, 403);
+      const [config, existing] = await Promise.all([publicConfig(cfg), body.token ? sessionByToken(body.token) : Promise.resolve(null)]);
+      if (existing && existing.config_id === cfg.id) {
+        const status = await syncStatus(existing);
+        return json({ config, token: String(body.token), status, messages: await messagesSince(existing.id) });
+      }
+      if (!cfg.enabled) return json({ config });
+      const started = await startSession(cfg, body.visitor_id, ip, hostOrigin);
+      if ("error" in started) return json({ config, error: started.error });
+      return json({ config, ...started, started: true });
+    }
+
     if (action === "start") {
       const cfg = await loadConfig(String(body.slug || "").toLowerCase());
       if (!cfg) return json({ error: "not_found" }, 404);
       if (!cfg.enabled) return json({ error: "disabled" }, 403);
       if (!domainAllowed(cfg, hostOrigin)) return json({ error: "domain_not_allowed" }, 403);
+      const started = await startSession(cfg, body.visitor_id, ip, hostOrigin);
+      if ("error" in started) return json({ error: started.error }, started.error === "rate_limited" ? 429 : 500);
+      return json(started);
+    }
+    if (action === "__unused_start") {
+      const cfg: any = null;
       const visitorId = VISITOR_RE.test(String(body.visitor_id || "")) ? String(body.visitor_id) : crypto.randomUUID().replace(/-/g, "");
       if (!(await rateLimit(`ip:${ip}`, "chatweb-start", 10, 600))) return json({ error: "rate_limited" }, 429);
       const token = newToken();
@@ -171,6 +217,7 @@ Deno.serve(async (req) => {
     if (!cfg) return json({ error: "not_found" }, 404);
     if (body.slug && String(body.slug).toLowerCase() !== cfg.slug) return json({ error: "invalid_session" }, 401);
 
+    if (action === "poll" && !(await rateLimit(`s:${sess.id}`, "chatweb-poll", 90, 60))) return json({ error: "rate_limited" }, 429);
     if (action === "resume" || action === "poll") {
       const status = await syncStatus(sess);
       return json({ status, messages: await messagesSince(sess.id, action === "poll" ? body.since : null) });

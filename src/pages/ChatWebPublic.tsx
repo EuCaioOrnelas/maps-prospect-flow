@@ -85,7 +85,7 @@ export default function ChatWebPublic() {
         if (r.config.display_name) document.title = r.config.display_name;
         if (r.token) { tokenRef.current = r.token; localStorage.setItem(storeKey(slug), r.token); }
         else localStorage.removeItem(storeKey(slug));
-        if (r.status) { setStatus(r.status); merge(r.messages || []); if (r.started) fastUntil.current = Date.now() + 15000; return; }
+        if (r.status) { setStatus(r.status); merge(r.messages || []); if (r.started) { fastUntil.current = Date.now() + 15000; setTyping(true); setTimeout(() => setTyping(false), 8000); } return; }
         if (!r.config.enabled) setError("Este atendimento está indisponível no momento.");
         else if (r.error === "rate_limited") setError("Muitas tentativas. Aguarde alguns minutos.");
       } catch (e: any) {
