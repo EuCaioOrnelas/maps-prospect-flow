@@ -818,7 +818,7 @@ export default function WhatsAppFlowEditor() {
           <MessageSquare size={12} className="text-emerald-500" />
           <span className="text-[11px] font-medium text-muted-foreground">WhatsApp</span>
         </div>
-        <ChatWebEditorBadge flowId={id} nodes={nodes} />
+        <ChatWebEditorBadge flowId={id} nodes={nodes} flowName={flowName} />
 
 
         {hasChanges && (
