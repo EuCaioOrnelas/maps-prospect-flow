@@ -473,7 +473,7 @@ export default function ChatWebSettings() {
               const buckets = Array.from({ length: days }, (_, i) => format(subDays(new Date(), days - 1 - i), "yyyy-MM-dd"));
               const perDay = buckets.map((d) => list.filter((x) => String(x.started_at).slice(0, 10) === d).length);
               const max = Math.max(1, ...perDay);
-              const origins = Object.entries(list.reduce((m: Record<string, number>, x) => { const k = x.origin || "link"; m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]);
+              const origins: [string, number][] = (Object.entries(list.reduce((m: Record<string, number>, x) => { const k = x.origin || "link"; m[k] = (m[k] || 0) + 1; return m; }, {})) as [string, number][]).sort((a, b) => b[1] - a[1]);
               const originName: Record<string, string> = { link: "Link direto", embed: "Chat na página", inline: "Chat na página", widget: "Botão flutuante" };
               const funnel = [
                 { l: "Sessões abertas", v: total, icon: Users },
