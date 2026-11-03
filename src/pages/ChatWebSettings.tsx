@@ -354,6 +354,12 @@ export default function ChatWebSettings() {
                     <SelectContent><SelectItem value="message">Balão de conversa</SelectItem><SelectItem value="sparkles">Brilho (IA)</SelectItem><SelectItem value="headset">Atendente</SelectItem></SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-1.5">
+                  <Label>WhatsApp para o botão “Voltar para o WhatsApp”</Label>
+                  <Input inputMode="tel" placeholder="5511999999999" className="max-w-xs" value={draft.theme.whatsapp || ""}
+                    onChange={(e) => setDraft({ ...draft, theme: { ...draft.theme, whatsapp: e.target.value.replace(/\D/g, "").slice(0, 15) } })} />
+                  <p className="text-xs text-muted-foreground">Opcional. Com DDI e DDD. Aparece quando o atendimento termina.</p>
+                </div>
                 <Button onClick={saveAppearance} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar personalização</Button>
               </CardContent></Card>
               {preview}
