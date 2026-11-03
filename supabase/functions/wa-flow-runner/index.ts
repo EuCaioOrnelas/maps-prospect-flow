@@ -151,7 +151,7 @@ function interactiveItems(cfg: Record<string, any>): Array<{ id: string; title: 
 }
 
 // ---------- Meta Cloud API ----------
-type FlowChannel = "whatsapp" | "instagram";
+type FlowChannel = "whatsapp" | "instagram" | "chatweb";
 
 interface SendCtx {
   channel: FlowChannel;
@@ -167,6 +167,10 @@ interface SendCtx {
   commentId?: string | null;
   to: string;
   convId: string | null;
+  /** Sessão do ChatWeb (canal web): mensagens vão para chatweb_messages */
+  chatwebSessionId?: string | null;
+  /** Marca a próxima mensagem como resposta de IA (indicadores por canal) */
+  aiReply?: boolean;
   userId: string;
   ownerId: string;
   connectionId?: string | null;
@@ -364,7 +368,50 @@ async function evolutionSend(ctx: SendCtx, payload: Record<string, any>, logText
   return true;
 }
 
+// ---------- Adaptador de canal: ChatWeb ----------
+// Grava a saída do motor no histórico da sessão web, sem chamar Meta/Evolution.
+async function chatwebSend(ctx: SendCtx, payload: Record<string, any>, logText: string, logType = "text") {
+  if (!ctx.chatwebSessionId) return false;
+  const type = String(payload?.type || logType || "text");
+  const metadata: Record<string, any> = { source: "wa_flow" };
+  if (ctx.aiReply) metadata.ai = true;
+  let content = logText;
+  let messageType = "text";
+  if (type === "text") content = String(payload?.text?.body ?? logText);
+  else if (type === "chatweb_options") {
+    messageType = "options";
+    content = String(payload.body || "");
+    metadata.header = payload.header || null;
+    metadata.footer = payload.footer || null;
+    metadata.options = payload.options || [];
+    metadata.style = payload.style || "buttons";
+  } else if (["image", "video", "audio", "document"].includes(type)) {
+    messageType = type;
+    const media = payload?.[type] || {};
+    metadata.url = String(media.link || "");
+    metadata.filename = media.filename || null;
+    content = String(media.caption || "");
+  } else if (type === "template") {
+    content = logText;
+  }
+  const { error } = await supabase.from("chatweb_messages").insert({
+    session_id: ctx.chatwebSessionId,
+    owner_user_id: ctx.ownerId,
+    sender_type: "bot",
+    message_type: messageType,
+    content: content?.slice(0, 8000) ?? null,
+    metadata,
+  });
+  if (error) {
+    console.error("[wa-flow-runner] chatweb insert falhou:", error.message);
+    return false;
+  }
+  await supabase.from("chatweb_sessions").update({ last_activity_at: new Date().toISOString() }).eq("id", ctx.chatwebSessionId);
+  return true;
+}
+
 async function metaSend(ctx: SendCtx, payload: Record<string, any>, logText: string, logType = "text") {
+  if (ctx.channel === "chatweb") return await chatwebSend(ctx, payload, logText, logType);
   if (ctx.channel === "instagram") return await igSend(ctx, payload, logText, logType);
   if (ctx.provider === "evolution") return await evolutionSend(ctx, payload, logText, logType);
   const res = await fetch(`https://graph.facebook.com/${META_API_VERSION}/${ctx.phoneNumberId}/messages`, {
@@ -403,6 +450,22 @@ async function sendInteractive(ctx: SendCtx, cfg: Record<string, any>, vars: Rec
   const isList = cfg.interaction_type === "list";
 
   if (!items.length) return await sendText(ctx, [header, body, footer].filter(Boolean).join("\n\n"));
+
+  // ChatWeb: botões/listas viram botões reais na interface web.
+  if (ctx.channel === "chatweb") {
+    return await chatwebSend(ctx, {
+      type: "chatweb_options",
+      body,
+      header: header || null,
+      footer: footer || null,
+      style: isList ? "list" : "buttons",
+      options: items.slice(0, 20).map((it) => ({
+        id: it.id,
+        title: interpolate(it.title, vars).slice(0, 80),
+        description: it.description ? interpolate(it.description, vars).slice(0, 160) : null,
+      })),
+    }, [header, body].filter(Boolean).join("\n\n"), "interactive");
+  }
 
   // Número de Atendimento: sem botões nativos — enviamos opções numeradas em texto.
   if (ctx.provider === "evolution") {
@@ -992,6 +1055,12 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
         } else if (!responsible) {
           console.warn("[wa-flow-runner] handoff sem responsável configurado — conversa segue sem atribuição");
         }
+        if (ctx.send.channel === "chatweb" && ctx.send.chatwebSessionId) {
+          await supabase.from("chatweb_sessions").update({
+            status: "handoff",
+            context: { handoff: { reason: cfg.handoff_reason || node.name || "Transferência para atendimento humano", responsible_user_id: responsible, flow_id: execution.flow_id, at: new Date().toISOString(), collected: runtime.vars } },
+          }).eq("id", ctx.send.chatwebSessionId);
+        }
         if (cfg.crm_stage_id && cfg.crm_stage_id !== "none" && ctx.leadId) {
           const stageId = await resolveStageId(execution.owner_user_id || execution.user_id, cfg.crm_stage_id);
           if (stageId) await supabase.from("leads").update({ pipeline_stage_id: stageId }).eq("id", ctx.leadId);
@@ -1040,7 +1109,17 @@ async function run(ctx: ExecCtx, startNodeId: string | null) {
                 ].filter(Boolean).join("\n"),
                 runtime.lastUserText || "(sem texto)",
               );
-              if (reply) await sendText(ctx.send, reply);
+              if (reply) {
+                ctx.send.aiReply = true;
+                try { await sendText(ctx.send, reply); } finally { ctx.send.aiReply = false; }
+                await supabase.from("ai_usage_logs").insert({
+                  user_id: execution.owner_user_id || execution.user_id,
+                  feature: "wa_flow_ai_agent",
+                  model: cfg.ai_model || cred.model || null,
+                  channel: ctx.send.channel,
+                  metadata: { flow_id: execution.flow_id, execution_id: execution.id },
+                }).then(({ error }) => { if (error) console.warn("[wa-flow-runner] ai_usage_logs", error.message); });
+              }
             } catch (e) {
               console.error("[wa-flow-runner] ai_agent", e);
             }
@@ -1280,6 +1359,17 @@ async function loadFlow(flowId: string) {
 }
 
 async function buildSendCtx(flow: any, phone: string, leadName: string | null, userId: string, ownerId: string): Promise<SendCtx | null> {
+  // ---- Canal ChatWeb (execuções web usam lead_phone = "cw:<sessão>") ----
+  if (String(phone || "").startsWith("cw:")) {
+    const sessionId = String(phone).slice(3);
+    const { data: sess } = await supabase
+      .from("chatweb_sessions")
+      .select("id,owner_user_id,status")
+      .eq("id", sessionId)
+      .maybeSingle();
+    if (!sess || sess.owner_user_id !== ownerId || sess.status === "closed") return null;
+    return { channel: "chatweb", token: "", phoneNumberId: "", to: "", convId: null, chatwebSessionId: sess.id, userId, ownerId, connectionId: null };
+  }
   // ---- Canal Instagram ----
   if ((flow.channel || "whatsapp") === "instagram") {
     let igQuery = supabase
@@ -1369,6 +1459,10 @@ async function buildSendCtx(flow: any, phone: string, leadName: string | null, u
 }
 
 async function findLeadId(ownerId: string, phone: string): Promise<string | null> {
+  if (String(phone || "").startsWith("cw:")) {
+    const { data: s } = await supabase.from("chatweb_sessions").select("lead_id").eq("id", String(phone).slice(3)).maybeSingle();
+    return s?.lead_id || null;
+  }
   const tail = digits(phone).slice(-8);
   if (!tail) return null;
   const { data } = await supabase
@@ -1682,6 +1776,7 @@ interface AudienceLead {
 }
 
 async function findLeadByPhone(ownerId: string, phone: string): Promise<AudienceLead | null> {
+  if (String(phone || "").startsWith("cw:")) return null;
   const tail = digits(phone).slice(-8);
   if (!tail) return null;
   const { data } = await supabase
