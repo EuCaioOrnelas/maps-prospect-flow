@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Sparkles, Workflow, MoreVertical, Play, Pause, Archive,
   Trash2, Copy, FlaskConical, Search, ShoppingCart, HeadphonesIcon,
@@ -32,7 +32,7 @@ import { ptBR } from "date-fns/locale";
 import { getFlowTemplate } from "@/data/flowTemplates";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWebhookGate } from "@/hooks/useWebhookGate";
-import { ShieldAlert, Globe, Settings2, PowerOff } from "lucide-react";
+import { ShieldAlert, Globe, Settings2, PowerOff, Workflow } from "lucide-react";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ActivateChatWebDialog } from "@/components/chatweb/ActivateChatWebDialog";
 import { subDays } from "date-fns";
