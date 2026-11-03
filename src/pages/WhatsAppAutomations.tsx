@@ -32,7 +32,7 @@ import { ptBR } from "date-fns/locale";
 import { getFlowTemplate } from "@/data/flowTemplates";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWebhookGate } from "@/hooks/useWebhookGate";
-import { ShieldAlert, Globe, Settings2, PowerOff, Workflow } from "lucide-react";
+import { ShieldAlert, Globe, Settings2, PowerOff } from "lucide-react";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ActivateChatWebDialog } from "@/components/chatweb/ActivateChatWebDialog";
 import { subDays } from "date-fns";
