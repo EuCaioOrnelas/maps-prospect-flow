@@ -32,7 +32,10 @@ import { ptBR } from "date-fns/locale";
 import { getFlowTemplate } from "@/data/flowTemplates";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWebhookGate } from "@/hooks/useWebhookGate";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Globe, Settings2, PowerOff } from "lucide-react";
+import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { ActivateChatWebDialog } from "@/components/chatweb/ActivateChatWebDialog";
+import { subDays } from "date-fns";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   draft: { label: "Rascunho", color: "bg-muted text-muted-foreground" },
@@ -261,6 +264,35 @@ export default function WhatsAppAutomations() {
     });
   }, [createFromTemplate]);
 
+  // ---- ChatWeb: configurações ligadas aos mesmos fluxos (sem duplicar) ----
+  const [channelFilter, setChannelFilter] = useState<"all" | "whatsapp" | "chatweb">("all");
+  const [chatwebFlow, setChatwebFlow] = useState<any>(null);
+  const { data: chatwebData } = useQuery({
+    queryKey: ["chatweb-list", accountOwnerId || user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const owner = accountOwnerId || user!.id;
+      const [{ data: cfgs }, { data: stats }] = await Promise.all([
+        supabase.from("chatweb_configurations").select("id,flow_id,enabled,slug"),
+        supabase.rpc("chatweb_flow_stats", { _owner: owner, _from: subDays(new Date(), 365).toISOString(), _to: new Date(Date.now() + 60_000).toISOString() }),
+      ]);
+      return { cfgs: cfgs || [], stats: (stats || []) as any[] };
+    },
+  });
+  const chatwebByFlow = useMemo(() => new Map((chatwebData?.cfgs || []).map((c: any) => [c.flow_id, c])), [chatwebData]);
+  const flowStats = useCallback((flowId: string, ch: string) => (chatwebData?.stats || []).find((r: any) => r.flow_id === flowId && r.channel === ch), [chatwebData]);
+  const hasWhatsApp = (f: any) => (f.channel || "whatsapp") !== "instagram" && !!(f.waba_connection_id || f.phone_number_id || f.whatsapp_number_id);
+  const hasChatweb = (f: any) => !!chatwebByFlow.get(f.id)?.enabled;
+  const visibleFlows = flows.filter((f: any) => channelFilter === "all" || (channelFilter === "chatweb" ? hasChatweb(f) : hasWhatsApp(f)));
+  const disableChatweb = async (flowId: string) => {
+    const c: any = chatwebByFlow.get(flowId);
+    if (!c) return;
+    const { error } = await supabase.from("chatweb_configurations").update({ enabled: false }).eq("id", c.id);
+    if (error) return toast.error("Não foi possível desativar o ChatWeb.");
+    toast.success("ChatWeb desativado. O fluxo e o histórico foram mantidos.");
+    queryClient.invalidateQueries({ queryKey: ["chatweb-list"] });
+  };
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const firstName = profile?.name?.split(" ")[0] || "usuário";
@@ -427,10 +459,26 @@ export default function WhatsAppAutomations() {
           {/* Flows list */}
           {flows.length > 0 && (
             <div>
-              <h2 className="text-lg font-bold text-foreground mb-4">Seus fluxos</h2>
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 className="text-lg font-bold text-foreground">Seus fluxos</h2>
+                <div className="inline-flex rounded-lg border border-border bg-card p-0.5" role="tablist" aria-label="Filtrar por canal">
+                  {([["all", "Todos"], ["whatsapp", "WhatsApp"], ["chatweb", "ChatWeb"]] as const).map(([k, l]) => (
+                    <button key={k} role="tab" aria-selected={channelFilter === k} onClick={() => setChannelFilter(k)}
+                      className={`px-3 h-8 text-sm rounded-md transition-colors ${channelFilter === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {visibleFlows.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center">Nenhum fluxo neste canal.</p>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {flows.map((flow: any) => {
+                {visibleFlows.map((flow: any) => {
                   const st = statusLabels[flow.status] || statusLabels.draft;
+                  const cw: any = chatwebByFlow.get(flow.id);
+                  const web = flowStats(flow.id, "chatweb");
+                  const wa = flowStats(flow.id, "whatsapp");
                   return (
                     <Card
                       key={flow.id}
@@ -467,6 +515,22 @@ export default function WhatsAppAutomations() {
                                   <Play size={14} className="mr-2" /> Retomar
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuSeparator />
+                              {cw?.enabled ? (
+                                <>
+                                  <DropdownMenuItem onClick={() => navigate(`/fluxos/${flow.id}/chatweb`)}>
+                                    <Settings2 size={14} className="mr-2" /> Configurar ChatWeb
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => disableChatweb(flow.id)}>
+                                    <PowerOff size={14} className="mr-2" /> Desativar ChatWeb
+                                  </DropdownMenuItem>
+                                </>
+                              ) : (
+                                <DropdownMenuItem onClick={() => setChatwebFlow(flow)}>
+                                  <Globe size={14} className="mr-2" /> Transformar em ChatWeb
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => duplicateFlow.mutate(flow)}>
                                 <Copy size={14} className="mr-2" /> Duplicar
                               </DropdownMenuItem>
@@ -481,6 +545,20 @@ export default function WhatsAppAutomations() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                          {hasWhatsApp(flow) && <Badge variant="outline" className="text-[11px] font-medium">WhatsApp</Badge>}
+                          {cw?.enabled && (
+                            <Badge variant="outline" className="text-[11px] font-medium gap-1 border-primary/40 text-primary">
+                              <Globe size={11} /> ChatWeb
+                            </Badge>
+                          )}
+                          {cw?.enabled && hasWhatsApp(flow) && <span className="text-[11px] text-muted-foreground">· 2 canais</span>}
+                          {(web || wa) && (
+                            <span className="ml-auto text-[11px] text-muted-foreground tabular-nums" title="Atendimentos iniciados nos últimos 12 meses">
+                              {Number(wa?.sessions || 0) + Number(web?.sessions || 0)} atendimentos
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center justify-between">
                           <Badge className={`${st.color} border-0 text-xs`}>{st.label}</Badge>
@@ -555,6 +633,13 @@ export default function WhatsAppAutomations() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <ActivateChatWebDialog
+          flow={chatwebFlow}
+          existing={chatwebFlow ? (chatwebByFlow.get(chatwebFlow.id) as any) || null : null}
+          onOpenChange={(o) => { if (!o) setChatwebFlow(null); }}
+          onDone={() => queryClient.invalidateQueries({ queryKey: ["chatweb-list"] })}
+        />
 
         {/* Loading overlay during template creation */}
         {createFromTemplate.isPending && (

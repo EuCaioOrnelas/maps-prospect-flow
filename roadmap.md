@@ -38,3 +38,12 @@
 - [x] Remover header global; mover oportunidades e perfil ao sidebar; tema apenas no Dashboard.
 - [x] Testar regras (14 testes), criação/publicação autenticada, menu, tema, avisos e telas de diferentes tamanhos.
 - [ ] Validação completa de popup, frequência por sessão, mídia e isolamento com duas contas: bloqueada pela sessão injetada sem session_id e ausência de conta do solicitante para gerar sessão completa; requer login real na prévia.
+
+## Wiize ChatWeb
+- [x] Auditoria do motor e plano multicanal.
+- [x] Banco (configurações, sessões, mensagens, histórico de endereços) com RLS.
+- [x] Executor com canal ChatWeb, CRM e transferência para humano.
+- [x] Lista de fluxos (filtro de canal, menu ⋮), configurações em abas, página pública, widget e embed.
+- [x] Testes: regras (7), conversa real com botões, isolamento, recarregar página, token inválido.
+- [ ] Domínio chat.wiize.com.br — depende de você apontar o domínio.
+- [ ] Atendente responder pelo ChatWeb na caixa de entrada — próxima etapa.
