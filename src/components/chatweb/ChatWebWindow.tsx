@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Smile, X, Check, CheckCheck, AlertCircle, MessageCircle, Sparkles, Headset, FileText, RotateCcw, Reply } from "lucide-react";
+import { Send, Smile, X, Check, CheckCheck, AlertCircle, MessageCircle, Sparkles, Headset, FileText, RotateCcw, Reply, List, CheckCircle2 } from "lucide-react";
 import { format, isSameDay, isToday, isYesterday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -85,6 +85,18 @@ export function ChatWebWindow(p: Props) {
     return null;
   }, [p.messages]);
 
+  // Texto escolhido logo após cada mensagem de opções (para marcar a opção selecionada).
+  const chosen = useMemo(() => {
+    const map: Record<string, string> = {};
+    p.messages.forEach((m, i) => {
+      if (m.message_type !== "options") return;
+      const next = p.messages.slice(i + 1).find((x) => x.sender_type === "visitor");
+      if (next?.content) map[m.id] = next.content;
+    });
+    return map;
+  }, [p.messages]);
+  const [listFor, setListFor] = useState<ChatWebMessage | null>(null);
+
   const submit = () => {
     const v = text.trim();
     if (!v || p.disabled || ended) return;
@@ -95,7 +107,7 @@ export function ChatWebWindow(p: Props) {
 
   return (
     <div className={cn("flex flex-col h-full w-full overflow-hidden", p.className)} style={{ background: t.background, color: t.text }}>
-      <header className="flex items-center gap-3 px-4 py-3 shrink-0" style={{ background: t.primary, color: contrastText(t.primary) }}>
+      <header className="flex items-center gap-3 px-4 py-3 shrink-0" style={{ background: t.header, color: contrastText(t.header) }}>
         <div className="relative">
           {p.avatarUrl ? (
             <img src={p.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" width={40} height={40} />
@@ -104,7 +116,7 @@ export function ChatWebWindow(p: Props) {
               <Icon size={18} />
             </div>
           )}
-          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2" style={{ background: "#22c55e", boxShadow: `0 0 0 2px ${t.primary}` }} />
+          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2" style={{ background: "#22c55e", boxShadow: `0 0 0 2px ${t.header}` }} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-sm truncate">{p.name}</p>
@@ -168,29 +180,48 @@ export function ChatWebWindow(p: Props) {
                   </div>
                 </div>
               )}
-              {m.message_type === "options" && m.metadata?.options?.length ? (
-                t.optionStyle === "whatsapp" ? (
-                  <div className="flex flex-col gap-[3px] mt-[3px] mb-1 max-w-[82%] min-w-[200px] w-fit">
-                    {m.metadata.options.map((o) => (
-                      <button key={o.id} disabled={m.id !== activeOptionsId || p.disabled || !!ended} onClick={() => p.onOption?.(o)} title={o.description || undefined}
-                        className="flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-[14px] font-medium shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] transition-all hover:brightness-[0.97] active:scale-[0.99] disabled:opacity-55 disabled:cursor-default"
+              {m.message_type === "options" && m.metadata?.options?.length ? (() => {
+                const open = m.id === activeOptionsId && !p.disabled && !ended;
+                const picked = chosen[m.id];
+                if (m.metadata?.style === "list") {
+                  return (
+                    <div className="mt-[3px] mb-1 max-w-[82%] min-w-[220px] w-fit">
+                      <button disabled={!open} onClick={() => setListFor(m)}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[14px] font-semibold shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] transition-colors enabled:hover:brightness-[0.97] disabled:cursor-default"
                         style={{ background: t.receivedBubble, color: t.primary }}>
-                        <Reply size={15} className="opacity-80" />{o.title}
+                        <List size={16} />{picked ? `Selecionado: ${picked}` : "Ver opções"}
                       </button>
-                    ))}
+                    </div>
+                  );
+                }
+                return t.optionStyle === "whatsapp" ? (
+                  <div className="flex flex-col gap-[3px] mt-[3px] mb-1 max-w-[82%] min-w-[220px] w-fit">
+                    {m.metadata!.options!.map((o) => {
+                      const sel = picked === o.title;
+                      return (
+                        <button key={o.id} disabled={!open} onClick={() => p.onOption?.(o)} title={o.description || undefined}
+                          className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[14px] font-semibold shadow-[0_1px_0.5px_rgba(0,0,0,0.13)] transition-all enabled:hover:brightness-[0.96] enabled:active:scale-[0.99] disabled:cursor-default"
+                          style={{ background: t.receivedBubble, color: t.primary, opacity: !open && picked && !sel ? 0.75 : 1 }}>
+                          {sel ? <CheckCircle2 size={16} /> : <Reply size={16} />}{o.title}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2 mt-2 mb-1 pl-1">
-                    {m.metadata.options.map((o) => (
-                      <button key={o.id} disabled={m.id !== activeOptionsId || p.disabled || !!ended} onClick={() => p.onOption?.(o)} title={o.description || undefined}
-                        className="text-sm px-3.5 py-2 rounded-full border font-medium transition-all hover:-translate-y-px disabled:opacity-50 disabled:hover:translate-y-0 text-left"
-                        style={{ borderColor: t.primary, color: t.primary, background: t.receivedBubble }}>
-                        {o.title}
-                      </button>
-                    ))}
+                    {m.metadata!.options!.map((o) => {
+                      const sel = picked === o.title;
+                      return (
+                        <button key={o.id} disabled={!open} onClick={() => p.onOption?.(o)} title={o.description || undefined}
+                          className="text-sm px-4 py-2 rounded-full border-[1.5px] font-semibold transition-all enabled:hover:-translate-y-px disabled:cursor-default text-left"
+                          style={sel ? { borderColor: t.primary, color: contrastText(t.primary), background: t.primary } : { borderColor: t.primary, color: t.primary, background: t.receivedBubble, opacity: !open && picked ? 0.75 : 1 }}>
+                          {o.title}
+                        </button>
+                      );
+                    })}
                   </div>
-                )
-              ) : null}
+                );
+              })() : null}
             </div>
           );
         })}
@@ -204,6 +235,29 @@ export function ChatWebWindow(p: Props) {
           </div>
         )}
       </div>
+
+      {listFor && (
+        <div className="absolute inset-0 z-20 flex flex-col justify-end bg-black/40 animate-in fade-in duration-150" onClick={() => setListFor(null)}>
+          <div className="rounded-t-2xl max-h-[75%] flex flex-col animate-in slide-in-from-bottom-4 duration-200" style={{ background: t.inputBackground, color: contrastText(t.inputBackground) }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-black/10">
+              <button onClick={() => setListFor(null)} aria-label="Fechar" className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5"><X size={18} /></button>
+              <p className="font-semibold text-[15px] truncate">{listFor.metadata?.header || "Escolha uma opção"}</p>
+            </div>
+            <div className="overflow-y-auto py-1">
+              {listFor.metadata?.options?.map((o) => (
+                <button key={o.id} onClick={() => { setListFor(null); p.onOption?.(o); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-black/5 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-medium truncate">{o.title}</p>
+                    {o.description && <p className="text-xs opacity-60 line-clamp-2">{o.description}</p>}
+                  </div>
+                  <span className="h-5 w-5 rounded-full border-2 shrink-0" style={{ borderColor: t.primary }} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {ended ? (
         <div className="relative m-3 mt-1 p-3 text-center text-sm rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] shrink-0" style={{ background: t.inputBackground, color: contrastText(t.inputBackground) }}>
@@ -224,10 +278,10 @@ export function ChatWebWindow(p: Props) {
         </div>
       ) : (
         <div className="relative flex items-end gap-2 px-3 pb-3 pt-1 shrink-0">
-          <div className="flex-1 flex items-end gap-1 rounded-[24px] pl-1.5 pr-3 min-h-[46px] shadow-[0_1px_2px_rgba(0,0,0,0.08),0_2px_8px_-2px_rgba(0,0,0,0.06)]" style={{ background: t.inputBackground }}>
+          <div className="flex-1 flex items-center gap-1 rounded-[24px] pl-1.5 pr-3 min-h-[46px] shadow-[0_1px_2px_rgba(0,0,0,0.08),0_2px_8px_-2px_rgba(0,0,0,0.06)]" style={{ background: t.inputBackground }}>
           <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
             <PopoverTrigger asChild>
-              <button aria-label="Emojis" className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center opacity-70 hover:opacity-100" style={{ color: contrastText(t.inputBackground) }}>
+              <button aria-label="Emojis" className="h-[38px] w-[38px] self-end mb-1 shrink-0 rounded-full flex items-center justify-center opacity-70 hover:opacity-100" style={{ color: contrastText(t.inputBackground) }}>
                 <Smile size={20} />
               </button>
             </PopoverTrigger>
@@ -247,7 +301,7 @@ export function ChatWebWindow(p: Props) {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
             placeholder={p.placeholder || "Digite sua mensagem..."}
-            className="flex-1 resize-none bg-transparent outline-none text-sm py-2.5 max-h-32"
+            className="flex-1 resize-none bg-transparent outline-none text-[15px] leading-5 py-[13px] max-h-32 block"
             style={{ color: contrastText(t.inputBackground) }}
             aria-label="Mensagem"
           />
@@ -256,7 +310,7 @@ export function ChatWebWindow(p: Props) {
             onClick={submit}
             disabled={!text.trim() || p.disabled}
             aria-label="Enviar"
-            className="h-[46px] w-[46px] shrink-0 rounded-full flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all hover:brightness-105 active:scale-95 disabled:opacity-60"
+            className="h-[46px] w-[46px] shrink-0 rounded-full flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.15)] transition-all hover:brightness-105 active:scale-95 disabled:opacity-90"
             style={{ background: t.primary, color: contrastText(t.primary) }}
           >
             <Send size={18} className="ml-0.5" />
