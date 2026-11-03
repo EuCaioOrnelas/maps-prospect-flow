@@ -121,10 +121,10 @@ export function widgetEmbedCode(slug: string, o: WidgetEmbedOptions, base = chat
 // ---------- Tema ----------
 export interface ChatWebTheme {
   primary: string; secondary: string; sentBubble: string; receivedBubble: string; text: string; background: string; icon: "message" | "sparkles" | "headset"; whatsapp?: string;
-  inputBackground: string; optionStyle: "whatsapp" | "pill"; pattern: boolean;
+  header: string; inputBackground: string; optionStyle: "whatsapp" | "pill"; pattern: boolean;
 }
 export const DEFAULT_THEME: ChatWebTheme = {
-  primary: "#16a34a", secondary: "#0f172a", sentBubble: "#d9fdd3", receivedBubble: "#ffffff", text: "#0f172a", background: "#efeae2", icon: "message",
+  primary: "#00a884", secondary: "#dfe5e7", header: "#f0f2f5", sentBubble: "#d9fdd3", receivedBubble: "#ffffff", text: "#111b21", background: "#efeae2", icon: "message",
   inputBackground: "#ffffff", optionStyle: "whatsapp", pattern: true,
 };
 export function readTheme(t: any): ChatWebTheme {

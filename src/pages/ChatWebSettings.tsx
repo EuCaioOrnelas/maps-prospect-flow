@@ -340,7 +340,8 @@ export default function ChatWebSettings() {
                 <div className="space-y-1.5"><Label>Mensagem de boas-vindas</Label><Textarea maxLength={500} rows={2} value={draft.welcome_message} onChange={(e) => setDraft({ ...draft, welcome_message: e.target.value })} /></div>
                 <div className="space-y-1.5"><Label>Texto do campo de digitação</Label><Input maxLength={80} value={draft.input_placeholder} onChange={(e) => setDraft({ ...draft, input_placeholder: e.target.value })} /></div>
                 <div className="grid sm:grid-cols-2 gap-x-8 border-t border-border pt-4">
-                  {colorField("primary", "Cor principal")}
+                  {colorField("header", "Topo (onde fica o logo)")}
+                  {colorField("primary", "Cor principal (botões)")}
                   {colorField("secondary", "Cor secundária")}
                   {colorField("sentBubble", "Balões enviados")}
                   {colorField("receivedBubble", "Balões recebidos")}
