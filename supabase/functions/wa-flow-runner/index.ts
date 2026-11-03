@@ -1595,13 +1595,21 @@ function igEntryMatches(cfg: Record<string, any>, text: string, event: string, i
 }
 
 // ---------- handler inbound ----------
+function telVar(leadPhone: string, collected: any): string {
+  if (String(leadPhone || "").startsWith("cw:")) return String(collected?.telefone || "");
+  return digits(leadPhone);
+}
+
 async function handleInbound(body: Record<string, any>) {
-  const channel: FlowChannel = body.channel === "instagram" ? "instagram" : "whatsapp";
+  const channel: FlowChannel = body.channel === "instagram" ? "instagram" : body.channel === "chatweb" ? "chatweb" : "whatsapp";
+  const isWeb = channel === "chatweb";
   const isIg = channel === "instagram";
   const igEvent = String(body.ig_event_type || "dm");
   const commentId = body.comment_id ? String(body.comment_id) : null;
 
-  const phone = isIg ? String(body.contact_ref || body.lead_phone || "").trim() : digits(body.lead_phone);
+  const phone = isWeb
+    ? (/^[0-9a-f-]{36}$/i.test(String(body.chatweb_session_id || "")) ? `cw:${body.chatweb_session_id}` : "")
+    : isIg ? String(body.contact_ref || body.lead_phone || "").trim() : digits(body.lead_phone);
   if (!phone) return json({ skipped: isIg ? "sem contato do Instagram" : "sem telefone" });
   const userId = body.user_id;
   const tail = phone.slice(-8);
@@ -1609,6 +1617,12 @@ async function handleInbound(body: Record<string, any>) {
   // owner do usuário que recebeu
   const { data: profile } = await supabase.from("profiles").select("id,parent_owner_id").eq("id", userId).maybeSingle();
   const ownerId = profile?.parent_owner_id || userId;
+  let webSession: any = null;
+  if (isWeb) {
+    const { data } = await supabase.from("chatweb_sessions").select("*").eq("id", phone.slice(3)).maybeSingle();
+    if (!data || data.owner_user_id !== ownerId) return json({ skipped: "sessão web inválida" }, 403);
+    webSession = data;
+  }
 
   const text = String(body.incoming_text || "");
   const runtimeBase: Runtime = {
@@ -1626,7 +1640,7 @@ async function handleInbound(body: Record<string, any>) {
     .eq("owner_user_id", ownerId)
     .eq("channel", channel)
     .in("status", ["active", "running", "waiting", "awaiting_input"])
-    .ilike("lead_phone", `%${tail}`)
+    .filter("lead_phone", isWeb ? "eq" : "ilike", isWeb ? phone : `%${tail}`)
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -1639,7 +1653,7 @@ async function handleInbound(body: Record<string, any>) {
     if (!send) return json({ skipped: isIg ? "sem conta Instagram ativa" : "sem conexão WhatsApp ativa" });
     if (isIg) send.commentId = commentId || (running.trigger_data as any)?.comment_id || null;
 
-    const vars = { ...(running.collected_data || {}), nome: body.lead_name || running.lead_name || "", telefone: phone };
+    const vars = { ...(running.collected_data || {}), nome: body.lead_name || running.lead_name || "", telefone: isWeb ? String(running.collected_data?.telefone || "") : phone };
     const runtime = { ...runtimeBase, vars };
 
     let startId: string | null = running.awaiting_node_id || running.current_node_id;
@@ -1664,7 +1678,7 @@ async function handleInbound(body: Record<string, any>) {
         match = items.find((i) => i.title.toLowerCase().includes(answer) || answer.includes(i.title.toLowerCase()));
       }
 
-      if (!match && send.provider === "evolution") {
+      if (!match && (send.provider === "evolution" || isWeb)) {
         const cfg = awaiting.config || {};
         const retry = String(cfg.invalid_option_text || "Não entendi sua resposta. Responda com o número da opção desejada.");
         await sendText(send, retry);
@@ -1696,6 +1710,46 @@ async function handleInbound(body: Record<string, any>) {
       startId,
     );
     return json({ ok: true, resumed: running.id });
+  }
+
+  // 2-web) ChatWeb: a sessão já aponta para o fluxo; começa direto pela entrada.
+  if (isWeb) {
+    if (webSession.execution_id) return json({ skipped: "execução web já encerrada" });
+    const { data: flow } = await supabase.from("wa_automation_flows").select("*").eq("id", webSession.flow_id).maybeSingle();
+    if (!flow) return json({ skipped: "fluxo removido" });
+    const { nodes, edges } = await loadFlow(flow.id);
+    const entry = nodes.find((n) => n.node_type === "entry");
+    if (!entry) return json({ skipped: "fluxo sem entrada" });
+    const send = await buildSendCtx(flow, phone, null, userId, ownerId);
+    if (!send) return json({ skipped: "sessão web encerrada" });
+    const { data: execution } = await supabase
+      .from("wa_flow_executions")
+      .insert({
+        flow_id: flow.id,
+        user_id: userId,
+        owner_user_id: ownerId,
+        lead_phone: phone,
+        lead_name: null,
+        status: "active",
+        channel: "chatweb",
+        chatweb_session_id: webSession.id,
+        contact_ref: webSession.visitor_id,
+        trigger_type: "chatweb_session",
+        trigger_data: { origin: webSession.origin || null },
+        current_node_id: entry.id,
+        current_node_name: entry.name,
+        entry_data: { text, button_id: body.button_id || null, source: "chatweb" },
+        last_user_message_at: new Date().toISOString(),
+      })
+      .select("*")
+      .maybeSingle();
+    if (!execution) return json({ error: "falha ao iniciar" }, 500);
+    await supabase.from("chatweb_sessions").update({ execution_id: execution.id }).eq("id", webSession.id);
+    await run(
+      { execution, nodes, edges, flow, send, leadId: webSession.lead_id || null, runtime: { ...runtimeBase, vars: { nome: "", telefone: "" } } },
+      entry.id,
+    );
+    return json({ ok: true, started: execution.id, flow_id: flow.id });
   }
 
   // 2) nenhuma execução: tentar disparar um fluxo ativo
@@ -2221,7 +2275,7 @@ async function handleTick() {
         continue;
       }
       if (send.channel === "instagram") send.commentId = (exec.trigger_data as any)?.comment_id || null;
-      const vars = { ...(exec.collected_data || {}), nome: exec.lead_name || "", telefone: digits(exec.lead_phone) };
+      const vars = { ...(exec.collected_data || {}), nome: exec.lead_name || "", telefone: telVar(exec.lead_phone, exec.collected_data) };
       await persist(exec.id, { status: "active", wait_until: null, awaiting_node_id: null });
       await run(
         {
@@ -2261,7 +2315,7 @@ async function handleTick() {
       const ownerId = exec.owner_user_id || exec.user_id;
       const send = await buildSendCtx(flow, exec.lead_phone, exec.lead_name, exec.user_id, ownerId);
       if (!send) continue;
-      const vars = { ...(exec.collected_data || {}), nome: exec.lead_name || "", telefone: digits(exec.lead_phone) };
+      const vars = { ...(exec.collected_data || {}), nome: exec.lead_name || "", telefone: telVar(exec.lead_phone, exec.collected_data) };
       // sem resposta: condição avalia false (exceto no_response, que vira true)
       const next = node.node_type === "condition"
         ? targetByHandle(edges, node.id, node.config?.condition_type === "no_response" ? "yes" : "no")
@@ -2316,7 +2370,7 @@ async function handleTick() {
             ? flow.inactivity_target_node_id
             : nodes.find((n) => n.node_type === "entry")?.id || null;
           if (send && target) {
-            const vars = { ...(exec.collected_data || {}), nome: exec.lead_name || "", telefone: digits(exec.lead_phone) };
+            const vars = { ...(exec.collected_data || {}), nome: exec.lead_name || "", telefone: telVar(exec.lead_phone, exec.collected_data) };
             await persist(exec.id, { status: "active", awaiting_node_id: null, inactivity_processed_at: nowIso });
             await run(
               {
@@ -2361,6 +2415,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
+    // Canal ChatWeb: só aceito vindo da função chatweb-api (chave de serviço).
+    if (body?.channel === "chatweb") {
+      const auth = req.headers.get("Authorization") || "";
+      if (auth !== `Bearer ${SERVICE_KEY}`) return json({ error: "unauthorized" }, 401);
+    }
     if (body?.mode === "tick" || body?.trigger === "cron" || body?.scheduler === true) return await handleTick();
     return await handleInbound(body || {});
   } catch (e) {
