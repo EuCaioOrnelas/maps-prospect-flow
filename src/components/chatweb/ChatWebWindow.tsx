@@ -214,8 +214,8 @@ export function ChatWebWindow(p: Props) {
                       return (
                         <button key={o.id} disabled={!open} onClick={() => p.onOption?.(o)} title={o.description || undefined}
                           className="text-sm px-4 py-2 rounded-full border-[1.5px] font-semibold transition-all enabled:hover:-translate-y-px disabled:cursor-default text-left"
-                          style={sel ? { borderColor: t.primary, color: contrastText(t.primary), background: t.primary } : { borderColor: t.primary, color: t.primary, background: t.receivedBubble, opacity: !open && picked ? 0.75 : 1 }}>
-                          {o.title}
+                          style={{ borderColor: t.primary, color: contrastText(t.primary), background: t.primary, opacity: !open && picked && !sel ? 0.6 : 1 }}>
+                          {sel ? "✓ " : ""}{o.title}
                         </button>
                       );
                     })}
