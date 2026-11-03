@@ -294,10 +294,10 @@ export default function ChatWebSettings() {
               <div className="space-y-6">
                 <Card><CardContent className="p-5 space-y-3">
                   <Label>Seu link exclusivo</Label>
-                  <div className="flex gap-2">
-                    <Input readOnly value={link} className="font-mono text-sm" />
-                    <Button variant="outline" onClick={() => copy(link, "Link copiado!")}><Copy size={15} className="mr-2" />Copiar</Button>
-                    <Button variant="outline" onClick={() => window.open(link, "_blank", "noopener")}><ExternalLink size={15} className="mr-2" />Visualizar</Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Input readOnly value={link} className="font-mono text-sm flex-1 min-w-[220px]" />
+                    <Button variant="outline" className="shrink-0" onClick={() => copy(link, "Link copiado!")}><Copy size={15} className="mr-2" />Copiar</Button>
+                    <Button variant="outline" className="shrink-0" onClick={() => window.open(link, "_blank", "noopener")}><ExternalLink size={15} className="mr-2" />Visualizar</Button>
                   </div>
                 </CardContent></Card>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
