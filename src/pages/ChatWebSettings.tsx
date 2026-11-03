@@ -181,6 +181,21 @@ export default function ChatWebSettings() {
     },
   });
 
+  const { data: waOptions = [] } = useQuery({
+    queryKey: ["chatweb-wa-numbers", cfg?.owner_user_id],
+    enabled: !!cfg,
+    queryFn: async () => {
+      const [{ data: meta }, { data: evo }] = await Promise.all([
+        supabase.from("user_waba_connections").select("id, nickname, display_phone_number"),
+        supabase.from("whatsapp_numbers").select("id, name, phone_number").eq("owner_user_id", cfg!.owner_user_id),
+      ]);
+      const out: { key: string; phone: string; label: string }[] = [];
+      for (const n of (meta || []) as any[]) { const d = String(n.display_phone_number || "").replace(/\D/g, ""); if (d.length >= 10) out.push({ key: `m-${n.id}`, phone: d, label: `${n.nickname || "Meta"} · +${d}` }); }
+      for (const n of (evo || []) as any[]) { const d = String(n.phone_number || "").replace(/\D/g, ""); if (d.length >= 10 && !out.some((o) => o.phone === d)) out.push({ key: `e-${n.id}`, phone: d, label: `${n.name || "Número"} · +${d}` }); }
+      return out;
+    },
+  });
+
   // ----- sessões -----
   const [openSession, setOpenSession] = useState<string | null>(null);
   const { data: sessions } = useQuery({
@@ -372,9 +387,25 @@ export default function ChatWebSettings() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>WhatsApp para o botão “Voltar para o WhatsApp”</Label>
-                  <Input inputMode="tel" placeholder="5511999999999" className="max-w-xs" value={draft.theme.whatsapp || ""}
-                    onChange={(e) => setDraft({ ...draft, theme: { ...draft.theme, whatsapp: e.target.value.replace(/\D/g, "").slice(0, 15) } })} />
-                  <p className="text-xs text-muted-foreground">Opcional. Com DDI e DDD. Aparece quando o atendimento termina.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={waOptions.some((o) => o.phone === draft.theme.whatsapp) ? draft.theme.whatsapp : "__manual"}
+                      onValueChange={(v) => { if (v !== "__manual") setDraft({ ...draft, theme: { ...draft.theme, whatsapp: v } }); }}>
+                      <SelectTrigger className="w-64"><SelectValue placeholder="Escolha um número" /></SelectTrigger>
+                      <SelectContent>
+                        {waOptions.map((o) => <SelectItem key={o.key} value={o.phone}>{o.label}</SelectItem>)}
+                        <SelectItem value="__manual">Digitar outro número</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input inputMode="tel" placeholder="5511999999999" className="w-48" value={draft.theme.whatsapp || ""}
+                      onChange={(e) => setDraft({ ...draft, theme: { ...draft.theme, whatsapp: e.target.value.replace(/\D/g, "").slice(0, 15) } })} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Escolha um número conectado na Wiize ou digite outro, com DDI e DDD. Aparece quando o atendimento termina.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Mensagem ao voltar para o WhatsApp</Label>
+                  <Textarea rows={2} maxLength={300} placeholder="Olá! Acabei de falar com vocês pelo site e quero continuar o atendimento por aqui."
+                    value={draft.theme.whatsappMessage || ""} onChange={(e) => setDraft({ ...draft, theme: { ...draft.theme, whatsappMessage: e.target.value.slice(0, 300) } })} />
+                  <p className="text-xs text-muted-foreground">Já vem escrita para o cliente enviar. Assim ele te chama primeiro e a conversa no WhatsApp fica aberta (mesmo se a janela de 24h estiver fechada).</p>
                 </div>
                 <Button onClick={saveAppearance} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Salvar personalização</Button>
               </CardContent></Card>
