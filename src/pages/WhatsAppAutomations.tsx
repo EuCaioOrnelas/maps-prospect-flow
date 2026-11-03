@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Plus, Sparkles, Workflow, MoreVertical, Play, Pause, Archive,
   Trash2, Copy, FlaskConical, Search, ShoppingCart, HeadphonesIcon,
@@ -264,6 +264,7 @@ export default function WhatsAppAutomations() {
     });
   }, [createFromTemplate]);
 
+  const [openChoice, setOpenChoice] = useState<any>(null);
   // ---- ChatWeb: configurações ligadas aos mesmos fluxos (sem duplicar) ----
   const [channelFilter, setChannelFilter] = useState<"all" | "whatsapp" | "chatweb">("all");
   const [chatwebFlow, setChatwebFlow] = useState<any>(null);
@@ -483,7 +484,7 @@ export default function WhatsAppAutomations() {
                     <Card
                       key={flow.id}
                       className="hover:border-primary/30 transition-colors cursor-pointer group"
-                      onClick={() => navigate(`/fluxos/${flow.id}`)}
+                      onClick={() => (chatwebByFlow.get(flow.id) as any)?.enabled ? setOpenChoice(flow) : navigate(`/fluxos/${flow.id}`)}
                     >
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between mb-3">
@@ -630,6 +631,28 @@ export default function WhatsAppAutomations() {
               {filteredTemplates.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-8">Nenhum template encontrado</p>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!openChoice} onOpenChange={(o) => { if (!o) setOpenChoice(null); }}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>O que você quer abrir?</DialogTitle>
+              <DialogDescription>{openChoice?.name} está ativo no WhatsApp e no ChatWeb.</DialogDescription>
+            </DialogHeader>
+            <div className="grid sm:grid-cols-2 gap-3 pt-2">
+              {[
+                { icon: Workflow, title: "Canvas do fluxo", desc: "Editar blocos, mensagens e regras.", to: `/fluxos/${openChoice?.id}` },
+                { icon: Globe, title: "ChatWeb", desc: "Aparência, link, site, sessões e números.", to: `/fluxos/${openChoice?.id}/chatweb` },
+              ].map((o) => (
+                <button key={o.title} onClick={() => { setOpenChoice(null); navigate(o.to); }}
+                  className="text-left rounded-xl border border-border p-4 hover:border-primary/50 hover:bg-muted/50 transition-colors">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-3"><o.icon size={18} /></div>
+                  <p className="font-medium text-foreground">{o.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{o.desc}</p>
+                </button>
+              ))}
             </div>
           </DialogContent>
         </Dialog>

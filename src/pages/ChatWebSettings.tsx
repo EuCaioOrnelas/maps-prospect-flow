@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Copy, ExternalLink, Loader2, Upload, Check, X, Globe, Power, MessageSquare, Code2, BarChart3, History, Palette, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink, Loader2, Upload, Check, X, Globe, Power, MessageSquare, Code2, BarChart3, History, Palette, AlertTriangle, LayoutTemplate, MousePointerClick, ShieldCheck, Users, CheckCircle2, XCircle, Clock, Timer, Bot, UserPlus, Headphones, Activity, TrendingUp, Info, type LucideIcon } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -25,11 +25,39 @@ import { cn } from "@/lib/utils";
 
 const copy = async (v: string, msg = "Copiado!") => { await navigator.clipboard.writeText(v); toast.success(msg); };
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({ label, value, icon: Icon, hint }: { label: string; value: string | number; icon?: LucideIcon; hint?: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {Icon && <span className="h-7 w-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0"><Icon size={14} /></span>}
+      </div>
       <p className="text-2xl font-semibold text-foreground mt-1 tabular-nums">{value}</p>
+      {hint && <p className="text-[11px] text-muted-foreground mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+function SectionHead({ icon: Icon, title, desc, step }: { icon: LucideIcon; title: string; desc: string; step?: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0"><Icon size={18} /></span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2"><p className="font-medium text-foreground">{title}</p>{step && <Badge variant="secondary" className="text-[10px]">{step}</Badge>}</div>
+        <p className="text-sm text-muted-foreground">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function CodeBox({ code, onCopy }: { code: string; onCopy: () => void }) {
+  return (
+    <div className="rounded-xl border border-border overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-muted border-b border-border">
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Code2 size={13} />HTML</span>
+        <Button size="sm" variant="ghost" className="h-7" onClick={onCopy}><Copy size={13} className="mr-1.5" />Copiar código</Button>
+      </div>
+      <pre className="p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all bg-card text-foreground font-mono">{code}</pre>
     </div>
   );
 }
@@ -146,7 +174,7 @@ export default function ChatWebSettings() {
       const [{ data: rows }, { count: aiCount }, { data: sess }] = await Promise.all([
         supabase.rpc("chatweb_flow_stats", { _owner: cfg.owner_user_id, _from: from, _to: to }),
         supabase.from("ai_usage_logs").select("id", { count: "exact", head: true }).eq("channel", "chatweb").eq("feature", "wa_flow_ai_agent").gte("created_at", from).contains("metadata", { flow_id: flowId }),
-        supabase.from("chatweb_sessions").select("id,status,lead_id,started_at").eq("config_id", cfg.id).gte("started_at", from),
+        supabase.from("chatweb_sessions").select("id,status,lead_id,started_at,origin").eq("config_id", cfg.id).gte("started_at", from),
       ]);
       const mine = (rows || []).filter((r: any) => r.flow_id === flowId);
       return { web: mine.find((r: any) => r.channel === "chatweb"), wa: mine.find((r: any) => r.channel === "whatsapp"), ai: aiCount || 0, sessions: sess || [] };
@@ -356,8 +384,20 @@ export default function ChatWebSettings() {
           </TabsContent>
 
           <TabsContent value="embed" className="mt-6 space-y-6">
-            <Card><CardContent className="p-5 space-y-4">
-              <div><p className="font-medium">Chat completo dentro de uma página</p><p className="text-sm text-muted-foreground">Ideal para páginas de contato, suporte ou vendas. Cole o código onde o chat deve aparecer.</p></div>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {[
+                { icon: LayoutTemplate, t: "1. Escolha o formato", d: "Chat na página ou botão flutuante." },
+                { icon: Copy, t: "2. Copie o código", d: "Ajuste tamanho e cor antes de copiar." },
+                { icon: Globe, t: "3. Cole no seu site", d: "Funciona em WordPress, Wix, HTML e outros." },
+              ].map((x) => (
+                <div key={x.t} className="rounded-xl border border-border bg-card p-4 flex gap-3">
+                  <x.icon size={18} className="text-primary shrink-0 mt-0.5" />
+                  <div><p className="text-sm font-medium text-foreground">{x.t}</p><p className="text-xs text-muted-foreground">{x.d}</p></div>
+                </div>
+              ))}
+            </div>
+            <Card><CardContent className="p-5 space-y-5">
+              <SectionHead icon={LayoutTemplate} title="Chat dentro de uma página" step="Incorporado" desc="Ideal para páginas de contato, suporte ou vendas. Cole o código onde o chat deve aparecer." />
               <div className="grid sm:grid-cols-5 gap-3">
                 {(["width", "height", "minHeight", "margin"] as const).map((k) => (
                   <div key={k} className="space-y-1"><Label className="text-xs">{{ width: "Largura", height: "Altura", minHeight: "Altura mínima", margin: "Margens" }[k]}</Label><Input value={inline[k]} onChange={(e) => setInline({ ...inline, [k]: e.target.value })} /></div>
@@ -365,29 +405,36 @@ export default function ChatWebSettings() {
                 <div className="space-y-1"><Label className="text-xs">Cantos (px)</Label><Input type="number" value={inline.radius} onChange={(e) => setInline({ ...inline, radius: Number(e.target.value) })} /></div>
               </div>
               <div className="flex items-center gap-2"><Switch checked={inline.border} onCheckedChange={(v) => setInline({ ...inline, border: v })} /><Label className="font-normal">Mostrar borda</Label></div>
-              <pre className="rounded-lg bg-muted p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">{inlineEmbedCode(cfg.slug, inline)}</pre>
-              <Button variant="outline" onClick={() => copy(inlineEmbedCode(cfg.slug, inline), "Código copiado!")}><Copy size={15} className="mr-2" />Copiar código</Button>
+              <CodeBox code={inlineEmbedCode(cfg.slug, inline)} onCopy={() => copy(inlineEmbedCode(cfg.slug, inline), "Código copiado!")} />
             </CardContent></Card>
-            <Card><CardContent className="p-5 space-y-4">
-              <div><p className="font-medium">Botão flutuante</p><p className="text-sm text-muted-foreground">Um botão no canto do site que abre o chat. Cole antes do fechamento da tag &lt;/body&gt;.</p></div>
+            <Card><CardContent className="p-5 space-y-5">
+              <SectionHead icon={MousePointerClick} title="Botão flutuante" step="Mais usado" desc="Um botão no canto do site que abre o chat. Cole antes do fechamento da tag </body>." />
               <div className="grid sm:grid-cols-3 gap-3">
                 <div className="space-y-1"><Label className="text-xs">Posição</Label>
                   <Select value={widget.position} onValueChange={(v: any) => setWidget({ ...widget, position: v })}><SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="right">Inferior direita</SelectItem><SelectItem value="left">Inferior esquerda</SelectItem></SelectContent></Select>
                 </div>
-                <div className="space-y-1"><Label className="text-xs">Cor</Label><Input value={widget.color} onChange={(e) => setWidget({ ...widget, color: e.target.value })} /></div>
+                <div className="space-y-1"><Label className="text-xs">Cor</Label>
+                  <div className="flex gap-2"><input type="color" aria-label="Escolher cor" value={/^#[0-9a-f]{6}$/i.test(widget.color) ? widget.color : "#000000"} onChange={(e) => setWidget({ ...widget, color: e.target.value })} className="h-10 w-12 rounded-md border border-input bg-background p-1 cursor-pointer" /><Input value={widget.color} onChange={(e) => setWidget({ ...widget, color: e.target.value })} /></div>
+                </div>
                 <div className="space-y-1"><Label className="text-xs">Texto do botão (opcional)</Label><Input maxLength={40} value={widget.label} onChange={(e) => setWidget({ ...widget, label: e.target.value })} /></div>
               </div>
-              <pre className="rounded-lg bg-muted p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all">{widgetEmbedCode(cfg.slug, widget)}</pre>
-              <Button variant="outline" onClick={() => copy(widgetEmbedCode(cfg.slug, widget), "Código copiado!")}><Copy size={15} className="mr-2" />Copiar código</Button>
+              <div className="relative h-28 rounded-xl border border-dashed border-border bg-muted/40 overflow-hidden">
+                <span className="absolute top-3 left-3 text-[11px] text-muted-foreground">Prévia no seu site</span>
+                <div className={cn("absolute bottom-3 flex items-center gap-2", widget.position === "left" ? "left-3" : "right-3")}>
+                  {widget.label && <span className="rounded-full bg-card border border-border px-3 py-1 text-xs text-foreground shadow-sm">{widget.label}</span>}
+                  <span className="h-11 w-11 rounded-full flex items-center justify-center text-primary-foreground shadow-sm" style={{ background: widget.color }}><MessageSquare size={18} /></span>
+                </div>
+              </div>
+              <CodeBox code={widgetEmbedCode(cfg.slug, widget)} onCopy={() => copy(widgetEmbedCode(cfg.slug, widget), "Código copiado!")} />
             </CardContent></Card>
-            <Card><CardContent className="p-5 space-y-3">
-              <div><p className="font-medium">Sites autorizados</p><p className="text-sm text-muted-foreground">Opcional. Um domínio por linha (ex.: minhaempresa.com.br). Vazio = qualquer site pode incorporar.</p></div>
+            <Card><CardContent className="p-5 space-y-4">
+              <SectionHead icon={ShieldCheck} title="Sites autorizados" desc="Opcional. Um domínio por linha (ex.: minhaempresa.com.br). Vazio = qualquer site pode incorporar." />
               <Textarea rows={3} value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="minhaempresa.com.br" />
               <Button variant="outline" onClick={() => {
                 const list = Array.from(new Set(domains.split(/[\s,]+/).map((d) => d.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "")).filter((d) => /^(\*\.)?[a-z0-9.-]+\.[a-z]{2,}$/.test(d)))).slice(0, 20);
                 update({ allowed_domains: list }, "Sites autorizados salvos!");
-              }}>Salvar sites</Button>
+              }}><ShieldCheck size={15} className="mr-2" />Salvar sites</Button>
             </CardContent></Card>
           </TabsContent>
 
@@ -415,34 +462,96 @@ export default function ChatWebSettings() {
             </div>
           </TabsContent>
 
-          <TabsContent value="stats" className="mt-6 space-y-4">
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="7">Últimos 7 dias</SelectItem><SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem></SelectContent>
-            </Select>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <Stat label="Total de sessões" value={stats?.sessions.length ?? 0} />
-              <Stat label="Conversas iniciadas" value={web?.sessions ?? 0} />
-              <Stat label="Concluídas" value={web?.completed ?? 0} />
-              <Stat label="Abandonadas" value={(stats?.sessions || []).filter((s: any) => s.status === "abandoned").length + Number(web?.abandoned || 0)} />
-              <Stat label="Em andamento" value={web?.in_progress ?? 0} />
-              <Stat label="Taxa de conclusão" value={pct(web?.completed, web?.sessions)} />
-              <Stat label="Tempo médio" value={mins(Number(web?.avg_seconds))} />
-              <Stat label="Respostas de IA" value={stats?.ai ?? 0} />
-              <Stat label="Leads gerados" value={(stats?.sessions || []).filter((s: any) => s.lead_id).length} />
-              <Stat label="Encaminhadas a atendente" value={(stats?.sessions || []).filter((s: any) => s.status === "handoff").length} />
-            </div>
-            <Card><CardContent className="p-5">
-              <p className="font-medium mb-3">Comparação com WhatsApp (mesmo fluxo)</p>
-              <table className="w-full text-sm">
-                <thead><tr className="text-muted-foreground text-left"><th className="py-1.5 font-normal">Indicador</th><th className="font-normal">ChatWeb</th><th className="font-normal">WhatsApp</th></tr></thead>
-                <tbody className="divide-y divide-border">
-                  <tr><td className="py-2">Execuções</td><td>{web?.sessions ?? 0}</td><td>{wa?.sessions ?? 0}</td></tr>
-                  <tr><td className="py-2">Taxa de conclusão</td><td>{pct(web?.completed, web?.sessions)}</td><td>{pct(wa?.completed, wa?.sessions)}</td></tr>
-                  <tr><td className="py-2">Tempo médio</td><td>{mins(Number(web?.avg_seconds))}</td><td>{mins(Number(wa?.avg_seconds))}</td></tr>
-                </tbody>
-              </table>
-            </CardContent></Card>
+          <TabsContent value="stats" className="mt-6 space-y-5">
+            {(() => {
+              const list: any[] = stats?.sessions || [];
+              const total = list.length;
+              const count = (st: string) => list.filter((x) => x.status === st).length;
+              const leads = list.filter((x) => x.lead_id).length;
+              const handoff = count("handoff");
+              const days = Number(period);
+              const buckets = Array.from({ length: days }, (_, i) => format(subDays(new Date(), days - 1 - i), "yyyy-MM-dd"));
+              const perDay = buckets.map((d) => list.filter((x) => String(x.started_at).slice(0, 10) === d).length);
+              const max = Math.max(1, ...perDay);
+              const origins: [string, number][] = (Object.entries(list.reduce((m: Record<string, number>, x) => { const k = x.origin || "link"; m[k] = (m[k] || 0) + 1; return m; }, {})) as [string, number][]).sort((a, b) => b[1] - a[1]);
+              const originName: Record<string, string> = { link: "Link direto", embed: "Chat na página", inline: "Chat na página", widget: "Botão flutuante" };
+              const funnel = [
+                { l: "Sessões abertas", v: total, icon: Users },
+                { l: "Conversas iniciadas", v: Number(web?.sessions || 0), icon: MessageSquare },
+                { l: "Concluídas", v: Number(web?.completed || 0), icon: CheckCircle2 },
+                { l: "Leads gerados", v: leads, icon: UserPlus },
+              ];
+              const fmax = Math.max(1, ...funnel.map((f) => f.v));
+              return (<>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div><p className="font-medium text-foreground">Desempenho do ChatWeb</p><p className="text-sm text-muted-foreground">Acompanhe como os visitantes usam seu atendimento web.</p></div>
+                  <Select value={period} onValueChange={setPeriod}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="7">Últimos 7 dias</SelectItem><SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Stat icon={Users} label="Total de sessões" value={total} hint="Visitantes que abriram o chat" />
+                  <Stat icon={TrendingUp} label="Taxa de conclusão" value={pct(web?.completed, web?.sessions)} hint="Chegaram ao fim do fluxo" />
+                  <Stat icon={UserPlus} label="Leads gerados" value={leads} hint={total ? `${Math.round((leads / total) * 100)}% das sessões` : "Enviados ao CRM"} />
+                  <Stat icon={Timer} label="Tempo médio" value={mins(Number(web?.avg_seconds))} hint="Duração da conversa" />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <Stat icon={MessageSquare} label="Conversas iniciadas" value={web?.sessions ?? 0} />
+                  <Stat icon={CheckCircle2} label="Concluídas" value={web?.completed ?? 0} />
+                  <Stat icon={Activity} label="Em andamento" value={web?.in_progress ?? 0} />
+                  <Stat icon={XCircle} label="Abandonadas" value={count("abandoned") + Number(web?.abandoned || 0)} />
+                  <Stat icon={Headphones} label="Com atendente" value={handoff} />
+                </div>
+                <div className="grid lg:grid-cols-[1.4fr_1fr] gap-4">
+                  <Card><CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-4"><p className="font-medium">Sessões por dia</p><span className="text-xs text-muted-foreground">Pico: {Math.max(0, ...perDay)}</span></div>
+                    <div className="flex items-end gap-[2px] h-40">
+                      {perDay.map((v, i) => (
+                        <div key={i} className="flex-1 h-full flex items-end group relative">
+                          <div className="w-full rounded-t bg-primary/80 group-hover:bg-primary transition-colors" style={{ height: `${Math.max(v ? 6 : 2, (v / max) * 100)}%`, opacity: v ? 1 : 0.25 }} />
+                          <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:block rounded bg-foreground text-background text-[10px] px-1.5 py-0.5 whitespace-nowrap z-10">{format(new Date(buckets[i] + "T12:00"), "dd/MM")}: {v}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-2"><span>{format(new Date(buckets[0] + "T12:00"), "dd/MM")}</span><span>Hoje</span></div>
+                  </CardContent></Card>
+                  <Card><CardContent className="p-5 space-y-3">
+                    <p className="font-medium">Funil de conversão</p>
+                    {funnel.map((f) => (
+                      <div key={f.l} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><f.icon size={14} />{f.l}</span><span className="font-medium tabular-nums">{f.v}</span></div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full bg-primary" style={{ width: `${(f.v / fmax) * 100}%` }} /></div>
+                      </div>
+                    ))}
+                  </CardContent></Card>
+                </div>
+                <div className="grid lg:grid-cols-2 gap-4">
+                  <Card><CardContent className="p-5 space-y-3">
+                    <p className="font-medium">De onde vêm os visitantes</p>
+                    {origins.length === 0 ? <p className="text-sm text-muted-foreground flex items-center gap-2"><Info size={14} />Sem sessões no período.</p> : origins.map(([k, v]) => (
+                      <div key={k} className="space-y-1">
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">{originName[k] || k}</span><span className="tabular-nums">{v} · {Math.round((v / total) * 100)}%</span></div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full bg-primary" style={{ width: `${(v / total) * 100}%` }} /></div>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 pt-2 text-sm text-muted-foreground"><Bot size={14} />Respostas de IA no período: <b className="text-foreground">{stats?.ai ?? 0}</b></div>
+                  </CardContent></Card>
+                  <Card><CardContent className="p-5">
+                    <p className="font-medium mb-3">ChatWeb x WhatsApp (mesmo fluxo)</p>
+                    <table className="w-full text-sm">
+                      <thead><tr className="text-muted-foreground text-left"><th className="py-1.5 font-normal">Indicador</th><th className="font-normal"><span className="flex items-center gap-1"><Globe size={13} />ChatWeb</span></th><th className="font-normal"><span className="flex items-center gap-1"><MessageSquare size={13} />WhatsApp</span></th></tr></thead>
+                      <tbody className="divide-y divide-border">
+                        <tr><td className="py-2.5">Execuções</td><td className="tabular-nums">{web?.sessions ?? 0}</td><td className="tabular-nums">{wa?.sessions ?? 0}</td></tr>
+                        <tr><td className="py-2.5">Concluídas</td><td className="tabular-nums">{web?.completed ?? 0}</td><td className="tabular-nums">{wa?.completed ?? 0}</td></tr>
+                        <tr><td className="py-2.5">Taxa de conclusão</td><td>{pct(web?.completed, web?.sessions)}</td><td>{pct(wa?.completed, wa?.sessions)}</td></tr>
+                        <tr><td className="py-2.5"><span className="flex items-center gap-1"><Clock size={13} />Tempo médio</span></td><td>{mins(Number(web?.avg_seconds))}</td><td>{mins(Number(wa?.avg_seconds))}</td></tr>
+                      </tbody>
+                    </table>
+                  </CardContent></Card>
+                </div>
+              </>);
+            })()}
           </TabsContent>
         </Tabs>
       </div>
