@@ -181,6 +181,21 @@ export default function ChatWebSettings() {
     },
   });
 
+  const { data: waOptions = [] } = useQuery({
+    queryKey: ["chatweb-wa-numbers", cfg?.owner_user_id],
+    enabled: !!cfg,
+    queryFn: async () => {
+      const [{ data: meta }, { data: evo }] = await Promise.all([
+        supabase.from("user_waba_connections").select("id, nickname, display_phone_number"),
+        supabase.from("whatsapp_numbers").select("id, name, phone_number").eq("owner_user_id", cfg!.owner_user_id),
+      ]);
+      const out: { key: string; phone: string; label: string }[] = [];
+      for (const n of (meta || []) as any[]) { const d = String(n.display_phone_number || "").replace(/\D/g, ""); if (d.length >= 10) out.push({ key: `m-${n.id}`, phone: d, label: `${n.nickname || "Meta"} · +${d}` }); }
+      for (const n of (evo || []) as any[]) { const d = String(n.phone_number || "").replace(/\D/g, ""); if (d.length >= 10 && !out.some((o) => o.phone === d)) out.push({ key: `e-${n.id}`, phone: d, label: `${n.name || "Número"} · +${d}` }); }
+      return out;
+    },
+  });
+
   // ----- sessões -----
   const [openSession, setOpenSession] = useState<string | null>(null);
   const { data: sessions } = useQuery({
@@ -227,21 +242,6 @@ export default function ChatWebSettings() {
         placeholder={draft.input_placeholder} messages={previewMsgs} onSend={() => {}} onOption={() => {}} />
     </div>
   );
-
-  const { data: waOptions = [] } = useQuery({
-    queryKey: ["chatweb-wa-numbers", cfg?.owner_user_id],
-    enabled: !!cfg,
-    queryFn: async () => {
-      const [{ data: meta }, { data: evo }] = await Promise.all([
-        supabase.from("user_waba_connections").select("id, nickname, display_phone_number"),
-        supabase.from("whatsapp_numbers").select("id, name, phone_number").eq("owner_user_id", cfg.owner_user_id),
-      ]);
-      const out: { key: string; phone: string; label: string }[] = [];
-      for (const n of (meta || []) as any[]) { const d = String(n.display_phone_number || "").replace(/\D/g, ""); if (d.length >= 10) out.push({ key: `m-${n.id}`, phone: d, label: `${n.nickname || "Meta"} · +${d}` }); }
-      for (const n of (evo || []) as any[]) { const d = String(n.phone_number || "").replace(/\D/g, ""); if (d.length >= 10 && !out.some((o) => o.phone === d)) out.push({ key: `e-${n.id}`, phone: d, label: `${n.name || "Número"} · +${d}` }); }
-      return out;
-    },
-  });
 
   const colorField = (key: keyof ChatWebTheme, label: string) => (
     <div className="flex items-center justify-between gap-3 py-1.5">
