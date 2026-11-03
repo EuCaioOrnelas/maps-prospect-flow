@@ -281,7 +281,7 @@ export default function WhatsAppAutomations() {
   });
   const chatwebByFlow = useMemo(() => new Map((chatwebData?.cfgs || []).map((c: any) => [c.flow_id, c])), [chatwebData]);
   const flowStats = useCallback((flowId: string, ch: string) => (chatwebData?.stats || []).find((r: any) => r.flow_id === flowId && r.channel === ch), [chatwebData]);
-  const hasWhatsApp = (f: any) => (f.channel || "whatsapp") !== "instagram" && !!(f.waba_connection_id || f.phone_number_id || f.whatsapp_number_id || f.api_type);
+  const hasWhatsApp = (f: any) => (f.channel || "whatsapp") !== "instagram" && !!(f.waba_connection_id || f.phone_number_id || f.whatsapp_number_id);
   const hasChatweb = (f: any) => !!chatwebByFlow.get(f.id)?.enabled;
   const visibleFlows = flows.filter((f: any) => channelFilter === "all" || (channelFilter === "chatweb" ? hasChatweb(f) : hasWhatsApp(f)));
   const disableChatweb = async (flowId: string) => {
