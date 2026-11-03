@@ -15,7 +15,7 @@ export function ChatWebEditorBadge({ flowId, nodes, flowName }: { flowId?: strin
   const { data: flowRow } = useQuery({
     queryKey: ["chatweb-editor-flow", flowId],
     enabled: !!flowId,
-    queryFn: async () => (await supabase.from("wa_flows" as any).select("id,name,user_id,owner_user_id").eq("id", flowId!).maybeSingle()).data as any,
+    queryFn: async () => (await supabase.from("wa_automation_flows" as any).select("id,name,user_id,owner_user_id").eq("id", flowId!).maybeSingle()).data as any,
   });
   const { data: cfg, refetch } = useQuery({
     queryKey: ["chatweb-editor", flowId],
