@@ -188,28 +188,6 @@ Deno.serve(async (req) => {
       if ("error" in started) return json({ error: started.error }, started.error === "rate_limited" ? 429 : 500);
       return json(started);
     }
-    if (action === "__unused_start") {
-      const cfg: any = null;
-      const visitorId = VISITOR_RE.test(String(body.visitor_id || "")) ? String(body.visitor_id) : crypto.randomUUID().replace(/-/g, "");
-      if (!(await rateLimit(`ip:${ip}`, "chatweb-start", 10, 600))) return json({ error: "rate_limited" }, 429);
-      const token = newToken();
-      const { data: sess, error } = await db.from("chatweb_sessions").insert({
-        config_id: cfg.id,
-        owner_user_id: cfg.owner_user_id,
-        flow_id: cfg.flow_id,
-        visitor_id: visitorId,
-        session_token_hash: await sha256(token),
-        origin: hostOrigin ? hostOf(hostOrigin) : "link",
-        expires_at: new Date(Date.now() + cfg.session_ttl_minutes * 60_000).toISOString(),
-      }).select("*").single();
-      if (error || !sess) return json({ error: "start_failed" }, 500);
-      if (cfg.welcome_message) {
-        await db.from("chatweb_messages").insert({ session_id: sess.id, owner_user_id: cfg.owner_user_id, sender_type: "bot", content: cleanText(cfg.welcome_message), metadata: { welcome: true } });
-      }
-      await callRunner(cfg, sess, { incoming_text: "", chatweb_start: true });
-      return json({ token, visitor_id: visitorId, status: "active", messages: await messagesSince(sess.id) });
-    }
-
     // Ações com sessão
     const sess = await sessionByToken(body.token);
     if (!sess) return json({ error: "invalid_session" }, 401);
