@@ -407,6 +407,13 @@
       "when": 1793717020669,
       "tag": "0057_chatweb_channel",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793717041123,
+      "tag": "0058_chatweb_avatar_read_members",
+      "breakpoints": true
     }
   ]
 }
