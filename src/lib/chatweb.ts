@@ -124,7 +124,7 @@ export interface ChatWebTheme {
   header: string; inputBackground: string; optionStyle: "whatsapp" | "pill"; pattern: boolean;
 }
 export const DEFAULT_THEME: ChatWebTheme = {
-  primary: "#00a884", secondary: "#dfe5e7", header: "#f0f2f5", sentBubble: "#d9fdd3", receivedBubble: "#ffffff", text: "#111b21", background: "#efeae2", icon: "message",
+  primary: "#00a884", secondary: "#dfe5e7", header: "#f0f2f5", sentBubble: "#bbeccd", receivedBubble: "#ffffff", text: "#111b21", background: "#efeae2", icon: "message",
   inputBackground: "#ffffff", optionStyle: "whatsapp", pattern: true,
 };
 export function readTheme(t: any): ChatWebTheme {
