@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -466,7 +465,7 @@ export const ManageStagesDialog = ({
             {/* Custom tags */}
             <div className="space-y-1">
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Personalizadas</span>
-              <ScrollArea className="max-h-[200px]">
+              <div className="max-h-[200px] overflow-y-auto overscroll-contain">
                 <div className="space-y-1.5 pr-2">
                   {isLoadingTags ? (
                     <p className="text-sm text-muted-foreground text-center py-4">Carregando tags...</p>
@@ -512,7 +511,7 @@ export const ManageStagesDialog = ({
                     ))
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
 
             {/* Create new tag */}
