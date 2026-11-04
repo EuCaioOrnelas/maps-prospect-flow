@@ -7,8 +7,10 @@ let returnOrigin: string | null = null;
 // para uma página do próprio app, que avisa a janela principal e fecha.
 function finishResponse(title: string, message: string): Response {
   const ok = !title.toLowerCase().startsWith("erro");
-  if (returnOrigin) {
-    const target = `${returnOrigin}/google-conectado?ok=${ok ? "1" : "0"}&msg=${encodeURIComponent(message)}`;
+  // Sem origem conhecida, volta para o site oficial (nunca mostra código cru)
+  const base = returnOrigin || (Deno.env.get("APP_PUBLIC_URL") || "https://wiize.com.br").replace(/\/$/, "");
+  if (base) {
+    const target = `${base}/google-conectado?ok=${ok ? "1" : "0"}&msg=${encodeURIComponent(message)}`;
     return new Response(null, { status: 302, headers: { Location: target } });
   }
   return new Response(renderHTML(title, message), { headers: { "Content-Type": "text/html; charset=utf-8" } });
