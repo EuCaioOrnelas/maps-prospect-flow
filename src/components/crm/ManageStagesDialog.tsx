@@ -404,7 +404,7 @@ export const ManageStagesDialog = ({
                   );
                 })}
               </div>
-            </ScrollArea>
+            </div>
 
             <div className="border-t pt-4 mt-2">
               {isCreating ? (
