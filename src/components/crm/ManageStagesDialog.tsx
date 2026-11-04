@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -347,7 +346,7 @@ export const ManageStagesDialog = ({
         {/* Columns Tab */}
         {activeTab === 'columns' && (
           <>
-            <ScrollArea className="max-h-[400px] pr-4">
+            <div className="min-h-0 max-h-[50vh] overflow-y-auto overscroll-contain pr-2 -mr-2">
               <div className="space-y-2">
                 {sortedStages.map((stage, index) => {
                   const locked = isLockedStage(stage.name);
@@ -404,7 +403,7 @@ export const ManageStagesDialog = ({
                   );
                 })}
               </div>
-            </ScrollArea>
+            </div>
 
             <div className="border-t pt-4 mt-2">
               {isCreating ? (
@@ -466,7 +465,7 @@ export const ManageStagesDialog = ({
             {/* Custom tags */}
             <div className="space-y-1">
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Personalizadas</span>
-              <ScrollArea className="max-h-[200px]">
+              <div className="max-h-[200px] overflow-y-auto overscroll-contain">
                 <div className="space-y-1.5 pr-2">
                   {isLoadingTags ? (
                     <p className="text-sm text-muted-foreground text-center py-4">Carregando tags...</p>
@@ -512,7 +511,7 @@ export const ManageStagesDialog = ({
                     ))
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
 
             {/* Create new tag */}

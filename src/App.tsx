@@ -100,6 +100,7 @@ const SDRWizardPage = lazyWithRetry(() => import("./pages/SDRWizardPage"), "SDRW
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
 const ChatComingSoonGate = lazyWithRetry(() => import("./components/chat/ChatComingSoonGate").then((m) => ({ default: m.ChatComingSoonGate })), "ChatComingSoonGate");
 const ChatWebSettings = lazyWithRetry(() => import("./pages/ChatWebSettings"), "ChatWebSettings");
+const GoogleOAuthDone = lazyWithRetry(() => import("./pages/GoogleOAuthDone"), "GoogleOAuthDone");
 const ChatWebPublic = lazyWithRetry(() => import("./pages/ChatWebPublic"), "ChatWebPublic");
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
@@ -343,6 +344,7 @@ const App = () => (
                 <Route path="/refund-policy" element={<LightThemeWrapper><RefundPolicy /></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
+                <Route path="/google-conectado" element={<Suspense fallback={<PageLoader />}><GoogleOAuthDone /></Suspense>} />
                 <Route path="/c/:slug" element={<Suspense fallback={<PageLoader />}><ChatWebPublic /></Suspense>} />
                 <Route path="/form/:slug" element={<LightThemeWrapper><PublicForm /></LightThemeWrapper>} />
                 <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />

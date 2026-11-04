@@ -1,32 +1,47 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+let returnOrigin: string | null = null;
+
+// O servidor de funções exibe HTML como texto puro; por isso voltamos
+// para uma página do próprio app, que avisa a janela principal e fecha.
+function finishResponse(title: string, message: string): Response {
+  const ok = !title.toLowerCase().startsWith("erro");
+  if (returnOrigin) {
+    const target = `${returnOrigin}/google-conectado?ok=${ok ? "1" : "0"}&msg=${encodeURIComponent(message)}`;
+    return new Response(null, { status: 302, headers: { Location: target } });
+  }
+  return new Response(renderHTML(title, message), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
+
 serve(async (req) => {
+  returnOrigin = null;
   try {
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
     const stateParam = url.searchParams.get("state");
     const error = url.searchParams.get("error");
+    try {
+      const early = stateParam ? JSON.parse(atob(stateParam)) : null;
+      const o = typeof early?.origin === "string" ? new URL(early.origin) : null;
+      const h = o?.hostname || "";
+      if (o && (h === "localhost" || h.endsWith(".lovable.app") || h.endsWith(".lovableproject.com") ||
+        h === "wiize.com.br" || h.endsWith(".wiize.com.br") || h.endsWith(".vercel.app"))) returnOrigin = o.origin;
+    } catch { /* estado inválido */ }
 
     if (error) {
-      return new Response(renderHTML("Erro", `Autorização negada: ${error}`), {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
+      return finishResponse("Erro", `Autorização negada: ${error}`);
     }
 
     if (!code || !stateParam) {
-      return new Response(renderHTML("Erro", "Parâmetros inválidos"), {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
+      return finishResponse("Erro", "Parâmetros inválidos");
     }
 
     const state = JSON.parse(atob(stateParam));
     const userId = state.user_id;
 
     if (!userId) {
-      return new Response(renderHTML("Erro", "Usuário não identificado"), {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
+      return finishResponse("Erro", "Usuário não identificado");
     }
 
     const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
@@ -52,9 +67,7 @@ serve(async (req) => {
 
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("Token exchange failed:", tokenData);
-      return new Response(renderHTML("Erro", "Falha ao obter tokens do Google"), {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
+      return finishResponse("Erro", "Falha ao obter tokens do Google");
     }
 
     // Get user email from Google
@@ -94,9 +107,7 @@ serve(async (req) => {
 
     if (upsertError) {
       console.error("Failed to save tokens:", upsertError);
-      return new Response(renderHTML("Erro", "Falha ao salvar credenciais"), {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
+      return finishResponse("Erro", "Falha ao salvar credenciais");
     }
 
     // If Drive scopes are present, also populate user_drive_connections
@@ -115,14 +126,10 @@ serve(async (req) => {
         }, { onConflict: "user_id" });
     }
 
-    return new Response(renderHTML("Sucesso! ✅", `Conta Google (${userInfo.email || ""}) conectada com sucesso. Você pode fechar esta janela.`), {
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
+    return finishResponse("Sucesso! ✅", `Conta Google (${userInfo.email || ""}) conectada com sucesso. Você pode fechar esta janela.`);
   } catch (err) {
     console.error("Error in google-oauth-callback:", err);
-    return new Response(renderHTML("Erro", err.message), {
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
+    return finishResponse("Erro", err.message);
   }
 });
 
