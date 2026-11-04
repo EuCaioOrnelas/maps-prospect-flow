@@ -11,7 +11,7 @@ function finishResponse(title: string, message: string): Response {
     const target = `${returnOrigin}/google-conectado?ok=${ok ? "1" : "0"}&msg=${encodeURIComponent(message)}`;
     return new Response(null, { status: 302, headers: { Location: target } });
   }
-  return finishResponse(title, message), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+  return new Response(renderHTML(title, message), { headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 
 serve(async (req) => {
@@ -23,7 +23,7 @@ serve(async (req) => {
     const error = url.searchParams.get("error");
 
     if (error) {
-      return new Response(renderHTML("Erro", `Autorização negada: ${error}`);
+      return finishResponse("Erro", `Autorização negada: ${error}`);
     }
 
     if (!code || !stateParam) {
