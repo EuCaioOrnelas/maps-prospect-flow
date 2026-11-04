@@ -205,13 +205,13 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       // A janela do Google pode parecer "fechada" cedo por segurança do navegador;
       // então só conferimos a conexão periodicamente, por até 5 minutos.
       const startedAt = Date.now();
+      const initialCount = accounts.length;
       const timer = window.setInterval(async () => {
         if (finished) return;
         if (Date.now() - startedAt > 5 * 60 * 1000) { cleanup(); return; }
         if (popup?.closed) {
-          const before = accountsCountRef.current;
-          const state = await loadStatus();
-          if ((state?.accounts || []).length > before) void finish(true);
+                    const state = await loadStatus();
+          if ((state?.accounts || []).length > initialCount) void finish(true);
         }
       }, 2500);
     } catch (err) {

@@ -347,7 +347,7 @@ export const ManageStagesDialog = ({
         {/* Columns Tab */}
         {activeTab === 'columns' && (
           <>
-            <ScrollArea className="max-h-[400px] pr-4">
+            <div className="min-h-0 max-h-[50vh] overflow-y-auto overscroll-contain pr-2 -mr-2">
               <div className="space-y-2">
                 {sortedStages.map((stage, index) => {
                   const locked = isLockedStage(stage.name);
