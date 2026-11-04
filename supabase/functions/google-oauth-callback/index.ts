@@ -21,6 +21,13 @@ serve(async (req) => {
     const code = url.searchParams.get("code");
     const stateParam = url.searchParams.get("state");
     const error = url.searchParams.get("error");
+    try {
+      const early = stateParam ? JSON.parse(atob(stateParam)) : null;
+      const o = typeof early?.origin === "string" ? new URL(early.origin) : null;
+      const h = o?.hostname || "";
+      if (o && (h === "localhost" || h.endsWith(".lovable.app") || h.endsWith(".lovableproject.com") ||
+        h === "wiize.com.br" || h.endsWith(".wiize.com.br") || h.endsWith(".vercel.app"))) returnOrigin = o.origin;
+    } catch { /* estado inválido */ }
 
     if (error) {
       return finishResponse("Erro", `Autorização negada: ${error}`);
@@ -31,7 +38,6 @@ serve(async (req) => {
     }
 
     const state = JSON.parse(atob(stateParam));
-    returnOrigin = typeof state.origin === "string" ? state.origin : null;
     const userId = state.user_id;
 
     if (!userId) {
