@@ -1876,7 +1876,117 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       )}
 
       {/* 7 - Produtos */}
-      {step === 7 && (
+      {step === 7 && draft.operation_mode === "venda_direta" && (
+        <div className="space-y-4">
+          <InfoBox icon={Package} title="Catálogo comercial">
+            <p>
+              No modo venda direta, o SDR só pode oferecer produtos do <strong>catálogo
+              comercial</strong>, com os preços e condições cadastrados nele. Nada é inventado.
+            </p>
+          </InfoBox>
+
+          <div className="space-y-3">
+            <SectionTitle
+              icon={Brain}
+              title="Estratégia de oferta"
+              hint="Como o SDR escolhe o que vender para cada lead."
+            />
+            <CardSelect
+              value={draft.offer_strategy}
+              onChange={(v) => set("offer_strategy", v as any)}
+              options={SDR_OFFER_STRATEGIES}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <SectionTitle
+                icon={Package}
+                title="Produtos disponíveis para este SDR"
+                hint={
+                  draft.offer_strategy === "inteligente" && draft.catalog_product_ids.length === 0
+                    ? "Sem seleção, a venda inteligente considera todos os produtos ativos do catálogo."
+                    : "Marque os produtos que este SDR pode oferecer."
+                }
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => setCatalogOpen(true)}
+              >
+                <Plus className="h-4 w-4" /> Gerenciar catálogo
+              </Button>
+            </div>
+
+            {catalogLoading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : catalogProducts.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                <Package className="h-7 w-7 mx-auto text-muted-foreground" strokeWidth={1.5} />
+                <p className="mt-2 text-sm font-medium text-foreground">Catálogo vazio</p>
+                <p className="text-xs text-muted-foreground">
+                  Cadastre produtos com preços e condições para o SDR vender.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-1.5"
+                  onClick={() => setCatalogOpen(true)}
+                >
+                  <Plus className="h-4 w-4" /> Cadastrar produto
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {catalogProducts.map((p) => {
+                  const on = draft.catalog_product_ids.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        set("catalog_product_ids", toggleArray(draft.catalog_product_ids, p.id))
+                      }
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition-all",
+                        on
+                          ? "border-primary ring-2 ring-primary/20"
+                          : "border-border hover:border-primary/40",
+                        !p.active && "opacity-50"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
+                          on ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        <Package className="h-4 w-4" strokeWidth={1.75} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {productPriceLabel(p)}
+                          {(p.segments ?? []).length ? ` • ${(p.segments ?? []).join(", ")}` : ""}
+                          {!p.active ? " • inativo" : ""}
+                        </p>
+                      </div>
+                      <Check className={cn("h-4 w-4 shrink-0", on ? "text-primary" : "text-transparent")} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {step === 7 && draft.operation_mode !== "venda_direta" && (
         <div className="space-y-4">
           <InfoBox icon={Package} title="Cada produto precisa de contexto">
             <p>
