@@ -554,7 +554,6 @@ export const LeadDetailDialog = ({
         body: { 
           scopes: [
             'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/drive',
           ],
         },
       });
