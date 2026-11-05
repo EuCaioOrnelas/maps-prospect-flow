@@ -1148,12 +1148,24 @@ serve(async (req) => {
         await markFirstRealPayment(supabaseClient, invoice);
 
 
-        // Only reset searches on subscription renewal (not first payment)
-        if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
+        // Ativa/renova o acesso em dois casos:
+        // 1) Renovação mensal/anual (subscription_cycle);
+        // 2) Primeira cobrança PAGA de uma assinatura nova (subscription_create
+        //    com valor > 0) — cobre quem cancelou o trial e comprou depois,
+        //    por qualquer canal (checkout, link de pagamento ou painel Stripe).
+        // Invoice de trial (R$ 0) e assinatura ainda em trial não ativam aqui.
+        const isRenewal = invoice.billing_reason === "subscription_cycle";
+        const isFirstPaidActivation =
+          invoice.billing_reason === "subscription_create" && (invoice.amount_paid ?? 0) > 0;
+        if ((isRenewal || isFirstPaidActivation) && invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
           const customerEmail = invoice.customer_email;
-          
-          if (customerEmail) {
+
+          if (subscription.status === "trialing") {
+            logStep("Invoice de assinatura em trial - ativação fica no customer.subscription.created", {
+              subscriptionId: subscription.id,
+            });
+          } else if (customerEmail) {
             const { data: profile } = await supabaseClient
               .from("profiles")
               .select("id, plan, searches_used, searches_limit, created_at")
@@ -1170,15 +1182,23 @@ serve(async (req) => {
                 ? new Date(subscription.current_period_end * 1000).toISOString()
                 : null;
 
-              // Reset searches on renewal + clear trial markers (trial virou pagante real)
+              // Ativa/renova: zera consumo, grava vigência e limpa TODAS as
+              // marcas de trial (inclusive o cancelamento da cobrança automática),
+              // pois agora existe pagamento real confirmado.
               const { error: updateError } = await supabaseClient
                 .from("profiles")
                 .update({ 
+                  plan,
                   searches_used: 0,
                   searches_limit: basePlanLimit,
                   last_searches_reset: new Date().toISOString(),
                   subscription_current_period_end: subscriptionEnd,
+                  payment_provider: "stripe",
+                  subscription_price_cents: subscription.items.data[0]?.price?.unit_amount || 0,
                   trial_will_charge_at: null,
+                  trial_end_at: null,
+                  trial_auto_charge_cancelled: false,
+                  trial_auto_charge_cancelled_at: null,
                 })
                 .eq("id", profile.id);
 
@@ -1193,10 +1213,10 @@ serve(async (req) => {
                 });
               }
 
-              // Log renewal event
+              // Log renewal/activation event
               await logSubscriptionEvent(
                 supabaseClient,
-                "subscription_renewed",
+                isRenewal ? "subscription_renewed" : "subscription_activated",
                 "stripe-webhook",
                 customerEmail,
                 profile.id,
@@ -1216,7 +1236,7 @@ serve(async (req) => {
                 }
               );
 
-              // Partner program: register recurring sale on renewal
+              // Partner program: register sale (recurring on renewal, first sale on activation)
               try {
                 const partnerResult = await registerPartnerSale(supabaseClient, {
                   userId: profile.id,
@@ -1228,9 +1248,9 @@ serve(async (req) => {
                   stripeInvoiceId: invoice.id,
                   stripeSubscriptionId: subscription.id,
                   paidAt: new Date().toISOString(),
-                  isRecurring: true,
+                  isRecurring: isRenewal,
                 });
-                logStep("Partner sale check (renewal)", partnerResult);
+                logStep("Partner sale check (renewal/activation)", partnerResult);
               } catch (e) {
                 logStep("Partner sale registration failed (renewal)", { error: String(e) });
               }
