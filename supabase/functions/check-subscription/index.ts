@@ -573,7 +573,7 @@ serve(async (req) => {
     // novo pagamento, troca de e-mail). Olhar só o primeiro rebaixava contas pagas.
     const customers = await stripe.customers.list({ email: userEmail, limit: 10 });
     const customerIds: string[] = customers.data.map((c: Stripe.Customer) => c.id);
-    const listSubsForAllCustomers = async (status?: Stripe.SubscriptionListParams.Status) => {
+    const listSubsForAllCustomers = async (status?: "active") => {
       const all: Stripe.Subscription[] = [];
       for (const id of customerIds) {
         const res = await stripe.subscriptions.list({ customer: id, limit: 10, ...(status ? { status } : {}) });
