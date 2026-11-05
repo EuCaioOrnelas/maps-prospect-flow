@@ -260,6 +260,128 @@ const OBJECTIVE_PLAYBOOK: Record<string, string> = {
     "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide, e construa o desejo. Peça o aceite explícito do lead ('posso te enviar a proposta?'), só então envie e peça confirmação de recebimento, combinando o dia da resposta. Nunca cobre pagamento nem tente fechar a venda pelo chat.",
 };
 
+// ========== MODO VENDA DIRETA ==========
+const SALES_MODE_RULE =
+  "MODO VENDA DIRETA ATIVO: você é um vendedor consultivo autorizado a apresentar preços, condições e propostas do CATÁLOGO OFICIAL. " +
+  "REGRAS INEGOCIÁVEIS: (1) Use SOMENTE produtos, preços, condições, prazos e descontos do catálogo oficial — nunca invente serviço, preço, desconto, prazo, garantia ou condição não cadastrada. " +
+  "(2) Se um produto não tiver preço cadastrado, diga que o investimento é personalizado e que um especialista confirma o valor; nunca estime. " +
+  "(3) O desconto máximo permitido de cada produto está no catálogo; se o lead pedir condição fora do limite, diga que um especialista humano vai avaliar e defina proxima_acao = chamar_vendedor. " +
+  "(4) Se faltar informação para escolher o produto certo, faça perguntas de descoberta ANTES de ofertar. " +
+  "(5) Quando o lead demonstrar intenção clara de contratação, confirme o produto escolhido e os dados, e defina proxima_acao = chamar_vendedor para um humano concluir a contratação — nunca considere a venda concluída sozinho e nunca peça dados de pagamento.";
+
+const SALES_PLAYBOOK =
+  "OBJETIVO VENDA DIRETA: conduza como um vendedor consultivo. Descubra a necessidade real, escolha o produto mais aderente do catálogo (nunca apresente a lista inteira), apresente benefícios e preço cadastrado, trabalhe as objeções com os argumentos oficiais e, diante de intenção de contratação, encaminhe para o humano concluir. Proposta em PDF só após aceite explícito do lead.";
+
+/** Formata o preço de um produto do catálogo para o prompt. */
+function productPriceText(p: any): string {
+  if (p.price_display) return String(p.price_display);
+  const fmt = (v: number) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  const billing = p.billing_model === "mensal" ? "/mês" : p.billing_model === "anual" ? "/ano" : "";
+  if (p.price_type === "range" && p.price_min != null && p.price_max != null)
+    return `${fmt(p.price_min)} a ${fmt(p.price_max)}${billing}`;
+  if (p.price_type === "from" && p.price_value != null) return `a partir de ${fmt(p.price_value)}${billing}`;
+  if (p.price_value != null) return `${fmt(p.price_value)}${billing}`;
+  return "investimento personalizado (NUNCA informe valor; um especialista confirma)";
+}
+
+function catalogBlock(products: any[]): string {
+  return products
+    .map((p: any, i: number) => {
+      const objections = Array.isArray(p.objections)
+        ? p.objections.filter((o: any) => o?.question).map((o: any) => `    - "${o.question}" => ${o.answer || "-"}`).join("\n")
+        : "";
+      return [
+        `PRODUTO ${i + 1}: ${p.name}${p.category ? ` [${p.category}]` : ""} (prioridade: ${p._agent_priority || p.priority || "media"})`,
+        `  Descrição: ${p.description || "-"}`,
+        p.benefits ? `  Benefícios: ${p.benefits}` : null,
+        p.problems_solved ? `  Problemas que resolve: ${p.problems_solved}` : null,
+        p.differentials ? `  Diferenciais: ${p.differentials}` : null,
+        `  PREÇO OFICIAL: ${productPriceText(p)}`,
+        `  Desconto máximo autorizado: ${Number(p.max_discount_percent) || 0}%`,
+        p.installments ? `  Parcelamento: ${p.installments}` : null,
+        p.payment_conditions ? `  Condições de pagamento: ${p.payment_conditions}` : null,
+        p.delivery_estimate ? `  Prazo de entrega: ${p.delivery_estimate}` : null,
+        p.hiring_conditions ? `  Condições de contratação: ${p.hiring_conditions}` : null,
+        (p.segments || []).length ? `  Segmentos recomendados: ${(p.segments || []).join(", ")}` : null,
+        p.when_to_offer ? `  OFERECER QUANDO: ${p.when_to_offer}` : null,
+        p.when_not_to_offer ? `  NÃO OFERECER QUANDO: ${p.when_not_to_offer}` : null,
+        p.sales_arguments ? `  Argumentos de venda: ${p.sales_arguments}` : null,
+        (p.qualification_questions || []).length ? `  Perguntas de qualificação: ${(p.qualification_questions || []).join(" | ")}` : null,
+        p.requirements ? `  Requisitos para contratar: ${p.requirements}` : null,
+        objections ? `  Objeções e respostas oficiais:\n${objections}` : null,
+        p.proposal_file?.path ? `  Possui proposta em PDF pronta para envio após aceite.` : null,
+      ].filter(Boolean).join("\n");
+    })
+    .join("\n\n");
+}
+
+/** Extrai valores monetários citados em um texto (pt-BR). */
+function extractMentionedPrices(text: string): number[] {
+  const found: number[] = [];
+  const patterns = [
+    /R\$\s*(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)/g,
+    /(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\s*reais/gi,
+  ];
+  for (const pattern of patterns) {
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(text)) !== null) {
+      const normalized = m[1].replace(/\./g, "").replace(",", ".");
+      const value = Number(normalized);
+      if (Number.isFinite(value) && value > 0) found.push(value);
+    }
+  }
+  return found;
+}
+
+/** Faixas de preço autorizadas: [mínimo com desconto, máximo] por produto. */
+function authorizedPriceRanges(products: any[]): { min: number; max: number }[] {
+  const ranges: { min: number; max: number }[] = [];
+  for (const p of products) {
+    const discount = Math.min(100, Math.max(0, Number(p.max_discount_percent) || 0)) / 100;
+    const values = [p.price_value, p.price_min, p.price_max]
+      .map((v) => (v == null ? null : Number(v)))
+      .filter((v): v is number => v != null && Number.isFinite(v) && v > 0);
+    if (!values.length) continue;
+    const hi = Math.max(...values);
+    const lo = Math.min(...values) * (1 - discount);
+    ranges.push({ min: Math.round(lo * 100) / 100, max: Math.round(hi * 100) / 100 });
+  }
+  return ranges;
+}
+
+/** Valores citados nas mensagens que não existem no catálogo (anti-alucinação). */
+function findUnauthorizedPrices(messages: string[], products: any[]): number[] {
+  const ranges = authorizedPriceRanges(products);
+  const unauthorized = new Set<number>();
+  for (const text of messages) {
+    for (const price of extractMentionedPrices(text)) {
+      const ok = ranges.some((r) => price >= r.min - 0.01 && price <= r.max + 0.01);
+      if (!ok) unauthorized.add(price);
+    }
+  }
+  return Array.from(unauthorized);
+}
+
+/** Valor de referência do produto para potencial de venda. */
+function productReferenceValue(p: any): number | null {
+  const v = p?.price_value ?? p?.price_min ?? p?.price_max;
+  const n = v == null ? null : Number(v);
+  return n != null && Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Localiza no catálogo o produto recomendado pela análise (por nome normalizado). */
+function matchCatalogProduct(products: any[], name: unknown): any | null {
+  if (typeof name !== "string" || !name.trim()) return null;
+  const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const target = norm(name);
+  return (
+    products.find((p) => norm(String(p.name)) === target) ??
+    products.find((p) => norm(String(p.name)).includes(target) || target.includes(norm(String(p.name)))) ??
+    null
+  );
+}
+// ========== FIM MODO VENDA DIRETA ==========
+
 const INSISTENCE_GUIDE: Record<string, string> = {
   pouco: "Insistência baixa: diante de um 'agora não', acolha e recue na primeira negativa.",
   medio: "Insistência média: tente contornar no máximo duas vezes com ângulos diferentes antes de recuar.",
