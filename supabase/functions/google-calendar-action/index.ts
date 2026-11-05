@@ -1,133 +1,60 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { adminClient, corsHeaders, getGoogleAccessToken, googleFailure, json, resolveCaller } from "../_shared/googleAuth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const EMAIL_RE = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
-    const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
+    const body = await req.json().catch(() => ({}));
+    const { google_account_id, calendar_id, description, start_datetime, duration_minutes, attendee_email, reminder_minutes } = body;
+    const summary = typeof body.summary === "string" ? body.summary.trim().slice(0, 500) : "";
+    if (!summary) return json({ error: "Informe o nome do evento" }, 400);
 
-    const { user_id, google_account_id, calendar_id, summary, description, start_datetime, duration_minutes, attendee_email, reminder_minutes } = await req.json();
+    const supabase = adminClient();
+    const caller = await resolveCaller(req, supabase, body.user_id);
+    if (caller instanceof Response) return caller;
 
-    if (!user_id || !summary) {
-      return new Response(JSON.stringify({ error: "Missing required fields: user_id, summary" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const tok = await getGoogleAccessToken(supabase, caller.userId, google_account_id, "calendar");
+    if (tok instanceof Response) return tok;
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    let startTime = start_datetime ? new Date(start_datetime) : new Date();
+    if (isNaN(startTime.getTime())) startTime = new Date();
+    const minutes = Math.min(Math.max(Number(duration_minutes) || 30, 5), 24 * 60);
+    const endTime = new Date(startTime.getTime() + minutes * 60000);
 
-    // FIX BUG-02: suporta múltiplas contas Google. Usa google_account_id quando fornecido;
-    // senão pega a conta mais recente do user_id (sem .single()).
-    let tokenQuery = supabase.from("user_google_tokens").select("*");
-    if (google_account_id) tokenQuery = tokenQuery.eq("id", google_account_id);
-    else tokenQuery = tokenQuery.eq("user_id", user_id).order("updated_at", { ascending: false }).limit(1);
-    const { data: tokenRecords, error: tokenError } = await tokenQuery;
-    const tokenRecord = Array.isArray(tokenRecords) ? tokenRecords[0] : tokenRecords;
-
-    if (tokenError || !tokenRecord) {
-      return new Response(JSON.stringify({ error: "Google not connected", requiresAuth: true }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    let accessToken = tokenRecord.access_token;
-
-    // Refresh token if expired
-    if (new Date(tokenRecord.token_expires_at) <= new Date()) {
-      const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: googleClientId,
-          client_secret: googleClientSecret,
-          refresh_token: tokenRecord.refresh_token,
-          grant_type: "refresh_token",
-        }),
-      });
-
-      const refreshData = await refreshRes.json();
-
-      if (!refreshRes.ok || !refreshData.access_token) {
-        await supabase.from("user_google_tokens").delete().eq("user_id", user_id);
-        return new Response(JSON.stringify({ error: "Token expired, please reconnect", requiresAuth: true }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      accessToken = refreshData.access_token;
-      await supabase.from("user_google_tokens").update({
-        access_token: accessToken,
-        token_expires_at: new Date(Date.now() + (refreshData.expires_in || 3600) * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("user_id", user_id);
-    }
-
-    // Build event
-    const startTime = start_datetime ? new Date(start_datetime) : new Date();
-    const endTime = new Date(startTime.getTime() + (duration_minutes || 30) * 60000);
-
-    const event: any = {
+    const event: Record<string, unknown> = {
       summary,
-      description: description || "",
-      start: {
-        dateTime: startTime.toISOString(),
-        timeZone: "America/Sao_Paulo",
-      },
-      end: {
-        dateTime: endTime.toISOString(),
-        timeZone: "America/Sao_Paulo",
-      },
+      description: typeof description === "string" ? description.slice(0, 8000) : "",
+      start: { dateTime: startTime.toISOString(), timeZone: "America/Sao_Paulo" },
+      end: { dateTime: endTime.toISOString(), timeZone: "America/Sao_Paulo" },
     };
 
-    if (attendee_email) {
-      event.attendees = [{ email: attendee_email }];
+    const attendee = typeof attendee_email === "string" ? attendee_email.trim() : "";
+    if (attendee && EMAIL_RE.test(attendee)) event.attendees = [{ email: attendee }];
+
+    const rem = Number(reminder_minutes);
+    if (Number.isFinite(rem) && rem > 0) {
+      event.reminders = { useDefault: false, overrides: [{ method: "popup", minutes: Math.min(rem, 40320) }] };
     }
 
-    if (typeof reminder_minutes === "number" && reminder_minutes > 0) {
-      event.reminders = {
-        useDefault: false,
-        overrides: [{ method: "popup", minutes: reminder_minutes }],
-      };
-    }
-
-    // FIX BUG-03: respeita calendar_id; default "primary".
     const calId = encodeURIComponent(calendar_id || "primary");
-    const calRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calId}/events`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+    const sendUpdates = event.attendees ? "all" : "none";
+    const calRes = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${calId}/events?sendUpdates=${sendUpdates}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${tok.accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify(event),
       },
-      body: JSON.stringify(event),
-    });
-
+    );
+    if (!calRes.ok) return await googleFailure(calRes, "Falha ao criar o evento");
     const calData = await calRes.json();
 
-    if (!calRes.ok) {
-      console.error("Calendar API error:", calData);
-      return new Response(JSON.stringify({ error: "Failed to create event", details: calData }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true, eventId: calData.id, htmlLink: calData.htmlLink }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ success: true, eventId: calData.id, htmlLink: calData.htmlLink });
   } catch (err) {
     console.error("Error in google-calendar-action:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: (err as Error).message }, 500);
   }
 });
