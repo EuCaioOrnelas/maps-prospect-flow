@@ -10286,19 +10286,69 @@ export type Database = {
         }
         Relationships: []
       }
+      sdr_agent_products: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          owner_user_id: string
+          priority: string
+          product_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          priority?: string
+          product_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          priority?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_agent_products_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_agent_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sdr_agents: {
         Row: {
+          activation_mode: string
           ai: Json
+          allowed_origins: string[] | null
           closing: Json
           created_at: string
           created_by: string | null
+          exclude_clients: boolean
+          exclude_crm: boolean
+          exclude_human_owned: boolean
           id: string
           knowledge: Json
           name: string
           objective: string
           objective_custom: string | null
+          offer_strategy: string
+          operation_mode: string
           owner_user_id: string
           personality: Json
+          sales_behavior: Json
           schedule: Json
           situations: Json
           status: string
@@ -10308,17 +10358,25 @@ export type Database = {
           whatsapp_number_ids: string[]
         }
         Insert: {
+          activation_mode?: string
           ai?: Json
+          allowed_origins?: string[] | null
           closing?: Json
           created_at?: string
           created_by?: string | null
+          exclude_clients?: boolean
+          exclude_crm?: boolean
+          exclude_human_owned?: boolean
           id?: string
           knowledge?: Json
           name: string
           objective?: string
           objective_custom?: string | null
+          offer_strategy?: string
+          operation_mode?: string
           owner_user_id: string
           personality?: Json
+          sales_behavior?: Json
           schedule?: Json
           situations?: Json
           status?: string
@@ -10328,17 +10386,25 @@ export type Database = {
           whatsapp_number_ids?: string[]
         }
         Update: {
+          activation_mode?: string
           ai?: Json
+          allowed_origins?: string[] | null
           closing?: Json
           created_at?: string
           created_by?: string | null
+          exclude_clients?: boolean
+          exclude_crm?: boolean
+          exclude_human_owned?: boolean
           id?: string
           knowledge?: Json
           name?: string
           objective?: string
           objective_custom?: string | null
+          offer_strategy?: string
+          operation_mode?: string
           owner_user_id?: string
           personality?: Json
+          sales_behavior?: Json
           schedule?: Json
           situations?: Json
           status?: string
@@ -10346,6 +10412,170 @@ export type Database = {
           triggers?: Json
           updated_at?: string
           whatsapp_number_ids?: string[]
+        }
+        Relationships: []
+      }
+      sdr_eligibility_log: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          details: Json | null
+          eligible: boolean
+          id: string
+          lead_id: string | null
+          owner_user_id: string
+          phone: string | null
+          reason: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          eligible: boolean
+          id?: string
+          lead_id?: string | null
+          owner_user_id: string
+          phone?: string | null
+          reason: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          eligible?: boolean
+          id?: string
+          lead_id?: string | null
+          owner_user_id?: string
+          phone?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_eligibility_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sdr_products: {
+        Row: {
+          active: boolean
+          benefits: string | null
+          billing_model: string
+          category: string | null
+          created_at: string
+          delivery_estimate: string | null
+          description: string | null
+          differentials: string | null
+          full_description: string | null
+          hiring_conditions: string | null
+          id: string
+          image_url: string | null
+          installments: string | null
+          max_discount_percent: number | null
+          name: string
+          negotiation_rules: string | null
+          objections: Json | null
+          owner_user_id: string
+          payment_conditions: string | null
+          price_display: string | null
+          price_max: number | null
+          price_min: number | null
+          price_type: string
+          price_value: number | null
+          priority: string
+          priority_segments: string[] | null
+          problems_solved: string | null
+          proposal_file: Json | null
+          qualification_questions: string[] | null
+          requirements: string | null
+          sales_arguments: string | null
+          segments: string[] | null
+          target_audience: string | null
+          updated_at: string
+          user_id: string
+          when_not_to_offer: string | null
+          when_to_offer: string | null
+        }
+        Insert: {
+          active?: boolean
+          benefits?: string | null
+          billing_model?: string
+          category?: string | null
+          created_at?: string
+          delivery_estimate?: string | null
+          description?: string | null
+          differentials?: string | null
+          full_description?: string | null
+          hiring_conditions?: string | null
+          id?: string
+          image_url?: string | null
+          installments?: string | null
+          max_discount_percent?: number | null
+          name: string
+          negotiation_rules?: string | null
+          objections?: Json | null
+          owner_user_id: string
+          payment_conditions?: string | null
+          price_display?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          price_value?: number | null
+          priority?: string
+          priority_segments?: string[] | null
+          problems_solved?: string | null
+          proposal_file?: Json | null
+          qualification_questions?: string[] | null
+          requirements?: string | null
+          sales_arguments?: string | null
+          segments?: string[] | null
+          target_audience?: string | null
+          updated_at?: string
+          user_id: string
+          when_not_to_offer?: string | null
+          when_to_offer?: string | null
+        }
+        Update: {
+          active?: boolean
+          benefits?: string | null
+          billing_model?: string
+          category?: string | null
+          created_at?: string
+          delivery_estimate?: string | null
+          description?: string | null
+          differentials?: string | null
+          full_description?: string | null
+          hiring_conditions?: string | null
+          id?: string
+          image_url?: string | null
+          installments?: string | null
+          max_discount_percent?: number | null
+          name?: string
+          negotiation_rules?: string | null
+          objections?: Json | null
+          owner_user_id?: string
+          payment_conditions?: string | null
+          price_display?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          price_value?: number | null
+          priority?: string
+          priority_segments?: string[] | null
+          problems_solved?: string | null
+          proposal_file?: Json | null
+          qualification_questions?: string[] | null
+          requirements?: string | null
+          sales_arguments?: string | null
+          segments?: string[] | null
+          target_audience?: string | null
+          updated_at?: string
+          user_id?: string
+          when_not_to_offer?: string | null
+          when_to_offer?: string | null
         }
         Relationships: []
       }
@@ -10406,6 +10636,67 @@ export type Database = {
           },
         ]
       }
+      sdr_sales_events: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          lead_id: string | null
+          owner_user_id: string
+          product_id: string | null
+          session_id: string | null
+          value: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          lead_id?: string | null
+          owner_user_id: string
+          product_id?: string | null
+          session_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          lead_id?: string | null
+          owner_user_id?: string
+          product_id?: string | null
+          session_id?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_sales_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_sales_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_sales_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sdr_sessions: {
         Row: {
           agent_id: string
@@ -10427,7 +10718,9 @@ export type Database = {
           owner_user_id: string
           phone: string | null
           phone_number_id: string | null
+          potential_value: number | null
           replies_received: number
+          selected_product_id: string | null
           stage: string
           status: string
           updated_at: string
@@ -10454,7 +10747,9 @@ export type Database = {
           owner_user_id: string
           phone?: string | null
           phone_number_id?: string | null
+          potential_value?: number | null
           replies_received?: number
+          selected_product_id?: string | null
           stage?: string
           status?: string
           updated_at?: string
@@ -10481,7 +10776,9 @@ export type Database = {
           owner_user_id?: string
           phone?: string | null
           phone_number_id?: string | null
+          potential_value?: number | null
           replies_received?: number
+          selected_product_id?: string | null
           stage?: string
           status?: string
           updated_at?: string
@@ -15682,6 +15979,23 @@ export type Database = {
       revenue_score_to_bucket: {
         Args: { p_score: number }
         Returns: Database["public"]["Enums"]["revenue_status_bucket"]
+      }
+      sdr_check_eligibility: {
+        Args: { p_agent_id: string; p_phone: string; p_trigger?: string }
+        Returns: Json
+      }
+      sdr_log_sales_event: {
+        Args: {
+          p_agent_id: string
+          p_details?: Json
+          p_event_type: string
+          p_lead_id?: string
+          p_owner_user_id: string
+          p_product_id: string
+          p_session_id: string
+          p_value?: number
+        }
+        Returns: string
       }
       seed_revenue_score_rules: {
         Args: { p_user_id: string }
