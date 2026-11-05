@@ -1232,7 +1232,26 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
             </p>
           </div>
 
-          {draft.objective === "proposta" && (
+          <div className="space-y-3">
+            <IconLabel icon={ShoppingCart}>Modo de operação</IconLabel>
+            <CardSelect
+              value={draft.operation_mode}
+              onChange={(v) => set("operation_mode", v as any)}
+              options={SDR_OPERATION_MODES}
+            />
+            {draft.operation_mode === "venda_direta" && (
+              <InfoBox icon={ShieldCheck} title="Venda direta com regras claras">
+                <p>
+                  O SDR passa a apresentar produtos, preços e propostas do <strong>catálogo
+                  comercial</strong> (etapa Produtos). Ele nunca inventa preço, desconto ou condição:
+                  só usa o que você cadastrou, e encaminha para um humano quando o pedido sai dos
+                  limites autorizados.
+                </p>
+              </InfoBox>
+            )}
+          </div>
+
+          {draft.objective === "proposta" && draft.operation_mode !== "venda_direta" && (
             <div className="space-y-3">
               <SectionTitle
                 icon={FileText}
