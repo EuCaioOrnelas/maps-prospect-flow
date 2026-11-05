@@ -569,7 +569,18 @@ serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
+    // Um mesmo e-mail pode ter mais de um cliente na Stripe (teste cancelado,
+    // novo pagamento, troca de e-mail). Olhar só o primeiro rebaixava contas pagas.
+    const customers = await stripe.customers.list({ email: userEmail, limit: 10 });
+    const customerIds: string[] = customers.data.map((c: Stripe.Customer) => c.id);
+    const listSubsForAllCustomers = async (status?: "active") => {
+      const all: Stripe.Subscription[] = [];
+      for (const id of customerIds) {
+        const res = await stripe.subscriptions.list({ customer: id, limit: 10, ...(status ? { status } : {}) });
+        all.push(...res.data);
+      }
+      return { data: all };
+    };
     
     if (customers.data.length === 0) {
       logStep("No customer found in Stripe");
@@ -655,14 +666,9 @@ serve(async (req) => {
       });
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
+    logStep("Found Stripe customer(s)", { customerIds });
 
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 10,
-    });
+    const subscriptions = await listSubsForAllCustomers("active");
 
     const getPlanOrder = (planName: string) => {
       const order: Record<string, number> = {
@@ -808,13 +814,10 @@ serve(async (req) => {
             status: 200,
           });
         } else {
-          const allSubs = await stripe.subscriptions.list({
-            customer: customerId,
-            limit: 10,
-          });
+          const allSubs = await listSubsForAllCustomers();
           
           const hasAnySub = allSubs.data.some((s: Stripe.Subscription) => 
-            ["active", "trialing", "incomplete"].includes(s.status)
+            ["active", "trialing", "incomplete", "past_due"].includes(s.status)
           );
           
           if (!hasAnySub) {
