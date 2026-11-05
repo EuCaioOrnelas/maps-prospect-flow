@@ -918,7 +918,8 @@ ${historyText}`;
 
     // Regra fixa: com "nunca falar preço sem reunião", o SDR NUNCA informa valores.
     // Quando a reunião é confirmada o objetivo está concluído e a conversa sai do SDR.
-    if (agent.situations?.preco === "nunca_sem_reuniao") {
+    // (No modo venda direta, preços do catálogo são permitidos — a blindagem abaixo cuida disso.)
+    if (agent.situations?.preco === "nunca_sem_reuniao" && !isSalesMode) {
       const disclosedPrice = messages.some((text) => /(?:R\$\s*\d|\b\d+(?:[.,]\d{2})?\s*(?:reais|por m[eê]s|\/m[eê]s))/i.test(text));
       if (disclosedPrice) {
         console.error("[sdr-brain] blocked price disclosure (nunca_sem_reuniao)");
@@ -926,6 +927,24 @@ ${historyText}`;
         written.proxima_acao = "aguardar";
       }
     }
+
+    // Blindagem determinística de preços (modo venda direta): todo valor citado
+    // precisa existir no catálogo, respeitando o desconto máximo autorizado.
+    // A IA não pode inventar preço — se inventar, a resposta é bloqueada aqui.
+    if (isSalesMode && catalogProducts.length && messages.length) {
+      const unauthorized = findUnauthorizedPrices(messages, catalogProducts);
+      if (unauthorized.length) {
+        console.error("[sdr-brain] blocked unauthorized price disclosure:", unauthorized);
+        messages = [];
+        written.proxima_acao = "aguardar";
+      }
+    }
+
+    // Produto escolhido pela análise, conferido contra o catálogo oficial.
+    const selectedProduct = isSalesMode
+      ? matchCatalogProduct(catalogProducts, analysis?.produto_recomendado)
+      : null;
+    const pricePresented = isSalesMode && messages.some((text) => extractMentionedPrices(text).length > 0);
 
     const detectedObjections = Array.isArray(analysis?.memoria?.objecoes)
       ? analysis.memoria.objecoes.filter((item: unknown) => typeof item === "string" && item.trim())
