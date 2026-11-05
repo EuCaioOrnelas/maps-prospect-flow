@@ -730,7 +730,7 @@ REGRAS DE AGENDAMENTO (inegociáveis):
 - Só marque como confirmado quando o lead escolher explicitamente uma das opções.`
       : `AGENDA REAL DO RESPONSÁVEL: não há horários livres nos próximos dias. Não ofereça horários; diga que vai confirmar a disponibilidade e retornar.`;
 
-    const brief = `${agentBrief(agent)}\n\n${agendaBlock}`;
+    const brief = `${agentBrief(agent, catalogProducts)}\n\n${agendaBlock}`;
     const historyText =
       history.map((m) => `${m.role === "assistant" ? "SDR" : "LEAD"}: ${m.content}`).join("\n") ||
       "(sem histórico)";
@@ -776,7 +776,13 @@ REGRAS DE CONTEXTO E DECISOR:
 - Descubra de forma respeitosa se o contato é dono, responsável pela área, influenciador ou intermediário. Para venda B2B, priorize conversar com o dono ou responsável pela decisão.
 - Se o contato não for o decisor ou disser que ele está indisponível, não confronte nem presuma mentira. Peça o nome/cargo do responsável e uma apresentação, encaminhamento ou melhor horário para falar. Ofereça duas alternativas simples de continuidade.
 - Nunca finja conhecer alguém, invente indicação, esconda sua identidade, pressione recepcionistas ou tente contornar controles de acesso. Persistência comercial deve ser transparente e respeitar recusa/opt-out.
-}`;
+}${isSalesMode ? `
+
+REGRAS DO MODO VENDA DIRETA:
+- "produto_recomendado" deve ser EXATAMENTE o nome de um produto do CATÁLOGO OFICIAL, ou null quando ainda não houver evidência suficiente (nesse caso o próximo passo é pergunta de descoberta, nunca oferta).
+- Justifique a escolha em "justificativa_produto" com base em evidências: segmento, dor relatada, contexto pesquisado e compatibilidade com "OFERECER QUANDO".
+- Respeite "NÃO OFERECER QUANDO" e a prioridade comercial de cada produto.
+- Intenção clara de contratação => proxima_acao = chamar_vendedor (um humano conclui a venda).` : ""}`;
     const analysisUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
 
