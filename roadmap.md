@@ -47,3 +47,7 @@
 - [x] Testes: regras (7), conversa real com botões, isolamento, recarregar página, token inválido.
 - [ ] Domínio chat.wiize.com.br — depende de você apontar o domínio.
 - [ ] Atendente responder pelo ChatWeb na caixa de entrada — próxima etapa.
+
+## Integrações Google independentes
+- [x] Remover dependência de _shared/googleAuth.ts nas cinco funções, mantendo autenticação e renovação de tokens.
+- [x] Cinco funções publicadas; validação de autenticação, bloqueio entre usuários, CORS e ausência de imports shared passou.
