@@ -68,7 +68,13 @@ describe("findUnauthorizedPrices (anti-alucinação)", () => {
   });
 
   it("bloqueia desconto acima do limite autorizado", () => {
-    expect(findUnauthorizedPrices(["Fecho por R$ 1.800,00"], catalog)).toEqual([1800]);
+    // R$ 1.100 está abaixo do piso de TODOS os produtos (site: 2250 com desconto; tráfego: 1200)
+    expect(findUnauthorizedPrices(["Fecho por R$ 1.100,00"], catalog)).toEqual([1100]);
+  });
+
+  it("valor dentro da faixa de outro produto do catálogo é autorizado", () => {
+    // R$ 1.800 está fora do limite do site (mín. 2250), mas dentro da faixa do tráfego (1200-3000)
+    expect(findUnauthorizedPrices(["Fecho por R$ 1.800,00"], catalog)).toEqual([]);
   });
 
   it("bloqueia preço inventado fora do catálogo", () => {

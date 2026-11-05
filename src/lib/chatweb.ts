@@ -98,7 +98,7 @@ export interface InlineEmbedOptions { width: string; height: string; minHeight: 
 export interface WidgetEmbedOptions { position: "right" | "left"; color: string; label: string }
 
 const safeCss = (v: string, fallback: string) => (/^[0-9.]+(px|%|vh|vw|rem)?$/.test(String(v).trim()) ? String(v).trim() : fallback);
-const safeColor = (v: string) => (/^#[0-9a-fA-F]{3,8}$/.test(v) ? v : "#16a34a");
+const safeColor = (v: string) => (/^#[0-9a-fA-F]{3,8}$/.test(v) ? v : "#00a884");
 const escAttr = (v: string) => String(v).replace(/[&"<>]/g, (c) => ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[c]!);
 
 export function inlineEmbedCode(slug: string, o: InlineEmbedOptions, base = chatwebBaseUrl()): string {

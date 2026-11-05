@@ -31,7 +31,7 @@ describe("compatibilidade dos blocos", () => {
 describe("códigos de instalação", () => {
   it("não aceita cores ou textos que injetem código", () => {
     const code = widgetEmbedCode("loja", { position: "left", color: "red;alert(1)", label: '"><script>' }, "https://x.com");
-    expect(code).toContain('data-color="#16a34a"');
+    expect(code).toContain('data-color="#00a884"');
     expect(code).not.toContain("<script>\"");
     expect(code).toContain("&lt;script&gt;");
   });
@@ -41,6 +41,6 @@ describe("códigos de instalação", () => {
     expect(code).toContain("border-radius:40px");
   });
   it("tema ignora valores inválidos", () => {
-    expect(readTheme({ primary: "javascript:1" }).primary).toBe("#16a34a");
+    expect(readTheme({ primary: "javascript:1" }).primary).toBe("#00a884");
   });
 });

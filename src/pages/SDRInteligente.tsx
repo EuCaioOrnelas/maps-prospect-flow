@@ -40,10 +40,15 @@ import {
   Wifi,
   MessagesSquare,
   Sparkles,
-  
+  Package,
+  ShieldAlert,
+  Handshake,
+  FileText,
+  DollarSign,
 } from "lucide-react";
 import { useSDRAgents } from "@/hooks/useSDRAgents";
 import { SDRTestChatDialog } from "@/components/sdr/SDRTestChatDialog";
+import { SDRProductCatalog } from "@/components/sdr/SDRProductCatalog";
 import {
   clearSdrDraft,
   getSdrLimit,
@@ -89,13 +94,63 @@ function MetricCard({
 }
 
 export default function SDRInteligente() {
-  const { profile } = useAuth();
+  const { profile, accountOwnerId } = useAuth();
   const navigate = useNavigate();
   const { agents, analytics, loading, refresh } = useSDRAgents();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [testAgent, setTestAgent] = useState<any | null>(null);
   const [storedDraft, setStoredDraft] = useState<SdrStoredDraft | null>(() => loadSdrDraft());
   const [showBeta, setShowBeta] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [salesPeriod, setSalesPeriod] = useState<"7d" | "30d" | "all">("30d");
+  const [salesStats, setSalesStats] = useState<{
+    offers: number;
+    prices: number;
+    proposals: number;
+    handoffs: number;
+    objections: number;
+    potential: number;
+    denied: number;
+    loaded: boolean;
+  }>({ offers: 0, prices: 0, proposals: 0, handoffs: 0, objections: 0, potential: 0, denied: 0, loaded: false });
+
+  // Indicadores comerciais do SDR vendedor (eventos registrados pelo backend)
+  useEffect(() => {
+    if (!accountOwnerId) return;
+    const since =
+      salesPeriod === "all"
+        ? null
+        : new Date(Date.now() - (salesPeriod === "7d" ? 7 : 30) * 24 * 60 * 60 * 1000).toISOString();
+    (async () => {
+      let eventsQuery = supabase
+        .from("sdr_sales_events" as any)
+        .select("event_type, value")
+        .eq("owner_user_id", accountOwnerId);
+      if (since) eventsQuery = eventsQuery.gte("created_at", since);
+      let deniedQuery = supabase
+        .from("sdr_eligibility_log" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_id", accountOwnerId)
+        .eq("eligible", false);
+      if (since) deniedQuery = deniedQuery.gte("created_at", since);
+      const [{ data: events }, { count: denied }] = await Promise.all([eventsQuery, deniedQuery]);
+      const rows = (events as any[]) ?? [];
+      const count = (t: string) => rows.filter((r) => r.event_type === t).length;
+      const potential = rows
+        .filter((r) => r.event_type === "product_selected")
+        .reduce((sum, r) => sum + (Number(r.value) || 0), 0);
+      setSalesStats({
+        offers: count("product_selected"),
+        prices: count("price_presented"),
+        proposals: count("proposal_sent"),
+        handoffs: count("handoff"),
+        objections: count("objection_detected"),
+        potential,
+        denied: denied ?? 0,
+        loaded: true,
+      });
+    })();
+  }, [accountOwnerId, salesPeriod]);
 
   useEffect(() => {
     if (!hasSeenSdrBetaNotice()) setShowBeta(true);
@@ -161,6 +216,15 @@ export default function SDRInteligente() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 h-7 text-xs"
+                    onClick={() => setCatalogOpen(true)}
+                  >
+                    <Package size={12} />
+                    Catálogo comercial
+                  </Button>
                   <button
                     type="button"
                     onClick={() => setShowBeta(true)}
@@ -227,6 +291,90 @@ export default function SDRInteligente() {
                   emptyHint="Será atualizado no primeiro envio da IA."
                 />
               </div>
+
+              {/* Desempenho comercial (modo venda direta) */}
+              {(salesStats.loaded &&
+                (salesStats.offers > 0 ||
+                  salesStats.proposals > 0 ||
+                  salesStats.handoffs > 0 ||
+                  salesStats.denied > 0)) && (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <DollarSign size={18} className="text-primary" />
+                        Desempenho comercial
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Funil de vendas do SDR vendedor e bloqueios do motor de elegibilidade.
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      {(
+                        [
+                          { id: "7d", label: "7 dias" },
+                          { id: "30d", label: "30 dias" },
+                          { id: "all", label: "Tudo" },
+                        ] as const
+                      ).map((p) => (
+                        <Button
+                          key={p.id}
+                          size="sm"
+                          variant={salesPeriod === p.id ? "default" : "outline"}
+                          className="h-7 text-xs"
+                          onClick={() => setSalesPeriod(p.id)}
+                        >
+                          {p.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <MetricCard
+                      loading={!salesStats.loaded}
+                      icon={Target}
+                      label="Ofertas"
+                      value={String(salesStats.offers)}
+                      hint="Produtos selecionados pela IA"
+                    />
+                    <MetricCard
+                      loading={!salesStats.loaded}
+                      icon={DollarSign}
+                      label="Preços apresentados"
+                      value={String(salesStats.prices)}
+                      hint="Valores do catálogo informados"
+                    />
+                    <MetricCard
+                      loading={!salesStats.loaded}
+                      icon={FileText}
+                      label="Propostas enviadas"
+                      value={String(salesStats.proposals)}
+                      hint="PDFs entregues após aceite"
+                    />
+                    <MetricCard
+                      loading={!salesStats.loaded}
+                      icon={Handshake}
+                      label="Enviados p/ humano"
+                      value={String(salesStats.handoffs)}
+                      hint="Negociações transferidas"
+                    />
+                    <MetricCard
+                      loading={!salesStats.loaded}
+                      icon={TrendingUp}
+                      label="Valor potencial"
+                      value={`R$ ${salesStats.potential.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`}
+                      hint="Soma das ofertas selecionadas"
+                    />
+                    <MetricCard
+                      loading={!salesStats.loaded}
+                      icon={ShieldAlert}
+                      label="Bloqueados"
+                      value={String(salesStats.denied)}
+                      hint="Contatos fora das regras de ativação"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Lista de SDRs */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
@@ -428,6 +576,8 @@ export default function SDRInteligente() {
       </AlertDialog>
 
       <SDRBetaDialog open={showBeta} onOpenChange={setShowBeta} />
+
+      <SDRProductCatalog open={catalogOpen} onClose={() => setCatalogOpen(false)} />
 
     </SidebarProvider>
   );

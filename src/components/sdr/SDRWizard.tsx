@@ -119,6 +119,15 @@ import {
   type SdrSeller,
 } from "@/lib/sdrConfig";
 import { AI_PROVIDERS } from "@/lib/aiProviders";
+import {
+  SDR_ACTIVATION_MODES,
+  SDR_LEAD_ORIGINS,
+  SDR_OFFER_STRATEGIES,
+  SDR_OPERATION_MODES,
+  productPriceLabel,
+} from "@/lib/sdrSales";
+import { useSdrProducts } from "@/hooks/useSdrProducts";
+import { SDRProductCatalog } from "@/components/sdr/SDRProductCatalog";
 
 interface Props {
   open: boolean;
@@ -876,6 +885,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const [templates, setTemplates] = useState<any[]>([]);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [uploadingProposal, setUploadingProposal] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const { products: catalogProducts, loading: catalogLoading, reload: reloadCatalog } = useSdrProducts();
 
   useEffect(() => {
     if (!open) return;
@@ -895,7 +906,32 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         knowledge: { ...SDR_DEFAULT_DRAFT.knowledge, ...(editing.knowledge || {}) },
         closing: { ...SDR_DEFAULT_DRAFT.closing, ...(editing.closing || {}) },
         situations: { ...SDR_DEFAULT_DRAFT.situations, ...(editing.situations || {}) },
+        operation_mode: editing.operation_mode === "venda_direta" ? "venda_direta" : "tradicional",
+        offer_strategy: ["especifico", "selecionados", "inteligente"].includes(editing.offer_strategy)
+          ? editing.offer_strategy
+          : "inteligente",
+        catalog_product_ids: [],
+        activation_mode: ["todos", "oportunidades", "oportunidades_novos", "personalizado"].includes(
+          editing.activation_mode
+        )
+          ? editing.activation_mode
+          : "todos",
+        allowed_origins: Array.isArray(editing.allowed_origins)
+          ? editing.allowed_origins
+          : ["oportunidades", "prospeccao"],
+        exclude_crm: Boolean(editing.exclude_crm),
+        exclude_clients: Boolean(editing.exclude_clients),
+        exclude_human_owned: Boolean(editing.exclude_human_owned),
       });
+      // Produtos do catálogo já vinculados a este SDR
+      supabase
+        .from("sdr_agent_products" as any)
+        .select("product_id")
+        .eq("agent_id", editing.id)
+        .then(({ data }) => {
+          const ids = (data ?? []).map((r: any) => r.product_id).filter(Boolean);
+          if (ids.length) setDraft((d) => ({ ...d, catalog_product_ids: ids }));
+        });
     } else {
       const stored = loadSdrDraft();
       if (stored?.draft) {
@@ -1037,6 +1073,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           draft.knowledge.differentials.trim().length >= 3
         );
       case 7:
+        // No modo venda direta, o catálogo comercial substitui a lista simples de produtos.
+        if (draft.operation_mode === "venda_direta") return true;
         return draft.knowledge.products_list.length > 0 && productsValid;
       case 9:
         return (
@@ -1091,12 +1129,34 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         },
         situations: draft.situations,
         ai: { provider: "openai", model: draft.ai.model || "gpt-4o-mini" },
+        operation_mode: draft.operation_mode,
+        offer_strategy: draft.offer_strategy,
+        activation_mode: draft.activation_mode,
+        allowed_origins: draft.activation_mode === "personalizado" ? draft.allowed_origins : null,
+        exclude_crm: draft.exclude_crm,
+        exclude_clients: draft.exclude_clients,
+        exclude_human_owned: draft.exclude_human_owned,
       };
       const q = editing
         ? supabase.from("sdr_agents" as any).update(payload).eq("id", editing.id)
-        : supabase.from("sdr_agents" as any).insert(payload);
-      const { error } = await q;
+        : supabase.from("sdr_agents" as any).insert(payload).select("id").maybeSingle();
+      const { data: savedAgent, error } = await q;
       if (error) throw error;
+
+      // Vínculo dos produtos do catálogo com o agente (modo venda direta)
+      const agentId: string | undefined = editing?.id ?? (savedAgent as any)?.id;
+      if (agentId) {
+        await supabase.from("sdr_agent_products" as any).delete().eq("agent_id", agentId);
+        if (draft.operation_mode === "venda_direta" && draft.catalog_product_ids.length) {
+          const rows = draft.catalog_product_ids.map((product_id) => ({
+            agent_id: agentId,
+            product_id,
+            owner_user_id: accountOwnerId,
+          }));
+          const { error: linkError } = await supabase.from("sdr_agent_products" as any).insert(rows);
+          if (linkError) throw linkError;
+        }
+      }
       if (!editing) clearSdrDraft();
       toast.success(editing ? "SDR atualizado com sucesso" : "SDR criado com sucesso");
       onCreated();
@@ -1174,7 +1234,26 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
             </p>
           </div>
 
-          {draft.objective === "proposta" && (
+          <div className="space-y-3">
+            <IconLabel icon={ShoppingCart}>Modo de operação</IconLabel>
+            <CardSelect
+              value={draft.operation_mode}
+              onChange={(v) => set("operation_mode", v as any)}
+              options={SDR_OPERATION_MODES}
+            />
+            {draft.operation_mode === "venda_direta" && (
+              <InfoBox icon={ShieldCheck} title="Venda direta com regras claras">
+                <p>
+                  O SDR passa a apresentar produtos, preços e propostas do <strong>catálogo
+                  comercial</strong> (etapa Produtos). Ele nunca inventa preço, desconto ou condição:
+                  só usa o que você cadastrou, e encaminha para um humano quando o pedido sai dos
+                  limites autorizados.
+                </p>
+              </InfoBox>
+            )}
+          </div>
+
+          {draft.objective === "proposta" && draft.operation_mode !== "venda_direta" && (
             <div className="space-y-3">
               <SectionTitle
                 icon={FileText}
@@ -1360,6 +1439,83 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
               }
               options={SDR_ACTIVATION_TRIGGERS}
             />
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle
+              icon={ShieldCheck}
+              title="Quem o SDR pode atender"
+              hint="Controle rigoroso de origem: o SDR só responde contatos dentro das regras abaixo. A verificação acontece no servidor a cada mensagem — a IA não pode liberar ninguém."
+            />
+            <CardSelect
+              value={draft.activation_mode}
+              onChange={(v) => set("activation_mode", v as any)}
+              options={SDR_ACTIVATION_MODES}
+            />
+            {draft.activation_mode === "personalizado" && (
+              <div className="space-y-2">
+                <IconLabel icon={GitBranch}>Origens permitidas</IconLabel>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {SDR_LEAD_ORIGINS.map((origin) => {
+                    const on = draft.allowed_origins.includes(origin.id);
+                    return (
+                      <button
+                        key={origin.id}
+                        type="button"
+                        onClick={() =>
+                          set("allowed_origins", toggleArray(draft.allowed_origins, origin.id))
+                        }
+                        className={cn(
+                          "flex items-center gap-2 h-10 px-3 rounded-lg text-sm border bg-card transition-all",
+                          on
+                            ? "border-primary ring-2 ring-primary/20 text-foreground font-medium"
+                            : "border-border text-muted-foreground hover:border-primary/40"
+                        )}
+                      >
+                        <Check className={cn("h-4 w-4", on ? "text-primary" : "text-transparent")} />
+                        {origin.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {draft.activation_mode !== "todos" && (
+              <div className="space-y-2">
+                <IconLabel icon={Ban}>Exclusões automáticas</IconLabel>
+                {[
+                  {
+                    key: "exclude_crm",
+                    label: "Excluir contatos que já estão no CRM",
+                    hint: "Recomendado: não interferir em relacionamentos existentes",
+                  },
+                  {
+                    key: "exclude_clients",
+                    label: "Excluir quem já é cliente",
+                    hint: "Contatos com negócio ativo registrado nas vendas",
+                  },
+                  {
+                    key: "exclude_human_owned",
+                    label: "Excluir conversas com responsável humano",
+                    hint: "Contatos que já têm um vendedor responsável",
+                  },
+                ].map((o) => (
+                  <div
+                    key={o.key}
+                    className="flex items-center justify-between rounded-xl border border-border p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{o.label}</p>
+                      <p className="text-xs text-muted-foreground">{o.hint}</p>
+                    </div>
+                    <Switch
+                      checked={(draft as any)[o.key]}
+                      onCheckedChange={(v) => set(o.key as any, v as any)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -1722,7 +1878,117 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
       )}
 
       {/* 7 - Produtos */}
-      {step === 7 && (
+      {step === 7 && draft.operation_mode === "venda_direta" && (
+        <div className="space-y-4">
+          <InfoBox icon={Package} title="Catálogo comercial">
+            <p>
+              No modo venda direta, o SDR só pode oferecer produtos do <strong>catálogo
+              comercial</strong>, com os preços e condições cadastrados nele. Nada é inventado.
+            </p>
+          </InfoBox>
+
+          <div className="space-y-3">
+            <SectionTitle
+              icon={Brain}
+              title="Estratégia de oferta"
+              hint="Como o SDR escolhe o que vender para cada lead."
+            />
+            <CardSelect
+              value={draft.offer_strategy}
+              onChange={(v) => set("offer_strategy", v as any)}
+              options={SDR_OFFER_STRATEGIES}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <SectionTitle
+                icon={Package}
+                title="Produtos disponíveis para este SDR"
+                hint={
+                  draft.offer_strategy === "inteligente" && draft.catalog_product_ids.length === 0
+                    ? "Sem seleção, a venda inteligente considera todos os produtos ativos do catálogo."
+                    : "Marque os produtos que este SDR pode oferecer."
+                }
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => setCatalogOpen(true)}
+              >
+                <Plus className="h-4 w-4" /> Gerenciar catálogo
+              </Button>
+            </div>
+
+            {catalogLoading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : catalogProducts.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                <Package className="h-7 w-7 mx-auto text-muted-foreground" strokeWidth={1.5} />
+                <p className="mt-2 text-sm font-medium text-foreground">Catálogo vazio</p>
+                <p className="text-xs text-muted-foreground">
+                  Cadastre produtos com preços e condições para o SDR vender.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-1.5"
+                  onClick={() => setCatalogOpen(true)}
+                >
+                  <Plus className="h-4 w-4" /> Cadastrar produto
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {catalogProducts.map((p) => {
+                  const on = draft.catalog_product_ids.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        set("catalog_product_ids", toggleArray(draft.catalog_product_ids, p.id))
+                      }
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-xl border bg-card p-3 text-left transition-all",
+                        on
+                          ? "border-primary ring-2 ring-primary/20"
+                          : "border-border hover:border-primary/40",
+                        !p.active && "opacity-50"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
+                          on ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        <Package className="h-4 w-4" strokeWidth={1.75} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {productPriceLabel(p)}
+                          {(p.segments ?? []).length ? ` • ${(p.segments ?? []).join(", ")}` : ""}
+                          {!p.active ? " • inativo" : ""}
+                        </p>
+                      </div>
+                      <Check className={cn("h-4 w-4 shrink-0", on ? "text-primary" : "text-transparent")} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {step === 7 && draft.operation_mode !== "venda_direta" && (
         <div className="space-y-4">
           <InfoBox icon={Package} title="Cada produto precisa de contexto">
             <p>
@@ -2486,22 +2752,36 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     </div>
   );
 
+  const catalogDialog = (
+    <SDRProductCatalog
+      open={catalogOpen}
+      onClose={() => {
+        setCatalogOpen(false);
+        reloadCatalog();
+      }}
+    />
+  );
+
   if (isPage) {
     return (
-      <OnboardingShell
-        step={step}
-        total={STEPS.length}
-        stepKey={`sdr-step-${step}`}
-        headline={stepDef.headline}
-        subtitle={stepDef.subtitle}
-        footer={footer}
-      >
-        {body}
-      </OnboardingShell>
+      <>
+        <OnboardingShell
+          step={step}
+          total={STEPS.length}
+          stepKey={`sdr-step-${step}`}
+          headline={stepDef.headline}
+          subtitle={stepDef.subtitle}
+          footer={footer}
+        >
+          {body}
+        </OnboardingShell>
+        {catalogDialog}
+      </>
     );
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
@@ -2537,5 +2817,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         {footer}
       </DialogContent>
     </Dialog>
+    {catalogDialog}
+    </>
   );
 }
