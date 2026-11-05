@@ -286,6 +286,7 @@ export function WAFlowTestDialog({
       const { data, error } = await supabase.functions.invoke("google-sheets-action", {
         body: {
           user_id: user.id,
+          google_account_id: config.google_account_id,
           spreadsheet_id: config.spreadsheet_id,
           sheet_name: config.sheet_name || "Dados",
           data: [row],
@@ -306,12 +307,15 @@ export function WAFlowTestDialog({
 
     const summary = interpolateVariables(config.event_title || "Evento do fluxo", variables);
     const description = interpolateVariables(config.event_description || "", variables);
-    const attendeeEmail = config.invite_attendee ? interpolateVariables(config.attendee_email || "", variables) : undefined;
+    const attendeeEmail = interpolateVariables(config.attendee_email || "", variables) || undefined;
 
     try {
       const { data, error } = await supabase.functions.invoke("google-calendar-action", {
         body: {
           user_id: user.id,
+          google_account_id: config.google_account_id,
+          calendar_id: config.calendar_id || "primary",
+          reminder_minutes: config.reminder_minutes,
           summary,
           description,
           start_datetime: config.event_start || new Date().toISOString(),
@@ -332,19 +336,20 @@ export function WAFlowTestDialog({
       return { success: false, error: "Gmail não configurado" };
     }
 
-    const to = interpolateVariables(config.to_email || "", variables);
-    const subject = interpolateVariables(config.subject || "", variables);
-    const bodyField = config.use_html ? "body_html" : "body_text";
-    const bodyContent = interpolateVariables(config.body || "", variables);
+    const to = interpolateVariables(config.email_to ?? config.to_email ?? "", variables);
+    const subject = interpolateVariables(config.email_subject ?? config.subject ?? "", variables);
+    const bodyField = (config.email_html ?? config.use_html) ? "body_html" : "body_text";
+    const bodyContent = interpolateVariables(config.email_body ?? config.body ?? "", variables);
 
     try {
       const { data, error } = await supabase.functions.invoke("gmail-send-action", {
         body: {
           user_id: user.id,
+          google_account_id: config.google_account_id,
           to,
           subject,
-          cc: config.cc || [],
-          bcc: config.bcc || [],
+          cc: config.email_cc ?? config.cc ?? [],
+          bcc: config.email_bcc ?? config.bcc ?? [],
           [bodyField]: bodyContent,
         },
       });
