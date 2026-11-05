@@ -81,8 +81,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!profile.terms_accepted_at) return { isExpired: true, daysRemaining: 0, isTrialing: false };
     const willCharge = profile.trial_will_charge_at;
 
+    // Um teste antigo (cancelado/encerrado) não pode travar uma assinatura paga
+    // depois: se a vigência paga vai além do fim do teste, vale o plano pago.
+    const paidPeriodEnd = profile.subscription_current_period_end
+      ? new Date(profile.subscription_current_period_end).getTime()
+      : NaN;
+    const staleTrial =
+      !!willCharge &&
+      !!profile.plan &&
+      profile.plan !== 'free' &&
+      new Date(willCharge).getTime() <= Date.now() &&
+      Number.isFinite(paidPeriodEnd) &&
+      paidPeriodEnd > new Date(willCharge).getTime();
+
     // Caso 1: trial pago com cartão (Stripe) — usa trial_will_charge_at como fonte da verdade
-    if (willCharge) {
+    if (willCharge && !staleTrial) {
       const endDate = new Date(willCharge);
       const now = new Date();
       const msRemaining = endDate.getTime() - now.getTime();
