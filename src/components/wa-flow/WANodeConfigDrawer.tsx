@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeGoogle } from "@/lib/googleInvoke";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -262,7 +263,7 @@ function VariablesHelper({ variables }: { variables?: { key: string; label: stri
 function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; allNodes?: any[] }) {
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/drive.file",
   ], config.google_account_id);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -280,29 +281,41 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     }
   }, [selectedAccount?.google_email, selectedAccountId]);
 
-  const { data: spreadsheets = [], isLoading: loadingSheets, refetch: refetchSheets } = useQuery({
-    queryKey: ["google-spreadsheets", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id },
-      });
-      if (error) throw error;
-      return data?.spreadsheets || [];
-    },
-    enabled: !!user && isConnected,
-  });
+  const accountId = selectedAccount?.id as string | undefined;
 
-  const { data: sheetTabs = [], refetch: refetchTabs } = useQuery({
-    queryKey: ["google-sheet-tabs", user?.id, config.spreadsheet_id],
+  const { data: sheetsData, isLoading: loadingSheets, isFetching: fetchingSheets, error: sheetsError, refetch: refetchSheets } = useQuery({
+    queryKey: ["google-spreadsheets", user?.id, accountId],
+    queryFn: () => invokeGoogle<{ spreadsheets: any[]; warning?: string | null }>("google-list-spreadsheets", {
+      user_id: user!.id, google_account_id: accountId,
+    }),
+    enabled: !!user && isConnected && !!accountId,
+    retry: 1,
+    staleTime: 60_000,
+  });
+  const fetchedSheets: any[] = sheetsData?.spreadsheets || [];
+  // Keep the selected spreadsheet visible even if Google does not list it.
+  const spreadsheets: any[] = config.spreadsheet_id && !fetchedSheets.some((s) => s.id === config.spreadsheet_id)
+    ? [{ id: config.spreadsheet_id, name: config.spreadsheet_name || "Planilha selecionada", source: "wiize" }, ...fetchedSheets]
+    : fetchedSheets;
+
+  const { data: sheetTabs = [], error: tabsError, refetch: refetchTabs } = useQuery({
+    queryKey: ["google-sheet-tabs", user?.id, accountId, config.spreadsheet_id],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id, action: "get_sheets", spreadsheet_id: config.spreadsheet_id },
+      const data = await invokeGoogle<{ sheets: any[] }>("google-list-spreadsheets", {
+        user_id: user!.id, google_account_id: accountId, action: "get_sheets", spreadsheet_id: config.spreadsheet_id,
       });
-      if (error) throw error;
       return data?.sheets || [];
     },
-    enabled: !!user && isConnected && !!config.spreadsheet_id,
+    enabled: !!user && isConnected && !!accountId && !!config.spreadsheet_id,
+    retry: 1,
   });
+
+  // Default to the first tab when none is chosen yet.
+  useEffect(() => {
+    if (sheetTabs.length > 0 && (!config.sheet_name || !sheetTabs.some((t: any) => t.title === config.sheet_name))) {
+      updateConfig("sheet_name", sheetTabs[0].title);
+    }
+  }, [sheetTabs]);
 
   const handleCreateSpreadsheet = async () => {
     if (!newSheetName.trim()) {
@@ -311,23 +324,27 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     }
     setIsCreating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id, action: "create", title: newSheetName.trim(), tab_name: newTabName.trim() || "Dados" },
+      const data = await invokeGoogle<{ spreadsheet: any }>("google-list-spreadsheets", {
+        user_id: user!.id,
+        google_account_id: accountId,
+        action: "create",
+        title: newSheetName.trim(),
+        tab_name: newTabName.trim() || "Dados",
       });
-      if (error) throw error;
-      if (data?.spreadsheet) {
+      if (data?.spreadsheet?.id) {
         updateConfig("spreadsheet_id", data.spreadsheet.id);
         updateConfig("spreadsheet_name", data.spreadsheet.name);
-        updateConfig("sheet_name", newTabName.trim() || "Dados");
+        updateConfig("sheet_name", data.spreadsheet.tab_name || newTabName.trim() || "Dados");
         setShowCreate(false);
         setNewSheetName("");
         setNewTabName("");
         refetchSheets();
-        toast.success("Planilha criada com sucesso!");
+        refetchTabs();
+        toast.success("Planilha criada no seu Google Drive!");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create spreadsheet:", err);
-      toast.error("Erro ao criar planilha");
+      toast.error(`Erro ao criar planilha: ${err?.message || "tente novamente"}`);
     } finally {
       setIsCreating(false);
     }
