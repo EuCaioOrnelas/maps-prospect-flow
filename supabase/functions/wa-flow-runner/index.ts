@@ -847,6 +847,10 @@ async function callGoogleFn(fn: string, body: Record<string, any>) {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
       body: JSON.stringify(body),
     });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`[wa-flow-runner] ${fn} falhou [${res.status}]: ${errText.slice(0, 500)}`);
+    }
     return res.ok;
   } catch (e) {
     console.error(`[wa-flow-runner] ${fn} falhou`, e);
