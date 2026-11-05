@@ -1300,6 +1300,60 @@ ${historyText}`;
           })
           .eq("id", session.id);
 
+        // ---------- Eventos comerciais (rastreabilidade do SDR vendedor) ----------
+        if (isSalesMode) {
+          const nextActionNow = written.proxima_acao ?? analysis.proxima_acao ?? "aguardar";
+          const salesEvents: Record<string, unknown>[] = [];
+          if (selectedProduct && selectedProduct.id !== session.selected_product_id) {
+            salesEvents.push({
+              event_type: "product_selected",
+              product_id: selectedProduct.id,
+              value: productReferenceValue(selectedProduct),
+              details: { justificativa: analysis?.justificativa_produto ?? null },
+            });
+          }
+          if (pricePresented) {
+            salesEvents.push({
+              event_type: "price_presented",
+              product_id: selectedProduct?.id ?? null,
+              value: productReferenceValue(selectedProduct),
+              details: {},
+            });
+          }
+          if (detectedObjections.length) {
+            salesEvents.push({
+              event_type: "objection_detected",
+              product_id: selectedProduct?.id ?? null,
+              details: { objecoes: detectedObjections },
+            });
+          }
+          if (objectiveDone && proposalObjective && proposalFile?.path) {
+            salesEvents.push({
+              event_type: "proposal_sent",
+              product_id: selectedProduct?.id ?? null,
+              value: productReferenceValue(selectedProduct),
+              details: { proposal: proposalFile?.name ?? null },
+            });
+          }
+          if (nextActionNow === "chamar_vendedor") {
+            salesEvents.push({
+              event_type: "handoff",
+              product_id: selectedProduct?.id ?? null,
+              value: productReferenceValue(selectedProduct),
+              details: { motivo: analysis?.estrategia ?? null },
+            });
+          }
+          for (const ev of salesEvents) {
+            await supabase.from("sdr_sales_events").insert({
+              owner_user_id: agent.owner_user_id,
+              agent_id: agentId,
+              session_id: session.id,
+              lead_id: session.lead_id ?? null,
+              ...ev,
+            });
+          }
+        }
+
       }
     }
 
