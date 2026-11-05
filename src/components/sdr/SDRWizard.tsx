@@ -1073,6 +1073,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
           draft.knowledge.differentials.trim().length >= 3
         );
       case 7:
+        // No modo venda direta, o catálogo comercial substitui a lista simples de produtos.
+        if (draft.operation_mode === "venda_direta") return true;
         return draft.knowledge.products_list.length > 0 && productsValid;
       case 9:
         return (
