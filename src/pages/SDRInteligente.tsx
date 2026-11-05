@@ -40,10 +40,15 @@ import {
   Wifi,
   MessagesSquare,
   Sparkles,
-  
+  Package,
+  ShieldAlert,
+  Handshake,
+  FileText,
+  DollarSign,
 } from "lucide-react";
 import { useSDRAgents } from "@/hooks/useSDRAgents";
 import { SDRTestChatDialog } from "@/components/sdr/SDRTestChatDialog";
+import { SDRProductCatalog } from "@/components/sdr/SDRProductCatalog";
 import {
   clearSdrDraft,
   getSdrLimit,
@@ -89,13 +94,63 @@ function MetricCard({
 }
 
 export default function SDRInteligente() {
-  const { profile } = useAuth();
+  const { profile, accountOwnerId } = useAuth();
   const navigate = useNavigate();
   const { agents, analytics, loading, refresh } = useSDRAgents();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [testAgent, setTestAgent] = useState<any | null>(null);
   const [storedDraft, setStoredDraft] = useState<SdrStoredDraft | null>(() => loadSdrDraft());
   const [showBeta, setShowBeta] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [salesPeriod, setSalesPeriod] = useState<"7d" | "30d" | "all">("30d");
+  const [salesStats, setSalesStats] = useState<{
+    offers: number;
+    prices: number;
+    proposals: number;
+    handoffs: number;
+    objections: number;
+    potential: number;
+    denied: number;
+    loaded: boolean;
+  }>({ offers: 0, prices: 0, proposals: 0, handoffs: 0, objections: 0, potential: 0, denied: 0, loaded: false });
+
+  // Indicadores comerciais do SDR vendedor (eventos registrados pelo backend)
+  useEffect(() => {
+    if (!accountOwnerId) return;
+    const since =
+      salesPeriod === "all"
+        ? null
+        : new Date(Date.now() - (salesPeriod === "7d" ? 7 : 30) * 24 * 60 * 60 * 1000).toISOString();
+    (async () => {
+      let eventsQuery = supabase
+        .from("sdr_sales_events" as any)
+        .select("event_type, value")
+        .eq("owner_user_id", accountOwnerId);
+      if (since) eventsQuery = eventsQuery.gte("created_at", since);
+      let deniedQuery = supabase
+        .from("sdr_eligibility_log" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("owner_user_id", accountOwnerId)
+        .eq("eligible", false);
+      if (since) deniedQuery = deniedQuery.gte("created_at", since);
+      const [{ data: events }, { count: denied }] = await Promise.all([eventsQuery, deniedQuery]);
+      const rows = (events as any[]) ?? [];
+      const count = (t: string) => rows.filter((r) => r.event_type === t).length;
+      const potential = rows
+        .filter((r) => r.event_type === "product_selected")
+        .reduce((sum, r) => sum + (Number(r.value) || 0), 0);
+      setSalesStats({
+        offers: count("product_selected"),
+        prices: count("price_presented"),
+        proposals: count("proposal_sent"),
+        handoffs: count("handoff"),
+        objections: count("objection_detected"),
+        potential,
+        denied: denied ?? 0,
+        loaded: true,
+      });
+    })();
+  }, [accountOwnerId, salesPeriod]);
 
   useEffect(() => {
     if (!hasSeenSdrBetaNotice()) setShowBeta(true);
