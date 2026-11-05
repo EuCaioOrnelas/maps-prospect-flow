@@ -1254,6 +1254,12 @@ ${historyText}`;
               : {}),
             stage: analysis.proximo_passo ?? analysis.passo_atual ?? analysis.estagio ?? session.stage,
             current_goal: analysis.micro_objetivo ?? session.current_goal,
+            ...(isSalesMode && selectedProduct
+              ? {
+                  selected_product_id: selectedProduct.id,
+                  potential_value: productReferenceValue(selectedProduct),
+                }
+              : {}),
             memory: {
               ...(session.memory ?? {}),
               fatos: Array.from(new Set([
