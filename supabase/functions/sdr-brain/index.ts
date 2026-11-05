@@ -407,12 +407,18 @@ const PIPELINE_STEPS = `1. conexao — quebrar o gelo e gerar confiança
 4. objecoes — tratar dúvidas e travas
 5. fechamento — conduzir para o objetivo final`;
 
-function agentBrief(agent: any) {
+function agentBrief(agent: any, catalog: any[] = []) {
   const k = agent.knowledge ?? {};
   const p = agent.personality ?? {};
   const s = agent.strategy ?? {};
   const c = agent.closing ?? {};
   const t = agent.triggers ?? {};
+  const isSalesMode = agent.operation_mode === "venda_direta";
+  const salesCatalog = isSalesMode && catalog.length
+    ? `\nCATÁLOGO OFICIAL (única fonte de verdade comercial — se não está aqui, não existe para a conversa):\n${catalogBlock(catalog)}\n`
+    : isSalesMode
+      ? "\nCATÁLOGO OFICIAL: vazio — nenhum produto disponível. Não oferte nada; faça descoberta e informe que um especialista humano apresentará as soluções.\n"
+      : "";
   const products = Array.isArray(k.products_list)
     ? k.products_list
         .filter((x: any) => x?.name)
@@ -438,15 +444,14 @@ function agentBrief(agent: any) {
     .join("\n");
   return `
 NOME DO SDR: ${agent.name}
-  OBJETIVO FINAL: ${normalizeObjective(agent.objective)}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO (válida apenas se não contrariar o limite abaixo): ${agent.objective_custom}` : ""}
-CRITÉRIO DE SUCESSO: ${(c.success_criteria || []).join(", ") || "-"}
-${NO_SALE_RULE}
-
+  OBJETIVO FINAL: ${isSalesMode ? "venda_direta" : normalizeObjective(agent.objective)}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO (válida apenas se não contrariar o limite abaixo): ${agent.objective_custom}` : ""}
+CRITÉRIO DE SUCESSO: ${isSalesMode ? "Lead com intenção de contratação confirmada e encaminhado ao humano para concluir" : (c.success_criteria || []).join(", ") || "-"}
+${isSalesMode ? SALES_MODE_RULE : NO_SALE_RULE}
+${salesCatalog}
 EMPRESA: ${k.company || "-"}
 NICHO: ${k.niche || "-"} | PÚBLICO-ALVO: ${k.audience || "-"}
 DIFERENCIAIS: ${k.differentials || "-"}
-PRODUTOS:
-${products || k.products || "-"}
+${isSalesMode ? "" : `PRODUTOS:\n${products || k.products || "-"}`}
 CASES: ${k.cases || "-"}
 FAQ (pergunta => resposta oficial):
 ${
