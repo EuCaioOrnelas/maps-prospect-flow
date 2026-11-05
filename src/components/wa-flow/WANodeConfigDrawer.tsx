@@ -923,6 +923,30 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
   const ccEmails: string[] = Array.isArray(config.email_cc) ? config.email_cc : (config.email_cc ? [config.email_cc] : []);
   const bccEmails: string[] = Array.isArray(config.email_bcc) ? config.email_bcc : (config.email_bcc ? [config.email_bcc] : []);
 
+  const [sendingTest, setSendingTest] = useState(false);
+  const sendTestEmail = async () => {
+    const to = selectedAccount?.google_email;
+    if (!to) { toast.error("Reconecte a conta Google para ver o e-mail dela"); return; }
+    const sample: Record<string, string> = { nome: "Maria Exemplo", telefone: "(11) 99999-0000", email: to, empresa: "Empresa Exemplo" };
+    const fill = (s: string) => (s || "").replace(/\{(\w+)\}/g, (m, k) => sample[k] ?? m);
+    setSendingTest(true);
+    try {
+      const body = fill(config.email_body || "");
+      await invokeGoogle("gmail-send-action", {
+        user_id: user?.id,
+        google_account_id: selectedAccount?.id,
+        to,
+        subject: `[Teste] ${fill(config.email_subject || "")}`,
+        ...(config.email_html ? { body_html: body } : { body_text: body }),
+      });
+      toast.success(`E-mail de teste enviado para ${to}`);
+    } catch (err: any) {
+      toast.error(`Não foi possível enviar: ${err?.message || "tente novamente"}`);
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Como funciona - collapsible no topo */}
@@ -1068,6 +1092,22 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
           </div>
 
           <VariablesHelper />
+
+          <div className="p-3 rounded-lg border border-border/50 bg-muted/10 space-y-2">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Envie um e-mail de teste para <span className="font-medium text-foreground">{selectedAccount?.google_email || "sua conta"}</span> e confira como ele chega. As variáveis aparecem com valores de exemplo.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs w-full gap-1.5"
+              disabled={sendingTest || !config.email_subject?.trim()}
+              onClick={sendTestEmail}
+            >
+              {sendingTest ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
+              Enviar e-mail de teste
+            </Button>
+          </div>
         </>
       )}
     </div>
