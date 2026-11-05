@@ -776,6 +776,7 @@ serve(async (req) => {
         searchesLimit = basePlanLimit;
       }
 
+      if (!subscriptionEnd) subscriptionEnd = currentProfile?.subscription_current_period_end ?? null;
       const { error: updateError } = await supabaseClient
         .from('profiles')
         .update({
