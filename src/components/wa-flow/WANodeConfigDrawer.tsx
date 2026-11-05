@@ -586,17 +586,34 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
     }
   }, [selectedAccount?.google_email, selectedAccountId]);
 
-  const { data: calendars = [], isLoading: loadingCalendars } = useQuery({
-    queryKey: ["google-calendars", user?.id],
+  const calAccountId = selectedAccount?.id as string | undefined;
+  const { data: fetchedCalendars = [], isLoading: loadingCalendars, error: calendarsError, refetch: refetchCalendars } = useQuery({
+    queryKey: ["google-calendars", user?.id, calAccountId],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-list-calendars", {
-        body: { user_id: user!.id },
+      const data = await invokeGoogle<{ calendars: any[] }>("google-list-calendars", {
+        user_id: user!.id, google_account_id: calAccountId,
       });
-      if (error) throw error;
       return data?.calendars || [];
     },
-    enabled: !!user && isConnected,
+    enabled: !!user && isConnected && !!calAccountId,
+    retry: 1,
+    staleTime: 60_000,
   });
+  // "primary" is always valid in Google Calendar; keep it (and the saved one) selectable.
+  const calendars: any[] = (() => {
+    const list = [...fetchedCalendars];
+    if (!list.some((c) => c.primary || c.id === "primary")) {
+      list.unshift({ id: "primary", summary: "Agenda principal", primary: true });
+    }
+    if (config.calendar_id && config.calendar_id !== "primary" && !list.some((c) => c.id === config.calendar_id)) {
+      list.push({ id: config.calendar_id, summary: config.calendar_name || config.calendar_id });
+    }
+    return list;
+  })();
+  const primaryCal = calendars.find((c) => c.primary) || calendars[0];
+  const selectedCalendarId = config.calendar_id && config.calendar_id !== "primary"
+    ? config.calendar_id
+    : (primaryCal?.id || "primary");
 
   const durationOptions = [
     { value: 15, label: "15 minutos" },
@@ -688,8 +705,19 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
                 <Loader2 size={14} className="animate-spin" /> Carregando agendas...
               </div>
             ) : (
+              <>
+              {calendarsError && (
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+                  <p className="text-[10px] text-destructive leading-relaxed">
+                    Não foi possível carregar suas agendas: {(calendarsError as Error).message}
+                  </p>
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px] shrink-0" onClick={() => refetchCalendars()}>
+                    Tentar de novo
+                  </Button>
+                </div>
+              )}
               <Select
-                value={config.calendar_id || "primary"}
+                value={selectedCalendarId}
                 onValueChange={(v) => {
                   const cal = calendars.find((c: any) => c.id === v);
                   updateConfig("calendar_id", v);
@@ -706,12 +734,13 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
                         {c.backgroundColor && (
                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.backgroundColor }} />
                         )}
-                        <span className="truncate">{c.summary}{c.primary ? " (Principal)" : ""}</span>
+                        <span className="truncate">{c.summary}{c.primary && c.id !== "primary" ? " (Principal)" : ""}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              </>
             )}
           </div>
 
