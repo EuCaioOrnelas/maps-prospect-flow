@@ -398,6 +398,17 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
         <>
           <div className="space-y-2">
             <Label className="text-xs font-medium">Planilha</Label>
+            {sheetsError && (
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-destructive/5 border border-destructive/20">
+                <AlertTriangle size={13} className="text-destructive shrink-0 mt-0.5" />
+                <p className="text-[11px] text-destructive leading-relaxed">
+                  Não foi possível carregar as planilhas: {(sheetsError as Error).message}
+                </p>
+              </div>
+            )}
+            {sheetsData?.warning && !sheetsError && (
+              <p className="text-[10px] text-muted-foreground">{sheetsData.warning}</p>
+            )}
             {loadingSheets ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
                 <Loader2 size={14} className="animate-spin" /> Carregando planilhas...
@@ -421,6 +432,9 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
                   {spreadsheets.map((s: any) => (
                     <SelectItem key={s.id} value={s.id}>
                       <span className="truncate">{s.name}</span>
+                      {s.source === "wiize" && (
+                        <span className="ml-1.5 text-[9px] text-muted-foreground">· usada na Wiize</span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -431,9 +445,16 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
               <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setShowCreate(!showCreate)}>
                 <Plus size={12} /> Nova planilha
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => refetchSheets()}>
-                Atualizar lista
+              <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => refetchSheets()} disabled={fetchingSheets}>
+                {fetchingSheets && <Loader2 size={10} className="animate-spin" />} Atualizar lista
               </Button>
+              {config.spreadsheet_id && (
+                <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
+                  <a href={`https://docs.google.com/spreadsheets/d/${config.spreadsheet_id}/edit`} target="_blank" rel="noopener noreferrer">
+                    Abrir planilha
+                  </a>
+                </Button>
+              )}
             </div>
 
             {showCreate && (
@@ -464,6 +485,11 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
             )}
           </div>
 
+          {config.spreadsheet_id && tabsError && (
+            <p className="text-[10px] text-destructive">
+              Não foi possível abrir esta planilha: {(tabsError as Error).message}
+            </p>
+          )}
           {config.spreadsheet_id && sheetTabs.length > 0 && (
             <div className="space-y-2">
               <Label className="text-xs font-medium">Aba (página da planilha)</Label>
