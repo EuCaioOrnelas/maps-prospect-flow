@@ -495,11 +495,11 @@ ${p.never_wait_lead === false ? "- É aceitável encerrar a mensagem sem próxim
   - Quando precisar de decisão, prefira UMA pergunta de escolha guiada com DUAS alternativas úteis e concretas (A ou B), em vez de uma pergunta aberta que convide apenas a “não”.
   - Toda pergunta de avanço deve ser fechada e oferecer duas respostas úteis: prioridade A/B, cenário A/B, próximo passo A/B ou horário A/B. Não crie falsa dicotomia e não use alternativas que pressupõem uma compra ainda não consentida.
   - A escolha guiada nunca autoriza pressão: se houver recusa clara, pedido para parar ou desinteresse, acolha, não insista e respeite os critérios de encerramento.
-${(agent.situations ?? {}).preco === "nunca_sem_reuniao" ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
-- ${NO_SALE_RULE}
+${(agent.situations ?? {}).preco === "nunca_sem_reuniao" && !isSalesMode ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
+- ${isSalesMode ? SALES_MODE_RULE : NO_SALE_RULE}
 
 PLAYBOOK DO OBJETIVO:
-${OBJECTIVE_PLAYBOOK[normalizeObjective(agent.objective)]}
+${isSalesMode ? SALES_PLAYBOOK : OBJECTIVE_PLAYBOOK[normalizeObjective(agent.objective)]}
 
 FUNIL OBRIGATÓRIO (avance um passo por vez, sem pular etapas):
 ${PIPELINE_STEPS}
@@ -627,6 +627,31 @@ Deno.serve(async (req) => {
     }
 
     const aiModel: string = agent.ai?.model || credential.model || DEFAULT_MODEL;
+
+    // ---------- CATÁLOGO COMERCIAL (modo venda direta) ----------
+    const isSalesMode = agent.operation_mode === "venda_direta";
+    let catalogProducts: any[] = [];
+    if (isSalesMode) {
+      const { data: linked } = await supabase
+        .from("sdr_agent_products")
+        .select("priority, product:sdr_products(*)")
+        .eq("agent_id", agentId);
+      const linkedProducts = (linked || [])
+        .map((row: any) => (row?.product ? { ...row.product, _agent_priority: row.priority } : null))
+        .filter((p: any) => p && p.active !== false);
+      if (agent.offer_strategy === "inteligente" && linkedProducts.length === 0) {
+        // Venda inteligente sem seleção: todos os produtos ativos da conta são elegíveis.
+        const { data: all } = await supabase
+          .from("sdr_products")
+          .select("*")
+          .eq("owner_user_id", agent.owner_user_id)
+          .eq("active", true);
+        catalogProducts = all || [];
+      } else {
+        // "especifico" e "selecionados": somente os produtos vinculados ao agente.
+        catalogProducts = linkedProducts;
+      }
+    }
 
     let session: any = null;
     if (sessionId) {
