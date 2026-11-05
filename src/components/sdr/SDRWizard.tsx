@@ -1441,6 +1441,83 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
 
           <div className="space-y-3">
             <SectionTitle
+              icon={ShieldCheck}
+              title="Quem o SDR pode atender"
+              hint="Controle rigoroso de origem: o SDR só responde contatos dentro das regras abaixo. A verificação acontece no servidor a cada mensagem — a IA não pode liberar ninguém."
+            />
+            <CardSelect
+              value={draft.activation_mode}
+              onChange={(v) => set("activation_mode", v as any)}
+              options={SDR_ACTIVATION_MODES}
+            />
+            {draft.activation_mode === "personalizado" && (
+              <div className="space-y-2">
+                <IconLabel icon={GitBranch}>Origens permitidas</IconLabel>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {SDR_LEAD_ORIGINS.map((origin) => {
+                    const on = draft.allowed_origins.includes(origin.id);
+                    return (
+                      <button
+                        key={origin.id}
+                        type="button"
+                        onClick={() =>
+                          set("allowed_origins", toggleArray(draft.allowed_origins, origin.id))
+                        }
+                        className={cn(
+                          "flex items-center gap-2 h-10 px-3 rounded-lg text-sm border bg-card transition-all",
+                          on
+                            ? "border-primary ring-2 ring-primary/20 text-foreground font-medium"
+                            : "border-border text-muted-foreground hover:border-primary/40"
+                        )}
+                      >
+                        <Check className={cn("h-4 w-4", on ? "text-primary" : "text-transparent")} />
+                        {origin.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {draft.activation_mode !== "todos" && (
+              <div className="space-y-2">
+                <IconLabel icon={Ban}>Exclusões automáticas</IconLabel>
+                {[
+                  {
+                    key: "exclude_crm",
+                    label: "Excluir contatos que já estão no CRM",
+                    hint: "Recomendado: não interferir em relacionamentos existentes",
+                  },
+                  {
+                    key: "exclude_clients",
+                    label: "Excluir quem já é cliente",
+                    hint: "Contatos com negócio ativo registrado nas vendas",
+                  },
+                  {
+                    key: "exclude_human_owned",
+                    label: "Excluir conversas com responsável humano",
+                    hint: "Contatos que já têm um vendedor responsável",
+                  },
+                ].map((o) => (
+                  <div
+                    key={o.key}
+                    className="flex items-center justify-between rounded-xl border border-border p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{o.label}</p>
+                      <p className="text-xs text-muted-foreground">{o.hint}</p>
+                    </div>
+                    <Switch
+                      checked={(draft as any)[o.key]}
+                      onCheckedChange={(v) => set(o.key as any, v as any)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle
               icon={Timer}
               title="Tempo para responder"
               hint="Quanto tempo o SDR espera antes de enviar a resposta. Respostas instantâneas entregam menos e parecem robô."
