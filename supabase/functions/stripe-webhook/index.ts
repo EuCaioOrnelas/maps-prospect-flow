@@ -1182,15 +1182,23 @@ serve(async (req) => {
                 ? new Date(subscription.current_period_end * 1000).toISOString()
                 : null;
 
-              // Reset searches on renewal + clear trial markers (trial virou pagante real)
+              // Ativa/renova: zera consumo, grava vigência e limpa TODAS as
+              // marcas de trial (inclusive o cancelamento da cobrança automática),
+              // pois agora existe pagamento real confirmado.
               const { error: updateError } = await supabaseClient
                 .from("profiles")
                 .update({ 
+                  plan,
                   searches_used: 0,
                   searches_limit: basePlanLimit,
                   last_searches_reset: new Date().toISOString(),
                   subscription_current_period_end: subscriptionEnd,
+                  payment_provider: "stripe",
+                  subscription_price_cents: subscription.items.data[0]?.price?.unit_amount || 0,
                   trial_will_charge_at: null,
+                  trial_end_at: null,
+                  trial_auto_charge_cancelled: false,
+                  trial_auto_charge_cancelled_at: null,
                 })
                 .eq("id", profile.id);
 
