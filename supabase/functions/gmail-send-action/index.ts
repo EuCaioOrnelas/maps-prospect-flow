@@ -1,129 +1,106 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { adminClient, corsHeaders, getGoogleAccessToken, googleFailure, json, resolveCaller } from "../_shared/googleAuth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+const EMAIL_RE = /^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/;
+
+// UTF-8 safe base64 (btoa alone only handles Latin-1).
+const b64 = (s: string) => {
+  const bytes = new TextEncoder().encode(s);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
 };
+const b64url = (s: string) => b64(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+// RFC 2047 for non-ASCII headers (accents, emojis in subject).
+const encHeader = (v: string) => (/^[\x20-\x7E]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
+// Base64 body wrapped at 76 chars.
+const wrap = (s: string) => b64(s).replace(/(.{76})/g, "$1\r\n");
+
+function parseList(v: unknown): string[] {
+  const raw = Array.isArray(v) ? v : typeof v === "string" ? v.split(/[,;\s]+/) : [];
+  return Array.from(new Set(raw.map((e) => String(e).trim()).filter(Boolean)));
+}
+
+const stripHtml = (h: string) =>
+  h.replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
-    const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
+    const body = await req.json().catch(() => ({}));
+    const { google_account_id } = body;
+    const subject = typeof body.subject === "string" ? body.subject.replace(/[\r\n]+/g, " ").trim().slice(0, 900) : "";
+    const to = parseList(body.to);
+    const cc = parseList(body.cc);
+    const bcc = parseList(body.bcc);
 
-    const { user_id, google_account_id, to, cc, bcc, subject, body_text, body_html } = await req.json();
+    const invalid = [...to, ...cc, ...bcc].filter((e) => !EMAIL_RE.test(e));
+    if (to.length === 0) return json({ error: "Informe um destinatário válido" }, 400);
+    if (invalid.length) return json({ error: `E-mail inválido: ${invalid.join(", ")}` }, 400);
+    if (!subject) return json({ error: "Informe o assunto do e-mail" }, 400);
+    if (to.length + cc.length + bcc.length > 50) return json({ error: "Máximo de 50 destinatários" }, 400);
 
-    if (!user_id || !to || !subject) {
-      return new Response(JSON.stringify({ error: "Missing required fields: user_id, to, subject" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const html = typeof body.body_html === "string" && body.body_html.trim() ? body.body_html : "";
+    const text = typeof body.body_text === "string" ? body.body_text : html ? stripHtml(html) : "";
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const supabase = adminClient();
+    const caller = await resolveCaller(req, supabase, body.user_id);
+    if (caller instanceof Response) return caller;
 
-    // FIX BUG-02: suporta múltiplas contas Google.
-    let tokenQuery = supabase.from("user_google_tokens").select("*");
-    if (google_account_id) tokenQuery = tokenQuery.eq("id", google_account_id);
-    else tokenQuery = tokenQuery.eq("user_id", user_id).order("updated_at", { ascending: false }).limit(1);
-    const { data: tokenRecords, error: tokenError } = await tokenQuery;
-    const tokenRecord = Array.isArray(tokenRecords) ? tokenRecords[0] : tokenRecords;
+    const tok = await getGoogleAccessToken(supabase, caller.userId, google_account_id, "gmail");
+    if (tok instanceof Response) return tok;
 
-    if (tokenError || !tokenRecord) {
-      return new Response(JSON.stringify({ error: "Google not connected", requiresAuth: true }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    let accessToken = tokenRecord.access_token;
-
-    // Refresh token if expired
-    if (new Date(tokenRecord.token_expires_at) <= new Date()) {
-      const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: googleClientId,
-          client_secret: googleClientSecret,
-          refresh_token: tokenRecord.refresh_token,
-          grant_type: "refresh_token",
-        }),
-      });
-
-      const refreshData = await refreshRes.json();
-
-      if (!refreshRes.ok || !refreshData.access_token) {
-        await supabase.from("user_google_tokens").delete().eq("user_id", user_id);
-        return new Response(JSON.stringify({ error: "Token expired, please reconnect", requiresAuth: true }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      accessToken = refreshData.access_token;
-      await supabase.from("user_google_tokens").update({
-        access_token: accessToken,
-        token_expires_at: new Date(Date.now() + (refreshData.expires_in || 3600) * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("user_id", user_id);
-    }
-
-    // Build CC and BCC headers
-    const ccList = Array.isArray(cc) ? cc.join(", ") : (cc || "");
-    const bccList = Array.isArray(bcc) ? bcc.join(", ") : (bcc || "");
-
-    // Build email headers
-    const headers: string[] = [
-      `MIME-Version: 1.0`,
-      `To: ${to}`,
-      `Subject: ${subject}`,
+    const headers = [
+      ...(tok.account.google_email ? [`From: ${tok.account.google_email}`] : []),
+      `To: ${to.join(", ")}`,
+      ...(cc.length ? [`Cc: ${cc.join(", ")}`] : []),
+      ...(bcc.length ? [`Bcc: ${bcc.join(", ")}`] : []),
+      `Subject: ${encHeader(subject)}`,
+      "MIME-Version: 1.0",
     ];
-    if (ccList) headers.push(`Cc: ${ccList}`);
-    if (bccList) headers.push(`Bcc: ${bccList}`);
 
-    // Build email in RFC 2822 format
-    const contentType = body_html
-      ? `Content-Type: text/html; charset="UTF-8"`
-      : `Content-Type: text/plain; charset="UTF-8"`;
-    headers.unshift(contentType);
-
-    const emailContent = [...headers, "", body_html || body_text || ""].join("\r\n");
-
-    // Base64url encode
-    const encodedEmail = btoa(unescape(encodeURIComponent(emailContent)))
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
+    let mime: string;
+    if (html) {
+      const boundary = `wiize_${crypto.randomUUID().replace(/-/g, "")}`;
+      mime = [
+        ...headers,
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        "",
+        `--${boundary}`,
+        'Content-Type: text/plain; charset="UTF-8"',
+        "Content-Transfer-Encoding: base64",
+        "",
+        wrap(text),
+        `--${boundary}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        "Content-Transfer-Encoding: base64",
+        "",
+        wrap(html),
+        `--${boundary}--`,
+      ].join("\r\n");
+    } else {
+      mime = [
+        ...headers,
+        'Content-Type: text/plain; charset="UTF-8"',
+        "Content-Transfer-Encoding: base64",
+        "",
+        wrap(text),
+      ].join("\r\n");
+    }
 
     const gmailRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ raw: encodedEmail }),
+      headers: { Authorization: `Bearer ${tok.accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ raw: b64url(mime) }),
     });
-
+    if (!gmailRes.ok) return await googleFailure(gmailRes, "Falha ao enviar o e-mail");
     const gmailData = await gmailRes.json();
 
-    if (!gmailRes.ok) {
-      console.error("Gmail API error:", gmailData);
-      return new Response(JSON.stringify({ error: "Failed to send email", details: gmailData }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true, messageId: gmailData.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ success: true, messageId: gmailData.id, from: tok.account.google_email });
   } catch (err) {
     console.error("Error in gmail-send-action:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: (err as Error).message }, 500);
   }
 });

@@ -1,163 +1,137 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { adminClient, corsHeaders, getGoogleAccessToken, googleFailure, json, resolveCaller } from "../_shared/googleAuth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const SHEET_ID_RE = /^[A-Za-z0-9_-]{10,200}$/;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
-    const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
+    const body = await req.json().catch(() => ({}));
+    const { action, spreadsheet_id, google_account_id } = body;
+    const title = typeof body.title === "string" ? body.title.trim().slice(0, 200) : "";
+    const tabName = typeof body.tab_name === "string" && body.tab_name.trim()
+      ? body.tab_name.trim().slice(0, 100)
+      : "Dados";
 
-    const { user_id, action, spreadsheet_id, title, tab_name } = await req.json();
+    const supabase = adminClient();
+    const caller = await resolveCaller(req, supabase, body.user_id);
+    if (caller instanceof Response) return caller;
 
-    if (!user_id) {
-      return new Response(JSON.stringify({ error: "Missing user_id" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const tok = await getGoogleAccessToken(supabase, caller.userId, google_account_id, "spreadsheets");
+    if (tok instanceof Response) return tok;
+    const authHeader = { Authorization: `Bearer ${tok.accessToken}` };
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Get user tokens
-    const { data: tokenRecord, error: tokenError } = await supabase
-      .from("user_google_tokens")
-      .select("*")
-      .eq("user_id", user_id)
-      .single();
-
-    if (tokenError || !tokenRecord) {
-      return new Response(JSON.stringify({ error: "Google not connected", requiresAuth: true }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    let accessToken = tokenRecord.access_token;
-
-    // Refresh token if expired
-    if (new Date(tokenRecord.token_expires_at) <= new Date()) {
-      const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: googleClientId,
-          client_secret: googleClientSecret,
-          refresh_token: tokenRecord.refresh_token,
-          grant_type: "refresh_token",
-        }),
-      });
-
-      const refreshData = await refreshRes.json();
-
-      if (!refreshRes.ok || !refreshData.access_token) {
-        await supabase.from("user_google_tokens").delete().eq("user_id", user_id);
-        return new Response(JSON.stringify({ error: "Token expired", requiresAuth: true }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      accessToken = refreshData.access_token;
-      await supabase.from("user_google_tokens").update({
-        access_token: accessToken,
-        token_expires_at: new Date(Date.now() + (refreshData.expires_in || 3600) * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq("user_id", user_id);
-    }
-
-    // Action: create a new spreadsheet
+    // ── Criar planilha ──
     if (action === "create") {
+      if (!title) return json({ error: "Informe o nome da planilha" }, 400);
       const createRes = await fetch("https://sheets.googleapis.com/v4/spreadsheets", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
+        headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({
-          properties: { title: title || "Wiize - Leads" },
-          sheets: [{ properties: { title: tab_name || "Dados" } }],
+          properties: { title, locale: "pt_BR", timeZone: "America/Sao_Paulo" },
+          sheets: [{ properties: { title: tabName, gridProperties: { frozenRowCount: 1 } } }],
         }),
       });
-
+      if (!createRes.ok) return await googleFailure(createRes, "Falha ao criar planilha");
       const createData = await createRes.json();
-
-      if (!createRes.ok) {
-        return new Response(JSON.stringify({ error: "Failed to create spreadsheet", details: createData }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(JSON.stringify({
+      const createdTab = createData.sheets?.[0]?.properties?.title || tabName;
+      return json({
         success: true,
         spreadsheet: {
           id: createData.spreadsheetId,
-          name: createData.properties?.title,
+          name: createData.properties?.title || title,
           url: createData.spreadsheetUrl,
+          tab_name: createdTab,
         },
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      });
     }
 
-    // Action: get sheets (tabs) from a spreadsheet
-    if (action === "get_sheets" && spreadsheet_id) {
-      const sheetsRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}?fields=sheets.properties`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+    // ── Abas de uma planilha ──
+    if (action === "get_sheets") {
+      if (!spreadsheet_id || !SHEET_ID_RE.test(spreadsheet_id)) return json({ error: "Planilha inválida" }, 400);
+      const res = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}?fields=properties.title,sheets.properties(sheetId,title)`,
+        { headers: authHeader },
       );
+      if (!res.ok) return await googleFailure(res, "Falha ao ler as abas da planilha");
+      const data = await res.json();
+      return json({
+        name: data.properties?.title,
+        sheets: (data.sheets || []).map((s: any) => ({ id: s.properties.sheetId, title: s.properties.title })),
+      });
+    }
 
-      const sheetsData = await sheetsRes.json();
+    // ── Listar planilhas ──
+    const byId = new Map<string, { id: string; name: string; modifiedTime?: string; url?: string; source: string }>();
 
-      if (!sheetsRes.ok) {
-        return new Response(JSON.stringify({ error: "Failed to get sheets", details: sheetsData }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // 1) Planilhas já usadas nos fluxos desta conta (sempre aparecem, mesmo sem acesso ao Drive).
+    const { data: flows } = await supabase
+      .from("wa_automation_flows")
+      .select("id")
+      .or(`user_id.eq.${caller.userId},owner_user_id.eq.${caller.userId}`)
+      .limit(1000);
+    const flowIds = (flows || []).map((f: any) => f.id);
+    if (flowIds.length) {
+      const { data: nodes } = await supabase
+        .from("wa_flow_nodes")
+        .select("config")
+        .in("flow_id", flowIds)
+        .eq("node_type", "google_sheets");
+      for (const n of nodes || []) {
+        const c: any = n.config || {};
+        if (!c.spreadsheet_id || byId.has(c.spreadsheet_id)) continue;
+        if (c.google_account_id && c.google_account_id !== tok.account.id) continue;
+        byId.set(c.spreadsheet_id, {
+          id: c.spreadsheet_id,
+          name: c.spreadsheet_name || "Planilha usada em fluxo",
+          url: `https://docs.google.com/spreadsheets/d/${c.spreadsheet_id}/edit`,
+          source: "wiize",
         });
       }
-
-      const sheets = (sheetsData.sheets || []).map((s: any) => ({
-        id: s.properties.sheetId,
-        title: s.properties.title,
-      }));
-
-      return new Response(JSON.stringify({ sheets }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
-    // Default: list spreadsheets from Drive
-    const driveRes = await fetch(
-      "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&orderBy=modifiedTime desc&pageSize=50&fields=files(id,name,modifiedTime,webViewLink)",
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    const driveData = await driveRes.json();
-
-    if (!driveRes.ok) {
-      console.error("Drive API error:", driveData);
-      return new Response(JSON.stringify({ error: "Failed to list spreadsheets", details: driveData }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // 2) Planilhas visíveis no Drive (criadas pela Wiize ou liberadas pela conta).
+    let driveWarning: string | null = null;
+    const files: any[] = [];
+    let pageToken = "";
+    for (let page = 0; page < 4; page++) {
+      const params = new URLSearchParams({
+        q: "mimeType='application/vnd.google-apps.spreadsheet' and trashed=false",
+        orderBy: "modifiedTime desc",
+        pageSize: "100",
+        fields: "nextPageToken,files(id,name,modifiedTime,webViewLink)",
+        supportsAllDrives: "true",
+        includeItemsFromAllDrives: "true",
       });
+      if (pageToken) params.set("pageToken", pageToken);
+      const driveRes = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, { headers: authHeader });
+      if (!driveRes.ok) {
+        const t = await driveRes.text();
+        console.warn("[google-list-spreadsheets] Drive list failed", driveRes.status, t.slice(0, 300));
+        driveWarning = "Para ver todas as planilhas do Google, reconecte a conta Google.";
+        break;
+      }
+      const d = await driveRes.json();
+      files.push(...(d.files || []));
+      if (!d.nextPageToken) break;
+      pageToken = d.nextPageToken;
     }
 
-    const spreadsheets = (driveData.files || []).map((f: any) => ({
-      id: f.id,
-      name: f.name,
-      modifiedTime: f.modifiedTime,
-      url: f.webViewLink,
+    const list: any[] = files.map((f) => ({
+      id: f.id, name: f.name, modifiedTime: f.modifiedTime, url: f.webViewLink, source: "drive",
     }));
+    for (const item of list) {
+      const prev = byId.get(item.id);
+      byId.set(item.id, prev ? { ...item, source: "wiize" } : item);
+    }
 
-    return new Response(JSON.stringify({ spreadsheets }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const spreadsheets = Array.from(byId.values()).sort((a, b) =>
+      (b.modifiedTime || "").localeCompare(a.modifiedTime || ""));
+
+    return json({ spreadsheets, warning: driveWarning, google_email: tok.account.google_email });
   } catch (err) {
     console.error("Error in google-list-spreadsheets:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: (err as Error).message }, 500);
   }
 });

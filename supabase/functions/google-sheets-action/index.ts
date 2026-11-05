@@ -1,154 +1,73 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { adminClient, corsHeaders, getGoogleAccessToken, googleFailure, json, resolveCaller } from "../_shared/googleAuth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const SHEET_ID_RE = /^[A-Za-z0-9_-]{10,200}$/;
+
+// A1 notation needs quotes around tab names ('Minha aba'!A1).
+const a1 = (tab: string, cell = "A1") => `'${tab.replace(/'/g, "''")}'!${cell}`;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const googleClientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
-    const googleClientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
+    const body = await req.json().catch(() => ({}));
+    const { google_account_id, spreadsheet_id, sheet_name, data, action } = body;
 
-    const { user_id, google_account_id, spreadsheet_id, sheet_name, data, action } = await req.json();
-
-    if (!user_id || !spreadsheet_id || !data) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!spreadsheet_id || !SHEET_ID_RE.test(spreadsheet_id) || !Array.isArray(data)) {
+      return json({ error: "Dados obrigatórios ausentes (planilha ou linha)" }, 400);
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const supabase = adminClient();
+    const caller = await resolveCaller(req, supabase, body.user_id);
+    if (caller instanceof Response) return caller;
 
-    // FIX BUG-02: suporta múltiplas contas Google.
-    let tokenQuery = supabase.from("user_google_tokens").select("*");
-    if (google_account_id) tokenQuery = tokenQuery.eq("id", google_account_id);
-    else tokenQuery = tokenQuery.eq("user_id", user_id).order("updated_at", { ascending: false }).limit(1);
-    const { data: tokenRecords, error: tokenError } = await tokenQuery;
-    const tokenRecord = Array.isArray(tokenRecords) ? tokenRecords[0] : tokenRecords;
+    const tok = await getGoogleAccessToken(supabase, caller.userId, google_account_id, "spreadsheets");
+    if (tok instanceof Response) return tok;
+    const auth = { Authorization: `Bearer ${tok.accessToken}`, "Content-Type": "application/json" };
+    const base = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}`;
 
-    if (tokenError || !tokenRecord) {
-      return new Response(JSON.stringify({ error: "Google not connected", requiresAuth: true }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    let accessToken = tokenRecord.access_token;
-
-    // Check if token expired, refresh if needed
-    if (new Date(tokenRecord.token_expires_at) <= new Date()) {
-      const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+    // Garante que a aba exista: usa a informada, cria se faltar, ou usa a primeira.
+    const metaRes = await fetch(`${base}?fields=sheets.properties(sheetId,title)`, { headers: auth });
+    if (!metaRes.ok) return await googleFailure(metaRes, "Não foi possível abrir a planilha");
+    const meta = await metaRes.json();
+    const tabs: string[] = (meta.sheets || []).map((s: any) => s.properties.title);
+    let tab = typeof sheet_name === "string" && sheet_name.trim() ? sheet_name.trim() : "";
+    if (!tab) tab = tabs[0] || "Dados";
+    if (!tabs.includes(tab)) {
+      const addRes = await fetch(`${base}:batchUpdate`, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: googleClientId,
-          client_secret: googleClientSecret,
-          refresh_token: tokenRecord.refresh_token,
-          grant_type: "refresh_token",
-        }),
+        headers: auth,
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title: tab } } }] }),
       });
-
-      const refreshData = await refreshRes.json();
-
-      if (!refreshRes.ok || !refreshData.access_token) {
-        // Token invalid, user needs to reconnect
-        await supabase.from("user_google_tokens").delete().eq("user_id", user_id);
-        return new Response(JSON.stringify({ error: "Token expired, please reconnect", requiresAuth: true }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      accessToken = refreshData.access_token;
-      const newExpiry = new Date(Date.now() + (refreshData.expires_in || 3600) * 1000).toISOString();
-
-      await supabase.from("user_google_tokens").update({
-        access_token: accessToken,
-        token_expires_at: newExpiry,
-        updated_at: new Date().toISOString(),
-      }).eq("user_id", user_id);
+      if (!addRes.ok) return await googleFailure(addRes, "Não foi possível criar a aba na planilha");
     }
 
-    const sheetTarget = sheet_name || "Dados";
+    const values = (Array.isArray(data[0]) ? data : [data]).map((row: any[]) =>
+      row.map((v) => (v == null ? "" : String(v).slice(0, 50000))));
 
-    // Action: clear sheet and set headers
     if (action === "clear_and_set_headers") {
-      // 1. Clear entire sheet
-      const clearRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}/values/${encodeURIComponent(sheetTarget)}:clear`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        }
-      );
-      if (!clearRes.ok) {
-        const clearErr = await clearRes.json();
-        console.error("Clear error:", clearErr);
-        return new Response(JSON.stringify({ error: "Failed to clear sheet", details: clearErr }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // 2. Set headers in first row
-      const values = Array.isArray(data[0]) ? data : [data];
-      const updateRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}/values/${encodeURIComponent(sheetTarget + "!A1")}?valueInputOption=USER_ENTERED`,
-        {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ values }),
-        }
-      );
-      const updateData = await updateRes.json();
-      if (!updateRes.ok) {
-        return new Response(JSON.stringify({ error: "Failed to set headers", details: updateData }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ success: true, updatedRange: updateData.updatedRange }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const clearRes = await fetch(`${base}/values/${encodeURIComponent(a1(tab, "A:ZZ"))}:clear`, {
+        method: "POST", headers: auth, body: "{}",
       });
+      if (!clearRes.ok) return await googleFailure(clearRes, "Falha ao limpar a aba");
+      const updRes = await fetch(
+        `${base}/values/${encodeURIComponent(a1(tab))}?valueInputOption=USER_ENTERED`,
+        { method: "PUT", headers: auth, body: JSON.stringify({ values }) },
+      );
+      if (!updRes.ok) return await googleFailure(updRes, "Falha ao gravar os cabeçalhos");
+      const upd = await updRes.json();
+      return json({ success: true, sheet_name: tab, updatedRange: upd.updatedRange });
     }
 
-    // Default: Append data to Google Sheets
-    const range = `${sheetTarget}!A1`;
-    const values = Array.isArray(data[0]) ? data : [data];
-
-    const sheetsRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ values }),
-      }
+    const appendRes = await fetch(
+      `${base}/values/${encodeURIComponent(a1(tab))}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      { method: "POST", headers: auth, body: JSON.stringify({ values }) },
     );
-
-    const sheetsData = await sheetsRes.json();
-
-    if (!sheetsRes.ok) {
-      console.error("Sheets API error:", sheetsData);
-      return new Response(JSON.stringify({ error: "Failed to write to Google Sheets", details: sheetsData }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true, updatedRange: sheetsData.updates?.updatedRange }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (!appendRes.ok) return await googleFailure(appendRes, "Falha ao gravar na planilha");
+    const appended = await appendRes.json();
+    return json({ success: true, sheet_name: tab, updatedRange: appended.updates?.updatedRange });
   } catch (err) {
     console.error("Error in google-sheets-action:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: (err as Error).message }, 500);
   }
 });

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeGoogle } from "@/lib/googleInvoke";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -262,7 +263,7 @@ function VariablesHelper({ variables }: { variables?: { key: string; label: stri
 function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }: { config: any; updateConfig: (k: string, v: any) => void; renderInfoBanner: (t: string) => JSX.Element; allNodes?: any[] }) {
   const { user, googleAccounts, selectedAccount, isConnected, isConnecting, selectedAccountId, setSelectedAccountId, handleConnect, handleDisconnect } = useGoogleAuth("sheets", [
     "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/drive.file",
   ], config.google_account_id);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -280,29 +281,41 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     }
   }, [selectedAccount?.google_email, selectedAccountId]);
 
-  const { data: spreadsheets = [], isLoading: loadingSheets, refetch: refetchSheets } = useQuery({
-    queryKey: ["google-spreadsheets", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id },
-      });
-      if (error) throw error;
-      return data?.spreadsheets || [];
-    },
-    enabled: !!user && isConnected,
-  });
+  const accountId = selectedAccount?.id as string | undefined;
 
-  const { data: sheetTabs = [], refetch: refetchTabs } = useQuery({
-    queryKey: ["google-sheet-tabs", user?.id, config.spreadsheet_id],
+  const { data: sheetsData, isLoading: loadingSheets, isFetching: fetchingSheets, error: sheetsError, refetch: refetchSheets } = useQuery({
+    queryKey: ["google-spreadsheets", user?.id, accountId],
+    queryFn: () => invokeGoogle<{ spreadsheets: any[]; warning?: string | null }>("google-list-spreadsheets", {
+      user_id: user!.id, google_account_id: accountId,
+    }),
+    enabled: !!user && isConnected && !!accountId,
+    retry: 1,
+    staleTime: 60_000,
+  });
+  const fetchedSheets: any[] = sheetsData?.spreadsheets || [];
+  // Keep the selected spreadsheet visible even if Google does not list it.
+  const spreadsheets: any[] = config.spreadsheet_id && !fetchedSheets.some((s) => s.id === config.spreadsheet_id)
+    ? [{ id: config.spreadsheet_id, name: config.spreadsheet_name || "Planilha selecionada", source: "wiize" }, ...fetchedSheets]
+    : fetchedSheets;
+
+  const { data: sheetTabs = [], error: tabsError, refetch: refetchTabs } = useQuery({
+    queryKey: ["google-sheet-tabs", user?.id, accountId, config.spreadsheet_id],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id, action: "get_sheets", spreadsheet_id: config.spreadsheet_id },
+      const data = await invokeGoogle<{ sheets: any[] }>("google-list-spreadsheets", {
+        user_id: user!.id, google_account_id: accountId, action: "get_sheets", spreadsheet_id: config.spreadsheet_id,
       });
-      if (error) throw error;
       return data?.sheets || [];
     },
-    enabled: !!user && isConnected && !!config.spreadsheet_id,
+    enabled: !!user && isConnected && !!accountId && !!config.spreadsheet_id,
+    retry: 1,
   });
+
+  // Default to the first tab when none is chosen yet.
+  useEffect(() => {
+    if (sheetTabs.length > 0 && (!config.sheet_name || !sheetTabs.some((t: any) => t.title === config.sheet_name))) {
+      updateConfig("sheet_name", sheetTabs[0].title);
+    }
+  }, [sheetTabs]);
 
   const handleCreateSpreadsheet = async () => {
     if (!newSheetName.trim()) {
@@ -311,23 +324,27 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
     }
     setIsCreating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("google-list-spreadsheets", {
-        body: { user_id: user!.id, action: "create", title: newSheetName.trim(), tab_name: newTabName.trim() || "Dados" },
+      const data = await invokeGoogle<{ spreadsheet: any }>("google-list-spreadsheets", {
+        user_id: user!.id,
+        google_account_id: accountId,
+        action: "create",
+        title: newSheetName.trim(),
+        tab_name: newTabName.trim() || "Dados",
       });
-      if (error) throw error;
-      if (data?.spreadsheet) {
+      if (data?.spreadsheet?.id) {
         updateConfig("spreadsheet_id", data.spreadsheet.id);
         updateConfig("spreadsheet_name", data.spreadsheet.name);
-        updateConfig("sheet_name", newTabName.trim() || "Dados");
+        updateConfig("sheet_name", data.spreadsheet.tab_name || newTabName.trim() || "Dados");
         setShowCreate(false);
         setNewSheetName("");
         setNewTabName("");
         refetchSheets();
-        toast.success("Planilha criada com sucesso!");
+        refetchTabs();
+        toast.success("Planilha criada no seu Google Drive!");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create spreadsheet:", err);
-      toast.error("Erro ao criar planilha");
+      toast.error(`Erro ao criar planilha: ${err?.message || "tente novamente"}`);
     } finally {
       setIsCreating(false);
     }
@@ -381,6 +398,17 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
         <>
           <div className="space-y-2">
             <Label className="text-xs font-medium">Planilha</Label>
+            {sheetsError && (
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-destructive/5 border border-destructive/20">
+                <AlertTriangle size={13} className="text-destructive shrink-0 mt-0.5" />
+                <p className="text-[11px] text-destructive leading-relaxed">
+                  Não foi possível carregar as planilhas: {(sheetsError as Error).message}
+                </p>
+              </div>
+            )}
+            {sheetsData?.warning && !sheetsError && (
+              <p className="text-[10px] text-muted-foreground">{sheetsData.warning}</p>
+            )}
             {loadingSheets ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
                 <Loader2 size={14} className="animate-spin" /> Carregando planilhas...
@@ -404,6 +432,9 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
                   {spreadsheets.map((s: any) => (
                     <SelectItem key={s.id} value={s.id}>
                       <span className="truncate">{s.name}</span>
+                      {s.source === "wiize" && (
+                        <span className="ml-1.5 text-[9px] text-muted-foreground">· usada na Wiize</span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -414,9 +445,16 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
               <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setShowCreate(!showCreate)}>
                 <Plus size={12} /> Nova planilha
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => refetchSheets()}>
-                Atualizar lista
+              <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => refetchSheets()} disabled={fetchingSheets}>
+                {fetchingSheets && <Loader2 size={10} className="animate-spin" />} Atualizar lista
               </Button>
+              {config.spreadsheet_id && (
+                <Button variant="ghost" size="sm" className="h-7 text-[10px]" asChild>
+                  <a href={`https://docs.google.com/spreadsheets/d/${config.spreadsheet_id}/edit`} target="_blank" rel="noopener noreferrer">
+                    Abrir planilha
+                  </a>
+                </Button>
+              )}
             </div>
 
             {showCreate && (
@@ -447,6 +485,11 @@ function GoogleSheetsConfig({ config, updateConfig, renderInfoBanner, allNodes }
             )}
           </div>
 
+          {config.spreadsheet_id && tabsError && (
+            <p className="text-[10px] text-destructive">
+              Não foi possível abrir esta planilha: {(tabsError as Error).message}
+            </p>
+          )}
           {config.spreadsheet_id && sheetTabs.length > 0 && (
             <div className="space-y-2">
               <Label className="text-xs font-medium">Aba (página da planilha)</Label>
@@ -543,17 +586,34 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
     }
   }, [selectedAccount?.google_email, selectedAccountId]);
 
-  const { data: calendars = [], isLoading: loadingCalendars } = useQuery({
-    queryKey: ["google-calendars", user?.id],
+  const calAccountId = selectedAccount?.id as string | undefined;
+  const { data: fetchedCalendars = [], isLoading: loadingCalendars, error: calendarsError, refetch: refetchCalendars } = useQuery({
+    queryKey: ["google-calendars", user?.id, calAccountId],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("google-list-calendars", {
-        body: { user_id: user!.id },
+      const data = await invokeGoogle<{ calendars: any[] }>("google-list-calendars", {
+        user_id: user!.id, google_account_id: calAccountId,
       });
-      if (error) throw error;
       return data?.calendars || [];
     },
-    enabled: !!user && isConnected,
+    enabled: !!user && isConnected && !!calAccountId,
+    retry: 1,
+    staleTime: 60_000,
   });
+  // "primary" is always valid in Google Calendar; keep it (and the saved one) selectable.
+  const calendars: any[] = (() => {
+    const list = [...fetchedCalendars];
+    if (!list.some((c) => c.primary || c.id === "primary")) {
+      list.unshift({ id: "primary", summary: "Agenda principal", primary: true });
+    }
+    if (config.calendar_id && config.calendar_id !== "primary" && !list.some((c) => c.id === config.calendar_id)) {
+      list.push({ id: config.calendar_id, summary: config.calendar_name || config.calendar_id });
+    }
+    return list;
+  })();
+  const primaryCal = calendars.find((c) => c.primary) || calendars[0];
+  const selectedCalendarId = config.calendar_id && config.calendar_id !== "primary"
+    ? config.calendar_id
+    : (primaryCal?.id || "primary");
 
   const durationOptions = [
     { value: 15, label: "15 minutos" },
@@ -645,8 +705,19 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
                 <Loader2 size={14} className="animate-spin" /> Carregando agendas...
               </div>
             ) : (
+              <>
+              {calendarsError && (
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+                  <p className="text-[10px] text-destructive leading-relaxed">
+                    Não foi possível carregar suas agendas: {(calendarsError as Error).message}
+                  </p>
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px] shrink-0" onClick={() => refetchCalendars()}>
+                    Tentar de novo
+                  </Button>
+                </div>
+              )}
               <Select
-                value={config.calendar_id || "primary"}
+                value={selectedCalendarId}
                 onValueChange={(v) => {
                   const cal = calendars.find((c: any) => c.id === v);
                   updateConfig("calendar_id", v);
@@ -663,12 +734,13 @@ function GoogleCalendarConfig({ config, updateConfig, renderInfoBanner, allNodes
                         {c.backgroundColor && (
                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.backgroundColor }} />
                         )}
-                        <span className="truncate">{c.summary}{c.primary ? " (Principal)" : ""}</span>
+                        <span className="truncate">{c.summary}{c.primary && c.id !== "primary" ? " (Principal)" : ""}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              </>
             )}
           </div>
 
@@ -851,6 +923,30 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
   const ccEmails: string[] = Array.isArray(config.email_cc) ? config.email_cc : (config.email_cc ? [config.email_cc] : []);
   const bccEmails: string[] = Array.isArray(config.email_bcc) ? config.email_bcc : (config.email_bcc ? [config.email_bcc] : []);
 
+  const [sendingTest, setSendingTest] = useState(false);
+  const sendTestEmail = async () => {
+    const to = selectedAccount?.google_email;
+    if (!to) { toast.error("Reconecte a conta Google para ver o e-mail dela"); return; }
+    const sample: Record<string, string> = { nome: "Maria Exemplo", telefone: "(11) 99999-0000", email: to, empresa: "Empresa Exemplo" };
+    const fill = (s: string) => (s || "").replace(/\{(\w+)\}/g, (m, k) => sample[k] ?? m);
+    setSendingTest(true);
+    try {
+      const body = fill(config.email_body || "");
+      await invokeGoogle("gmail-send-action", {
+        user_id: user?.id,
+        google_account_id: selectedAccount?.id,
+        to,
+        subject: `[Teste] ${fill(config.email_subject || "")}`,
+        ...(config.email_html ? { body_html: body } : { body_text: body }),
+      });
+      toast.success(`E-mail de teste enviado para ${to}`);
+    } catch (err: any) {
+      toast.error(`Não foi possível enviar: ${err?.message || "tente novamente"}`);
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Como funciona - collapsible no topo */}
@@ -996,6 +1092,22 @@ function GmailConfig({ config, updateConfig, renderInfoBanner }: { config: any; 
           </div>
 
           <VariablesHelper />
+
+          <div className="p-3 rounded-lg border border-border/50 bg-muted/10 space-y-2">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Envie um e-mail de teste para <span className="font-medium text-foreground">{selectedAccount?.google_email || "sua conta"}</span> e confira como ele chega. As variáveis aparecem com valores de exemplo.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs w-full gap-1.5"
+              disabled={sendingTest || !config.email_subject?.trim()}
+              onClick={sendTestEmail}
+            >
+              {sendingTest ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />}
+              Enviar e-mail de teste
+            </Button>
+          </div>
         </>
       )}
     </div>
@@ -3134,25 +3246,20 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         try {
           toast.loading("Formatando planilha...", { id: "sheets-format" });
           const headers = columns.map((c: any) => c.label || "");
-          const { error } = await supabase.functions.invoke("google-sheets-action", {
-            body: {
-              user_id: user?.id,
-              spreadsheet_id: config.spreadsheet_id,
-              sheet_name: sheetName,
-              action: "clear_and_set_headers",
-              data: [headers],
-            },
+          const res = await invokeGoogle<{ sheet_name?: string }>("google-sheets-action", {
+            user_id: user?.id,
+            google_account_id: config.google_account_id,
+            spreadsheet_id: config.spreadsheet_id,
+            sheet_name: sheetName,
+            action: "clear_and_set_headers",
+            data: [headers],
           });
-          if (error) {
-            toast.error("Erro ao formatar planilha", { id: "sheets-format" });
-            console.error("Sheets format error:", error);
-            return;
-          }
+          if (res?.sheet_name) config.sheet_name = res.sheet_name;
           // Mark as formatted so it won't clear again for this combo
-          config.sheet_formatted_id = formatKey;
+          config.sheet_formatted_id = `${config.spreadsheet_id}::${config.sheet_name || sheetName}`;
           toast.success("Planilha formatada com sucesso!", { id: "sheets-format" });
-        } catch (err) {
-          toast.error("Erro ao formatar planilha", { id: "sheets-format" });
+        } catch (err: any) {
+          toast.error(`Erro ao formatar planilha: ${err?.message || "tente novamente"}`, { id: "sheets-format" });
           console.error(err);
           return;
         }
