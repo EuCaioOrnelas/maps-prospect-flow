@@ -1148,12 +1148,24 @@ serve(async (req) => {
         await markFirstRealPayment(supabaseClient, invoice);
 
 
-        // Only reset searches on subscription renewal (not first payment)
-        if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
+        // Ativa/renova o acesso em dois casos:
+        // 1) Renovação mensal/anual (subscription_cycle);
+        // 2) Primeira cobrança PAGA de uma assinatura nova (subscription_create
+        //    com valor > 0) — cobre quem cancelou o trial e comprou depois,
+        //    por qualquer canal (checkout, link de pagamento ou painel Stripe).
+        // Invoice de trial (R$ 0) e assinatura ainda em trial não ativam aqui.
+        const isRenewal = invoice.billing_reason === "subscription_cycle";
+        const isFirstPaidActivation =
+          invoice.billing_reason === "subscription_create" && (invoice.amount_paid ?? 0) > 0;
+        if ((isRenewal || isFirstPaidActivation) && invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
           const customerEmail = invoice.customer_email;
-          
-          if (customerEmail) {
+
+          if (subscription.status === "trialing") {
+            logStep("Invoice de assinatura em trial - ativação fica no customer.subscription.created", {
+              subscriptionId: subscription.id,
+            });
+          } else if (customerEmail) {
             const { data: profile } = await supabaseClient
               .from("profiles")
               .select("id, plan, searches_used, searches_limit, created_at")
