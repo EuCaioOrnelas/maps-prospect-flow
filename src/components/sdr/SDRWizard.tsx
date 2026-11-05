@@ -1127,12 +1127,34 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         },
         situations: draft.situations,
         ai: { provider: "openai", model: draft.ai.model || "gpt-4o-mini" },
+        operation_mode: draft.operation_mode,
+        offer_strategy: draft.offer_strategy,
+        activation_mode: draft.activation_mode,
+        allowed_origins: draft.activation_mode === "personalizado" ? draft.allowed_origins : null,
+        exclude_crm: draft.exclude_crm,
+        exclude_clients: draft.exclude_clients,
+        exclude_human_owned: draft.exclude_human_owned,
       };
       const q = editing
         ? supabase.from("sdr_agents" as any).update(payload).eq("id", editing.id)
-        : supabase.from("sdr_agents" as any).insert(payload);
-      const { error } = await q;
+        : supabase.from("sdr_agents" as any).insert(payload).select("id").maybeSingle();
+      const { data: savedAgent, error } = await q;
       if (error) throw error;
+
+      // Vínculo dos produtos do catálogo com o agente (modo venda direta)
+      const agentId: string | undefined = editing?.id ?? (savedAgent as any)?.id;
+      if (agentId) {
+        await supabase.from("sdr_agent_products" as any).delete().eq("agent_id", agentId);
+        if (draft.operation_mode === "venda_direta" && draft.catalog_product_ids.length) {
+          const rows = draft.catalog_product_ids.map((product_id) => ({
+            agent_id: agentId,
+            product_id,
+            owner_user_id: accountOwnerId,
+          }));
+          const { error: linkError } = await supabase.from("sdr_agent_products" as any).insert(rows);
+          if (linkError) throw linkError;
+        }
+      }
       if (!editing) clearSdrDraft();
       toast.success(editing ? "SDR atualizado com sucesso" : "SDR criado com sucesso");
       onCreated();
