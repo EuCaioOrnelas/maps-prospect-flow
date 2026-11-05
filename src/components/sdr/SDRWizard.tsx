@@ -2752,22 +2752,36 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
     </div>
   );
 
+  const catalogDialog = (
+    <SDRProductCatalog
+      open={catalogOpen}
+      onClose={() => {
+        setCatalogOpen(false);
+        reloadCatalog();
+      }}
+    />
+  );
+
   if (isPage) {
     return (
-      <OnboardingShell
-        step={step}
-        total={STEPS.length}
-        stepKey={`sdr-step-${step}`}
-        headline={stepDef.headline}
-        subtitle={stepDef.subtitle}
-        footer={footer}
-      >
-        {body}
-      </OnboardingShell>
+      <>
+        <OnboardingShell
+          step={step}
+          total={STEPS.length}
+          stepKey={`sdr-step-${step}`}
+          headline={stepDef.headline}
+          subtitle={stepDef.subtitle}
+          footer={footer}
+        >
+          {body}
+        </OnboardingShell>
+        {catalogDialog}
+      </>
     );
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
@@ -2803,5 +2817,7 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         {footer}
       </DialogContent>
     </Dialog>
+    {catalogDialog}
+    </>
   );
 }
