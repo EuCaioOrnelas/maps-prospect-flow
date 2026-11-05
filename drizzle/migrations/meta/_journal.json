@@ -414,6 +414,13 @@
       "when": 1793717041123,
       "tag": "0058_chatweb_avatar_read_members",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1793898741434,
+      "tag": "0059_sdr_sales_catalog",
+      "breakpoints": true
     }
   ]
 }
