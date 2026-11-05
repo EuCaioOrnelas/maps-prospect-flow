@@ -119,6 +119,15 @@ import {
   type SdrSeller,
 } from "@/lib/sdrConfig";
 import { AI_PROVIDERS } from "@/lib/aiProviders";
+import {
+  SDR_ACTIVATION_MODES,
+  SDR_LEAD_ORIGINS,
+  SDR_OFFER_STRATEGIES,
+  SDR_OPERATION_MODES,
+  productPriceLabel,
+} from "@/lib/sdrSales";
+import { useSdrProducts } from "@/hooks/useSdrProducts";
+import { SDRProductCatalog } from "@/components/sdr/SDRProductCatalog";
 
 interface Props {
   open: boolean;
@@ -876,6 +885,8 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
   const [templates, setTemplates] = useState<any[]>([]);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [uploadingProposal, setUploadingProposal] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const { products: catalogProducts, loading: catalogLoading, reload: reloadCatalog } = useSdrProducts();
 
   useEffect(() => {
     if (!open) return;
@@ -895,7 +906,32 @@ export function SDRWizard({ open, onClose, onCreated, editing, variant = "dialog
         knowledge: { ...SDR_DEFAULT_DRAFT.knowledge, ...(editing.knowledge || {}) },
         closing: { ...SDR_DEFAULT_DRAFT.closing, ...(editing.closing || {}) },
         situations: { ...SDR_DEFAULT_DRAFT.situations, ...(editing.situations || {}) },
+        operation_mode: editing.operation_mode === "venda_direta" ? "venda_direta" : "tradicional",
+        offer_strategy: ["especifico", "selecionados", "inteligente"].includes(editing.offer_strategy)
+          ? editing.offer_strategy
+          : "inteligente",
+        catalog_product_ids: [],
+        activation_mode: ["todos", "oportunidades", "oportunidades_novos", "personalizado"].includes(
+          editing.activation_mode
+        )
+          ? editing.activation_mode
+          : "todos",
+        allowed_origins: Array.isArray(editing.allowed_origins)
+          ? editing.allowed_origins
+          : ["oportunidades", "prospeccao"],
+        exclude_crm: Boolean(editing.exclude_crm),
+        exclude_clients: Boolean(editing.exclude_clients),
+        exclude_human_owned: Boolean(editing.exclude_human_owned),
       });
+      // Produtos do catálogo já vinculados a este SDR
+      supabase
+        .from("sdr_agent_products" as any)
+        .select("product_id")
+        .eq("agent_id", editing.id)
+        .then(({ data }) => {
+          const ids = (data ?? []).map((r: any) => r.product_id).filter(Boolean);
+          if (ids.length) setDraft((d) => ({ ...d, catalog_product_ids: ids }));
+        });
     } else {
       const stored = loadSdrDraft();
       if (stored?.draft) {
