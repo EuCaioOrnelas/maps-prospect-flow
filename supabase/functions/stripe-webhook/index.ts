@@ -1213,10 +1213,10 @@ serve(async (req) => {
                 });
               }
 
-              // Log renewal event
+              // Log renewal/activation event
               await logSubscriptionEvent(
                 supabaseClient,
-                "subscription_renewed",
+                isRenewal ? "subscription_renewed" : "subscription_activated",
                 "stripe-webhook",
                 customerEmail,
                 profile.id,
@@ -1236,7 +1236,7 @@ serve(async (req) => {
                 }
               );
 
-              // Partner program: register recurring sale on renewal
+              // Partner program: register sale (recurring on renewal, first sale on activation)
               try {
                 const partnerResult = await registerPartnerSale(supabaseClient, {
                   userId: profile.id,
@@ -1248,9 +1248,9 @@ serve(async (req) => {
                   stripeInvoiceId: invoice.id,
                   stripeSubscriptionId: subscription.id,
                   paidAt: new Date().toISOString(),
-                  isRecurring: true,
+                  isRecurring: isRenewal,
                 });
-                logStep("Partner sale check (renewal)", partnerResult);
+                logStep("Partner sale check (renewal/activation)", partnerResult);
               } catch (e) {
                 logStep("Partner sale registration failed (renewal)", { error: String(e) });
               }
