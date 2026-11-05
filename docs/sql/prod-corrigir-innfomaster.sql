@@ -33,7 +33,6 @@ SET
   searches_used = 0,
   searches_limit = 1000,
   last_searches_reset = now(),
-  first_paid_at = COALESCE(first_paid_at, now()),
   is_blocked = false,
   requires_payment_setup = false,
   updated_at = now()
