@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Na API Stripe 2025 ("basil") a data de fim do período saiu da assinatura e
+// foi para o item. Ler só subscription.current_period_end gravava vigência vazia.
+const periodEndOf = (sub: any): number | null => {
+  const v = sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end;
+  return typeof v === "number" ? v : null;
+};
+
+
 async function sendPartnerEmail(
   supabase: any,
   partnerId: string,
@@ -682,8 +690,8 @@ serve(async (req) => {
                   searches_used: newSearchesUsed,
                   payment_provider: "stripe",
                   subscription_price_cents: stripePriceCents,
-                  ...(isPaidCheckout && newSubscription.current_period_end
-                    ? { subscription_current_period_end: new Date(newSubscription.current_period_end * 1000).toISOString() }
+                  ...(isPaidCheckout && periodEndOf(newSubscription)
+                    ? { subscription_current_period_end: new Date(periodEndOf(newSubscription) * 1000).toISOString() }
                     : {}),
                 })
                 .eq("id", profile.id);
@@ -840,8 +848,8 @@ serve(async (req) => {
               const basePlanLimit = limitForPlan(plan, priceId, (profile as any)?.created_at);
 
               // Calculate period end from Stripe (CRITICAL for check-subscription)
-              const subscriptionEndIso = subscription.current_period_end
-                ? new Date(subscription.current_period_end * 1000).toISOString()
+              const subscriptionEndIso = periodEndOf(subscription)
+                ? new Date(periodEndOf(subscription) * 1000).toISOString()
                 : null;
 
               // Calculate new limit based on transition type
@@ -953,8 +961,8 @@ serve(async (req) => {
                     subscription_id: subscription.id,
                     billing_type: "CREDIT_CARD",
                     cancelled_at: new Date().toISOString(),
-                    active_until: subscription.current_period_end 
-                      ? new Date(subscription.current_period_end * 1000).toISOString() 
+                    active_until: periodEndOf(subscription) 
+                      ? new Date(periodEndOf(subscription) * 1000).toISOString() 
                       : null,
                     notes: `Assinatura Stripe status: ${subscription.status}. Plano anterior: ${profile.plan}. Email: ${customer.email}`,
                   });
@@ -1089,8 +1097,8 @@ serve(async (req) => {
                 subscription_id: subscription.id,
                 billing_type: "CREDIT_CARD",
                 cancelled_at: new Date().toISOString(),
-                active_until: subscription.current_period_end 
-                  ? new Date(subscription.current_period_end * 1000).toISOString() 
+                active_until: periodEndOf(subscription) 
+                  ? new Date(periodEndOf(subscription) * 1000).toISOString() 
                   : null,
                 notes: `Assinatura Stripe cancelada. Plano anterior: ${profile.plan}. Email: ${customer.email}`,
               });
@@ -1178,8 +1186,8 @@ serve(async (req) => {
               const basePlanLimit = limitForPlan(plan, priceId, (profile as any)?.created_at);
               
               // Calculate subscription end date
-              const subscriptionEnd = subscription.current_period_end 
-                ? new Date(subscription.current_period_end * 1000).toISOString()
+              const subscriptionEnd = periodEndOf(subscription) 
+                ? new Date(periodEndOf(subscription) * 1000).toISOString()
                 : null;
 
               // Ativa/renova: zera consumo, grava vigência e limpa TODAS as

@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Na API Stripe 2025 ("basil") a data de fim do período saiu da assinatura e
+// foi para o item. Ler só subscription.current_period_end gravava vigência vazia.
+const periodEndOf = (sub: any): number | null => {
+  const v = sub?.current_period_end ?? sub?.items?.data?.[0]?.current_period_end;
+  return typeof v === "number" ? v : null;
+};
+
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -716,8 +724,8 @@ serve(async (req) => {
         }
 
         if (cOrder === bestOrder) {
-          const cEnd = typeof c.sub.current_period_end === 'number' ? c.sub.current_period_end : 0;
-          const bEnd = typeof best.sub.current_period_end === 'number' ? best.sub.current_period_end : 0;
+          const cEnd = typeof periodEndOf(c.sub) === 'number' ? periodEndOf(c.sub) : 0;
+          const bEnd = typeof periodEndOf(best.sub) === 'number' ? periodEndOf(best.sub) : 0;
           if (cEnd > bEnd) best = c;
         }
       }
@@ -728,12 +736,12 @@ serve(async (req) => {
       const basePlanLimit = limitForPlan(plan, priceId, (currentProfile as any)?.created_at ?? null);
 
       try {
-        if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
-          subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        if (periodEndOf(subscription) && typeof periodEndOf(subscription) === 'number') {
+          subscriptionEnd = new Date(periodEndOf(subscription) * 1000).toISOString();
         }
       } catch (dateError) {
         logStep("Warning: Could not parse subscription end date", {
-          current_period_end: subscription.current_period_end,
+          current_period_end: periodEndOf(subscription),
         });
       }
 
