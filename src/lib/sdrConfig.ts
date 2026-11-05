@@ -247,6 +247,22 @@ export type SdrDraft = {
   objective: SdrObjective;
   objective_custom: string;
   whatsapp_number_ids: string[];
+  /** Modo de operação: atendimento/qualificação ou venda direta com catálogo. */
+  operation_mode: "tradicional" | "venda_direta";
+  /** Estratégia de oferta no modo venda direta. */
+  offer_strategy: "especifico" | "selecionados" | "inteligente";
+  /** Produtos do catálogo (sdr_products) vinculados a este SDR. */
+  catalog_product_ids: string[];
+  /** Quais origens de lead podem acionar o SDR. */
+  activation_mode: "todos" | "oportunidades" | "oportunidades_novos" | "personalizado";
+  /** Origens permitidas no modo personalizado (coluna leads.origin). */
+  allowed_origins: string[];
+  /** Excluir contatos que já existem no CRM. */
+  exclude_crm: boolean;
+  /** Excluir contatos que já são clientes (com negócio ativo). */
+  exclude_clients: boolean;
+  /** Excluir conversas que já têm responsável humano. */
+  exclude_human_owned: boolean;
   ai: {
     provider: "openai";
     model: string;
@@ -338,6 +354,14 @@ export const SDR_DEFAULT_DRAFT: SdrDraft = {
   objective: "reuniao",
   objective_custom: "",
   whatsapp_number_ids: [],
+  operation_mode: "tradicional",
+  offer_strategy: "inteligente",
+  catalog_product_ids: [],
+  activation_mode: "todos",
+  allowed_origins: ["oportunidades", "prospeccao"],
+  exclude_crm: true,
+  exclude_clients: true,
+  exclude_human_owned: true,
   ai: {
     provider: "openai",
     model: "gpt-4o-mini",
