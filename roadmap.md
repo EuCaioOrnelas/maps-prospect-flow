@@ -50,4 +50,4 @@
 
 ## Integrações Google independentes
 - [x] Remover dependência de _shared/googleAuth.ts nas cinco funções, mantendo autenticação e renovação de tokens.
-- [ ] Validar isolamento e publicar funções independentes.
+- [x] Cinco funções publicadas; validação de autenticação, bloqueio entre usuários, CORS e ausência de imports shared passou.
