@@ -1169,11 +1169,14 @@ ${historyText}`;
             : new Date(Date.now() + followupHours * 60 * 60 * 1000).toISOString()
           : null;
 
-        // Proposta em PDF enviada ao concluir o objetivo "Enviar proposta".
-        const proposalFile = agent.closing?.proposal_file;
+        // Proposta em PDF: no modo venda direta, usa a proposta do produto
+        // selecionado (cada produto pode ter a sua); caso contrário, a do agente.
+        const productProposal = selectedProduct?.proposal_file;
+        const proposalFile = isSalesMode && productProposal?.path ? productProposal : agent.closing?.proposal_file;
+        const proposalObjective = normalizeObjective(agent.objective) === "proposta" || isSalesMode;
         const proposalAlreadySent = Boolean((session.memory as any)?.proposal_sent);
         if (
-          objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path &&
+          objectiveDone && proposalObjective && proposalFile?.path &&
           !proposalAlreadySent && session.waba_connection_id && session.phone
         ) {
           try {
@@ -1271,7 +1274,7 @@ ${historyText}`;
                   Object.entries(analysis.identidade ?? {}).filter(([, value]) => value !== null && value !== ""),
                 ),
               },
-              ...(objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path
+              ...(objectiveDone && proposalObjective && proposalFile?.path
                 ? { proposal_sent: true }
                 : {}),
             },
