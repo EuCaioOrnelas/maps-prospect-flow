@@ -117,8 +117,16 @@ const mainPlans: Record<string, PlanDef[]> = {
 const TrialExpired = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { profile, user, refreshProfile, signOut } = useAuth();
+  const { profile, user, refreshProfile, signOut, isTrialExpired, loading: authLoading } = useAuth();
   const { toast } = useToast();
+
+  // Conta com acesso válido (ex.: pagamento liberado depois) não deve ficar presa nesta tela.
+  useEffect(() => {
+    if (authLoading || !user || !profile) return;
+    if (!isTrialExpired && (profile.plan || "free") !== "free") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [authLoading, user, profile, isTrialExpired, navigate]);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlanKey, setSelectedPlanKey] = useState<string | null>(null);
