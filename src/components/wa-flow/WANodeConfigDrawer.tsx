@@ -3206,25 +3206,20 @@ export function WANodeConfigDrawer({ open, onOpenChange, node, onUpdate, onDelet
         try {
           toast.loading("Formatando planilha...", { id: "sheets-format" });
           const headers = columns.map((c: any) => c.label || "");
-          const { error } = await supabase.functions.invoke("google-sheets-action", {
-            body: {
-              user_id: user?.id,
-              spreadsheet_id: config.spreadsheet_id,
-              sheet_name: sheetName,
-              action: "clear_and_set_headers",
-              data: [headers],
-            },
+          const res = await invokeGoogle<{ sheet_name?: string }>("google-sheets-action", {
+            user_id: user?.id,
+            google_account_id: config.google_account_id,
+            spreadsheet_id: config.spreadsheet_id,
+            sheet_name: sheetName,
+            action: "clear_and_set_headers",
+            data: [headers],
           });
-          if (error) {
-            toast.error("Erro ao formatar planilha", { id: "sheets-format" });
-            console.error("Sheets format error:", error);
-            return;
-          }
+          if (res?.sheet_name) config.sheet_name = res.sheet_name;
           // Mark as formatted so it won't clear again for this combo
-          config.sheet_formatted_id = formatKey;
+          config.sheet_formatted_id = `${config.spreadsheet_id}::${config.sheet_name || sheetName}`;
           toast.success("Planilha formatada com sucesso!", { id: "sheets-format" });
-        } catch (err) {
-          toast.error("Erro ao formatar planilha", { id: "sheets-format" });
+        } catch (err: any) {
+          toast.error(`Erro ao formatar planilha: ${err?.message || "tente novamente"}`, { id: "sheets-format" });
           console.error(err);
           return;
         }
