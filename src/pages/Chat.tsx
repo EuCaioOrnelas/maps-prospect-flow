@@ -4,7 +4,7 @@ import { ChatMessageArea } from "@/components/chat/ChatMessageArea";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSearchParams, useNavigate } from "react-router-dom";

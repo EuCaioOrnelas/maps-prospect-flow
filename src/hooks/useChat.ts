@@ -90,6 +90,9 @@ export function useChat() {
     try { return activeConnKey ? localStorage.getItem(activeConnKey) : null; } catch { return null; }
   }, [activeConnKey]);
   const [loading, setLoading] = useState(true);
+  // Libera ações que dependem apenas da conexão (como abrir uma abordagem do
+  // CRM) sem esperar a lista completa de conversas terminar de carregar.
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const connectionRequestRef = useRef(0);
   const [reloadVersion, setReloadVersion] = useState(0);
