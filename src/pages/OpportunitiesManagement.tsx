@@ -35,6 +35,7 @@ import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/o
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
 import { EvolutionConnectDialog } from "@/components/numbers/EvolutionConnectDialog";
+import { useManualChatTransition } from "@/components/opportunities/ManualChatTransition";
 import { formatPhoneNumber, formatPhoneForMeta } from "@/lib/phoneUtils";
 import { AutoApproachPrefs, EMPTY_AUTO_APPROACH, readAutoApproachPrefs, clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
 
