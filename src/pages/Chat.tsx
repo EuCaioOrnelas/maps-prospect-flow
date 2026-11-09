@@ -267,6 +267,7 @@ const Chat = () => {
     handledLaunchKey,
     hasConnection,
     chat.connectionsLoading,
+    manualChatTransition,
     searchParams,
     setSearchParams,
     shouldShowDialog,
