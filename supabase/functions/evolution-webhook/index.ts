@@ -390,6 +390,10 @@ Deno.serve(async (req) => {
               .eq("id", pendingOut.id);
             continue;
           }
+          // Corrida: o envio pode ter gravado o waba_message_id entre a checagem
+          // inicial e a reconciliação. Rechecagem final antes de inserir.
+          const { data: dup2 } = await supabase.from("chat_messages").select("id").eq("waba_message_id", msgId).limit(1).maybeSingle();
+          if (dup2) continue;
         }
 
         const mediaUrl = await storeMedia(ownerId, msgId, parsed);

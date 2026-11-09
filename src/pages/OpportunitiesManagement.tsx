@@ -2309,7 +2309,7 @@ export default function OpportunitiesManagement() {
                               const openMeta = () => { setSendingLead(lead); setSendDialogOpen(true); };
                               const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-[10px] bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95";
                               // Só uma opção → ação direta (manual abre o chat com rascunho; meta abre dialog)
-                              if (hasManual && !hasMeta) {
+                              if (hasManual) {
                                 return (
                                   <button
                                     className={sendBtnClass}
