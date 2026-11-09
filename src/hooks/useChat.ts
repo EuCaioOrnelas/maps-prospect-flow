@@ -692,11 +692,36 @@ export function useChat() {
       return null;
     }
 
-    const existing = conversations.find(c =>
-      c.contact_phone.replace(/\D/g, "").endsWith(cleanPhone.slice(-8))
+    const phoneSuffix = cleanPhone.slice(-8);
+    const localExisting = conversations.find(c =>
+      c.contact_phone.replace(/\D/g, "").endsWith(phoneSuffix)
     );
 
+    if (localExisting) {
+      setActiveConversationId(localExisting.id);
+      return localExisting.id;
+    }
+
+    // Não dependa da lista inteira: em uma abordagem vinda do CRM, ela ainda
+    // pode estar carregando. Busque somente o contato no número selecionado.
+    const { data: matches, error: lookupError } = await supabase
+      .from("chat_conversations")
+      .select("*")
+      .eq("owner_user_id", accountOwnerId || user.id)
+      .eq("waba_connection_id", activeConnectionId)
+      .ilike("contact_phone", `%${phoneSuffix}`)
+      .order("last_message_at", { ascending: false, nullsFirst: false })
+      .limit(1);
+
+    if (lookupError) {
+      console.error("[chat] failed to locate conversation", lookupError);
+      toast.error("Não foi possível localizar a conversa. Tente novamente.");
+      return null;
+    }
+
+    const existing = matches?.[0] as ChatConversation | undefined;
     if (existing) {
+      setConversations(prev => prev.some(c => c.id === existing.id) ? prev : [existing, ...prev]);
       setActiveConversationId(existing.id);
       return existing.id;
     }
