@@ -721,28 +721,62 @@ export default function OpportunitiesManagement() {
     toast({ title: "Mensagem copiada!" });
   };
 
-  // Normaliza telefone para wa.me (só dígitos, garantindo DDI 55 quando faltar)
-  const normalizePhoneForWa = (raw: string | null | undefined): string => {
-    const digits = (raw || "").replace(/\D/g, "");
-    if (!digits) return "";
-    if (digits.startsWith("55")) return digits;
-    // Brasil: 10 ou 11 dígitos -> prefixa 55
-    if (digits.length === 10 || digits.length === 11) return "55" + digits;
-    return digits;
-  };
-
-  // Abre WhatsApp Web ou App reutilizando SEMPRE a mesma aba (target nomeado)
-  const openWhatsApp = (lead: OpportunityLead, message: string, target: "web" | "app") => {
-    const phone = normalizePhoneForWa(lead.phone);
+  const launchManualChat = (lead: OpportunityLead, message: string, connectionId: string) => {
+    const phone = formatPhoneForMeta(lead.phone || "");
     if (!phone) {
-      toast({ title: "Telefone inválido", description: "Não foi possível abrir o WhatsApp para este lead.", variant: "destructive" });
+      toast({ title: "Telefone inválido", description: "Não foi possível abrir o chat para este lead.", variant: "destructive" });
       return;
     }
-    const encoded = encodeURIComponent(message || "");
-    const url = target === "web"
-      ? `https://web.whatsapp.com/send?phone=${phone}&text=${encoded}`
-      : `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`; // abre o app nativo (mobile) ou o desktop se instalado
-    window.open(url, "wiize_wa_send");
+
+    try {
+      window.sessionStorage.setItem("wiize:chat:manual-outreach", JSON.stringify({ phone, message, connectionId }));
+    } catch {
+      toast({ title: "Não foi possível preparar o rascunho", description: "Libere o armazenamento do navegador e tente novamente.", variant: "destructive" });
+      return;
+    }
+
+    const params = new URLSearchParams({
+      phone,
+      name: lead.company_name || "Contato",
+      connection: connectionId,
+      draft: "manual",
+    });
+    setSelectedLead(null);
+    navigate(`/chat?${params.toString()}`);
+  };
+
+  const openManualChat = async (lead: OpportunityLead, message: string) => {
+    if (!message.trim() || manualChatLoadingId) return;
+    if (!user || !accountOwnerId) {
+      toast({ title: "Entre na sua conta", description: "Faça login para abrir a conversa no Chat Wiize.", variant: "destructive" });
+      return;
+    }
+
+    setManualChatLoadingId(lead.id);
+    try {
+      const { data, error } = await supabase
+        .from("user_waba_connections")
+        .select("id")
+        .eq("owner_user_id", accountOwnerId)
+        .eq("provider", "evolution")
+        .eq("status", "active")
+        .eq("evolution_state", "open")
+        .limit(1);
+
+      if (error) throw error;
+      const connectionId = data?.[0]?.id;
+      if (!connectionId) {
+        setPendingManualChat({ lead, message });
+        setSupportConnectOpen(true);
+        return;
+      }
+      launchManualChat(lead, message, connectionId);
+    } catch (err: any) {
+      console.error("[opportunities] manual chat connection check failed", err);
+      toast({ title: "Não foi possível verificar o número", description: "Tente novamente em alguns instantes.", variant: "destructive" });
+    } finally {
+      setManualChatLoadingId(null);
+    }
   };
 
 
