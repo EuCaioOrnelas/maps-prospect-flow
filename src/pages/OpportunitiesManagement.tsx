@@ -2538,7 +2538,7 @@ export default function OpportunitiesManagement() {
             Sua mensagem gerada será mantida. Depois da conexão, a conversa abre automaticamente e você só precisa revisar e clicar em enviar.
           </div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <Button variant="outline" onClick={() => setSupportConnectOpen(false)}>Agora não</Button>
+            <Button variant="outline" onClick={() => { setSupportConnectOpen(false); setPendingManualChat(null); }}>Agora não</Button>
             <Button
               className="gap-2"
               onClick={() => {

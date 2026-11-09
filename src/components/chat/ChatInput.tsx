@@ -874,7 +874,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               />
 
               {text.trim() ? (
-                <button onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
+                <button type="button" aria-label="Enviar mensagem" onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
                   <Send size={20} className="wa-accent-text" />
                 </button>
               ) : (
