@@ -155,6 +155,7 @@ export function ManualChatTransitionProvider({ children }: { children: ReactNode
                 value={content.progress}
                 className="mt-6 h-2 bg-muted [&>div]:duration-700 [&>div]:ease-out"
                 aria-label="Progresso da abertura da abordagem"
+                aria-valuenow={content.progress}
               />
               <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>{isReady ? "Concluído" : "Aguarde só um instante"}</span>
