@@ -522,10 +522,11 @@ export function useChat() {
           client_token: tempId,
           waba_connection_id: connection.id,
         },
-      }).then(({ error: fnError }) => {
-        if (fnError) {
-          console.error("send-chat-message error:", fnError);
+      }).then(({ data, error: fnError }) => {
+        if (fnError || data?.success === false) {
+          if (fnError) console.error("send-chat-message error:", fnError);
           if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
+          if (data?.error) toast.error("Mensagem não enviada", { description: data.error });
         }
       });
     }
@@ -609,11 +610,11 @@ export function useChat() {
           waba_connection_id: connection.id,
           reply_to_message_id: replyToId || null,
         },
-      }).then(({ error: fnError }) => {
-        if (fnError) {
-          console.error("[sendMedia] send-chat-message error:", fnError);
+      }).then(({ data, error: fnError }) => {
+        if (fnError || data?.success === false) {
+          if (fnError) console.error("[sendMedia] send-chat-message error:", fnError);
           if (isActive) setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: "failed" } : m));
-          toast.error("Falha ao enviar mídia", { description: fnError.message });
+          toast.error("Falha ao enviar mídia", { description: data?.error || fnError?.message });
         }
       });
     }
