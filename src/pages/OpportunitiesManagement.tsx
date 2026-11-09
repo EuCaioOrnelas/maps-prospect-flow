@@ -2336,19 +2336,17 @@ export default function OpportunitiesManagement() {
                                       <span className="font-medium">Meta API</span>
                                       <span className="text-[11px] text-muted-foreground">Envio oficial pela Meta Cloud</span>
                                     </button>
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <button className="w-full text-left px-2 py-2 text-sm rounded hover:bg-muted flex flex-col gap-0.5">
-                                          <span className="font-medium">Manual (link WhatsApp)</span>
-                                          <span className="text-[11px] text-muted-foreground">Abre conversa com texto pronto</span>
-                                        </button>
-                                      </PopoverTrigger>
-                                      <PopoverContent className="w-52 p-1" align="center">
-                                        <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">Abrir WhatsApp</div>
-                                        <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "web")}>WhatsApp Web</button>
-                                        <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "app")}>Aplicativo</button>
-                                      </PopoverContent>
-                                    </Popover>
+                                    <button
+                                      className="w-full text-left px-2 py-2 text-sm rounded hover:bg-muted flex flex-col gap-0.5 disabled:opacity-60"
+                                      disabled={manualChatLoadingId === lead.id}
+                                      onClick={() => void openManualChat(lead, manualMsg)}
+                                    >
+                                      <span className="font-medium flex items-center gap-2">
+                                        {manualChatLoadingId === lead.id && <Loader2 size={12} className="animate-spin" />}
+                                        Manual no Chat Wiize
+                                      </span>
+                                      <span className="text-[11px] text-muted-foreground">Abre o contato com o texto pronto para você enviar</span>
+                                    </button>
                                   </PopoverContent>
                                 </Popover>
                               );
