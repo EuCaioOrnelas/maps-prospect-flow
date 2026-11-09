@@ -209,6 +209,7 @@ const Chat = () => {
         && connection.evolution_state === "open"
         && chat.connectionHealth[connection.id] !== false;
       if (!ready) {
+        manualChatTransition.cancel();
         window.sessionStorage.removeItem("wiize:chat:manual-outreach");
         toast({ title: "Número de atendimento desconectado", description: "Reconecte o número para abrir a conversa com o rascunho.", variant: "destructive" });
         finishLaunch();

@@ -740,10 +740,12 @@ export default function OpportunitiesManagement() {
     try {
       window.sessionStorage.setItem("wiize:chat:manual-outreach", JSON.stringify({ phone, message, connectionId, createdAt: Date.now() }));
     } catch {
+      manualChatTransition.cancel();
       toast({ title: "Não foi possível preparar o rascunho", description: "Libere o armazenamento do navegador e tente novamente.", variant: "destructive" });
       return;
     }
 
+    manualChatTransition.advance("opening");
     const params = new URLSearchParams({
       phone,
       name: lead.company_name || "Contato",
