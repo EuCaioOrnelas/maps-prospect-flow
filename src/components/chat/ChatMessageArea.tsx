@@ -62,6 +62,8 @@ interface ChatMessageAreaProps {
   onDeleteMessages?: (messageIds: string[], mode?: "me" | "all") => Promise<void>;
   /** Número de Atendimento (Evolution): sem janela de 24h nem templates da Meta. */
   isEvolution?: boolean;
+  /** Rascunho recebido de outro módulo; apenas preenche o campo, nunca envia. */
+  inputDraft?: { conversationId: string; text: string; version: number } | null;
 }
 
 

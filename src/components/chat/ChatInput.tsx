@@ -103,6 +103,8 @@ interface ChatInputProps {
   conversation?: { contact_name?: string | null; contact_phone?: string | null } | null;
   /** Stable identifier used to persist the draft per conversation in localStorage */
   conversationId?: string | null;
+  /** Draft encaminhado por outro módulo para revisão e envio manual. */
+  inputDraft?: { conversationId: string; text: string; version: number } | null;
 }
 
 interface AttachedFile {
