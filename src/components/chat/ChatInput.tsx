@@ -330,7 +330,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     setEmojiOpen(false);
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply, onSendOutreach, outreachFor, conversationId]);
+  }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply, onSendOutreach, outreachFor, conversationId, inputDraft]);
 
   // Etapas resolvidas (mensagem 1, 2, 3…) da mensagem rápida selecionada.
   const confirmSteps = useMemo(() => {
