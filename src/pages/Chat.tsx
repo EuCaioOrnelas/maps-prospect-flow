@@ -255,7 +255,7 @@ const Chat = () => {
     chat.startNewConversation,
     handledLaunchKey,
     hasConnection,
-    isLoading,
+    chat.connectionsLoading,
     searchParams,
     setSearchParams,
     shouldShowDialog,

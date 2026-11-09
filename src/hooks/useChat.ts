@@ -209,7 +209,10 @@ export function useChat() {
         setLoadError("Não foi possível carregar o Chat. Verifique sua conexão e tente novamente.");
       }
     } finally {
-      if (requestId === connectionRequestRef.current) setLoading(false);
+      if (requestId === connectionRequestRef.current) {
+        setLoading(false);
+        setConnectionsLoading(false);
+      }
     }
   }, [user, accountOwnerId, validateToken, readSavedConnectionId, setActiveConnectionId]);
 
