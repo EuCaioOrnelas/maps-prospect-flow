@@ -765,6 +765,7 @@ export default function OpportunitiesManagement() {
     }
 
     setManualChatLoadingId(lead.id);
+    manualChatTransition.start();
     try {
       const { data, error } = await supabase
         .from("user_waba_connections")

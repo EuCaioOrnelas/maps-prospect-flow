@@ -219,6 +219,7 @@ const Chat = () => {
 
     const openRequestedChat = async () => {
       launchInFlightRef.current = nextLaunchKey;
+      if (wantsManualDraft) manualChatTransition.advance("conversation");
       let openedConversationId = conversationId;
       if (conversationId) {
         chat.setActiveConversationId(conversationId);
