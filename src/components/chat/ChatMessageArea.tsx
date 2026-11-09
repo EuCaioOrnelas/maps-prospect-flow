@@ -6,6 +6,8 @@ import { ContactDetailsPanel } from "./ContactDetailsPanel";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
+import { OutreachQueueBubbles } from "./OutreachQueueBubbles";
+import { useOutreachQueue } from "@/hooks/useOutreachQueue";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
 import { ForwardDialog } from "./ForwardDialog";
@@ -1349,6 +1351,8 @@ export function ChatMessageArea({
                   );
               }
               return (
+                <>
+                <OutreachQueueBubbles items={outreachQueue.items} onCancel={outreachQueue.cancel} />
                 <ChatInput
                   onSendMessage={onSendMessage}
                   onSendMedia={onSendMedia}
@@ -1359,7 +1363,9 @@ export function ChatMessageArea({
                   conversation={conversation}
                   conversationId={conversation?.id ?? null}
                   inputDraft={inputDraft}
+                  onSendOutreach={isEvolution ? outreachQueue.enqueue : undefined}
                 />
+                </>
 
               );
             })()}
