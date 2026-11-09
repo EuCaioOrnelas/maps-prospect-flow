@@ -158,6 +158,7 @@ export function useChat() {
       const saved = savedId ? data.find(c => c.id === savedId) : null;
       setActiveConnectionId(saved?.id || healthyConn?.id || data[0].id);
       setLoading(false);
+      setConnectionsLoading(false);
       return;
     }
 

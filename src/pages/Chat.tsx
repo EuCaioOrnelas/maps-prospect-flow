@@ -177,9 +177,10 @@ const Chat = () => {
     const wantsManualDraft = searchParams.get("draft") === "manual";
     if (!phone && !conversationId) return;
     const nextLaunchKey = `${searchParams.get("launch") ?? ""}:${conversationId ?? ""}:${phone ?? ""}:${requestedConnectionId ?? chat.activeConnectionId ?? ""}`;
-    if (nextLaunchKey === handledLaunchKey) return;
+    if (nextLaunchKey === handledLaunchKey || launchInFlightRef.current === nextLaunchKey) return;
 
     const finishLaunch = () => {
+      launchInFlightRef.current = "";
       setHandledLaunchKey(nextLaunchKey);
       setSearchParams({}, { replace: true });
     };
