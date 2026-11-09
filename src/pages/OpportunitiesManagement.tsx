@@ -35,6 +35,7 @@ import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/o
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
 import { EvolutionConnectDialog } from "@/components/numbers/EvolutionConnectDialog";
+import { useManualChatTransition } from "@/components/opportunities/ManualChatTransition";
 import { formatPhoneNumber, formatPhoneForMeta } from "@/lib/phoneUtils";
 import { AutoApproachPrefs, EMPTY_AUTO_APPROACH, readAutoApproachPrefs, clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
 
@@ -97,6 +98,7 @@ export default function OpportunitiesManagement() {
   const publicDemo = window.location.pathname === "/tour-guiado";
   const { profile, user, accountOwnerId } = useAuth();
   const { toast } = useToast();
+  const manualChatTransition = useManualChatTransition();
   const navigate = useNavigate();
   const location = useLocation();
   useAutoScoreTracking("opportunities_management");
@@ -730,6 +732,7 @@ export default function OpportunitiesManagement() {
   const launchManualChat = (lead: OpportunityLead, message: string, connectionId: string) => {
     const phone = formatPhoneForMeta(lead.phone || "");
     if (!phone) {
+      manualChatTransition.cancel();
       toast({ title: "Telefone inválido", description: "Não foi possível abrir o chat para este lead.", variant: "destructive" });
       return;
     }
@@ -737,10 +740,12 @@ export default function OpportunitiesManagement() {
     try {
       window.sessionStorage.setItem("wiize:chat:manual-outreach", JSON.stringify({ phone, message, connectionId, createdAt: Date.now() }));
     } catch {
+      manualChatTransition.cancel();
       toast({ title: "Não foi possível preparar o rascunho", description: "Libere o armazenamento do navegador e tente novamente.", variant: "destructive" });
       return;
     }
 
+    manualChatTransition.advance("opening");
     const params = new URLSearchParams({
       phone,
       name: lead.company_name || "Contato",
@@ -760,6 +765,7 @@ export default function OpportunitiesManagement() {
     }
 
     setManualChatLoadingId(lead.id);
+    manualChatTransition.start();
     try {
       const { data, error } = await supabase
         .from("user_waba_connections")
@@ -773,12 +779,14 @@ export default function OpportunitiesManagement() {
       if (error) throw error;
       const connectionId = data?.[0]?.id;
       if (!connectionId) {
+        manualChatTransition.cancel();
         setPendingManualChat({ lead, message });
         setSupportConnectOpen(true);
         return;
       }
       launchManualChat(lead, message, connectionId);
     } catch (err: any) {
+      manualChatTransition.cancel();
       console.error("[opportunities] manual chat connection check failed", err);
       toast({ title: "Não foi possível verificar o número", description: "Tente novamente em alguns instantes.", variant: "destructive" });
     } finally {

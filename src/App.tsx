@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "./components/SEO";
 const ActivationChecklist = lazyWithRetry(() => import("@/components/dashboard/ActivationChecklist").then((m) => ({ default: m.ActivationChecklist })), "ActivationChecklist");
 import { GuidedTourProvider } from "@/hooks/useGuidedTour";
+import { ManualChatTransitionProvider } from "@/components/opportunities/ManualChatTransition";
 const GuidedTour = lazyWithRetry(() => import("@/components/onboarding/GuidedTour").then((m) => ({ default: m.GuidedTour })), "GuidedTour");
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
@@ -313,6 +314,7 @@ const App = () => (
           <TabTitleManager />
 
           <AuthProvider>
+            <ManualChatTransitionProvider>
             <MetricStateCacheProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
@@ -603,6 +605,7 @@ const App = () => (
 
             </GuidedTourProvider>
             </MetricStateCacheProvider>
+            </ManualChatTransitionProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
