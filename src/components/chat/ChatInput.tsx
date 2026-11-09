@@ -233,6 +233,16 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey]);
 
+  // Apply a draft handed off by another module without ever sending it automatically.
+  useEffect(() => {
+    if (!inputDraft || inputDraft.conversationId !== conversationId) return;
+    setText(inputDraft.text);
+    window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(inputDraft.text.length, inputDraft.text.length);
+    });
+  }, [conversationId, inputDraft]);
+
   // Persist draft on text change (debounced via microtask-free direct write — small payload)
   useEffect(() => {
     if (typeof window === "undefined" || !draftKey) return;

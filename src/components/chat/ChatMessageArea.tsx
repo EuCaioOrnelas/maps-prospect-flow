@@ -1358,6 +1358,7 @@ export function ChatMessageArea({
                   onExternalConsumed={() => setDroppedFiles([])}
                   conversation={conversation}
                   conversationId={conversation?.id ?? null}
+                  inputDraft={inputDraft}
                 />
 
               );

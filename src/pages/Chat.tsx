@@ -471,6 +471,7 @@ const Chat = () => {
                     onForwardMessages={chat.forwardMessages}
                     onDeleteMessages={chat.deleteMessages}
                     isEvolution={(chat.connections.find(c => c.id === chat.activeConversation?.waba_connection_id) ?? chat.activeConnection)?.provider === "evolution"}
+                    inputDraft={inputDraft}
                   />
                 </div>
               </>
