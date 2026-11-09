@@ -2516,6 +2516,57 @@ export default function OpportunitiesManagement() {
         />
       )}
 
+      <Dialog
+        open={supportConnectOpen}
+        onOpenChange={(open) => {
+          setSupportConnectOpen(open);
+          if (!open) setPendingManualChat(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare size={18} className="text-primary" />
+              Conecte seu número de atendimento
+            </DialogTitle>
+            <DialogDescription>
+              Para abrir este contato no Chat Wiize com a mensagem pronta, primeiro conecte um número de atendimento por QR code.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground leading-relaxed">
+            Sua mensagem gerada será mantida. Depois da conexão, a conversa abre automaticamente e você só precisa revisar e clicar em enviar.
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button variant="outline" onClick={() => setSupportConnectOpen(false)}>Agora não</Button>
+            <Button
+              className="gap-2"
+              onClick={() => {
+                setSupportConnectOpen(false);
+                setEvolutionConnectOpen(true);
+              }}
+            >
+              <Wifi size={15} /> Conectar número
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <EvolutionConnectDialog
+        open={evolutionConnectOpen}
+        onOpenChange={(open) => {
+          setEvolutionConnectOpen(open);
+          if (!open) setPendingManualChat(null);
+        }}
+        onConnected={(connection) => {
+          const pending = pendingManualChat;
+          setEvolutionConnectOpen(false);
+          setPendingManualChat(null);
+          if (pending && connection?.id) {
+            launchManualChat(pending.lead, pending.message, connection.id);
+          }
+        }}
+      />
+
       {/* Send Message Dialog */}
       {sendingLead && user && (
         <SendMessageDialog
