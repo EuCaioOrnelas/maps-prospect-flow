@@ -169,7 +169,7 @@ const Chat = () => {
   const shouldShowDialog = isLoading ? false : hasNoConnection;
 
   useEffect(() => {
-    if (isLoading || shouldShowDialog || !hasConnection) return;
+    if (chat.connectionsLoading || shouldShowDialog || !hasConnection) return;
     const phone = searchParams.get("phone");
     const name = searchParams.get("name") ?? undefined;
     const conversationId = searchParams.get("conversation");

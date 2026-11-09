@@ -134,6 +134,7 @@ export function useChat() {
     if (!data || data.length === 0) {
       setConnections([]);
       setLoading(false);
+      setConnectionsLoading(false);
       return;
     }
 
