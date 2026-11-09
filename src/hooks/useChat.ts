@@ -245,7 +245,15 @@ export function useChat() {
       }
       const data = secureData?.conversations;
 
-      setConversations(hydrateProfilePics((data as ChatConversation[]) || []));
+      const loaded = hydrateProfilePics((data as ChatConversation[]) || []);
+      setConversations(prev => {
+        // Uma conversa aberta diretamente pela abordagem pode ter sido criada
+        // enquanto esta lista carregava. Nunca a remova quando a resposta chegar.
+        const pending = prev.filter(c =>
+          c.waba_connection_id === activeConnectionId && !loaded.some(item => item.id === c.id)
+        );
+        return [...pending, ...loaded];
+      });
       loadedConvForConnRef.current = activeConnectionId;
       } catch {
         if (!cancelled) setLoadError("Não foi possível carregar as conversas. Tente novamente.");
@@ -1014,6 +1022,7 @@ export function useChat() {
     allConnectionsExpired,
     connectionHealth,
     loading,
+    connectionsLoading,
     loadError,
     retryLoad,
     loadingMessages,
