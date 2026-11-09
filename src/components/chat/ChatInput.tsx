@@ -103,6 +103,8 @@ interface ChatInputProps {
   conversation?: { contact_name?: string | null; contact_phone?: string | null } | null;
   /** Stable identifier used to persist the draft per conversation in localStorage */
   conversationId?: string | null;
+  /** Draft encaminhado por outro módulo para revisão e envio manual. */
+  inputDraft?: { conversationId: string; text: string; version: number } | null;
 }
 
 interface AttachedFile {
@@ -134,7 +136,7 @@ function pickAudioMime(): { mime: string; ext: string } {
   return { mime: "audio/webm", ext: "webm" };
 }
 
-export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation, conversationId }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation, conversationId, inputDraft }: ChatInputProps) {
   const draftKey = useMemo(() => {
     const id = conversationId || conversation?.contact_phone || null;
     return id ? `wiize:chat:draft:${id}` : null;
@@ -230,6 +232,16 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     } catch { setText(""); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey]);
+
+  // Apply a draft handed off by another module without ever sending it automatically.
+  useEffect(() => {
+    if (!inputDraft || inputDraft.conversationId !== conversationId) return;
+    setText(inputDraft.text);
+    window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(inputDraft.text.length, inputDraft.text.length);
+    });
+  }, [conversationId, inputDraft]);
 
   // Persist draft on text change (debounced via microtask-free direct write — small payload)
   useEffect(() => {
@@ -862,7 +874,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
               />
 
               {text.trim() ? (
-                <button onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
+                <button type="button" aria-label="Enviar mensagem" onClick={handleSend} className="p-[12px] shrink-0 self-end hover:opacity-70 transition-opacity">
                   <Send size={20} className="wa-accent-text" />
                 </button>
               ) : (

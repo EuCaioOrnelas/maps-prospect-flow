@@ -62,6 +62,8 @@ interface ChatMessageAreaProps {
   onDeleteMessages?: (messageIds: string[], mode?: "me" | "all") => Promise<void>;
   /** Número de Atendimento (Evolution): sem janela de 24h nem templates da Meta. */
   isEvolution?: boolean;
+  /** Rascunho recebido de outro módulo; apenas preenche o campo, nunca envia. */
+  inputDraft?: { conversationId: string; text: string; version: number } | null;
 }
 
 
@@ -387,7 +389,7 @@ function MessageActions({
 export function ChatMessageArea({
   conversation, conversations = [], messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
-  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages, isEvolution,
+  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages, isEvolution, inputDraft,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -1356,6 +1358,7 @@ export function ChatMessageArea({
                   onExternalConsumed={() => setDroppedFiles([])}
                   conversation={conversation}
                   conversationId={conversation?.id ?? null}
+                  inputDraft={inputDraft}
                 />
 
               );

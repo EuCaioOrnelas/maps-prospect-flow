@@ -664,14 +664,14 @@ export function useChat() {
 
 
   // Start new conversation
-  const startNewConversation = useCallback(async (phone: string, name?: string) => {
-    if (!user || !activeConnectionId) return;
+  const startNewConversation = useCallback(async (phone: string, name?: string): Promise<string | null> => {
+    if (!user || !activeConnectionId) return null;
 
     // E.164 global (BR + intl, com 9º dígito BR automático)
     const cleanPhone = formatPhoneForMeta(phone);
     if (!cleanPhone) {
       toast.error("Telefone inválido. Use formato internacional (ex: +55 11 99999-9999).");
-      return;
+      return null;
     }
 
     const existing = conversations.find(c =>
@@ -680,20 +680,28 @@ export function useChat() {
 
     if (existing) {
       setActiveConversationId(existing.id);
-      return;
+      return existing.id;
     }
 
-    const { data } = await supabase.from("chat_conversations").insert({
+    const { data, error } = await supabase.from("chat_conversations").insert({
       user_id: user.id,
       waba_connection_id: activeConnectionId,
       contact_phone: cleanPhone,
       contact_name: name || null,
     }).select().single();
 
+    if (error) {
+      console.error("[chat] failed to start conversation", error);
+      toast.error("Não foi possível abrir a conversa. Tente novamente.");
+      return null;
+    }
+
     if (data) {
       setConversations(prev => [data as ChatConversation, ...prev]);
       setActiveConversationId(data.id);
+      return data.id;
     }
+    return null;
   }, [user, activeConnectionId, conversations]);
 
   // Filter conversations
