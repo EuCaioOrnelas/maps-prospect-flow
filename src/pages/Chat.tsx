@@ -249,8 +249,11 @@ const Chat = () => {
           toast({ title: "Conversa aberta", description: "Não foi possível recuperar o rascunho. Volte à oportunidade e tente novamente.", variant: "destructive" });
         } finally {
           window.sessionStorage.removeItem("wiize:chat:manual-outreach");
+          if (recoveredDraft) manualChatTransition.complete();
+          else manualChatTransition.cancel();
         }
       }
+      if (wantsManualDraft && !openedConversationId) manualChatTransition.cancel();
       finishLaunch();
     };
     void openRequestedChat();
