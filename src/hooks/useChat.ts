@@ -745,7 +745,7 @@ export function useChat() {
       return data.id;
     }
     return null;
-  }, [user, activeConnectionId, conversations]);
+  }, [user, accountOwnerId, activeConnectionId, conversations]);
 
   // Filter conversations
   const filteredConversations = searchQuery
