@@ -45,6 +45,7 @@ const Chat = () => {
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState(false);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
+  const launchInFlightRef = useRef("");
   const [inputDraft, setInputDraft] = useState<{ conversationId: string; text: string; version: number } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [reconnectOpen, setReconnectOpen] = useState(false);

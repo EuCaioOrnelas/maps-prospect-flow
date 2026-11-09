@@ -121,7 +121,8 @@ export function useChat() {
   // Load WABA connections and validate tokens
   const loadConnections = useCallback(async (forceValidate = false) => {
     const requestId = ++connectionRequestRef.current;
-    if (!user || !accountOwnerId) { setLoading(false); return; }
+    if (!user || !accountOwnerId) { setLoading(false); setConnectionsLoading(false); return; }
+    setConnectionsLoading(true);
     setLoadError(null);
     try {
     const { data, error } = await withRequestTimeout(supabase
