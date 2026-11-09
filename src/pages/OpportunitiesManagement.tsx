@@ -183,6 +183,10 @@ export default function OpportunitiesManagement() {
   const [sendingLead, setSendingLead] = useState<OpportunityLead | null>(null);
   const [sendDialogOpen, setSendDialogOpen] = useState(true);
   const [sendCooldown, setSendCooldown] = useState(0);
+  const [manualChatLoadingId, setManualChatLoadingId] = useState<string | null>(null);
+  const [pendingManualChat, setPendingManualChat] = useState<{ lead: OpportunityLead; message: string } | null>(null);
+  const [supportConnectOpen, setSupportConnectOpen] = useState(false);
+  const [evolutionConnectOpen, setEvolutionConnectOpen] = useState(false);
 
 
   // Dual scroll refs for table

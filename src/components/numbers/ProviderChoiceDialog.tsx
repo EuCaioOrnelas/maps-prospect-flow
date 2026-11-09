@@ -43,10 +43,10 @@ export function ProviderChoiceDialog({ open, onOpenChange, onChoose }: Props) {
               <p className="mt-1.5 min-h-[60px] text-sm leading-relaxed text-muted-foreground">
                 Usa o seu WhatsApp Web para atender. Conecta por QR code em segundos, sem custo por mensagem.
               </p>
-              <div className="mt-4 flex min-h-[58px] items-start gap-2.5 rounded-hover border border-warning/30 bg-warning/10 px-3 py-2.5">
-                <AlertTriangle size={14} className="mt-0.5 shrink-0 text-warning" />
+              <div className="mt-4 flex min-h-[58px] items-start gap-2.5 rounded-hover border border-border bg-muted/40 px-3 py-2.5">
+                <Info size={14} className="mt-0.5 shrink-0 text-primary" />
                 <p className="text-[11px] font-normal leading-snug text-foreground/80">
-                  Funciona só para atender contatos com quem você já conversou. Risco de bloqueio se usado para marketing.
+                  Conexão por QR code via API não oficial, indicada para atendimento e conversas manuais. Para campanhas, use a API oficial da Meta.
                 </p>
               </div>
             </div>
