@@ -34,7 +34,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyProfileOnboarding, isBusinessModelMissing } from "@/components/opportunities/CompanyProfileOnboarding";
 import { IdealAudienceMismatchBanner } from "@/components/opportunities/IdealAudienceMismatchBanner";
 import { SendMessageDialog } from "@/components/opportunities/SendMessageDialog";
-import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { EvolutionConnectDialog } from "@/components/numbers/EvolutionConnectDialog";
+import { formatPhoneNumber, formatPhoneForMeta } from "@/lib/phoneUtils";
 import { AutoApproachPrefs, EMPTY_AUTO_APPROACH, readAutoApproachPrefs, clearAutoApproachPrefs } from "@/lib/autoApproachPrefs";
 
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";

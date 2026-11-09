@@ -201,7 +201,10 @@ export function EvolutionConnectDialog({ open, onOpenChange, onConnected }: Prop
             <div className="rounded-xl border border-border bg-muted/30 p-3.5 text-xs text-muted-foreground space-y-1.5">
               <p className="flex items-center gap-2 text-foreground font-medium"><Smartphone size={13} /> O que você vai precisar</p>
               <p>• O celular com o WhatsApp que será conectado, com internet.</p>
-              <p>• Este número serve para atendimento, chat, CRM e IA — não para disparos.</p>
+              <p>• Indicado para atendimento e conversas manuais no chat, CRM e IA.</p>
+              <p className="border-t border-border/70 pt-2 leading-relaxed">
+                A conexão por QR code usa uma <strong className="font-medium text-foreground">API não oficial do WhatsApp</strong>. Para campanhas e envios em escala, prefira a API oficial da Meta.
+              </p>
             </div>
             <Button className="w-full" onClick={handleCreate} disabled={creating}>
               {creating ? <Loader2 size={14} className="mr-2 animate-spin" /> : <QrCode size={14} className="mr-2" />}
