@@ -67,13 +67,21 @@ export interface WabaConnection {
   evolution_state?: string | null;
 }
 
+// Cache só em memória (some ao recarregar/sair da conta): ao voltar ao Chat a lista
+// aparece na hora e é atualizada em segundo plano, sem nova carga visível nem consulta extra.
+type ChatMemoryCache = { userId: string; connections: WabaConnection[]; activeConnectionId: string | null; conversations: Record<string, ChatConversation[]> };
+let chatMemoryCache: ChatMemoryCache | null = null;
+const readChatCache = (userId?: string | null) => (userId && chatMemoryCache?.userId === userId ? chatMemoryCache : null);
+
 export function useChat() {
   const { user, accountOwnerId } = useAuth();
-  const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const initialCache = readChatCache(user?.id);
+  const [conversations, setConversations] = useState<ChatConversation[]>(() =>
+    initialCache?.activeConnectionId ? initialCache.conversations[initialCache.activeConnectionId] || [] : []);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [connections, setConnections] = useState<WabaConnection[]>([]);
-  const [activeConnectionId, setActiveConnectionIdState] = useState<string | null>(null);
+  const [connections, setConnections] = useState<WabaConnection[]>(() => initialCache?.connections || []);
+  const [activeConnectionId, setActiveConnectionIdState] = useState<string | null>(() => initialCache?.activeConnectionId || null);
 
   // Número selecionado fica salvo no cache: ao voltar ao chat o usuário
   // continua no mesmo número, em vez de cair sempre no primeiro.
@@ -89,10 +97,10 @@ export function useChat() {
   const readSavedConnectionId = useCallback(() => {
     try { return activeConnKey ? localStorage.getItem(activeConnKey) : null; } catch { return null; }
   }, [activeConnKey]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(initialCache?.activeConnectionId && initialCache.conversations[initialCache.activeConnectionId]));
   // Libera ações que dependem apenas da conexão (como abrir uma abordagem do
   // CRM) sem esperar a lista completa de conversas terminar de carregar.
-  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectionsLoading, setConnectionsLoading] = useState(() => !initialCache?.connections.length);
   const [loadError, setLoadError] = useState<string | null>(null);
   const connectionRequestRef = useRef(0);
   const [reloadVersion, setReloadVersion] = useState(0);
@@ -230,7 +238,12 @@ export function useChat() {
   useEffect(() => {
     if (!user || !activeConnectionId) return;
     let cancelled = false;
-    const isFirstLoadForConn = loadedConvForConnRef.current !== activeConnectionId;
+    const cachedList = readChatCache(user.id)?.conversations[activeConnectionId];
+    const isFirstLoadForConn = loadedConvForConnRef.current !== activeConnectionId && !cachedList;
+    if (cachedList && loadedConvForConnRef.current !== activeConnectionId) {
+      setConversations(cachedList);
+      setLoading(false);
+    }
     const loadConversations = async () => {
       if (isFirstLoadForConn) setLoading(true);
       setLoadError(null);
@@ -264,6 +277,18 @@ export function useChat() {
     void loadConversations();
     return () => { cancelled = true; };
   }, [user?.id, accountOwnerId, activeConnectionId, reloadVersion]);
+
+  // Mantém o cache em memória sincronizado com o que está na tela.
+  useEffect(() => {
+    if (!user?.id) return;
+    const base = readChatCache(user.id) || { userId: user.id, connections: [], activeConnectionId: null, conversations: {} };
+    if (connections.length) base.connections = connections;
+    if (activeConnectionId) {
+      base.activeConnectionId = activeConnectionId;
+      if (loadedConvForConnRef.current === activeConnectionId) base.conversations[activeConnectionId] = conversations;
+    }
+    chatMemoryCache = base;
+  }, [user?.id, connections, activeConnectionId, conversations]);
 
   // Conversa aberta em um ref: usado pelo canal realtime e para descartar
   // respostas atrasadas de conversas que já foram fechadas.
