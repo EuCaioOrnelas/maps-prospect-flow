@@ -424,7 +424,15 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } else {
-      const errorMsg = metaResult.error?.message || 'Unknown error';
+      // Evolution responde 400 com { response: { message: [{ exists: false }] } } quando o número não tem WhatsApp.
+      const evoList = Array.isArray(metaResult?.response?.message) ? metaResult.response.message : [];
+      const notOnWhatsApp = evoList.some((m: any) => m && m.exists === false);
+      const errorMsg = notOnWhatsApp
+        ? 'Este número não tem WhatsApp.'
+        : (metaResult.error?.message
+          || (typeof metaResult?.response?.message === 'string' ? metaResult.response.message : null)
+          || (typeof metaResult?.error === 'string' ? metaResult.error : null)
+          || 'Não foi possível enviar a mensagem.');
       console.error(`[send-chat-message] Failed:`, errorMsg);
 
       await supabase.from('chat_messages').update({
@@ -433,8 +441,9 @@ Deno.serve(async (req) => {
         status_updated_at: new Date().toISOString(),
       }).eq('id', message_id);
 
-      return new Response(JSON.stringify({ error: errorMsg }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      // Falha de entrega é um resultado esperado (a mensagem fica "falhou" no chat), não erro de servidor.
+      return new Response(JSON.stringify({ success: false, error: errorMsg, code: notOnWhatsApp ? 'not_on_whatsapp' : 'send_failed' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
   } catch (error) {
