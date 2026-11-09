@@ -278,6 +278,24 @@ export function useChat() {
     return () => { cancelled = true; };
   }, [user?.id, accountOwnerId, activeConnectionId, reloadVersion]);
 
+  // Se o usuário só ficou disponível depois da 1ª renderização, hidrata pelo cache.
+  const hydratedFromCacheRef = useRef(false);
+  useEffect(() => {
+    if (hydratedFromCacheRef.current || !user?.id) return;
+    hydratedFromCacheRef.current = true;
+    const cache = readChatCache(user.id);
+    if (!cache) return;
+    if (cache.connections.length) { setConnections(prev => prev.length ? prev : cache.connections); setConnectionsLoading(false); }
+    const connId = activeConnectionId || cache.activeConnectionId;
+    const list = connId ? cache.conversations[connId] : null;
+    if (connId && list?.length) {
+      if (!activeConnectionId) setActiveConnectionIdState(connId);
+      setConversations(prev => prev.length ? prev : list);
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
   // Mantém o cache em memória sincronizado com o que está na tela.
   useEffect(() => {
     if (!user?.id) return;
@@ -285,7 +303,8 @@ export function useChat() {
     if (connections.length) base.connections = connections;
     if (activeConnectionId) {
       base.activeConnectionId = activeConnectionId;
-      if (loadedConvForConnRef.current === activeConnectionId) base.conversations[activeConnectionId] = conversations;
+      const forConn = conversations.filter(c => c.waba_connection_id === activeConnectionId);
+      if (forConn.length) base.conversations[activeConnectionId] = forConn;
     }
     chatMemoryCache = base;
   }, [user?.id, connections, activeConnectionId, conversations]);
