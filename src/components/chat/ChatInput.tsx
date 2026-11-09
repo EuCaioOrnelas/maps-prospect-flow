@@ -243,6 +243,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     if (!inputDraft || inputDraft.conversationId !== conversationId) return;
     setText(inputDraft.text);
     setOutreachFor(inputDraft.conversationId);
+    try { window.sessionStorage.setItem(`wiize:outreach:${inputDraft.conversationId}`, "1"); } catch { /* ignore */ }
     window.requestAnimationFrame(() => {
       inputRef.current?.focus();
       inputRef.current?.setSelectionRange(inputDraft.text.length, inputDraft.text.length);
@@ -318,11 +319,23 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       return;
     }
     if (!text.trim()) return;
-    if (onSendOutreach && outreachFor && (outreachFor === conversationId || inputDraft?.conversationId === conversationId)) {
+    // Abordagem (vinda da Gestão de Oportunidades ou igual à abordagem da IA) sempre vai para a fila.
+    let markedOutreach = false;
+    try { markedOutreach = !!conversationId && window.sessionStorage.getItem(`wiize:outreach:${conversationId}`) === "1"; } catch { /* ignore */ }
+    const isAiApproachText = !!aiApproachMessage && text.trim() === aiApproachMessage.trim();
+    if (onSendOutreach && conversationId && (markedOutreach || isAiApproachText || outreachFor === conversationId || inputDraft?.conversationId === conversationId)) {
       const outreachText = text.trim();
+      const convId = conversationId;
       setText("");
       setOutreachFor(null);
-      void onSendOutreach(outreachText).then(ok => { if (!ok) { setText(outreachText); setOutreachFor(conversationId ?? null); } });
+      try { window.sessionStorage.removeItem(`wiize:outreach:${convId}`); } catch { /* ignore */ }
+      void onSendOutreach(outreachText).then(ok => {
+        if (!ok) {
+          setText(outreachText);
+          setOutreachFor(convId);
+          try { window.sessionStorage.setItem(`wiize:outreach:${convId}`, "1"); } catch { /* ignore */ }
+        }
+      });
       return;
     }
     onSendMessage(text.trim(), replyingTo?.id);
@@ -330,7 +343,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     setEmojiOpen(false);
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply, onSendOutreach, outreachFor, conversationId, inputDraft]);
+  }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply, onSendOutreach, outreachFor, conversationId, inputDraft, aiApproachMessage]);
 
   // Etapas resolvidas (mensagem 1, 2, 3…) da mensagem rápida selecionada.
   const confirmSteps = useMemo(() => {
