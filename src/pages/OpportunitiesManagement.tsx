@@ -732,6 +732,7 @@ export default function OpportunitiesManagement() {
   const launchManualChat = (lead: OpportunityLead, message: string, connectionId: string) => {
     const phone = formatPhoneForMeta(lead.phone || "");
     if (!phone) {
+      manualChatTransition.cancel();
       toast({ title: "Telefone inválido", description: "Não foi possível abrir o chat para este lead.", variant: "destructive" });
       return;
     }

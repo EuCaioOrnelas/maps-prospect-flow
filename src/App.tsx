@@ -605,6 +605,7 @@ const App = () => (
 
             </GuidedTourProvider>
             </MetricStateCacheProvider>
+            </ManualChatTransitionProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

@@ -194,6 +194,7 @@ const Chat = () => {
         return;
       }
       if (wantsManualDraft) {
+        manualChatTransition.cancel();
         window.sessionStorage.removeItem("wiize:chat:manual-outreach");
         toast({ title: "Número de atendimento não encontrado", description: "Conecte o número novamente antes de abrir a conversa.", variant: "destructive" });
         finishLaunch();
