@@ -153,7 +153,10 @@ export function ManualChatTransitionProvider({ children }: { children: ReactNode
 
               <Progress
                 value={content.progress}
-                className="mt-6 h-2 bg-muted [&>div]:duration-700 [&>div]:ease-out"
+                className={cn(
+                  "mt-6 h-2 bg-muted [&>div]:ease-out",
+                  isReady ? "[&>div]:duration-300" : "[&>div]:duration-700",
+                )}
                 aria-label="Progresso da abertura da abordagem"
                 aria-valuenow={content.progress}
               />
