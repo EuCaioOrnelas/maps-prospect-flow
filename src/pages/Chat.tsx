@@ -243,6 +243,7 @@ const Chat = () => {
           if (valid) {
             window.localStorage.setItem(`wiize:chat:draft:${openedConversationId}`, handoff.message);
             setInputDraft({ conversationId: openedConversationId, text: handoff.message, version: Date.now() });
+            recoveredDraft = true;
           }
         } catch {
           toast({ title: "Conversa aberta", description: "Não foi possível recuperar o rascunho. Volte à oportunidade e tente novamente.", variant: "destructive" });
