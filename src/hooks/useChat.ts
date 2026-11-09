@@ -694,6 +694,7 @@ export function useChat() {
 
     const phoneSuffix = cleanPhone.slice(-8);
     const localExisting = conversations.find(c =>
+      c.waba_connection_id === activeConnectionId &&
       c.contact_phone.replace(/\D/g, "").endsWith(phoneSuffix)
     );
 
