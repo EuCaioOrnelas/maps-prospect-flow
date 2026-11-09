@@ -421,6 +421,13 @@
       "when": 1793898741434,
       "tag": "0059_sdr_sales_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1794234103224,
+      "tag": "0060_migration",
+      "breakpoints": true
     }
   ]
 }
