@@ -229,6 +229,7 @@ const Chat = () => {
 
       if (wantsManualDraft && openedConversationId && phone) {
         manualChatTransition.advance("draft");
+        let recoveredDraft = false;
         try {
           const raw = window.sessionStorage.getItem("wiize:chat:manual-outreach");
           const handoff = raw ? JSON.parse(raw) : null;

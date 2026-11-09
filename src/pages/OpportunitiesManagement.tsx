@@ -786,6 +786,7 @@ export default function OpportunitiesManagement() {
       }
       launchManualChat(lead, message, connectionId);
     } catch (err: any) {
+      manualChatTransition.cancel();
       console.error("[opportunities] manual chat connection check failed", err);
       toast({ title: "Não foi possível verificar o número", description: "Tente novamente em alguns instantes.", variant: "destructive" });
     } finally {
