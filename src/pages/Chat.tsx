@@ -4,7 +4,7 @@ import { ChatMessageArea } from "@/components/chat/ChatMessageArea";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -45,6 +45,7 @@ const Chat = () => {
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState(false);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
+  const launchInFlightRef = useRef("");
   const [inputDraft, setInputDraft] = useState<{ conversationId: string; text: string; version: number } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [reconnectOpen, setReconnectOpen] = useState(false);
@@ -168,7 +169,7 @@ const Chat = () => {
   const shouldShowDialog = isLoading ? false : hasNoConnection;
 
   useEffect(() => {
-    if (isLoading || shouldShowDialog || !hasConnection) return;
+    if (chat.connectionsLoading || shouldShowDialog || !hasConnection) return;
     const phone = searchParams.get("phone");
     const name = searchParams.get("name") ?? undefined;
     const conversationId = searchParams.get("conversation");
@@ -176,9 +177,10 @@ const Chat = () => {
     const wantsManualDraft = searchParams.get("draft") === "manual";
     if (!phone && !conversationId) return;
     const nextLaunchKey = `${searchParams.get("launch") ?? ""}:${conversationId ?? ""}:${phone ?? ""}:${requestedConnectionId ?? chat.activeConnectionId ?? ""}`;
-    if (nextLaunchKey === handledLaunchKey) return;
+    if (nextLaunchKey === handledLaunchKey || launchInFlightRef.current === nextLaunchKey) return;
 
     const finishLaunch = () => {
+      launchInFlightRef.current = "";
       setHandledLaunchKey(nextLaunchKey);
       setSearchParams({}, { replace: true });
     };
@@ -212,6 +214,7 @@ const Chat = () => {
     }
 
     const openRequestedChat = async () => {
+      launchInFlightRef.current = nextLaunchKey;
       let openedConversationId = conversationId;
       if (conversationId) {
         chat.setActiveConversationId(conversationId);
@@ -252,7 +255,7 @@ const Chat = () => {
     chat.startNewConversation,
     handledLaunchKey,
     hasConnection,
-    isLoading,
+    chat.connectionsLoading,
     searchParams,
     setSearchParams,
     shouldShowDialog,

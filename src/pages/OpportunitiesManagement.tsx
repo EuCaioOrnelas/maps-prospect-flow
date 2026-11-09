@@ -268,6 +268,12 @@ export default function OpportunitiesManagement() {
     if (user || publicDemo) fetchLeads();
   }, [user, publicDemo, accountOwnerId]);
 
+  // Prepara o Chat depois que a lista já teve tempo de aparecer. Assim, ao
+  // clicar em uma abordagem, o navegador não precisa baixar a tela na hora.
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void import("./Chat"); }, 1200);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // Auto-score unscored leads when they appear
   useEffect(() => {

@@ -90,6 +90,9 @@ export function useChat() {
     try { return activeConnKey ? localStorage.getItem(activeConnKey) : null; } catch { return null; }
   }, [activeConnKey]);
   const [loading, setLoading] = useState(true);
+  // Libera ações que dependem apenas da conexão (como abrir uma abordagem do
+  // CRM) sem esperar a lista completa de conversas terminar de carregar.
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const connectionRequestRef = useRef(0);
   const [reloadVersion, setReloadVersion] = useState(0);
@@ -118,7 +121,8 @@ export function useChat() {
   // Load WABA connections and validate tokens
   const loadConnections = useCallback(async (forceValidate = false) => {
     const requestId = ++connectionRequestRef.current;
-    if (!user || !accountOwnerId) { setLoading(false); return; }
+    if (!user || !accountOwnerId) { setLoading(false); setConnectionsLoading(false); return; }
+    setConnectionsLoading(true);
     setLoadError(null);
     try {
     const { data, error } = await withRequestTimeout(supabase
@@ -130,6 +134,7 @@ export function useChat() {
     if (!data || data.length === 0) {
       setConnections([]);
       setLoading(false);
+      setConnectionsLoading(false);
       return;
     }
 
@@ -153,6 +158,7 @@ export function useChat() {
       const saved = savedId ? data.find(c => c.id === savedId) : null;
       setActiveConnectionId(saved?.id || healthyConn?.id || data[0].id);
       setLoading(false);
+      setConnectionsLoading(false);
       return;
     }
 
@@ -197,12 +203,16 @@ export function useChat() {
     const saved2 = savedId2 ? data.find(c => c.id === savedId2) : null;
     setActiveConnectionId(saved2?.id || healthyConn?.id || data[0].id);
     setLoading(false);
+    setConnectionsLoading(false);
     } catch {
       if (requestId === connectionRequestRef.current) {
         setLoadError("Não foi possível carregar o Chat. Verifique sua conexão e tente novamente.");
       }
     } finally {
-      if (requestId === connectionRequestRef.current) setLoading(false);
+      if (requestId === connectionRequestRef.current) {
+        setLoading(false);
+        setConnectionsLoading(false);
+      }
     }
   }, [user, accountOwnerId, validateToken, readSavedConnectionId, setActiveConnectionId]);
 
@@ -235,7 +245,15 @@ export function useChat() {
       }
       const data = secureData?.conversations;
 
-      setConversations(hydrateProfilePics((data as ChatConversation[]) || []));
+      const loaded = hydrateProfilePics((data as ChatConversation[]) || []);
+      setConversations(prev => {
+        // Uma conversa aberta diretamente pela abordagem pode ter sido criada
+        // enquanto esta lista carregava. Nunca a remova quando a resposta chegar.
+        const pending = prev.filter(c =>
+          c.waba_connection_id === activeConnectionId && !loaded.some(item => item.id === c.id)
+        );
+        return [...pending, ...loaded];
+      });
       loadedConvForConnRef.current = activeConnectionId;
       } catch {
         if (!cancelled) setLoadError("Não foi possível carregar as conversas. Tente novamente.");
@@ -674,11 +692,37 @@ export function useChat() {
       return null;
     }
 
-    const existing = conversations.find(c =>
-      c.contact_phone.replace(/\D/g, "").endsWith(cleanPhone.slice(-8))
+    const phoneSuffix = cleanPhone.slice(-8);
+    const localExisting = conversations.find(c =>
+      c.waba_connection_id === activeConnectionId &&
+      c.contact_phone.replace(/\D/g, "").endsWith(phoneSuffix)
     );
 
+    if (localExisting) {
+      setActiveConversationId(localExisting.id);
+      return localExisting.id;
+    }
+
+    // Não dependa da lista inteira: em uma abordagem vinda do CRM, ela ainda
+    // pode estar carregando. Busque somente o contato no número selecionado.
+    const { data: matches, error: lookupError } = await supabase
+      .from("chat_conversations")
+      .select("*")
+      .eq("owner_user_id", accountOwnerId || user.id)
+      .eq("waba_connection_id", activeConnectionId)
+      .ilike("contact_phone", `%${phoneSuffix}`)
+      .order("last_message_at", { ascending: false, nullsFirst: false })
+      .limit(1);
+
+    if (lookupError) {
+      console.error("[chat] failed to locate conversation", lookupError);
+      toast.error("Não foi possível localizar a conversa. Tente novamente.");
+      return null;
+    }
+
+    const existing = matches?.[0] as ChatConversation | undefined;
     if (existing) {
+      setConversations(prev => prev.some(c => c.id === existing.id) ? prev : [existing, ...prev]);
       setActiveConversationId(existing.id);
       return existing.id;
     }
@@ -702,7 +746,7 @@ export function useChat() {
       return data.id;
     }
     return null;
-  }, [user, activeConnectionId, conversations]);
+  }, [user, accountOwnerId, activeConnectionId, conversations]);
 
   // Filter conversations
   const filteredConversations = searchQuery
@@ -1004,6 +1048,7 @@ export function useChat() {
     allConnectionsExpired,
     connectionHealth,
     loading,
+    connectionsLoading,
     loadError,
     retryLoad,
     loadingMessages,
