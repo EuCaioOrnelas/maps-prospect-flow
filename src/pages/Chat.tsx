@@ -229,6 +229,9 @@ const Chat = () => {
 
       if (wantsManualDraft && openedConversationId && phone) {
         manualChatTransition.advance("draft");
+        // Garante que a última etapa seja perceptível mesmo quando o contato já
+        // está em cache e o rascunho é recuperado no mesmo instante.
+        await new Promise<void>(resolve => window.setTimeout(resolve, 180));
         let recoveredDraft = false;
         try {
           const raw = window.sessionStorage.getItem("wiize:chat:manual-outreach");
