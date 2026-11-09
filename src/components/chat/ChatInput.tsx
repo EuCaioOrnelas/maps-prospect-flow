@@ -105,6 +105,8 @@ interface ChatInputProps {
   conversationId?: string | null;
   /** Draft encaminhado por outro módulo para revisão e envio manual. */
   inputDraft?: { conversationId: string; text: string; version: number } | null;
+  /** Envia a abordagem pela fila com intervalo inteligente. */
+  onSendOutreach?: (text: string) => Promise<boolean>;
 }
 
 interface AttachedFile {
@@ -136,7 +138,7 @@ function pickAudioMime(): { mime: string; ext: string } {
   return { mime: "audio/webm", ext: "webm" };
 }
 
-export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation, conversationId, inputDraft }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation, conversationId, inputDraft, onSendOutreach }: ChatInputProps) {
   const draftKey = useMemo(() => {
     const id = conversationId || conversation?.contact_phone || null;
     return id ? `wiize:chat:draft:${id}` : null;
@@ -233,10 +235,14 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey]);
 
+  // Conversa cujo rascunho veio de uma abordagem (Gestão de Oportunidades).
+  const [outreachFor, setOutreachFor] = useState<string | null>(null);
+
   // Apply a draft handed off by another module without ever sending it automatically.
   useEffect(() => {
     if (!inputDraft || inputDraft.conversationId !== conversationId) return;
     setText(inputDraft.text);
+    setOutreachFor(inputDraft.conversationId);
     window.requestAnimationFrame(() => {
       inputRef.current?.focus();
       inputRef.current?.setSelectionRange(inputDraft.text.length, inputDraft.text.length);
@@ -312,12 +318,19 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       return;
     }
     if (!text.trim()) return;
+    if (onSendOutreach && outreachFor && outreachFor === conversationId) {
+      const outreachText = text.trim();
+      setText("");
+      setOutreachFor(null);
+      void onSendOutreach(outreachText).then(ok => { if (!ok) { setText(outreachText); setOutreachFor(conversationId ?? null); } });
+      return;
+    }
     onSendMessage(text.trim(), replyingTo?.id);
     setText("");
     setEmojiOpen(false);
     onCancelReply?.();
     inputRef.current?.focus();
-  }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply]);
+  }, [text, attachments, caption, onSendMessage, onSendMedia, replyingTo, onCancelReply, onSendOutreach, outreachFor, conversationId]);
 
   // Etapas resolvidas (mensagem 1, 2, 3…) da mensagem rápida selecionada.
   const confirmSteps = useMemo(() => {

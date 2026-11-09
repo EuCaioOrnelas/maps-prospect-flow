@@ -2554,6 +2554,7 @@ export type Database = {
           created_by: string
           error: string | null
           id: string
+          is_outreach: boolean
           kind: string
           owner_user_id: string
           scheduled_at: string
@@ -2576,6 +2577,7 @@ export type Database = {
           created_by: string
           error?: string | null
           id?: string
+          is_outreach?: boolean
           kind?: string
           owner_user_id: string
           scheduled_at: string
@@ -2598,6 +2600,7 @@ export type Database = {
           created_by?: string
           error?: string | null
           id?: string
+          is_outreach?: boolean
           kind?: string
           owner_user_id?: string
           scheduled_at?: string
@@ -15655,6 +15658,7 @@ export type Database = {
           created_by: string
           error: string | null
           id: string
+          is_outreach: boolean
           kind: string
           owner_user_id: string
           scheduled_at: string
@@ -15979,6 +15983,10 @@ export type Database = {
       revenue_score_to_bucket: {
         Args: { p_score: number }
         Returns: Database["public"]["Enums"]["revenue_status_bucket"]
+      }
+      schedule_outreach_message: {
+        Args: { _content: string; _conversation_id: string }
+        Returns: Json
       }
       sdr_check_eligibility: {
         Args: { p_agent_id: string; p_phone: string; p_trigger?: string }
