@@ -612,7 +612,12 @@ export function ChatSidebar({
                         );
                       })()}
                       <span className={cn("text-[14px] leading-[20px] wa-text-secondary truncate", privacy.preview && PRIVACY_BLUR_CLASS)}>
-                        {getLastMessagePreview(conv)}
+                        {conv.last_message_text?.startsWith("🚫") ? (
+                          <span className="inline-flex items-center gap-1 italic text-foreground/70">
+                            <Ban className="h-3.5 w-3.5 shrink-0 text-foreground" aria-hidden />
+                            {truncateText(conv.last_message_text.replace(/^🚫\s*/, ""), 26)}
+                          </span>
+                        ) : getLastMessagePreview(conv)}
                       </span>
                     </div>
                     <div className="shrink-0 w-[104px] ml-2 pr-[22px] flex items-center justify-end gap-[6px]">
