@@ -214,6 +214,7 @@ const Chat = () => {
     }
 
     const openRequestedChat = async () => {
+      launchInFlightRef.current = nextLaunchKey;
       let openedConversationId = conversationId;
       if (conversationId) {
         chat.setActiveConversationId(conversationId);

@@ -203,6 +203,7 @@ export function useChat() {
     const saved2 = savedId2 ? data.find(c => c.id === savedId2) : null;
     setActiveConnectionId(saved2?.id || healthyConn?.id || data[0].id);
     setLoading(false);
+    setConnectionsLoading(false);
     } catch {
       if (requestId === connectionRequestRef.current) {
         setLoadError("Não foi possível carregar o Chat. Verifique sua conexão e tente novamente.");
