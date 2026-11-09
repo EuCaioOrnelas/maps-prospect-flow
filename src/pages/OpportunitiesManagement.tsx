@@ -740,6 +740,7 @@ export default function OpportunitiesManagement() {
       name: lead.company_name || "Contato",
       connection: connectionId,
       draft: "manual",
+      launch: `${Date.now()}`,
     });
     setSelectedLead(null);
     navigate(`/chat?${params.toString()}`);

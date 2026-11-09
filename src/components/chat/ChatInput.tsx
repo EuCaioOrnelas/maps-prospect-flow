@@ -136,7 +136,7 @@ function pickAudioMime(): { mime: string; ext: string } {
   return { mime: "audio/webm", ext: "webm" };
 }
 
-export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation, conversationId }: ChatInputProps) {
+export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelReply, externalFiles, onExternalConsumed, conversation, conversationId, inputDraft }: ChatInputProps) {
   const draftKey = useMemo(() => {
     const id = conversationId || conversation?.contact_phone || null;
     return id ? `wiize:chat:draft:${id}` : null;

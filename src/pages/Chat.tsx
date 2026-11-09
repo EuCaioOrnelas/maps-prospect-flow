@@ -172,21 +172,82 @@ const Chat = () => {
     const phone = searchParams.get("phone");
     const name = searchParams.get("name") ?? undefined;
     const conversationId = searchParams.get("conversation");
+    const requestedConnectionId = searchParams.get("connection");
+    const wantsManualDraft = searchParams.get("draft") === "manual";
     if (!phone && !conversationId) return;
-    const nextLaunchKey = `${conversationId ?? ""}:${phone ?? ""}:${chat.activeConnectionId ?? ""}`;
+    const nextLaunchKey = `${searchParams.get("launch") ?? ""}:${conversationId ?? ""}:${phone ?? ""}:${requestedConnectionId ?? chat.activeConnectionId ?? ""}`;
     if (nextLaunchKey === handledLaunchKey) return;
+
+    const finishLaunch = () => {
+      setHandledLaunchKey(nextLaunchKey);
+      setSearchParams({}, { replace: true });
+    };
+
+    if (requestedConnectionId && requestedConnectionId !== chat.activeConnectionId) {
+      const requestedConnection = chat.connections.find(c => c.id === requestedConnectionId);
+      if (requestedConnection) {
+        chat.setActiveConnectionId(requestedConnectionId);
+        return;
+      }
+      if (wantsManualDraft) {
+        window.sessionStorage.removeItem("wiize:chat:manual-outreach");
+        toast({ title: "Número de atendimento não encontrado", description: "Conecte o número novamente antes de abrir a conversa.", variant: "destructive" });
+        finishLaunch();
+      }
+      return;
+    }
+
+    if (wantsManualDraft) {
+      const connection = chat.connections.find(c => c.id === chat.activeConnectionId);
+      const ready = connection?.provider === "evolution"
+        && connection.status === "active"
+        && connection.evolution_state === "open"
+        && chat.connectionHealth[connection.id] !== false;
+      if (!ready) {
+        window.sessionStorage.removeItem("wiize:chat:manual-outreach");
+        toast({ title: "Número de atendimento desconectado", description: "Reconecte o número para abrir a conversa com o rascunho.", variant: "destructive" });
+        finishLaunch();
+        return;
+      }
+    }
+
     const openRequestedChat = async () => {
+      let openedConversationId = conversationId;
       if (conversationId) {
         chat.setActiveConversationId(conversationId);
       } else if (phone) {
-        await chat.startNewConversation(phone, name);
+        openedConversationId = await chat.startNewConversation(phone, name);
       }
-      setHandledLaunchKey(nextLaunchKey);
-      setSearchParams({}, { replace: true });
+
+      if (wantsManualDraft && openedConversationId && phone) {
+        try {
+          const raw = window.sessionStorage.getItem("wiize:chat:manual-outreach");
+          const handoff = raw ? JSON.parse(raw) : null;
+          const valid = handoff
+            && handoff.phone === phone
+            && handoff.connectionId === chat.activeConnectionId
+            && typeof handoff.message === "string"
+            && handoff.message.trim()
+            && typeof handoff.createdAt === "number"
+            && Date.now() - handoff.createdAt < 10 * 60 * 1000;
+          if (valid) {
+            window.localStorage.setItem(`wiize:chat:draft:${openedConversationId}`, handoff.message);
+            setInputDraft({ conversationId: openedConversationId, text: handoff.message, version: Date.now() });
+          }
+        } catch {
+          toast({ title: "Conversa aberta", description: "Não foi possível recuperar o rascunho. Volte à oportunidade e tente novamente.", variant: "destructive" });
+        } finally {
+          window.sessionStorage.removeItem("wiize:chat:manual-outreach");
+        }
+      }
+      finishLaunch();
     };
     void openRequestedChat();
   }, [
     chat.activeConnectionId,
+    chat.connections,
+    chat.connectionHealth,
+    chat.setActiveConnectionId,
     chat.setActiveConversationId,
     chat.startNewConversation,
     handledLaunchKey,
@@ -195,6 +256,7 @@ const Chat = () => {
     searchParams,
     setSearchParams,
     shouldShowDialog,
+    toast,
   ]);
 
   const showDisconnectedOverlay = !chat.loading && hasConnection && chat.allConnectionsExpired;
