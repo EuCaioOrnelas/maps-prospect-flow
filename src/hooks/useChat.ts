@@ -307,6 +307,7 @@ export function useChat() {
       if (forConn.length) base.conversations[activeConnectionId] = forConn;
     }
     chatMemoryCache = base;
+    (window as any).__chatCacheDbg = { ids: Object.keys(base.conversations), n: Object.values(base.conversations).map(l => l.length), active: base.activeConnectionId, uid: base.userId };
   }, [user?.id, connections, activeConnectionId, conversations]);
 
   // Conversa aberta em um ref: usado pelo canal realtime e para descartar
