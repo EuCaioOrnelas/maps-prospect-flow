@@ -779,6 +779,7 @@ export default function OpportunitiesManagement() {
       if (error) throw error;
       const connectionId = data?.[0]?.id;
       if (!connectionId) {
+        manualChatTransition.cancel();
         setPendingManualChat({ lead, message });
         setSupportConnectOpen(true);
         return;
