@@ -395,6 +395,7 @@ export function ChatMessageArea({
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const outreachQueue = useOutreachQueue(isEvolution ? conversation?.id : null);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
