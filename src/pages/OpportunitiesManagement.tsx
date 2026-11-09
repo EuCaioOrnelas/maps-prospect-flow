@@ -2293,21 +2293,17 @@ export default function OpportunitiesManagement() {
                               }
                               const openMeta = () => { setSendingLead(lead); setSendDialogOpen(true); };
                               const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-[10px] bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95";
-                              // Só uma opção → ação direta (manual abre popover de web/app; meta abre dialog)
+                              // Só uma opção → ação direta (manual abre o chat com rascunho; meta abre dialog)
                               if (hasManual && !hasMeta) {
                                 return (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <button className={sendBtnClass} title="Enviar via WhatsApp (manual)">
-                                        <WhatsAppIcon />
-                                      </button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-52 p-1" align="center">
-                                      <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">Abrir WhatsApp</div>
-                                      <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "web")}>WhatsApp Web</button>
-                                      <button className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-muted" onClick={() => openWhatsApp(lead, manualMsg, "app")}>Aplicativo</button>
-                                    </PopoverContent>
-                                  </Popover>
+                                  <button
+                                    className={sendBtnClass}
+                                    title="Abrir no Chat Wiize com a mensagem pronta"
+                                    disabled={manualChatLoadingId === lead.id}
+                                    onClick={() => void openManualChat(lead, manualMsg)}
+                                  >
+                                    {manualChatLoadingId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <WhatsAppIcon />}
+                                  </button>
                                 );
                               }
                               if (hasMeta && !hasManual) {
