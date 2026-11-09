@@ -2306,64 +2306,19 @@ export default function OpportunitiesManagement() {
                               if (!hasManual && !hasMeta) {
                                 return <span className="text-muted-foreground text-xs">—</span>;
                               }
-                              const openMeta = () => { setSendingLead(lead); setSendDialogOpen(true); };
                               const sendBtnClass = "inline-flex items-center justify-center w-9 h-9 rounded-[10px] bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all hover:scale-105 active:scale-95";
                               // Só uma opção → ação direta (manual abre o chat com rascunho; meta abre dialog)
-                              if (hasManual) {
-                                return (
-                                  <button
-                                    className={sendBtnClass}
-                                    title="Abrir no Chat Wiize com a mensagem pronta"
-                                    disabled={manualChatLoadingId === lead.id}
-                                    onClick={() => void openManualChat(lead, manualMsg)}
-                                  >
-                                    {manualChatLoadingId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <WhatsAppIcon />}
-                                  </button>
-                                );
-                              }
-                              if (hasMeta && !hasManual) {
-                                return (
-                                  <button
-                                    className={sendBtnClass}
-                                    title={sendCooldown > 0 ? `Aguarde ${sendCooldown}s` : "Enviar via Meta API"}
-                                    disabled={sendCooldown > 0}
-                                    onClick={openMeta}
-                                  >
-                                    <WhatsAppIcon />
-                                  </button>
-                                );
-                              }
-                              // Ambas geradas → mini-popup perguntando qual enviar
+                              // Sempre abre o Chat Wiize com o rascunho (sem perguntar a API).
+                              const chatMsg = hasManual ? manualMsg : metaMsg;
                               return (
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <button className={sendBtnClass} title="Enviar mensagem">
-                                      <WhatsAppIcon />
-                                    </button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-64 p-1" align="center">
-                                    <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">Qual mensagem enviar?</div>
-                                    <button
-                                      className="w-full text-left px-2 py-2 text-sm rounded hover:bg-muted flex flex-col gap-0.5"
-                                      onClick={openMeta}
-                                      disabled={sendCooldown > 0}
-                                    >
-                                      <span className="font-medium">Meta API</span>
-                                      <span className="text-[11px] text-muted-foreground">Envio oficial pela Meta Cloud</span>
-                                    </button>
-                                    <button
-                                      className="w-full text-left px-2 py-2 text-sm rounded hover:bg-muted flex flex-col gap-0.5 disabled:opacity-60"
-                                      disabled={manualChatLoadingId === lead.id}
-                                      onClick={() => void openManualChat(lead, manualMsg)}
-                                    >
-                                      <span className="font-medium flex items-center gap-2">
-                                        {manualChatLoadingId === lead.id && <Loader2 size={12} className="animate-spin" />}
-                                        Manual no Chat Wiize
-                                      </span>
-                                      <span className="text-[11px] text-muted-foreground">Abre o contato com o texto pronto para você enviar</span>
-                                    </button>
-                                  </PopoverContent>
-                                </Popover>
+                                <button
+                                  className={sendBtnClass}
+                                  title="Abrir no Chat Wiize com a mensagem pronta"
+                                  disabled={manualChatLoadingId === lead.id}
+                                  onClick={() => void openManualChat(lead, chatMsg)}
+                                >
+                                  {manualChatLoadingId === lead.id ? <Loader2 size={16} className="animate-spin" /> : <WhatsAppIcon />}
+                                </button>
                               );
                             })()}
                           </TableCell>
