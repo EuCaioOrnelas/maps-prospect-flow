@@ -395,7 +395,8 @@ export function ChatMessageArea({
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const outreachQueue = useOutreachQueue(isEvolution ? conversation?.id : null);
+  // A fila vale para qualquer rascunho de abordagem; não depende do provedor já ter carregado.
+  const outreachQueue = useOutreachQueue(conversation?.id);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -1364,7 +1365,7 @@ export function ChatMessageArea({
                   conversation={conversation}
                   conversationId={conversation?.id ?? null}
                   inputDraft={inputDraft}
-                  onSendOutreach={isEvolution ? outreachQueue.enqueue : undefined}
+                  onSendOutreach={outreachQueue.enqueue}
                 />
                 </>
 

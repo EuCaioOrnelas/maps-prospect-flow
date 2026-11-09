@@ -318,7 +318,7 @@ export function ChatInput({ onSendMessage, onSendMedia, replyingTo, onCancelRepl
       return;
     }
     if (!text.trim()) return;
-    if (onSendOutreach && outreachFor && outreachFor === conversationId) {
+    if (onSendOutreach && outreachFor && (outreachFor === conversationId || inputDraft?.conversationId === conversationId)) {
       const outreachText = text.trim();
       setText("");
       setOutreachFor(null);
