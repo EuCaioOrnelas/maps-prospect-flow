@@ -1006,7 +1006,7 @@ export function useChat() {
       return;
     }
     try {
-      const { error } = await supabase.functions.invoke("send-chat-message", {
+      const { data: tplData, error } = await supabase.functions.invoke("send-chat-message", {
         body: {
           conversation_id: activeConversation.id,
           phone_number_id: connection.phone_number_id,
@@ -1020,6 +1020,7 @@ export function useChat() {
           waba_connection_id: connection.id,
         },
       });
+      if (!error && tplData?.success === false) throw new Error(tplData.error || "Falha ao enviar o template");
       if (error) {
         let detail = "";
         try {
