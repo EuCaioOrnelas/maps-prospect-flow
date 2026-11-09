@@ -314,6 +314,7 @@ const App = () => (
           <TabTitleManager />
 
           <AuthProvider>
+            <ManualChatTransitionProvider>
             <MetricStateCacheProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>

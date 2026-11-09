@@ -98,6 +98,7 @@ export default function OpportunitiesManagement() {
   const publicDemo = window.location.pathname === "/tour-guiado";
   const { profile, user, accountOwnerId } = useAuth();
   const { toast } = useToast();
+  const manualChatTransition = useManualChatTransition();
   const navigate = useNavigate();
   const location = useLocation();
   useAutoScoreTracking("opportunities_management");

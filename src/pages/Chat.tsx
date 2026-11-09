@@ -43,6 +43,7 @@ const Chat = () => {
   useAutoScoreTracking("chat");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const manualChatTransition = useManualChatTransition();
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState(false);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
