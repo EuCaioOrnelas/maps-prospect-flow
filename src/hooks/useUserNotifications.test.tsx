@@ -7,18 +7,37 @@ const updatePayloads: Record<string, unknown>[] = [];
 let notifications: Array<Record<string, unknown>> = [];
 
 const makeQuery = () => {
+  const filters: Record<string, unknown> = {};
   const query: any = {
     select: vi.fn(() => query),
-    eq: vi.fn(() => query),
-    is: vi.fn(() => query),
+    eq: vi.fn((field: string, value: unknown) => {
+      filters[field] = value;
+      return query;
+    }),
+    is: vi.fn((field: string, value: unknown) => {
+      filters[field] = value;
+      return query;
+    }),
     order: vi.fn(() => query),
     limit: vi.fn(() => query),
     update: vi.fn((payload: Record<string, unknown>) => {
       updatePayloads.push(payload);
+      notifications = notifications.map((notification) => {
+        const matches = Object.entries(filters).every(([field, value]) => {
+          if (field === "user_id") return true;
+          if (value === null) return notification[field] == null;
+          return notification[field] === value;
+        });
+        return matches ? { ...notification, ...payload } : notification;
+      });
       return query;
     }),
-    then: (resolve: (value: unknown) => void) =>
-      resolve({ data: notifications, error: null, count: notifications.length }),
+    then: (resolve: (value: unknown) => void) => {
+      const visible = notifications.filter((notification) =>
+        filters.cleared_at === null ? notification.cleared_at == null : true,
+      );
+      resolve({ data: visible, error: null, count: visible.filter((item) => !item.read_at).length });
+    },
   };
   return query;
 };
