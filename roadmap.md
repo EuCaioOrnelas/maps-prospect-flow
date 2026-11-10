@@ -1,8 +1,8 @@
 # Roadmap — Evolução do SDR Inteligente
 
 ## Introdução 3D Wiize
-- [ ] Produzir introdução animada de 9 segundos, 16:9, com logo oficial, elementos 3D, mensagem e áudio
-- [ ] Conferir o MP4 final e apresentar o resultado
+- [x] Produzir introdução animada de 9 segundos, 16:9, com logo oficial, elementos 3D, mensagem e áudio
+- [x] Conferir o MP4 final e apresentar o resultado
 
 - [x] Fase 1 — Auditoria e plano aprovado
 - [x] Fase 2 — Catálogo comercial (sdr_products, sdr_agent_products, tela de catálogo, wizard)
