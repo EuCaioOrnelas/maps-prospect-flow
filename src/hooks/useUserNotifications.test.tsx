@@ -36,7 +36,6 @@ const makeQuery = () => {
       const visible = notifications.filter((notification) =>
         filters.cleared_at === null ? notification.cleared_at == null : true,
       );
-      console.log("MOCK THEN", JSON.stringify(filters), "visible", visible.length, "total", notifications.length);
       resolve({ data: visible, error: null, count: visible.filter((item) => !item.read_at).length });
     },
   };
@@ -52,8 +51,10 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+const authUser = { id: "user-1" };
+
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ user: { id: "user-1" } }),
+  useAuth: () => ({ user: authUser }),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
