@@ -3,6 +3,8 @@
 ## Introdução 3D Wiize
 - [x] Produzir introdução animada de 9 segundos, 16:9, com logo oficial, elementos 3D, mensagem e áudio
 - [x] Conferir o MP4 final e apresentar o resultado
+- [x] Refazer a introdução em estilo clean e minimalista, com alinhamento vertical correto da logo
+- [x] Conferir e entregar a segunda versão sem substituir a primeira
 
 - [x] Fase 1 — Auditoria e plano aprovado
 - [x] Fase 2 — Catálogo comercial (sdr_products, sdr_agent_products, tela de catálogo, wizard)
