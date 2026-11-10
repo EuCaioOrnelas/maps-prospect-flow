@@ -171,7 +171,6 @@ serve(async (req) => {
               !inv.amount_paid ||
               inv.amount_paid <= 0 ||
               inv.paid !== true ||
-              !inv.charge ||
               (inv.amount_remaining && inv.amount_remaining > 0)
             ) continue;
             const email = inv.customer_email || inv.customer_address?.email;
@@ -198,11 +197,10 @@ serve(async (req) => {
         }
 
 
-        const existingStripeIds = new Set(
+        const localCancellationsByStripeId = new Map(
           (cancellationsRes.data || [])
-            .filter((c: any) => c.provider === "stripe")
-            .map((c: any) => c.stripe_subscription_id)
-            .filter(Boolean)
+            .filter((c: any) => c.provider === "stripe" && c.subscription_id)
+            .map((c: any) => [c.subscription_id, c])
         );
         let hasMore = true;
         let startingAfter: string | undefined;
@@ -214,34 +212,18 @@ serve(async (req) => {
           });
           for (const sub of res.data) {
             if (!sub.canceled_at || sub.canceled_at < CHURN_CUTOFF_UNIX) continue;
-            if (existingStripeIds.has(sub.id)) continue;
 
-            // Ignorar cancelamentos durante o trial (nunca houve cobrança real = não é churn)
-            // Detecção: subscription cancelada antes/durante o trial_end, OU sem nenhuma invoice paga
-            const canceledDuringTrial =
-              sub.trial_end && sub.canceled_at <= sub.trial_end;
-            if (canceledDuringTrial) {
-              logStep("Skipping trial cancellation", { id: sub.id, canceled_at: sub.canceled_at, trial_end: sub.trial_end });
-              continue;
-            }
-
-            // Pagamento real exige valor positivo, cobrança efetiva e quitação
-            // anterior ao cancelamento. Invoice de R$ 0 gerada no trial não vale.
+            // A única regra é pagamento real anterior ao cancelamento. Não usar
+            // trial_end como atalho: quem pagou antecipadamente também é churn.
+            // Essa conferência vale inclusive para cancelamentos já gravados
+            // localmente, evitando depender apenas do backfill de first_paid_at.
             try {
               const invoices: any = await stripe.invoices.list({
                 subscription: sub.id,
                 status: "paid",
                 limit: 100,
               });
-              const hasRealPaymentBeforeCancellation = (invoices.data || []).some((invoice: any) => {
-                const paidAt = invoice.status_transitions?.paid_at || invoice.created;
-                return invoice.paid === true &&
-                  invoice.amount_paid > 0 &&
-                  invoice.charge &&
-                  (!invoice.amount_remaining || invoice.amount_remaining === 0) &&
-                  paidAt <= sub.canceled_at;
-              });
-              if (!hasRealPaymentBeforeCancellation) {
+              if (!hasRealPaymentBeforeCancellation(invoices.data || [], sub.canceled_at)) {
                 logStep("Skipping trial/unpaid cancellation", { id: sub.id });
                 continue;
               }
@@ -257,7 +239,12 @@ serve(async (req) => {
                 email = customer?.email || null;
               } catch (_) {}
             }
-            const profile = email ? profilesByEmail.get(email.toLowerCase()) : null;
+            const localCancellation = localCancellationsByStripeId.get(sub.id);
+            const localProfile = localCancellation?.user_id
+              ? profiles.find((p: any) => p.id === localCancellation.user_id)
+              : null;
+            const profile = localProfile || (email ? profilesByEmail.get(email.toLowerCase()) : null);
+            if (profile?.id) usersWithRealPayment.add(profile.id);
 
             stripeChurns.push({
               id: `stripe-${sub.id}`,

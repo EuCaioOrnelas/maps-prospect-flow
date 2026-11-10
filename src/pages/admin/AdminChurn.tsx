@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { buildChurnReasonData, filterChurnByDate, getChurnReasonLabel } from "@/lib/churnMetrics";
 
 interface ChurnRecord {
   id: string;
@@ -29,25 +31,6 @@ interface ChurnRecord {
   plan: string | null;
   name: string | null;
 }
-
-const reasonLabels: Record<string, string> = {
-  expensive: "Custo alto",
-  not_using: "Não estava usando",
-  no_results: "Sem resultado",
-  bug: "Problemas técnicos",
-  competitor: "Migrou para concorrente",
-  missing_feature: "Falta recurso",
-  no_time: "Sem tempo",
-  other: "Outro",
-  falta_pagamento: "Falta de pagamento",
-  "Não entendi como usar": "Não entendeu",
-  "Não tive tempo para implementar": "Sem tempo",
-  "Não vi resultado": "Sem resultado",
-  "Custo / investimento": "Custo alto",
-  "Tive problemas técnicos": "Problemas técnicos",
-  "Não era o que eu esperava": "Expectativa",
-  Outro: "Outro",
-};
 
 const returnLabels: Record<string, string> = {
   yes: "Sim",
