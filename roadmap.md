@@ -24,3 +24,9 @@
 - [x] Testes e verificação de regressão
 - [x] Relatório final
 - [ ] Produção: rodar docs/sql/prod-domine-a-wiize.sql e publicar os arquivos
+## Ajustes pós Domine a Wiize
+- [x] Sidebar: trocar "Domine a Wiize" por "Central de Ajuda"
+- [x] Sino de avisos no MainDashboard ao lado do tema, mantendo bolha com contador
+- [x] Corrigir avisos que reaparecem após apagar/marcar como lido (sino e popup sincronizados; validado no banco)
+- [x] Lista completa com checkbox de arquivos criados/editados
+- [ ] Produção: rodar docs/sql/prod-avisos-sino.sql junto com prod-domine-a-wiize.sql
