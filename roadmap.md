@@ -9,6 +9,8 @@
 - [x] Conferir e entregar a terceira versão preservando as anteriores
 - [x] Criar quarta versão mais clean: logo grande, frase menor e sem glow
 - [x] Conferir e entregar a quarta versão preservando as anteriores
+- [x] Criar quinta versão com pequenos ajustes de escala e sem CTA
+- [x] Conferir e entregar a quinta versão preservando as anteriores
 
 - [x] Fase 1 — Auditoria e plano aprovado
 - [x] Fase 2 — Catálogo comercial (sdr_products, sdr_agent_products, tela de catálogo, wizard)
