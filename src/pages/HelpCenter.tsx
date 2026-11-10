@@ -1,4 +1,4 @@
-import { ArrowLeft, HelpCircle, MessageSquareText, Link2, Instagram, Youtube, Mail, Headphones, ExternalLink } from "lucide-react";
+import { ArrowLeft, HelpCircle, MessageSquareText, Link2, Instagram, Youtube, Mail, Headphones, ExternalLink, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
@@ -60,6 +60,25 @@ const HelpCenter = () => {
 
           {/* Cards Grid - 2 columns like reference */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            {/* Domine a Wiize Card */}
+            <div className="relative rounded-2xl border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-8 flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300 md:col-span-2">
+              <div className="absolute -top-16 -left-16 w-44 h-44 bg-[hsl(158,72%,45%)]/[0.07] rounded-full blur-3xl pointer-events-none group-hover:bg-[hsl(158,72%,45%)]/[0.12] transition-colors duration-500" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-8 relative z-10">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <GraduationCap size={24} className="text-primary shrink-0" />
+                    <h2 className="text-2xl sm:text-3xl font-bold">Domine a Wiize</h2>
+                  </div>
+                  <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                    Aprenda a utilizar todos os recursos da Wiize por meio de tutoriais em vídeo.
+                  </p>
+                </div>
+                <Button asChild className="shrink-0 self-start sm:self-auto">
+                  <Link to="/aprenda">Começar a aprender</Link>
+                </Button>
+              </div>
+            </div>
+
             {/* FAQ Card */}
             <div className="relative rounded-2xl border border-border bg-white/80 backdrop-blur-sm p-6 sm:p-8 flex flex-col overflow-hidden group hover:shadow-lg transition-shadow duration-300">
               <div className="absolute -top-16 -right-16 w-40 h-40 bg-[hsl(158,72%,45%)]/[0.06] rounded-full blur-3xl pointer-events-none group-hover:bg-[hsl(158,72%,45%)]/[0.1] transition-colors duration-500" />
