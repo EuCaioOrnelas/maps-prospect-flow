@@ -6914,6 +6914,98 @@ export type Database = {
           },
         ]
       }
+      learning_lessons: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          duration_seconds: number | null
+          id: string
+          is_published: boolean
+          module_id: string
+          slug: string
+          thumbnail_path: string | null
+          title: string
+          updated_at: string
+          youtube_url: string
+          youtube_video_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean
+          module_id: string
+          slug: string
+          thumbnail_path?: string | null
+          title: string
+          updated_at?: string
+          youtube_url: string
+          youtube_video_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean
+          module_id?: string
+          slug?: string
+          thumbnail_path?: string | null
+          title?: string
+          updated_at?: string
+          youtube_url?: string
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_modules: {
+        Row: {
+          cover_path: string | null
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_path?: string | null
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_path?: string | null
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lifecycle_campaign_steps: {
         Row: {
           audience: string
