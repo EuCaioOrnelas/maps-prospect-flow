@@ -9,6 +9,7 @@
 - [ ] Pendente de homologação real: conversa ponta a ponta no WhatsApp com venda direta ativa; controles por contato na tela de conversas (pausar/excluir/retomar já existem via useSDRContactStatus)
 
 ## Admin — Churn
-- [ ] Contar somente cancelamentos com pagamento real comprovado, inclusive registros locais antigos
-- [ ] Exibir principal motivo e gráfico de pizza respeitando o filtro de datas
-- [ ] Testar regras de pagamento, motivos e período; validar painel
+- [x] Contar somente cancelamentos com pagamento real comprovado, inclusive registros locais antigos
+- [x] Exibir principal motivo e gráfico de pizza respeitando o filtro de datas
+- [x] Testar regras de pagamento, motivos e período; compilação e função verificadas
+- [ ] Conferir os valores com os dados reais de produção após publicar a tela e a função nesse ambiente

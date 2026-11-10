@@ -148,8 +148,8 @@ serve(async (req) => {
       if (usersWithRealPayment.has(p.id) && p.email) payingEmails.add(p.email.toLowerCase());
     });
 
-    // Buscar cancelamentos diretos no Stripe (feitos fora do nosso fluxo)
-    // Mescla qualquer subscription canceled pós-01/06 que não esteja já em subscription_cancellations.
+    // Busca todos os cancelamentos pós-01/06 e comprova o pagamento por assinatura.
+    // A tela e os totais removem duplicidades com os registros locais depois.
     const stripeChurns: any[] = [];
     try {
       const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
