@@ -7,8 +7,8 @@
 - [x] Conferir e entregar a segunda versão sem substituir a primeira
 - [x] Criar terceira versão com motion 3D mais marcante, tipografia forte, CTA premium e efeitos sonoros
 - [x] Conferir e entregar a terceira versão preservando as anteriores
-- [ ] Criar quarta versão mais clean: logo grande, frase menor e sem glow
-- [ ] Conferir e entregar a quarta versão preservando as anteriores
+- [x] Criar quarta versão mais clean: logo grande, frase menor e sem glow
+- [x] Conferir e entregar a quarta versão preservando as anteriores
 
 - [x] Fase 1 — Auditoria e plano aprovado
 - [x] Fase 2 — Catálogo comercial (sdr_products, sdr_agent_products, tela de catálogo, wizard)
