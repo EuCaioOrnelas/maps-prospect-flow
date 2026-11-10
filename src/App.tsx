@@ -49,6 +49,10 @@ const MainDashboard = lazyWithRetry(() => import("./pages/MainDashboard"), "Main
 const Admin = lazyWithRetry(() => import("./pages/Admin"), "Admin");
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"), "AdminDashboard");
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/AdminAnnouncements"), "AdminAnnouncements");
+const AprendaHome = lazyWithRetry(() => import("./pages/aprendizado/AprendaHome"), "AprendaHome");
+const AprendaModule = lazyWithRetry(() => import("./pages/aprendizado/AprendaModule"), "AprendaModule");
+const AprendaLesson = lazyWithRetry(() => import("./pages/aprendizado/AprendaLesson"), "AprendaLesson");
+const AdminAprendizado = lazyWithRetry(() => import("./pages/aprendizado/AdminAprendizado"), "AdminAprendizado");
 const Prospeccao = lazyWithRetry(() => import("./pages/Prospeccao"), "Prospeccao");
 const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"), "ResetPassword");
@@ -352,6 +356,9 @@ const App = () => (
                 <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
+                <Route path="/aprenda" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><AprendaHome /></Suspense></LightThemeWrapper>} />
+                <Route path="/aprenda/:moduleSlug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><AprendaModule /></Suspense></LightThemeWrapper>} />
+                <Route path="/aprenda/:moduleSlug/:lessonSlug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><AprendaLesson /></Suspense></LightThemeWrapper>} />
                 <Route path="/tour-completo" element={<LightThemeWrapper><TourCompleto /></LightThemeWrapper>} />
                 <Route path="/tour-guiado" element={<DashboardThemeProvider><Suspense fallback={<PageLoader />}><TourGuiado /></Suspense></DashboardThemeProvider>} />
                 <Route path="/upgrade" element={<LightThemeWrapper><Upgrade /></LightThemeWrapper>} />
@@ -476,6 +483,7 @@ const App = () => (
                   
                   {/* Admin */}
                   <Route path="announcements" element={<AdminAnnouncements />} />
+                  <Route path="aprendizado" element={<AdminAprendizado />} />
                   <Route path="termos" element={<AdminTermos />} />
                   <Route path="tags" element={<AdminTracking />} />
                   <Route path="auditoria" element={<AdminAuditoria />} />
