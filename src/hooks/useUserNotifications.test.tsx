@@ -8,6 +8,7 @@ let notifications: Array<Record<string, unknown>> = [];
 
 const makeQuery = () => {
   const filters: Record<string, unknown> = {};
+  let pendingUpdate: Record<string, unknown> | null = null;
   const query: any = {
     select: vi.fn(() => query),
     eq: vi.fn((field: string, value: unknown) => {
@@ -22,17 +23,22 @@ const makeQuery = () => {
     limit: vi.fn(() => query),
     update: vi.fn((payload: Record<string, unknown>) => {
       updatePayloads.push(payload);
-      notifications = notifications.map((notification) => {
-        const matches = Object.entries(filters).every(([field, value]) => {
-          if (field === "user_id") return true;
-          if (value === null) return notification[field] == null;
-          return notification[field] === value;
-        });
-        return matches ? { ...notification, ...payload } : notification;
-      });
+      pendingUpdate = payload;
       return query;
     }),
     then: (resolve: (value: unknown) => void) => {
+      if (pendingUpdate) {
+        const payload = pendingUpdate;
+        pendingUpdate = null;
+        notifications = notifications.map((notification) => {
+          const matches = Object.entries(filters).every(([field, value]) => {
+            if (field === "user_id") return true;
+            if (value === null) return notification[field] == null;
+            return notification[field] === value;
+          });
+          return matches ? { ...notification, ...payload } : notification;
+        });
+      }
       const visible = notifications.filter((notification) =>
         filters.cleared_at === null ? notification.cleared_at == null : true,
       );
