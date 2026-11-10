@@ -428,6 +428,13 @@
       "when": 1794234103224,
       "tag": "0060_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1794314257760,
+      "tag": "0061_domine_a_wiize_learning_center",
+      "breakpoints": true
     }
   ]
 }
