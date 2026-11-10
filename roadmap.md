@@ -13,4 +13,14 @@
 - [x] Exibir principal motivo e gráfico de pizza respeitando o filtro de datas
 - [x] Testar regras de pagamento, motivos e período; compilação e função verificadas
 - [ ] Conferir os valores com os dados reais de produção após publicar a tela e a função nesse ambiente
-## Domine a Wiize — Central de Aprendizado\n- [x] Card "Domine a Wiize" na Central de Ajuda apontando para /aprenda\n- [ ] Tabelas learning_modules/learning_lessons com RLS (leitura pública de publicados; escrita só admin)\n- [ ] Bucket de imagens da central\n- [ ] Páginas públicas /aprenda, /aprenda/:slug, /aprenda/:slug/:lessonSlug\n- [ ] Player YouTube com extração de ID\n- [ ] Painel admin "Gerenciar Aprendizado" (módulos, aulas, ordem, ativação, upload)\n- [ ] Acesso ao /aprenda no site e na plataforma\n- [ ] Testes e verificação de regressão\n- [ ] Relatório final
+## Domine a Wiize — Central de Aprendizado
+- [x] Card "Domine a Wiize" na Central de Ajuda apontando para /aprenda
+- [x] Tabelas learning_modules/learning_lessons com RLS (leitura pública de publicados; escrita só admin)
+- [x] Bucket de imagens da central (privado, URLs assinadas)
+- [x] Páginas públicas /aprenda, /aprenda/:slug, /aprenda/:slug/:lessonSlug
+- [x] Player YouTube com extração de ID
+- [x] Painel admin "Gerenciar Aprendizado" (módulos, aulas, ordem, ativação, upload)
+- [x] Acesso ao /aprenda no site e na plataforma
+- [x] Testes e verificação de regressão
+- [x] Relatório final
+- [ ] Produção: rodar docs/sql/prod-domine-a-wiize.sql e publicar os arquivos

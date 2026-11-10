@@ -5,6 +5,7 @@ import {
   Workflow,
   FileSignature,
   Search,
+  GraduationCap,
   LifeBuoy,
   HelpCircle,
   Code2,
@@ -107,6 +108,7 @@ export const RESOURCE_COLUMNS: MenuColumn[] = [
     title: "Suporte",
     items: [
       { label: "Central de ajuda", description: "Tutoriais e guias da plataforma", to: "/ajuda", icon: LifeBuoy },
+      { label: "Domine a Wiize", description: "Aprenda com tutoriais em vídeo", to: "/aprenda", icon: GraduationCap },
       { label: "FAQ", description: "Perguntas frequentes sobre a plataforma", to: "/ajuda/faq", icon: HelpCircle },
       { label: "Falar com vendas", description: "Converse com nosso time", to: "/contato", icon: Mail },
     ],

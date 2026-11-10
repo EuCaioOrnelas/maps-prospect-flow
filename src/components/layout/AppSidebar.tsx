@@ -1,5 +1,5 @@
 import { AccountMenu } from "./AccountMenu";
-import { Lightbulb } from "lucide-react";
+import { GraduationCap, Lightbulb } from "lucide-react";
 import { OpportunityUsage } from "./OpportunityUsage";
 import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
@@ -629,6 +629,18 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
                 isActive={currentPath === "/sugestoes"}
                 isExpanded={isExpanded}
                 tooltip="Sugestões e votação"
+              />
+            </li>
+
+            {/* Domine a Wiize — tutoriais em vídeo */}
+            <li>
+              <SidebarNavItem
+                title="Domine a Wiize"
+                icon={GraduationCap}
+                url="/aprenda"
+                isActive={currentPath.startsWith("/aprenda")}
+                isExpanded={isExpanded}
+                tooltip="Tutoriais em vídeo"
               />
             </li>
 
