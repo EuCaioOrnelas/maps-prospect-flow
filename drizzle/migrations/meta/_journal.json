@@ -435,6 +435,13 @@
       "when": 1794314257760,
       "tag": "0061_domine_a_wiize_learning_center",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1794315643892,
+      "tag": "0062_updates_record_event_marks_bell_read",
+      "breakpoints": true
     }
   ]
 }
