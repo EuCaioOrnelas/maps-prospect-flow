@@ -57,23 +57,18 @@ export default function AdminChurn() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Filtro de período: aplicado antes do KPIs e da busca textual
-  const dateFilteredRecords = useMemo(() => {
-    if (!startDate && !endDate) return records;
-    const startTs = startDate ? new Date(`${startDate}T00:00:00`).getTime() : -Infinity;
-    const endTs = endDate ? new Date(`${endDate}T23:59:59.999`).getTime() : Infinity;
-    return records.filter((record) => {
-      const t = new Date(record.cancelled_at).getTime();
-      return t >= startTs && t <= endTs;
-    });
-  }, [records, startDate, endDate]);
+  // O filtro vale para qualquer data do histórico e alimenta KPIs e gráfico.
+  const dateFilteredRecords = useMemo(
+    () => filterChurnByDate(records, startDate, endDate),
+    [records, startDate, endDate],
+  );
 
   const filteredRecords = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return dateFilteredRecords;
     return dateFilteredRecords.filter((record) => {
       const reasonLabel = record.cancellation_reason
-        ? (reasonLabels[record.cancellation_reason] || record.cancellation_reason).toLowerCase()
+        ? getChurnReasonLabel(record.cancellation_reason).toLowerCase()
         : "";
       return (
         (record.name || "").toLowerCase().includes(term) ||
@@ -308,13 +303,8 @@ export default function AdminChurn() {
   const churnRateTotal = rate(totalCount);
 
 
-  const reasonCounts: Record<string, number> = {};
-  kpiBase.forEach((record) => {
-    if (!record.cancellation_reason) return;
-    const key = reasonLabels[record.cancellation_reason] || record.cancellation_reason;
-    reasonCounts[key] = (reasonCounts[key] || 0) + 1;
-  });
-  const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0];
+  const reasonData = buildChurnReasonData(kpiBase);
+  const topReason = reasonData[0];
 
   const returnYes = kpiBase.filter((record) => record.intends_to_return === "yes").length;
   const returnMaybe = kpiBase.filter((record) => record.intends_to_return === "maybe").length;
@@ -467,7 +457,7 @@ export default function AdminChurn() {
                       <TableCell>
                         {record.cancellation_reason ? (
                           <Badge variant="secondary" className="text-[10px]">
-                            {reasonLabels[record.cancellation_reason] || record.cancellation_reason}
+                            {getChurnReasonLabel(record.cancellation_reason)}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">Sem feedback</span>
@@ -550,7 +540,7 @@ export default function AdminChurn() {
                     <span className="text-xs text-muted-foreground">Motivo</span>
                     <Badge variant="secondary" className="text-[10px]">
                       {selectedRecord.cancellation_reason
-                        ? reasonLabels[selectedRecord.cancellation_reason] || selectedRecord.cancellation_reason
+                        ? getChurnReasonLabel(selectedRecord.cancellation_reason)
                         : "Não informado"}
                     </Badge>
                   </div>
