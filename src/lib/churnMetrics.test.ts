@@ -1,6 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { hasRealPaymentBeforeCancellation } from "../../supabase/functions/admin-get-churn/churnRules";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 import { buildChurnReasonData, filterChurnByDate } from "./churnMetrics";
+
+// Testa a regra real do index.ts sem iniciar o servidor Deno nem copiar a lógica.
+const edgeSource = readFileSync("supabase/functions/admin-get-churn/index.ts", "utf8");
+const ruleStart = edgeSource.indexOf("export type StripeInvoicePayment");
+const ruleEnd = edgeSource.indexOf("const corsHeaders", ruleStart);
+if (ruleStart < 0 || ruleEnd < ruleStart) throw new Error("Regra de churn não encontrada no index.ts");
+const ruleModule = { exports: {} as {
+  hasRealPaymentBeforeCancellation: (
+    invoices: Array<{
+      paid?: boolean;
+      amount_paid?: number | null;
+      amount_remaining?: number | null;
+      created?: number;
+      status_transitions?: { paid_at?: number | null } | null;
+    }>,
+    canceledAtUnix: number,
+  ) => boolean;
+} };
+runInNewContext(ts.transpileModule(edgeSource.slice(ruleStart, ruleEnd), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: ruleModule.exports });
+const { hasRealPaymentBeforeCancellation } = ruleModule.exports;
 
 describe("prova de pagamento para churn", () => {
   it("conta quem pagou R$ 129 antes de cancelar, mesmo durante a data do trial", () => {
