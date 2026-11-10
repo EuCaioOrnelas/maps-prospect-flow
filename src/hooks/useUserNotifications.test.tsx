@@ -36,6 +36,7 @@ const makeQuery = () => {
       const visible = notifications.filter((notification) =>
         filters.cleared_at === null ? notification.cleared_at == null : true,
       );
+      console.log("MOCK THEN", JSON.stringify(filters), "visible", visible.length, "total", notifications.length);
       resolve({ data: visible, error: null, count: visible.filter((item) => !item.read_at).length });
     },
   };
