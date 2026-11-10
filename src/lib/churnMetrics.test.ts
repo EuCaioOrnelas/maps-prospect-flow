@@ -46,9 +46,9 @@ describe("motivos e filtro de churn", () => {
 
   it("permite filtrar churns de datas anteriores e inclui o dia final inteiro", () => {
     const records = [
-      { id: "old", cancelled_at: "2026-06-15T12:00:00-03:00" },
-      { id: "end", cancelled_at: "2026-07-31T23:59:59-03:00" },
-      { id: "after", cancelled_at: "2026-08-01T00:00:00-03:00" },
+      { id: "old", cancelled_at: "2026-06-15T12:00:00" },
+      { id: "end", cancelled_at: "2026-07-31T23:59:59" },
+      { id: "after", cancelled_at: "2026-08-01T00:00:00" },
     ];
     expect(filterChurnByDate(records, "2026-06-01", "2026-07-31").map((r) => r.id)).toEqual(["old", "end"]);
     expect(filterChurnByDate(records, "2026-06-01", "").map((r) => r.id)).toEqual(["old", "end", "after"]);
