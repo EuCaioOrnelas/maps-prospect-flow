@@ -174,7 +174,7 @@ export const ProspeccaoVideoModal = ({
 
       <div
         ref={containerRef}
-        className="relative w-full max-w-4xl rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10 group"
+        className="relative w-full max-w-4xl rounded-2xl overflow-hidden bg-black border border-white/10 group shadow-[0_24px_80px_-16px_rgba(0,0,0,0.55)]"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isPlaying && setShowControls(false)}
       >
@@ -209,24 +209,6 @@ export const ProspeccaoVideoModal = ({
               Ativar som
             </button>
           )}
-
-          {/* Botão central play/pause */}
-          <div
-            className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
-              !isPlaying || showControls ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlay();
-              }}
-              className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200 pointer-events-auto"
-              aria-label={isPlaying ? "Pausar" : "Reproduzir"}
-            >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-            </button>
-          </div>
 
           {/* Barra de controles */}
           <div
