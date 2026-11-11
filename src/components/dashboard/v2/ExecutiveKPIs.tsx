@@ -67,7 +67,7 @@ export function ExecutiveKPIs({
       value: `R$ ${fmtCompact(receitaPotencial)}`,
       badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : undefined,
       badgeType: receitaPotencialGrowth > 0 ? 'positive' : receitaPotencialGrowth < 0 ? 'negative' : 'neutral',
-      icon: <DollarSign size={20} />,
+      icon: <DollarSign size={18} />,
       description: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
       showBadge: true,
       empty: receitaPotencial === 0,
@@ -78,7 +78,7 @@ export function ExecutiveKPIs({
       value: String(leadsQuentesHoje),
       badge: hotLeadsChange > 0 ? `+${hotLeadsChange}` : hotLeadsChange < 0 ? String(hotLeadsChange) : undefined,
       badgeType: hotLeadsChange > 0 ? 'positive' : hotLeadsChange < 0 ? 'negative' : 'neutral',
-      icon: <Flame size={20} />,
+      icon: <Flame size={18} />,
       description: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
       showBadge: true,
       empty: leadsQuentesHoje === 0 && leadsQuentesOntem === 0,
@@ -88,7 +88,7 @@ export function ExecutiveKPIs({
       title: "Gargalo Atual",
       value: healthStatus,
       badgeType: healthBadgeType,
-      icon: <AlertTriangle size={20} />,
+      icon: <AlertTriangle size={18} />,
       description: healthDetail ? `${healthTooltip} — ${healthDetail}` : healthTooltip,
       showBadge: false,
       empty: isInsufficientData,
@@ -99,7 +99,7 @@ export function ExecutiveKPIs({
       value: aiDisplay,
       badge: "automático",
       badgeType: 'positive',
-      icon: <Bot size={20} />,
+      icon: <Bot size={18} />,
       empty: aiMinutesSaved === 0,
       emptyLabel: "Aguardando uso da IA",
       description: "Tempo economizado com respostas IA + fluxos. Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
@@ -120,7 +120,7 @@ export function ExecutiveKPIs({
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={cn(
-                    "shrink-0 h-11 w-11 rounded-xl flex items-center justify-center",
+                    "shrink-0 h-10 w-10 rounded-lg flex items-center justify-center",
                     kpi.empty || loading ? "bg-muted/50" : "bg-primary/[0.07] dark:bg-primary/[0.12]"
                   )}
                 >
@@ -128,8 +128,8 @@ export function ExecutiveKPIs({
                     {kpi.icon}
                   </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1 h-[18px]">
+                <div className="min-w-0 flex-1 h-10 flex flex-col">
+                  <div className="flex items-center gap-1 h-4">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate min-w-0">
                       {kpi.title}
                     </p>
@@ -150,7 +150,7 @@ export function ExecutiveKPIs({
                     {kpi.showBadge && kpi.badge && !kpi.empty && !loading && (
                       <span
                         className={cn(
-                          "ml-auto shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                          "ml-auto shrink-0 text-[9px] font-semibold px-1.5 leading-[14px] rounded-full",
                           kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
                           kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive dark:text-red-400",
                           kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground"
@@ -167,7 +167,7 @@ export function ExecutiveKPIs({
                     label={kpi.emptyLabel}
                     labelLineHeight="24px"
                     size="sm"
-                    className="min-h-[24px] mt-1.5"
+                    className="flex-1 min-h-0 flex items-center"
                   >
                     <p
                       className={cn(
