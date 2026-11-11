@@ -381,16 +381,22 @@ export const LeadDetailDialog = ({
     }
   };
 
+  const loadCrmTags = useCallback(async () => {
+    const owner = accountOwnerId || user?.id;
+    if (!owner) return;
+    const [tagsRes, leadsRes] = await Promise.all([
+      supabase.from('crm_tags').select('name').eq('owner_user_id', owner),
+      supabase.from('leads').select('tags').eq('owner_user_id', owner).not('tags', 'is', null).range(0, 1999),
+    ]);
+    const map = new Map<string, string>();
+    (tagsRes.data || []).forEach((t: any) => t?.name && map.set(String(t.name).toLowerCase(), String(t.name).trim()));
+    (leadsRes.data || []).forEach((l: any) => (Array.isArray(l.tags) ? l.tags : []).forEach((t: string) => { const v = String(t || '').trim(); if (v && !map.has(v.toLowerCase())) map.set(v.toLowerCase(), v); }));
+    setAvailableTags(Array.from(map.values()).sort((x, y) => x.localeCompare(y, 'pt-BR')));
+  }, [accountOwnerId, user?.id]);
+
   useEffect(() => {
-    if (!open || !accountOwnerId) return;
-    let cancelled = false;
-    supabase.from('crm_tags').select('name').eq('owner_user_id', accountOwnerId).then(({ data }) => {
-      if (cancelled || !data) return;
-      const names = Array.from(new Set(data.map((t) => t.name).filter(Boolean)));
-      setAvailableTags(names.sort((a, b) => a.localeCompare(b, 'pt-BR')));
-    });
-    return () => { cancelled = true; };
-  }, [open, accountOwnerId]);
+    if (open) loadCrmTags();
+  }, [open, loadCrmTags]);
 
   const loadDealAttachments = async () => {
     if (!lead || !user) return;
@@ -985,19 +991,78 @@ export const LeadDetailDialog = ({
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 group">
-                  <h2 className="text-lg font-semibold truncate" title={displayName}>
-                    {displayName.length > 50 ? `${displayName.slice(0, 50)}...` : displayName}
+                <div className="flex items-center gap-2 group min-w-0 pr-8">
+                  <h2 className="text-lg font-semibold truncate min-w-0" title={displayName}>
+                    {displayName}
                   </h2>
                   <button
                     onClick={() => {
                       setHeaderNameValue(lead.contact_name || lead.company_name || '');
                       setIsEditingHeaderName(true);
                     }}
+                    aria-label="Editar nome"
                     className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
+                  <div className="flex items-center gap-1 shrink-0 max-w-[55%] overflow-hidden">
+                    {localTags.slice(0, 2).map((tag) => (
+                      <span key={tag} className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-background/80 px-2 text-[11px] font-medium text-foreground max-w-[130px] pr-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                        <span className="truncate" title={tag}>{tag}</span>
+                        <button type="button" aria-label={`Remover tag ${tag}`} title="Remover tag" onClick={() => handleRemoveTag(tag)} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground shrink-0">
+                          <XIconTag className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <Popover onOpenChange={(o) => { if (o) loadCrmTags(); else setNewTag(''); }}>
+                      <PopoverTrigger asChild>
+                        <button type="button" title={localTags.length > 2 ? localTags.slice(2).join(', ') : 'Gerenciar tags'} className="inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-background hover:text-foreground shrink-0">
+                          {localTags.length > 2 ? `+${localTags.length - 2}` : <><PlusIconTag className="h-3 w-3" />{localTags.length ? '' : 'Tag'}</>}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-64 p-2">
+                        <Input
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value.slice(0, 30))}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+                          placeholder="Buscar ou criar tag"
+                          className="h-8 text-sm"
+                          autoFocus
+                        />
+                        {localTags.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1 border-b border-border pb-2">
+                            {localTags.map((tag) => (
+                              <span key={tag} className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-background/80 px-2 text-[11px] font-medium text-foreground max-w-full pr-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                                <span className="truncate">{tag}</span>
+                                <button type="button" aria-label={`Remover tag ${tag}`} onClick={() => handleRemoveTag(tag)} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                                  <XIconTag className="h-3 w-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="mt-2 px-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tags do CRM</p>
+                        <div className="mt-1 max-h-48 overflow-y-auto space-y-0.5">
+                          {tagSuggestions.map((tag) => (
+                            <button key={tag} type="button" onClick={() => handleAddTag(tag)} className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-muted">
+                              <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                              <span className="truncate">{tag}</span>
+                            </button>
+                          ))}
+                          {newTag.trim() && !availableTags.some((t) => t.toLowerCase() === newTag.trim().toLowerCase()) && (
+                            <button type="button" onClick={() => handleAddTag()} className="w-full truncate rounded px-2 py-1.5 text-left text-sm text-primary hover:bg-muted">
+                              Criar tag “{newTag.trim()}”
+                            </button>
+                          )}
+                          {!newTag.trim() && tagSuggestions.length === 0 && (
+                            <p className="px-2 py-1.5 text-xs text-muted-foreground">Nenhuma tag disponível. Digite para criar.</p>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
               )}
               {lead.company_name && lead.contact_name && (
@@ -1008,48 +1073,6 @@ export const LeadDetailDialog = ({
                   </span>
                 </p>
               )}
-              <div className="flex flex-wrap items-center gap-1 mt-2">
-                {localTags.map((tag) => (
-                  <span key={tag} className="group/tag inline-flex max-w-[160px] items-center gap-1 rounded-full border border-primary/20 bg-primary/10 pl-2 pr-1 py-0.5 text-[11px] font-medium text-primary">
-                    <span className="truncate" title={tag}>{tag}</span>
-                    <button type="button" aria-label={`Remover tag ${tag}`} title="Remover tag" onClick={() => handleRemoveTag(tag)} className="rounded-full p-0.5 hover:bg-primary/20">
-                      <XIconTag className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button type="button" className="inline-flex items-center gap-1 rounded-full border border-dashed border-primary/40 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10">
-                      <PlusIconTag className="h-3 w-3" /> {localTags.length ? 'Tag' : 'Adicionar tag'}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-64 p-2">
-                    <Input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value.slice(0, 30))}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
-                      placeholder="Buscar ou criar tag"
-                      className="h-8 text-sm"
-                      autoFocus
-                    />
-                    <div className="mt-2 max-h-48 overflow-y-auto space-y-0.5">
-                      {tagSuggestions.map((tag) => (
-                        <button key={tag} type="button" onClick={() => handleAddTag(tag)} className="w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-muted">
-                          {tag}
-                        </button>
-                      ))}
-                      {newTag.trim() && !availableTags.some((t) => t.toLowerCase() === newTag.trim().toLowerCase()) && (
-                        <button type="button" onClick={() => handleAddTag()} className="w-full truncate rounded px-2 py-1.5 text-left text-sm text-primary hover:bg-muted">
-                          Criar tag “{newTag.trim()}”
-                        </button>
-                      )}
-                      {!newTag.trim() && tagSuggestions.length === 0 && (
-                        <p className="px-2 py-1.5 text-xs text-muted-foreground">Digite para criar uma tag.</p>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs opacity-70">
                   {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}
