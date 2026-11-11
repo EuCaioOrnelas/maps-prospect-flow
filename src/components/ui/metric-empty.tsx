@@ -142,6 +142,7 @@ export function MetricSlot({
   loading,
   empty,
   hint,
+  label,
   align = "left",
   size = "md",
   className,
@@ -173,9 +174,9 @@ export function MetricSlot({
         className="animate-in fade-in-0 duration-500 ease-out motion-reduce:animate-none"
       >
         {state === "loading" ? (
-          <MetricSkeleton align={align} size={size} />
+          <MetricSkeleton align={align} size={size} single={!hint} />
         ) : state === "empty" ? (
-          <MetricEmpty hint={hint} align={align} size={size} />
+          <MetricEmpty hint={hint} label={label} align={align} size={size} />
         ) : (
           children
         )}
