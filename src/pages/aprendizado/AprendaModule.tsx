@@ -1,7 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { AprendaLayout } from "@/components/aprendizado/AprendaLayout";
-import { LearningImage } from "@/components/aprendizado/LearningImage";
 import { LessonListItem } from "@/components/aprendizado/LessonListItem";
 import { AprendaEmpty, AprendaLoading } from "@/components/aprendizado/AprendaFeedback";
 import { Button } from "@/components/ui/button";
@@ -43,20 +42,19 @@ export default function AprendaModule() {
         />
       ) : (
         <>
-          <LearningImage
-            path={module.cover_path}
-            alt={`Capa do modulo ${module.title}`}
-            className="aspect-[21/9] w-full rounded-lg border border-border"
-          />
-          <header className="mt-8">
-            <p className="text-sm font-medium text-primary">{lessonCountLabel(module.lessons.length)}</p>
-            <h1 className="mt-2 font-display text-3xl font-bold sm:text-4xl">{module.title}</h1>
+          <header>
+            <p className="text-xs font-medium uppercase tracking-wide text-primary sm:text-sm">
+              {lessonCountLabel(module.lessons.length)}
+            </p>
+            <h1 className="mt-2 font-display text-2xl font-bold leading-tight sm:text-3xl">{module.title}</h1>
             {module.description && (
-              <p className="mt-4 max-w-3xl leading-relaxed text-muted-foreground">{module.description}</p>
+              <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                {module.description}
+              </p>
             )}
           </header>
 
-          <section className="mt-10">
+          <section className="mt-8">
             <h2 className="text-lg font-semibold">Aulas deste modulo</h2>
             {module.lessons.length === 0 ? (
               <div className="mt-6">
