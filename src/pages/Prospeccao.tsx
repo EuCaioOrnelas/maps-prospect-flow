@@ -128,6 +128,7 @@ const Prospeccao = () => {
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection
             onSignupClick={trackSignupClick}
+            demoMode="video"
             titleLine1="Encontre empresas"
             titleLine2=""
             titleHighlight="Venda com eficiência"
