@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
-import videoAsset from "@/assets/video-vendas-prospeccao.mp4.asset.json";
+import videoUrl from "@/assets/video-vendas-prospeccao.mp4";
 
 interface ProspeccaoVideoModalProps {
   open: boolean;
@@ -181,7 +181,7 @@ export const ProspeccaoVideoModal = ({
         <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
           <video
             ref={videoRef}
-            src={videoAsset.url}
+            src={videoUrl}
             className="absolute inset-0 w-full h-full object-contain bg-black"
             playsInline
             preload="auto"
