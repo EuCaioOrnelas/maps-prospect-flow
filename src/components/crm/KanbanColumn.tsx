@@ -163,7 +163,7 @@ const KanbanColumnComponent = ({
       >
         <div className="p-2 space-y-3 w-full min-w-0">
           {visibleLeads.map((lead) => (
-            <div key={lead.id} className="relative [content-visibility:auto] [contain-intrinsic-size:auto_190px]">
+            <div key={lead.id} className="relative [content-visibility:auto] [contain-intrinsic-size:auto_90px]">
               {bulkSelectMode && (
                 <div 
                   className="absolute top-2 right-2 z-10"
