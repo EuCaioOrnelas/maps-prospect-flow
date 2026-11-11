@@ -15,12 +15,15 @@ const base = {
 };
 
 describe("CrmCapacityMeter", () => {
-  it("shows used contacts, the percentage and the upgrade link when the plan has a limit", () => {
+  it("shows the capacity number, the plan limit, the percentage and the expansion button", () => {
     const onUpgrade = vi.fn();
     const { container } = render(<CrmCapacityMeter {...base} count={640} onUpgrade={onUpgrade} />);
+    expect(container.textContent).toContain("Capacidade do CRM:");
     expect(container.textContent).toContain("640");
-    expect(container.textContent).toContain("/ 1.000");
+    expect(container.textContent).toContain("Limite do plano:");
+    expect(container.textContent).toContain("1.000");
     expect(container.textContent).toContain("64% usado");
+    expect(container.textContent).toContain("360 disponíveis");
     fireEvent.click(screen.getByRole("button", { name: "Aumentar capacidade" }));
     expect(onUpgrade).toHaveBeenCalledTimes(1);
   });
@@ -45,11 +48,11 @@ describe("CrmCapacityMeter", () => {
       />,
     );
     expect(container.textContent).toContain("1.200");
-    expect(container.textContent).toContain("/ 2.000");
+    expect(container.textContent).toContain("2.000");
     expect(container.textContent).toContain("plano 1.000 + 1.000 extras");
   });
 
-  it("says the plan has no limit and hides the upgrade link in that case", () => {
+  it("says the plan has no limit and hides the expansion button in that case", () => {
     const { container } = render(
       <CrmCapacityMeter
         {...base}
