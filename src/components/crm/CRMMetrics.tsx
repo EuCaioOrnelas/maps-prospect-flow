@@ -83,23 +83,33 @@ export const CRMMetrics = ({ leads, stages, hideValue = false, loading = false }
   return (
     <div className={`grid grid-cols-1 ${hideValue ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mt-4`}>
       {metrics.map((metric) => (
-        <Card key={metric.label} className="border-border/50 relative overflow-hidden">
+        <Card
+          key={metric.label}
+          className="border-border/50 relative overflow-hidden"
+          title={metric.empty ? metric.emptyHint : undefined}
+        >
           {/* Green glow */}
           {!metric.empty && !loading && (
-            <div className="absolute -bottom-10 -right-10 w-36 h-36 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-2xl pointer-events-none" />
           )}
-          <CardContent className="p-5 relative">
-            <div className="flex flex-col gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${metric.empty || loading ? 'bg-muted/50' : 'bg-primary/[0.07] dark:bg-primary/[0.12]'}`}>
-                <metric.icon className={`w-[17px] h-[17px] ${metric.empty || loading ? 'text-muted-foreground/40' : metric.color}`} />
+          <CardContent className="p-4 relative">
+            <div className="flex items-center gap-3">
+              <div className={`shrink-0 h-9 w-9 rounded-lg flex items-center justify-center ${metric.empty || loading ? 'bg-muted/50' : 'bg-primary/[0.07] dark:bg-primary/[0.12]'}`}>
+                <metric.icon className={`w-[15px] h-[15px] ${metric.empty || loading ? 'text-muted-foreground/40' : metric.color}`} />
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate">
                   {metric.label}
                 </p>
-                <MetricSlot cacheKey={`crm:${metric.label}`} loading={loading} empty={metric.empty} hint={metric.emptyHint} className="min-h-[46px]">
+                <MetricSlot
+                  cacheKey={`crm:${metric.label}`}
+                  loading={loading}
+                  empty={metric.empty}
+                  size="sm"
+                  className="min-h-[26px] mt-1.5"
+                >
                   <div className="flex items-baseline gap-1.5">
-                    <p className="text-[30px] font-bold leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    <p className="text-[22px] font-bold leading-none" style={{ fontVariantNumeric: 'tabular-nums' }}>
                       {metric.value}
                     </p>
                     {metric.subValue && (
