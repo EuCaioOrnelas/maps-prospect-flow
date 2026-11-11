@@ -25,6 +25,9 @@ export function isMetricEmpty(value: unknown): boolean {
   return false;
 }
 
+/** Tamanhos da linha principal do indicador. */
+type MetricSize = "xs" | "sm" | "md";
+
 interface MetricEmptyProps {
   /** Frase curta (1 linha) explicando quando o indicador será preenchido. */
   hint?: string;
@@ -32,8 +35,20 @@ interface MetricEmptyProps {
   /** Alinhamento do texto — acompanha o layout do card. */
   align?: "left" | "center";
   /** Tamanho da linha principal. */
-  size?: "sm" | "md";
+  size?: MetricSize;
 }
+
+const MAIN_TEXT: Record<MetricSize, string> = {
+  xs: "text-[10.5px]",
+  sm: "text-[12px]",
+  md: "text-sm",
+};
+
+const HINT_TEXT: Record<MetricSize, string> = {
+  xs: "text-[10px] mt-0.5",
+  sm: "text-[11px] mt-1",
+  md: "text-[11px] mt-1",
+};
 
 export function MetricEmpty({ hint, className, align = "left", size = "md" }: MetricEmptyProps) {
   return (
@@ -46,14 +61,14 @@ export function MetricEmpty({ hint, className, align = "left", size = "md" }: Me
     >
       <p
         className={cn(
-          "font-normal leading-tight text-muted-foreground/70",
-          size === "sm" ? "text-[12px]" : "text-sm"
+          "font-normal leading-tight text-muted-foreground/60",
+          MAIN_TEXT[size]
         )}
       >
         Ainda não há dados
       </p>
       {hint && (
-        <p className="text-[11px] leading-snug text-muted-foreground/50 mt-1 font-light">
+        <p className={cn("leading-snug text-muted-foreground/45 font-light", HINT_TEXT[size])}>
           {hint}
         </p>
       )}
@@ -64,7 +79,7 @@ export function MetricEmpty({ hint, className, align = "left", size = "md" }: Me
 interface MetricSkeletonProps {
   className?: string;
   align?: "left" | "center";
-  size?: "sm" | "md";
+  size?: MetricSize;
 }
 
 /** Skeleton do valor — ocupa exatamente o mesmo espaço do valor/empty state. */
@@ -82,7 +97,7 @@ export function MetricSkeleton({ className, align = "left", size = "md" }: Metri
       <div
         className={cn(
           "rounded-md bg-muted/70",
-          size === "sm" ? "h-4 w-16" : "h-6 w-24"
+          size === "xs" ? "h-3 w-14" : size === "sm" ? "h-4 w-16" : "h-6 w-24"
         )}
       />
       <div className="mt-2 h-2.5 w-3/5 min-w-[70px] rounded bg-muted/40" />
@@ -97,7 +112,7 @@ interface MetricSlotProps {
   empty?: boolean;
   hint?: string;
   align?: "left" | "center";
-  size?: "sm" | "md";
+  size?: MetricSize;
   /** Classe aplicada ao contêiner (use min-h para reservar o espaço). */
   className?: string;
   /**
@@ -159,4 +174,3 @@ export function MetricSlot({
     </div>
   );
 }
-
