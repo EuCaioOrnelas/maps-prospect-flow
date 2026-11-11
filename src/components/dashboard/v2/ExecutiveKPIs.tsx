@@ -117,70 +117,68 @@ export function ExecutiveKPIs({
               <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-2xl pointer-events-none" />
             )}
             <CardContent className="p-4 relative">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={cn(
-                      "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center",
-                      kpi.empty || loading ? "bg-muted/50" : "bg-primary/[0.07] dark:bg-primary/[0.12]"
-                    )}
-                  >
-                    <span className={cn(kpi.empty || loading ? "text-muted-foreground/40" : "text-primary")}>
-                      {kpi.icon}
-                    </span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate">
-                        {kpi.title}
-                      </p>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label={`O que significa ${kpi.title}?`}
-                            className="shrink-0 rounded-full text-muted-foreground/50 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
-                          >
-                            <HelpCircle className="w-3 h-3" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[260px] text-[11px] leading-snug">
-                          {kpi.description}
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <MetricSlot
-                      cacheKey={`cockpit:${kpi.title}`}
-                      loading={loading}
-                      empty={kpi.empty}
-                      hint={kpi.emptyHint}
-                      size="xs"
-                      className="min-h-[24px] mt-1.5"
-                    >
-                      <p
-                        className={cn(
-                          "font-bold leading-none truncate",
-                          kpi.value.length > 14 ? "text-[15px]" : "text-[22px]"
-                        )}
-                        style={{ fontVariantNumeric: "tabular-nums" }}
-                      >
-                        {kpi.value}
-                      </p>
-                    </MetricSlot>
-                  </div>
-                </div>
-                {kpi.showBadge && kpi.badge && !kpi.empty && !loading && (
-                  <span
-                    className={cn(
-                      "shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full",
-                      kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
-                      kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive dark:text-red-400",
-                      kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {kpi.badge}
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={cn(
+                    "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center",
+                    kpi.empty || loading ? "bg-muted/50" : "bg-primary/[0.07] dark:bg-primary/[0.12]"
+                  )}
+                >
+                  <span className={cn(kpi.empty || loading ? "text-muted-foreground/40" : "text-primary")}>
+                    {kpi.icon}
                   </span>
-                )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate min-w-0">
+                      {kpi.title}
+                    </p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`O que significa ${kpi.title}?`}
+                          className="shrink-0 rounded-full text-muted-foreground/50 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
+                        >
+                          <HelpCircle className="w-3 h-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px] text-[11px] leading-snug">
+                        {kpi.description}
+                      </TooltipContent>
+                    </Tooltip>
+                    {kpi.showBadge && kpi.badge && !kpi.empty && !loading && (
+                      <span
+                        className={cn(
+                          "ml-auto shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                          kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
+                          kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive dark:text-red-400",
+                          kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {kpi.badge}
+                      </span>
+                    )}
+                  </div>
+                  <MetricSlot
+                    cacheKey={`cockpit:${kpi.title}`}
+                    loading={loading}
+                    empty={kpi.empty}
+                    label={kpi.emptyLabel}
+                    size="sm"
+                    className="min-h-[24px] mt-1.5"
+                  >
+                    <p
+                      className={cn(
+                        "font-bold leading-none truncate",
+                        kpi.value.length > 14 ? "text-[15px]" : "text-[22px]"
+                      )}
+                      style={{ fontVariantNumeric: "tabular-nums" }}
+                    >
+                      {kpi.value}
+                    </p>
+                  </MetricSlot>
+                </div>
               </div>
             </CardContent>
           </Card>
