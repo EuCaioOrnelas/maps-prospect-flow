@@ -415,9 +415,6 @@ export default function CRM() {
 
               <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} loading={isLoading} />
 
-
-
-
               <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <CRMFilters 
