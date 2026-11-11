@@ -36,6 +36,8 @@ interface MetricEmptyProps {
    * vazio caber em uma linha só; o padrão é "Ainda não há dados".
    */
   label?: string;
+  /** Altura de linha da frase principal (ex.: "24px") — centra o texto no espaço reservado. */
+  labelLineHeight?: string;
   className?: string;
   /** Alinhamento do texto — acompanha o layout do card. */
   align?: "left" | "center";
@@ -55,7 +57,7 @@ const HINT_TEXT: Record<MetricSize, string> = {
   md: "text-[11px] mt-1",
 };
 
-export function MetricEmpty({ hint, label, className, align = "left", size = "md" }: MetricEmptyProps) {
+export function MetricEmpty({ hint, label, labelLineHeight, className, align = "left", size = "md" }: MetricEmptyProps) {
   return (
     <div
       className={cn(
@@ -69,6 +71,7 @@ export function MetricEmpty({ hint, label, className, align = "left", size = "md
           "font-normal leading-tight text-muted-foreground/60",
           MAIN_TEXT[size]
         )}
+        style={labelLineHeight ? { lineHeight: labelLineHeight } : undefined}
       >
         {label ?? "Ainda não há dados"}
       </p>
@@ -120,6 +123,8 @@ interface MetricSlotProps {
   hint?: string;
   /** Frase curta do estado vazio — use para caber em 1 linha. */
   label?: string;
+  /** Altura de linha da frase do estado vazio — centra no espaço reservado. */
+  labelLineHeight?: string;
   align?: "left" | "center";
   size?: MetricSize;
   /** Classe aplicada ao contêiner (use min-h para reservar o espaço). */
@@ -143,6 +148,7 @@ export function MetricSlot({
   empty,
   hint,
   label,
+  labelLineHeight,
   align = "left",
   size = "md",
   className,
@@ -176,7 +182,7 @@ export function MetricSlot({
         {state === "loading" ? (
           <MetricSkeleton align={align} size={size} single={!hint} />
         ) : state === "empty" ? (
-          <MetricEmpty hint={hint} label={label} align={align} size={size} />
+          <MetricEmpty hint={hint} label={label} labelLineHeight={labelLineHeight} align={align} size={size} />
         ) : (
           children
         )}
