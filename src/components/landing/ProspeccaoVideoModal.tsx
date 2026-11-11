@@ -174,7 +174,7 @@ export const ProspeccaoVideoModal = ({
 
       <div
         ref={containerRef}
-        className="relative w-full max-w-4xl rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10 group"
+        className="relative w-full max-w-4xl rounded-2xl overflow-hidden bg-black border border-white/10 group shadow-[0_24px_80px_-16px_rgba(0,0,0,0.55)]"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isPlaying && setShowControls(false)}
       >
@@ -209,24 +209,6 @@ export const ProspeccaoVideoModal = ({
               Ativar som
             </button>
           )}
-
-          {/* Botão central play/pause */}
-          <div
-            className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
-              !isPlaying || showControls ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlay();
-              }}
-              className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200 pointer-events-auto"
-              aria-label={isPlaying ? "Pausar" : "Reproduzir"}
-            >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-            </button>
-          </div>
 
           {/* Barra de controles */}
           <div
@@ -337,15 +319,15 @@ export const ProspeccaoVideoModal = ({
 
         {/* CTA abaixo do vídeo (some em tela cheia) */}
         {!isFullscreen && (
-          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-card flex flex-col sm:flex-row items-center justify-center gap-3 border-t border-border">
+          <div className="px-4 sm:px-6 py-3 bg-card/95 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
             <p className="text-muted-foreground text-xs sm:text-sm text-center">
               Teste gratuitamente por 7 dias — sem compromisso
             </p>
             {TRIAL_DISABLED ? (
               <Button
                 variant="hero"
-                size="lg"
-                className="rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11 opacity-60 cursor-not-allowed"
+                size="sm"
+                className="rounded-full text-sm px-6 h-9 opacity-60 cursor-not-allowed shadow-none"
                 disabled
                 aria-disabled="true"
                 onClick={(e) => {
@@ -353,7 +335,7 @@ export const ProspeccaoVideoModal = ({
                   notifyTrialDisabled();
                 }}
               >
-                <Lock size={16} className="mr-1" />
+                <Lock size={14} className="mr-1" />
                 Teste grátis em breve
               </Button>
             ) : (
@@ -364,9 +346,9 @@ export const ProspeccaoVideoModal = ({
                   onOpenChange(false);
                 }}
               >
-                <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11">
+                <Button variant="hero" size="sm" className="group rounded-full text-sm px-6 h-9 shadow-none">
                   Testar grátis por 7 dias
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             )}
