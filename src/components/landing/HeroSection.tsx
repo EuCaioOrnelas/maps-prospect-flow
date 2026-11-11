@@ -3,6 +3,10 @@ import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
 // O modal de vídeo (e o YouTube) só é baixado quando o visitante abre o vídeo.
 const VideoModal = lazy(() => import("./VideoModal").then((m) => ({ default: m.VideoModal })));
+// Vídeo de vendas local (MP4) — usado apenas na página de Prospecção.
+const ProspeccaoVideoModal = lazy(() =>
+  import("./ProspeccaoVideoModal").then((m) => ({ default: m.ProspeccaoVideoModal })),
+);
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -76,6 +80,8 @@ interface HeroSectionProps {
  titleHighlight?: string;
  description?: string;
  descriptionClassName?: string;
+ /** "tour" (padrão) leva ao tour guiado; "video" abre o vídeo de vendas em janela com fundo desfocado. */
+ demoMode?: "tour" | "video";
 }
 
 export const HeroSection = ({
@@ -85,6 +91,7 @@ export const HeroSection = ({
    titleHighlight = "Em um só lugar",
    description = "Infraestrutura comercial para captar, prospectar, atender, gerenciar e vender, com IA e automação conectando toda a operação em uma única plataforma.",
   descriptionClassName,
+  demoMode = "tour",
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
  const [currentStage, setCurrentStage] = useState(0);
