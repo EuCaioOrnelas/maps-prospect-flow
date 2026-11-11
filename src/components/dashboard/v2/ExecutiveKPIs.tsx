@@ -67,7 +67,7 @@ export function ExecutiveKPIs({
       value: `R$ ${fmtCompact(receitaPotencial)}`,
       badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : undefined,
       badgeType: receitaPotencialGrowth > 0 ? 'positive' : receitaPotencialGrowth < 0 ? 'negative' : 'neutral',
-      icon: <DollarSign size={15} />,
+      icon: <DollarSign size={18} />,
       description: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
       showBadge: true,
       empty: receitaPotencial === 0,
@@ -78,7 +78,7 @@ export function ExecutiveKPIs({
       value: String(leadsQuentesHoje),
       badge: hotLeadsChange > 0 ? `+${hotLeadsChange}` : hotLeadsChange < 0 ? String(hotLeadsChange) : undefined,
       badgeType: hotLeadsChange > 0 ? 'positive' : hotLeadsChange < 0 ? 'negative' : 'neutral',
-      icon: <Flame size={15} />,
+      icon: <Flame size={18} />,
       description: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
       showBadge: true,
       empty: leadsQuentesHoje === 0 && leadsQuentesOntem === 0,
@@ -88,7 +88,7 @@ export function ExecutiveKPIs({
       title: "Gargalo Atual",
       value: healthStatus,
       badgeType: healthBadgeType,
-      icon: <AlertTriangle size={15} />,
+      icon: <AlertTriangle size={18} />,
       description: healthDetail ? `${healthTooltip} — ${healthDetail}` : healthTooltip,
       showBadge: false,
       empty: isInsufficientData,
@@ -99,7 +99,7 @@ export function ExecutiveKPIs({
       value: aiDisplay,
       badge: "automático",
       badgeType: 'positive',
-      icon: <Bot size={15} />,
+      icon: <Bot size={18} />,
       empty: aiMinutesSaved === 0,
       emptyLabel: "Aguardando uso da IA",
       description: "Tempo economizado com respostas IA + fluxos. Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
@@ -140,7 +140,7 @@ export function ExecutiveKPIs({
                           aria-label={`O que significa ${kpi.title}?`}
                           className="shrink-0 rounded-full text-muted-foreground/50 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
                         >
-                          <HelpCircle className="w-3 h-3" />
+                          <HelpCircle className="w-3.5 h-3.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="top" className="max-w-[260px] text-[11px] leading-snug">
