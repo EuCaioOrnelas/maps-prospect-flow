@@ -92,7 +92,7 @@ export function CrmCapacityMeter({
                 </div>
 
                 {extraPacks > 0 && (
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="mt-2 text-xs text-foreground/70">
                     plano {baseLimit.toLocaleString('pt-BR')} + {extraContacts.toLocaleString('pt-BR')} extras
                   </p>
                 )}
