@@ -139,10 +139,20 @@ export function useAdminDashboard() {
 
   const loadStats = useCallback(async () => {
     try {
-      const { data: profiles } = await supabase
+      const baseCols = "id, plan, payment_provider, trial_will_charge_at, trial_start_at, trial_end_at, subscription_price_cents, subscription_current_period_end, searches_used, searches_limit, created_at, updated_at, is_blocked, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used";
+      // Se algum ambiente ainda não tiver first_paid_at, a consulta inteira
+      // falhava e zerava o cockpit; tenta de novo sem a coluna.
+      let { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, plan, payment_provider, trial_will_charge_at, trial_start_at, trial_end_at, first_paid_at, subscription_price_cents, subscription_current_period_end, searches_used, searches_limit, created_at, updated_at, is_blocked, trial_messages_sent, trial_leads_used, trial_flows_used, trial_campaigns_used")
+        .select(`${baseCols}, first_paid_at`)
         .order("created_at", { ascending: false });
+      if (profilesError) {
+        console.warn("[useAdminDashboard] profiles fallback:", profilesError.message);
+        ({ data: profiles } = await supabase
+          .from("profiles")
+          .select(baseCols)
+          .order("created_at", { ascending: false }) as any);
+      }
 
       if (!profiles) return;
 
