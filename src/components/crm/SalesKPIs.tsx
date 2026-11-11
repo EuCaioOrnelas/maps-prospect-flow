@@ -94,14 +94,16 @@ export function SalesKPIs({
                   size="sm"
                   className="min-h-[26px] mt-1.5"
                 >
-                  <div className="flex items-baseline gap-1.5">
+                  <div>
                     <p
                       className="text-[22px] font-bold leading-none"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
                       {k.value}
                     </p>
-                    <span className="text-[10px] text-muted-foreground truncate">{k.sub}</span>
+                    <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground/50 font-light truncate">
+                      {k.sub}
+                    </p>
                   </div>
                 </MetricSlot>
               </div>
