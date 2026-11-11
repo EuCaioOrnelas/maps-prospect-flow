@@ -13,7 +13,8 @@ interface KPIData {
   description: string;
   showBadge: boolean;
   empty?: boolean;
-  emptyHint?: string;
+  /** Frase curta do estado vazio — cabe em uma linha. */
+  emptyLabel?: string;
 }
 
 interface ExecutiveKPIsProps {
@@ -70,7 +71,7 @@ export function ExecutiveKPIs({
       description: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
       showBadge: true,
       empty: receitaPotencial === 0,
-      emptyHint: "Será preenchido após as primeiras negociações.",
+      emptyLabel: "Aguardando negociações",
     },
     {
       title: "Leads Quentes Hoje",
@@ -81,7 +82,7 @@ export function ExecutiveKPIs({
       description: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
       showBadge: true,
       empty: leadsQuentesHoje === 0 && leadsQuentesOntem === 0,
-      emptyHint: "Disponível quando os leads ganharem score.",
+      emptyLabel: "Aguardando score dos leads",
     },
     {
       title: "Gargalo Atual",
@@ -91,7 +92,7 @@ export function ExecutiveKPIs({
       description: healthDetail ? `${healthTooltip} — ${healthDetail}` : healthTooltip,
       showBadge: false,
       empty: isInsufficientData,
-      emptyHint: "Exige volume mínimo de leads para diagnóstico.",
+      emptyLabel: "Precisa de mais leads",
     },
     {
       title: "IA Economizou",
@@ -100,7 +101,7 @@ export function ExecutiveKPIs({
       badgeType: 'positive',
       icon: <Bot size={15} />,
       empty: aiMinutesSaved === 0,
-      emptyHint: "Atualizado conforme a IA responder por você.",
+      emptyLabel: "Aguardando uso da IA",
       description: "Tempo economizado com respostas IA + fluxos. Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
       showBadge: true,
     },
