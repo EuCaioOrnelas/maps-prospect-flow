@@ -233,6 +233,18 @@ const LeadCardComponent = ({
             >
               {displayName}
             </h4>
+            <span className="shrink-0 flex items-center gap-1" title={scoreTitle}>
+              {analyzed ? (
+                <>
+                  <span className="h-[3px] w-5 rounded-full bg-muted overflow-hidden">
+                    <span className="block h-full rounded-full bg-primary" style={{ width: `${score}%` }} />
+                  </span>
+                  <span className="text-[11px] font-semibold tabular-nums leading-none text-primary">{score}</span>
+                </>
+              ) : (
+                <span className="text-[11px] leading-none text-muted-foreground/50">—</span>
+              )}
+            </span>
             {onUpdateName && (
               <button
                 onClick={handleEditClick}
