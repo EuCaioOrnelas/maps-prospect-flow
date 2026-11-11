@@ -569,7 +569,7 @@ export default function CRM() {
                     <TooltipTrigger asChild>
                       <Button size="sm" onClick={() => { setAddLeadDefaultStageId(undefined); setAddLeadOpen(true); }} className="h-8 sm:h-9">
                         <Plus className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Adicionar Lead</span>
+                        <span className="hidden sm:inline">Adicionar contato</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Adicionar novo lead manualmente</TooltipContent>
