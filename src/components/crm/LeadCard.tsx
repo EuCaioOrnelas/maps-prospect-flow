@@ -236,7 +236,7 @@ const LeadCardComponent = ({
             <span className="shrink-0 flex items-center gap-1" title={scoreTitle}>
               {analyzed ? (
                 <>
-                  <span className="h-[3px] w-5 rounded-full bg-muted overflow-hidden">
+                  <span className="h-[3px] w-5 rounded-full bg-border overflow-hidden">
                     <span className="block h-full rounded-full bg-primary" style={{ width: `${score}%` }} />
                   </span>
                   <span className="text-[11px] font-semibold tabular-nums leading-none text-primary">{score}</span>
@@ -286,7 +286,7 @@ const LeadCardComponent = ({
                     onClick={(e) => { e.stopPropagation(); run(); }}
                     className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/70 transition-colors duration-100",
-                      disabled ? "opacity-30 cursor-not-allowed pointer-events-none" : "hover:bg-muted hover:text-foreground",
+                      disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "hover:bg-muted hover:text-foreground",
                     )}
                   >
                     <Icon className="w-3.5 h-3.5" />
