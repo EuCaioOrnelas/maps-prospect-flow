@@ -8,6 +8,7 @@ import { ImportExportDialog, type ImportRow } from '@/components/crm/ImportExpor
 import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
+import { CrmCapacityMeter } from '@/components/crm/CrmCapacityMeter';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
 import { CRMTabs } from '@/components/crm/CRMTabs';
 // MobileBlockOverlay removed - CRM now works on mobile
@@ -414,57 +415,6 @@ export default function CRM() {
 
               <CRMMetrics stages={stages} leads={filteredLeads} hideValue={isOperational} loading={isLoading} />
 
-
-              <div className={`mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 rounded-xl border ${contactsAtLimit ? 'border-destructive/40 bg-destructive/10' : contactsNearLimit ? 'border-amber-500/40 bg-amber-500/10' : 'border-border/50 bg-card'}`}>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs sm:text-sm text-foreground">
-                    <span className="text-muted-foreground">Capacidade do CRM:</span>
-                    <strong className="tabular-nums">{(Number(contactCount) || 0).toLocaleString('pt-BR')}</strong>
-                    <span className="text-muted-foreground">/</span>
-                    <strong className="tabular-nums">{hasContactLimit ? contactLimit.toLocaleString('pt-BR') : 'ilimitado'}</strong>
-                    {hasContactLimit && (
-                      <span className="text-[10px] text-muted-foreground hidden md:inline">
-                        ({Math.min(100, Math.round((Number(contactCount) || 0) / Math.max(Number(contactLimit) || 1, 1) * 100))}% usado)
-                      </span>
-                    )}
-                    {hasContactLimit && extraPacks > 0 && (
-                      <span className="text-[10px] text-muted-foreground">
-                        (plano {contactBaseLimit.toLocaleString('pt-BR')} + {extraContacts.toLocaleString('pt-BR')} extras)
-                      </span>
-                    )}
-                    {contactsAtLimit && <span className="ml-1 text-destructive font-medium">CRM lotado</span>}
-                  </div>
-                  {hasContactLimit && (
-                    <div className="mt-2 h-1.5 w-full max-w-md rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-[width] duration-500 ${contactsAtLimit ? 'bg-destructive' : contactsNearLimit ? 'bg-amber-500' : 'bg-primary'}`}
-                        style={{ width: `${Math.min(100, ((Number(contactCount) || 0) / Math.max(Number(contactLimit) || 1, 1)) * 100)}%` }}
-                      />
-                    </div>
-                  )}
-                  {contactsAtLimit && (
-                    <p className="mt-1.5 text-[11px] text-destructive">
-                      Você atingiu o limite de contatos. Aumente a capacidade para continuar adicionando leads.
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {hasContactLimit ? (
-                    <Button
-                      size="sm"
-                      variant={contactsAtLimit ? 'default' : contactsNearLimit ? 'outline' : 'ghost'}
-                      onClick={() => navigate('/upgrade')}
-                      className={contactsAtLimit || contactsNearLimit ? 'h-8 text-xs' : 'h-8 text-xs text-muted-foreground hover:text-foreground border border-border/40 hover:border-border bg-transparent hover:bg-muted/40 font-normal'}
-                    >
-                      Aumentar capacidade
-                    </Button>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">Seu plano não tem limite de contatos</span>
-                  )}
-                </div>
-              </div>
-
-
               <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <CRMFilters 
@@ -624,6 +574,19 @@ export default function CRM() {
                 onToggleArchive={async (lead) => {
                   await setLeadArchived(lead.id, !lead.archived_at);
                 }}
+                endSlot={
+                  <CrmCapacityMeter
+                    count={contactCount}
+                    limit={contactLimit}
+                    baseLimit={contactBaseLimit}
+                    extraContacts={extraContacts}
+                    extraPacks={extraPacks}
+                    hasLimit={hasContactLimit}
+                    atLimit={contactsAtLimit}
+                    nearLimit={contactsNearLimit}
+                    onUpgrade={() => navigate('/upgrade')}
+                  />
+                }
               />
             )}
           </div>
