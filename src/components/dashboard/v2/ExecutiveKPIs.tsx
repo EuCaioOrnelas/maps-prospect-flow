@@ -165,6 +165,7 @@ export function ExecutiveKPIs({
                     loading={loading}
                     empty={kpi.empty}
                     label={kpi.emptyLabel}
+                    labelLineHeight="24px"
                     size="sm"
                     className="min-h-[24px] mt-1.5"
                   >
