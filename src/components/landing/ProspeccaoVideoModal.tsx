@@ -319,15 +319,15 @@ export const ProspeccaoVideoModal = ({
 
         {/* CTA abaixo do vídeo (some em tela cheia) */}
         {!isFullscreen && (
-          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-card flex flex-col sm:flex-row items-center justify-center gap-3 border-t border-border">
+          <div className="px-4 sm:px-6 py-3 bg-card/95 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
             <p className="text-muted-foreground text-xs sm:text-sm text-center">
               Teste gratuitamente por 7 dias — sem compromisso
             </p>
             {TRIAL_DISABLED ? (
               <Button
                 variant="hero"
-                size="lg"
-                className="rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11 opacity-60 cursor-not-allowed"
+                size="sm"
+                className="rounded-full text-sm px-6 h-9 opacity-60 cursor-not-allowed shadow-none"
                 disabled
                 aria-disabled="true"
                 onClick={(e) => {
@@ -335,7 +335,7 @@ export const ProspeccaoVideoModal = ({
                   notifyTrialDisabled();
                 }}
               >
-                <Lock size={16} className="mr-1" />
+                <Lock size={14} className="mr-1" />
                 Teste grátis em breve
               </Button>
             ) : (
@@ -346,9 +346,9 @@ export const ProspeccaoVideoModal = ({
                   onOpenChange(false);
                 }}
               >
-                <Button variant="hero" size="lg" className="group rounded-full text-sm sm:text-base px-8 sm:px-10 h-10 sm:h-11">
+                <Button variant="hero" size="sm" className="group rounded-full text-sm px-6 h-9 shadow-none">
                   Testar grátis por 7 dias
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             )}
