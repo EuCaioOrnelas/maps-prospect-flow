@@ -274,7 +274,7 @@ const LeadCardComponent = ({
         <Phone className="w-3 h-3 shrink-0 text-muted-foreground/60" />
         <span className="text-xs text-muted-foreground tabular-nums truncate min-w-0">{phoneDisplay}</span>
 
-        <div className="ml-auto shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+        <div className="ml-auto shrink-0 flex items-center" onClick={(e) => e.stopPropagation()}>
           {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
             <Tooltip key={key} delayDuration={80} disableHoverableContent>
               <TooltipTrigger asChild>
