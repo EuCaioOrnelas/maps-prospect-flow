@@ -381,6 +381,17 @@ export const LeadDetailDialog = ({
     }
   };
 
+  useEffect(() => {
+    if (!open || !accountOwnerId) return;
+    let cancelled = false;
+    supabase.from('crm_tags').select('name').eq('owner_user_id', accountOwnerId).then(({ data }) => {
+      if (cancelled || !data) return;
+      const names = Array.from(new Set(data.map((t) => t.name).filter(Boolean)));
+      setAvailableTags(names.sort((a, b) => a.localeCompare(b, 'pt-BR')));
+    });
+    return () => { cancelled = true; };
+  }, [open, accountOwnerId]);
+
   const loadDealAttachments = async () => {
     if (!lead || !user) return;
     const { data } = await supabase
