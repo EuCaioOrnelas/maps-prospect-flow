@@ -11,7 +11,6 @@ import { useLeadScores } from '@/hooks/useLeadScores';
 import { useLeadIntelligence } from '@/hooks/useLeadIntelligence';
 import { usePhonePrivacy, maskPhoneTail } from '@/hooks/usePhonePrivacy';
 import { isProfileAnalyzed } from '@/lib/intelligence';
-import { LeadPotentialValueCompact } from './LeadPotentialValueCompact';
 import { ResponsibleAvatar, type ResponsibleMember } from './ResponsibleAvatar';
 
 interface LeadCardProps {
@@ -53,7 +52,7 @@ const LeadCardComponent = ({
   const { getScoreForPhone } = useLeadScores();
   const { getByPhone: getIntelForPhone } = useLeadIntelligence();
   const { hidden: phoneHidden } = usePhonePrivacy();
-  
+
   const scoreData = getScoreForPhone(lead.phone);
   const intel = lead.phone ? getIntelForPhone(lead.phone) : undefined;
   const phoneFormatted = formatPhoneShort(lead.phone);
@@ -172,11 +171,17 @@ const LeadCardComponent = ({
     },
   ];
 
+  // Pontuação 0-100 do motor central (mesma fonte da aba interna). Sem análise
+  // o valor é 0 e neutro: ausência de dados, não baixa oportunidade.
+  const analyzed = isProfileAnalyzed(intel);
+  const score = analyzed ? Math.max(0, Math.min(100, Math.round(intel!.opportunity_score))) : 0;
+  const scoreTitle = analyzed ? `Oportunidade: ${score} de 100` : 'Ainda não analisado';
+
   return (
     <div
       data-lead-id={lead.id}
       className={cn(
-        "w-full max-w-full bg-card border border-border/60 rounded-[18px] p-5 cursor-pointer relative",
+        "w-full max-w-full bg-card border border-border/60 rounded-2xl p-3 cursor-pointer relative",
         isDragging && "opacity-60 ring-1 ring-primary/30 scale-[0.995]"
       )}
       onClick={(e) => {
@@ -193,8 +198,8 @@ const LeadCardComponent = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header - Name and Score */}
-      <div className="flex items-start justify-between gap-2 mb-1.5 overflow-visible">
+      {/* Linha 1 — nome + responsável */}
+      <div className="flex items-center gap-1.5 min-w-0">
         {isEditingName ? (
           <div className="flex items-center gap-1 flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>
             <Input
@@ -222,104 +227,77 @@ const LeadCardComponent = ({
           </div>
         ) : (
           <>
-            <h4 
-              className="font-semibold text-[15px] leading-snug text-foreground min-w-0 flex-1 w-0 overflow-hidden text-ellipsis whitespace-nowrap" 
+            <h4
+              className="font-semibold text-[14px] leading-tight text-foreground min-w-0 flex-1 truncate"
               title={displayName}
             >
               {displayName}
             </h4>
-            <div className="flex items-center gap-1.5 shrink-0 pr-0.5">
-              {onUpdateName && (
-                <button
-                  onClick={handleEditClick}
-                  className={cn(
-                    "p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-opacity",
-                    isHovered ? "opacity-100" : "opacity-0"
-                  )}
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-              )}
+            {onUpdateName && (
+              <button
+                onClick={handleEditClick}
+                aria-label="Editar nome"
+                className={cn(
+                  "p-1 -mr-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-opacity shrink-0",
+                  isHovered ? "opacity-100" : "opacity-0"
+                )}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <div className="shrink-0 flex items-center" onClick={(e) => e.stopPropagation()}>
+              <ResponsibleAvatar
+                responsibleId={lead.responsible_user_id}
+                members={members}
+                canEdit={canChangeResponsible && !!onChangeResponsible}
+                onChange={async (uid) => { if (onChangeResponsible) await onChangeResponsible(lead.id, uid); }}
+              />
             </div>
           </>
         )}
       </div>
 
-      {/* Phone */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2 min-w-0">
-        <Phone className="w-3 h-3 shrink-0" />
-        <span className="truncate min-w-0">{phoneDisplay}</span>
-      </div>
+      {/* Linha 2 — telefone + oportunidade + ações, tudo na mesma linha */}
+      <div className="mt-1 flex items-center gap-1.5 min-w-0">
+        <Phone className="w-3 h-3 shrink-0 text-muted-foreground/60" />
+        <span className="text-xs text-muted-foreground tabular-nums truncate min-w-0">{phoneDisplay}</span>
 
-      {/* Linha de separação */}
-      <div className="wiize-hairline mb-2.5" />
-
-      {/* Inteligência — resultado 0-100 do motor central (mesma fonte da aba interna).
-          Sem análise o valor é 0 e neutro: ausência de dados, não baixa oportunidade. */}
-      {(() => {
-        const analyzed = isProfileAnalyzed(intel);
-        const s = analyzed ? Math.max(0, Math.min(100, Math.round(intel!.opportunity_score))) : 0;
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Oportunidade</span>
-            <span
-              className={cn(
-                "text-xs font-semibold tabular-nums",
-                analyzed ? "text-primary" : "text-muted-foreground/70",
-              )}
-            >
-              {s} de 100
-            </span>
-            {analyzed ? (
-              <div className="relative flex-1 h-1 rounded-full bg-muted/60 overflow-hidden ml-1">
-                <div className="h-full rounded-full transition-[width] duration-700 bg-primary" style={{ width: `${s}%` }} />
-              </div>
-            ) : (
-              <span className="text-[10px] text-muted-foreground/70 ml-0.5">Não analisado</span>
-            )}
-          </div>
-        );
-      })()}
-
-
-
-
-
-
-      {/* Ações rápidas */}
-      <div className="mt-2.5">
-      <div className="wiize-hairline" />
-      <div className="-mx-2 pt-2.5 pb-0 flex items-center gap-1">
-        {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
-          <Tooltip key={key} delayDuration={80} disableHoverableContent>
-            <TooltipTrigger asChild>
-              <span className="inline-flex" title={label} onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                aria-label={label}
-                disabled={disabled}
-                onClick={(e) => { e.stopPropagation(); run(); }}
-                className={cn(
-                  "p-1.5 rounded-md text-muted-foreground transition-colors duration-100",
-                  disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "hover:bg-muted hover:text-foreground",
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-              </button>
+        <span className="shrink-0 flex items-center gap-1 pl-1" title={scoreTitle}>
+          {analyzed ? (
+            <>
+              <span className="h-[3px] w-5 rounded-full bg-muted overflow-hidden">
+                <span className="block h-full rounded-full bg-primary" style={{ width: `${score}%` }} />
               </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6} className="px-2 py-1 text-xs">{label}</TooltipContent>
-          </Tooltip>
-        ))}
-        <div className="ml-auto mr-2 flex items-center" onClick={(e) => e.stopPropagation()}>
-          <ResponsibleAvatar
-            responsibleId={lead.responsible_user_id}
-            members={members}
-            canEdit={canChangeResponsible && !!onChangeResponsible}
-            onChange={async (uid) => { if (onChangeResponsible) await onChangeResponsible(lead.id, uid); }}
-          />
+              <span className="text-[11px] font-semibold tabular-nums leading-none text-primary">{score}</span>
+            </>
+          ) : (
+            <span className="text-[11px] leading-none text-muted-foreground/50">—</span>
+          )}
+        </span>
+
+        <div className="ml-auto shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+          {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
+            <Tooltip key={key} delayDuration={80} disableHoverableContent>
+              <TooltipTrigger asChild>
+                <span className="inline-flex" title={label}>
+                  <button
+                    type="button"
+                    aria-label={label}
+                    disabled={disabled}
+                    onClick={(e) => { e.stopPropagation(); run(); }}
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/70 transition-colors duration-100",
+                      disabled ? "opacity-30 cursor-not-allowed pointer-events-none" : "hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={6} className="px-2 py-1 text-xs">{label}</TooltipContent>
+            </Tooltip>
+          ))}
         </div>
-      </div>
       </div>
     </div>
   );
