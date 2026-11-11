@@ -8,6 +8,7 @@ import { ImportExportDialog, type ImportRow } from '@/components/crm/ImportExpor
 import { BulkActionsBar } from '@/components/crm/BulkActionsBar';
 import { CRMFilters, type CRMFiltersState } from '@/components/crm/CRMFilters';
 import { CRMMetrics } from '@/components/crm/CRMMetrics';
+import { CrmCapacityMeter } from '@/components/crm/CrmCapacityMeter';
 import { ManageStagesDialog } from '@/components/crm/ManageStagesDialog';
 import { CRMTabs } from '@/components/crm/CRMTabs';
 // MobileBlockOverlay removed - CRM now works on mobile
@@ -576,6 +577,19 @@ export default function CRM() {
                 onToggleArchive={async (lead) => {
                   await setLeadArchived(lead.id, !lead.archived_at);
                 }}
+                endSlot={
+                  <CrmCapacityMeter
+                    count={contactCount}
+                    limit={contactLimit}
+                    baseLimit={contactBaseLimit}
+                    extraContacts={extraContacts}
+                    extraPacks={extraPacks}
+                    hasLimit={hasContactLimit}
+                    atLimit={contactsAtLimit}
+                    nearLimit={contactsNearLimit}
+                    onUpgrade={() => navigate('/upgrade')}
+                  />
+                }
               />
             )}
           </div>
