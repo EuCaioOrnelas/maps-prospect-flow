@@ -46,6 +46,23 @@ const Prospeccao = () => {
   const [isReady, setIsReady] = useState(false);
   const { trackSignupClick } = useLandingPageTracking("prospeccao");
 
+  // Baixa o vídeo de demonstração em segundo plano para abrir instantâneo ao clicar
+  useEffect(() => {
+    let cancelled = false;
+    import("@/assets/video-vendas-prospeccao.mp4")
+      .then((mod) => {
+        if (cancelled) return;
+        const video = document.createElement("video");
+        video.preload = "auto";
+        video.muted = true;
+        video.src = mod.default;
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     const timeout = setTimeout(() => setIsReady(true), 1500);
     if (document.fonts) {
