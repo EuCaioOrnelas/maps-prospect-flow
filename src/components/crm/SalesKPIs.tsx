@@ -1,6 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { DollarSign, Repeat, CheckCircle2, TrendingUp, CalendarClock } from "lucide-react";
+import {
+  DollarSign,
+  Repeat,
+  CheckCircle2,
+  TrendingUp,
+  CalendarClock,
+  HelpCircle,
+} from "lucide-react";
 import { MetricSlot } from "@/components/ui/metric-empty";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface SalesKPIsProps {
@@ -27,15 +35,15 @@ export function SalesKPIs({
     {
       label: "Receita total",
       value: fmt(totalRevenue),
-      sub: "acumulado de vendas",
+      tip: "Soma de tudo que já foi vendido, sem descontar o que ainda vai vencer.",
       icon: DollarSign,
       empty: totalRevenue === 0,
       hint: "Aparece ao registrar a primeira venda.",
     },
     {
-      label: "MRR ativo",
+      label: "Receita recorrente",
       value: fmt(mrr),
-      sub: "receita recorrente / mês",
+      tip: "Quanto entra por mês com as vendas que se repetem todo mês.",
       icon: Repeat,
       empty: mrr === 0,
       hint: "Aparece quando há vendas recorrentes ativas.",
@@ -43,7 +51,7 @@ export function SalesKPIs({
     {
       label: "Vendas ativas",
       value: String(activeSales),
-      sub: "contratos em vigor",
+      tip: "Quantidade de contratos que ainda estão valendo hoje.",
       icon: CheckCircle2,
       empty: activeSales === 0,
       hint: "Aparece ao registrar uma venda.",
@@ -51,7 +59,7 @@ export function SalesKPIs({
     {
       label: "Projeção 12 meses",
       value: fmt(projected12mo),
-      sub: "previsto de recorrentes",
+      tip: "Quanto as vendas recorrentes devem somar nos próximos 12 meses.",
       icon: TrendingUp,
       empty: projected12mo === 0,
       hint: "Aparece quando há vendas recorrentes ativas.",
@@ -84,9 +92,25 @@ export function SalesKPIs({
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate">
-                  {k.label}
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate">
+                    {k.label}
+                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`O que significa ${k.label}?`}
+                        className="shrink-0 rounded-full text-muted-foreground/50 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
+                      >
+                        <HelpCircle className="w-3 h-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] text-[11px] leading-snug">
+                      {k.tip}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <MetricSlot
                   cacheKey={`sales:${k.label}`}
                   empty={k.empty}
@@ -94,17 +118,12 @@ export function SalesKPIs({
                   size="sm"
                   className="min-h-[26px] mt-1.5"
                 >
-                  <div>
-                    <p
-                      className="text-[22px] font-bold leading-none"
-                      style={{ fontVariantNumeric: "tabular-nums" }}
-                    >
-                      {k.value}
-                    </p>
-                    <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground/50 font-light truncate">
-                      {k.sub}
-                    </p>
-                  </div>
+                  <p
+                    className="text-[22px] font-bold leading-none"
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {k.value}
+                  </p>
                 </MetricSlot>
               </div>
             </div>
