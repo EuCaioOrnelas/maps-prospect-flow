@@ -251,6 +251,22 @@ const LeadCardComponent = ({
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
+      {/* Tags do contato */}
+      {Array.isArray(lead.tags) && lead.tags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1 mb-2 min-w-0">
+          {lead.tags.slice(0, 3).map((tag) => (
+            <span key={tag} title={tag} className="max-w-[110px] truncate rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+              {tag}
+            </span>
+          ))}
+          {lead.tags.length > 3 && (
+            <span title={lead.tags.slice(3).join(', ')} className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              +{lead.tags.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Linha de separação */}
       <div className="wiize-hairline mb-2.5" />
 
@@ -293,6 +309,7 @@ const LeadCardComponent = ({
         {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
           <Tooltip key={key} delayDuration={80} disableHoverableContent>
             <TooltipTrigger asChild>
+              <span className="inline-flex" title={label} onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 aria-label={label}
@@ -300,11 +317,12 @@ const LeadCardComponent = ({
                 onClick={(e) => { e.stopPropagation(); run(); }}
                 className={cn(
                   "p-1.5 rounded-md text-muted-foreground transition-colors duration-100",
-                  disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-muted hover:text-foreground",
+                  disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={6} className="px-2 py-1 text-xs">{label}</TooltipContent>
           </Tooltip>
