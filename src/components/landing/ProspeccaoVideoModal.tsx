@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { TRIAL_DISABLED, notifyTrialDisabled } from "@/lib/trialStatus";
 import videoUrl from "@/assets/video-vendas-prospeccao.mp4";
+import videoCapa from "@/assets/video-vendas-prospeccao-capa.jpg";
 
 interface ProspeccaoVideoModalProps {
   open: boolean;
@@ -182,6 +183,7 @@ export const ProspeccaoVideoModal = ({
           <video
             ref={videoRef}
             src={videoUrl}
+            poster={videoCapa}
             className="absolute inset-0 w-full h-full object-contain bg-black"
             playsInline
             preload="auto"
