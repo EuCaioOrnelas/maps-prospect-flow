@@ -181,7 +181,7 @@ const LeadCardComponent = ({
     <div
       data-lead-id={lead.id}
       className={cn(
-        "w-full max-w-full bg-card border border-border/60 rounded-2xl p-3 cursor-pointer relative",
+        "w-full max-w-full bg-card border border-border/60 rounded-2xl p-2.5 cursor-pointer relative",
         isDragging && "opacity-60 ring-1 ring-primary/30 scale-[0.995]"
       )}
       onClick={(e) => {
