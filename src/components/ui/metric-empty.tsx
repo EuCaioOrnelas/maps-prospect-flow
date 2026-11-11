@@ -85,10 +85,12 @@ interface MetricSkeletonProps {
   className?: string;
   align?: "left" | "center";
   size?: MetricSize;
+  /** true = uma barra só (estado vazio de uma linha), sem a segunda barra. */
+  single?: boolean;
 }
 
 /** Skeleton do valor — ocupa exatamente o mesmo espaço do valor/empty state. */
-export function MetricSkeleton({ className, align = "left", size = "md" }: MetricSkeletonProps) {
+export function MetricSkeleton({ className, align = "left", size = "md", single = false }: MetricSkeletonProps) {
   return (
     <div
       className={cn(
@@ -105,7 +107,7 @@ export function MetricSkeleton({ className, align = "left", size = "md" }: Metri
           size === "xs" ? "h-3 w-14" : size === "sm" ? "h-4 w-16" : "h-6 w-24"
         )}
       />
-      <div className="mt-2 h-2.5 w-3/5 min-w-[70px] rounded bg-muted/40" />
+      {!single && <div className="mt-2 h-2.5 w-3/5 min-w-[70px] rounded bg-muted/40" />}
     </div>
   );
 }
