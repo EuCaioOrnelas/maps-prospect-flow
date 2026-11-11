@@ -120,7 +120,7 @@ export function ExecutiveKPIs({
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={cn(
-                    "shrink-0 h-11 w-11 rounded-xl flex items-center justify-center",
+                    "shrink-0 h-10 w-10 rounded-lg flex items-center justify-center",
                     kpi.empty || loading ? "bg-muted/50" : "bg-primary/[0.07] dark:bg-primary/[0.12]"
                   )}
                 >
@@ -128,8 +128,8 @@ export function ExecutiveKPIs({
                     {kpi.icon}
                   </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1 h-[18px]">
+                <div className="min-w-0 flex-1 h-10 flex flex-col">
+                  <div className="flex items-center gap-1 h-4">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate min-w-0">
                       {kpi.title}
                     </p>
