@@ -1,5 +1,5 @@
-import { Card } from "@/components/ui/card";
-import { DollarSign, Flame, AlertTriangle, Bot, Info } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { DollarSign, Flame, AlertTriangle, Bot, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MetricSlot } from "@/components/ui/metric-empty";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -9,9 +9,8 @@ interface KPIData {
   value: string;
   badge?: string;
   badgeType: 'positive' | 'negative' | 'neutral';
-  subtitle: string;
   icon: React.ReactNode;
-  tooltip?: string;
+  description: string;
   showBadge: boolean;
   empty?: boolean;
   emptyHint?: string;
@@ -53,7 +52,7 @@ export function ExecutiveKPIs({
 
   const isInsufficientData = healthStatus === "Dados Insuficientes";
 
-  const healthBadgeType: 'positive' | 'negative' | 'neutral' = 
+  const healthBadgeType: 'positive' | 'negative' | 'neutral' =
     healthStatus === "Excelente" || healthStatus === "Operação Saudável" ? 'positive' :
     healthStatus === "Atenção Necessária" || healthStatus === "Score Baixo" || healthStatus === "Crítico" ? 'negative' : 'neutral';
 
@@ -65,11 +64,10 @@ export function ExecutiveKPIs({
     {
       title: "Receita Potencial Atual",
       value: `R$ ${fmtCompact(receitaPotencial)}`,
-      badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : '—',
+      badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : undefined,
       badgeType: receitaPotencialGrowth > 0 ? 'positive' : receitaPotencialGrowth < 0 ? 'negative' : 'neutral',
-      subtitle: "Soma do valor em negociação do CRM",
-      icon: <DollarSign size={18} />,
-      tooltip: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
+      icon: <DollarSign size={15} />,
+      description: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
       showBadge: true,
       empty: receitaPotencial === 0,
       emptyHint: "Será preenchido após as primeiras negociações.",
@@ -77,11 +75,10 @@ export function ExecutiveKPIs({
     {
       title: "Leads Quentes Hoje",
       value: String(leadsQuentesHoje),
-      badge: hotLeadsChange > 0 ? `+${hotLeadsChange}` : hotLeadsChange < 0 ? String(hotLeadsChange) : '—',
+      badge: hotLeadsChange > 0 ? `+${hotLeadsChange}` : hotLeadsChange < 0 ? String(hotLeadsChange) : undefined,
       badgeType: hotLeadsChange > 0 ? 'positive' : hotLeadsChange < 0 ? 'negative' : 'neutral',
-      subtitle: "Crescimento de score >150pts em 24h",
-      icon: <Flame size={18} />,
-      tooltip: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
+      icon: <Flame size={15} />,
+      description: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
       showBadge: true,
       empty: leadsQuentesHoje === 0 && leadsQuentesOntem === 0,
       emptyHint: "Disponível quando os leads ganharem score.",
@@ -90,9 +87,8 @@ export function ExecutiveKPIs({
       title: "Gargalo Atual",
       value: healthStatus,
       badgeType: healthBadgeType,
-      subtitle: healthDetail,
-      icon: <AlertTriangle size={18} />,
-      tooltip: healthTooltip,
+      icon: <AlertTriangle size={15} />,
+      description: healthDetail ? `${healthTooltip} — ${healthDetail}` : healthTooltip,
       showBadge: false,
       empty: isInsufficientData,
       emptyHint: "Exige volume mínimo de leads para diagnóstico.",
@@ -102,11 +98,10 @@ export function ExecutiveKPIs({
       value: aiDisplay,
       badge: "automático",
       badgeType: 'positive',
-      subtitle: "Tempo economizado com respostas IA + fluxos",
-      icon: <Bot size={18} />,
+      icon: <Bot size={15} />,
       empty: aiMinutesSaved === 0,
       emptyHint: "Atualizado conforme a IA responder por você.",
-      tooltip: "Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
+      description: "Tempo economizado com respostas IA + fluxos. Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
       showBadge: true,
     },
   ];
@@ -115,59 +110,79 @@ export function ExecutiveKPIs({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <TooltipProvider>
         {kpis.map((kpi) => (
-          <Tooltip key={kpi.title}>
-            <TooltipTrigger asChild>
-              <Card className="group relative overflow-hidden border-border/40 bg-card hover:border-primary/20 hover:shadow-md hover:shadow-primary/[0.04] transition-all duration-300 cursor-pointer rounded-2xl">
-                <div className="p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className={cn(
-                      "w-9 h-9 rounded-xl flex items-center justify-center",
-                      kpi.empty || loading ? "bg-muted/40 text-muted-foreground/40" : "bg-primary/10 text-primary"
-                    )}>
-                      {kpi.icon}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {kpi.showBadge && kpi.badge && !kpi.empty && !loading && (
-                        <span className={cn(
-                          "text-xs font-semibold px-2 py-0.5 rounded-full",
-                          kpi.badgeType === 'positive' && "bg-primary/10 text-primary",
-                          kpi.badgeType === 'negative' && "bg-destructive/10 text-destructive",
-                          kpi.badgeType === 'neutral' && "bg-muted text-muted-foreground",
-                        )}>
+          <Card key={kpi.title} className="border-border/50 relative overflow-hidden">
+            {/* Green glow */}
+            {!kpi.empty && !loading && (
+              <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-2xl pointer-events-none" />
+            )}
+            <CardContent className="p-4 relative">
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center",
+                    kpi.empty || loading ? "bg-muted/50" : "bg-primary/[0.07] dark:bg-primary/[0.12]"
+                  )}
+                >
+                  <span className={cn(kpi.empty || loading ? "text-muted-foreground/40" : "text-primary")}>
+                    {kpi.icon}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate">
+                      {kpi.title}
+                    </p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={`O que significa ${kpi.title}?`}
+                          className="shrink-0 rounded-full text-muted-foreground/50 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
+                        >
+                          <HelpCircle className="w-3 h-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px] text-[11px] leading-snug">
+                        {kpi.description}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <MetricSlot
+                    cacheKey={`cockpit:${kpi.title}`}
+                    loading={loading}
+                    empty={kpi.empty}
+                    hint={kpi.emptyHint}
+                    size="sm"
+                    className="min-h-[26px] mt-1.5"
+                  >
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <p
+                        className={cn(
+                          "font-bold leading-none truncate",
+                          kpi.value.length > 14 ? "text-[15px]" : "text-[22px]"
+                        )}
+                        style={{ fontVariantNumeric: "tabular-nums" }}
+                      >
+                        {kpi.value}
+                      </p>
+                      {kpi.showBadge && kpi.badge && (
+                        <span
+                          className={cn(
+                            "shrink-0 text-[10px] font-semibold",
+                            kpi.badgeType === 'positive' && "text-primary",
+                            kpi.badgeType === 'negative' && "text-destructive dark:text-red-400",
+                            kpi.badgeType === 'neutral' && "text-muted-foreground"
+                          )}
+                        >
                           {kpi.badge}
                         </span>
                       )}
-                      {kpi.title === "Gargalo Atual" && (
-                        <Info size={14} className="text-muted-foreground/50" />
-                      )}
                     </div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
-                      {kpi.title}
-                    </p>
-                    <MetricSlot cacheKey={`cockpit:${kpi.title}`} loading={loading} empty={kpi.empty} hint={kpi.emptyHint} className="min-h-[42px]">
-                      <>
-                        <p className={cn(
-                          "font-bold leading-none whitespace-nowrap",
-                          kpi.value.length > 16 ? "text-lg text-foreground" : "text-2xl text-foreground"
-                        )}>
-                          {kpi.value}
-                        </p>
-                        <p className="text-xs text-muted-foreground/60 mt-1">{kpi.subtitle}</p>
-                      </>
-                    </MetricSlot>
-                  </div>
+                  </MetricSlot>
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              </Card>
-            </TooltipTrigger>
-            {kpi.tooltip && (
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p className="text-xs">{kpi.tooltip}</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </TooltipProvider>
     </div>
