@@ -229,15 +229,26 @@ export const HeroSection = ({
    </Button>
    </Link>
   )}
+  {demoMode === "video" ? (
+  <Button
+  variant="ghost"
+  size="lg"
+  onClick={() => { trackDemoClick("hero"); setVideoOpen(true); }}
+  className="demo-shine rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
+   >
+  Ver Demonstração
+  </Button>
+  ) : (
   <Link to="/tour-guiado" className="group shrink-0" onClick={() => trackDemoClick("hero")}>
   <Button
   variant="ghost"
   size="lg"
   className="demo-shine rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
-  >
+   >
   Ver Demonstração
   </Button>
   </Link>
+  )}
   </div>
  </div>
 
@@ -315,11 +326,19 @@ export const HeroSection = ({
 
       {videoOpen && (
         <Suspense fallback={null}>
-          <VideoModal
-            open={videoOpen}
-            onOpenChange={setVideoOpen}
-            onSignupClick={onSignupClick}
-          />
+          {demoMode === "video" ? (
+            <ProspeccaoVideoModal
+              open={videoOpen}
+              onOpenChange={setVideoOpen}
+              onSignupClick={onSignupClick}
+            />
+          ) : (
+            <VideoModal
+              open={videoOpen}
+              onOpenChange={setVideoOpen}
+              onSignupClick={onSignupClick}
+            />
+          )}
         </Suspense>
       )}
 
