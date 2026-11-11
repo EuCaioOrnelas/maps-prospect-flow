@@ -67,7 +67,7 @@ export function CrmCapacityMeter({
               </span>
             </p>
 
-            <div className="h-1 w-20 shrink-0 overflow-hidden rounded-full bg-muted">
+            <div className="h-1 w-20 shrink-0 overflow-hidden rounded-full bg-border">
               <div
                 className={cn(
                   'h-full rounded-full transition-[width] duration-500',
@@ -80,7 +80,7 @@ export function CrmCapacityMeter({
             <p
               className={cn(
                 'text-xs tabular-nums text-muted-foreground',
-                atLimit && 'font-medium text-destructive',
+                atLimit && 'font-medium text-destructive dark:text-red-400',
                 nearLimit && !atLimit && 'font-medium text-amber-600 dark:text-amber-500',
               )}
             >
@@ -112,7 +112,7 @@ export function CrmCapacityMeter({
             onClick={onUpgrade}
             className={cn(
               'ml-auto h-6 rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground',
-              atLimit && 'text-destructive hover:bg-destructive/10 hover:text-destructive',
+              atLimit && 'text-destructive dark:text-red-400 hover:bg-destructive/10 hover:text-destructive',
             )}
           >
             Aumentar capacidade
