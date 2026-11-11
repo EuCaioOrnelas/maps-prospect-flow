@@ -31,6 +31,11 @@ type MetricSize = "xs" | "sm" | "md";
 interface MetricEmptyProps {
   /** Frase curta (1 linha) explicando quando o indicador será preenchido. */
   hint?: string;
+  /**
+   * Linha principal. Passe uma frase curta (até ~26 caracteres) para o estado
+   * vazio caber em uma linha só; o padrão é "Ainda não há dados".
+   */
+  label?: string;
   className?: string;
   /** Alinhamento do texto — acompanha o layout do card. */
   align?: "left" | "center";
@@ -50,7 +55,7 @@ const HINT_TEXT: Record<MetricSize, string> = {
   md: "text-[11px] mt-1",
 };
 
-export function MetricEmpty({ hint, className, align = "left", size = "md" }: MetricEmptyProps) {
+export function MetricEmpty({ hint, label, className, align = "left", size = "md" }: MetricEmptyProps) {
   return (
     <div
       className={cn(
@@ -65,7 +70,7 @@ export function MetricEmpty({ hint, className, align = "left", size = "md" }: Me
           MAIN_TEXT[size]
         )}
       >
-        Ainda não há dados
+        {label ?? "Ainda não há dados"}
       </p>
       {hint && (
         <p className={cn("leading-snug text-muted-foreground/45 font-light", HINT_TEXT[size])}>
@@ -80,10 +85,12 @@ interface MetricSkeletonProps {
   className?: string;
   align?: "left" | "center";
   size?: MetricSize;
+  /** true = uma barra só (estado vazio de uma linha), sem a segunda barra. */
+  single?: boolean;
 }
 
 /** Skeleton do valor — ocupa exatamente o mesmo espaço do valor/empty state. */
-export function MetricSkeleton({ className, align = "left", size = "md" }: MetricSkeletonProps) {
+export function MetricSkeleton({ className, align = "left", size = "md", single = false }: MetricSkeletonProps) {
   return (
     <div
       className={cn(
@@ -100,7 +107,7 @@ export function MetricSkeleton({ className, align = "left", size = "md" }: Metri
           size === "xs" ? "h-3 w-14" : size === "sm" ? "h-4 w-16" : "h-6 w-24"
         )}
       />
-      <div className="mt-2 h-2.5 w-3/5 min-w-[70px] rounded bg-muted/40" />
+      {!single && <div className="mt-2 h-2.5 w-3/5 min-w-[70px] rounded bg-muted/40" />}
     </div>
   );
 }
@@ -111,6 +118,8 @@ interface MetricSlotProps {
   /** Após o fetch, indica que não existem dados reais. */
   empty?: boolean;
   hint?: string;
+  /** Frase curta do estado vazio — use para caber em 1 linha. */
+  label?: string;
   align?: "left" | "center";
   size?: MetricSize;
   /** Classe aplicada ao contêiner (use min-h para reservar o espaço). */
@@ -133,6 +142,7 @@ export function MetricSlot({
   loading,
   empty,
   hint,
+  label,
   align = "left",
   size = "md",
   className,
@@ -164,9 +174,9 @@ export function MetricSlot({
         className="animate-in fade-in-0 duration-500 ease-out motion-reduce:animate-none"
       >
         {state === "loading" ? (
-          <MetricSkeleton align={align} size={size} />
+          <MetricSkeleton align={align} size={size} single={!hint} />
         ) : state === "empty" ? (
-          <MetricEmpty hint={hint} align={align} size={size} />
+          <MetricEmpty hint={hint} label={label} align={align} size={size} />
         ) : (
           children
         )}
