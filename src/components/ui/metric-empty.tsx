@@ -31,6 +31,11 @@ type MetricSize = "xs" | "sm" | "md";
 interface MetricEmptyProps {
   /** Frase curta (1 linha) explicando quando o indicador será preenchido. */
   hint?: string;
+  /**
+   * Linha principal. Passe uma frase curta (até ~26 caracteres) para o estado
+   * vazio caber em uma linha só; o padrão é "Ainda não há dados".
+   */
+  label?: string;
   className?: string;
   /** Alinhamento do texto — acompanha o layout do card. */
   align?: "left" | "center";
@@ -50,7 +55,7 @@ const HINT_TEXT: Record<MetricSize, string> = {
   md: "text-[11px] mt-1",
 };
 
-export function MetricEmpty({ hint, className, align = "left", size = "md" }: MetricEmptyProps) {
+export function MetricEmpty({ hint, label, className, align = "left", size = "md" }: MetricEmptyProps) {
   return (
     <div
       className={cn(
@@ -65,7 +70,7 @@ export function MetricEmpty({ hint, className, align = "left", size = "md" }: Me
           MAIN_TEXT[size]
         )}
       >
-        Ainda não há dados
+        {label ?? "Ainda não há dados"}
       </p>
       {hint && (
         <p className={cn("leading-snug text-muted-foreground/45 font-light", HINT_TEXT[size])}>
