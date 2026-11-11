@@ -997,6 +997,20 @@ export const LeadDetailDialog = ({
                   </span>
                 </p>
               )}
+              {localTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1 mt-2">
+                  {localTags.slice(0, 5).map((tag) => (
+                    <span key={tag} title={tag} className="max-w-[140px] truncate rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      {tag}
+                    </span>
+                  ))}
+                  {localTags.length > 5 && (
+                    <span title={localTags.slice(5).join(', ')} className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      +{localTags.length - 5}
+                    </span>
+                  )}
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs opacity-70">
                   {formatDistanceToNow(new Date(lead.prospected_at), { addSuffix: true, locale: ptBR })}

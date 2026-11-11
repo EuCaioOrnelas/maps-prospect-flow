@@ -251,22 +251,6 @@ const LeadCardComponent = ({
         <span className="truncate min-w-0">{phoneDisplay}</span>
       </div>
 
-      {/* Tags do contato */}
-      {Array.isArray(lead.tags) && lead.tags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1 mb-2 min-w-0">
-          {lead.tags.slice(0, 3).map((tag) => (
-            <span key={tag} title={tag} className="max-w-[110px] truncate rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-              {tag}
-            </span>
-          ))}
-          {lead.tags.length > 3 && (
-            <span title={lead.tags.slice(3).join(', ')} className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              +{lead.tags.length - 3}
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Linha de separação */}
       <div className="wiize-hairline mb-2.5" />
 
