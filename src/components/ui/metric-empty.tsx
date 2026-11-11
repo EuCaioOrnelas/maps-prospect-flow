@@ -118,6 +118,8 @@ interface MetricSlotProps {
   /** Após o fetch, indica que não existem dados reais. */
   empty?: boolean;
   hint?: string;
+  /** Frase curta do estado vazio — use para caber em 1 linha. */
+  label?: string;
   align?: "left" | "center";
   size?: MetricSize;
   /** Classe aplicada ao contêiner (use min-h para reservar o espaço). */
