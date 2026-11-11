@@ -173,7 +173,7 @@ export function ExecutiveKPIs({
                         "font-bold leading-none truncate",
                         kpi.value.length > 14 ? "text-[15px]" : "text-[22px]"
                       )}
-                      style={{ fontVariantNumeric: "tabular-nums" }}
+                      style={{ fontVariantNumeric: "tabular-nums", lineHeight: "24px" }}
                     >
                       {kpi.value}
                     </p>
