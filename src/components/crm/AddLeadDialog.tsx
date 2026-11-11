@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { 
   Loader2, 
@@ -30,6 +31,10 @@ import {
   Layers,
   DollarSign,
   Navigation,
+  ChevronDown,
+  Check,
+  Search,
+  UserPlus,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -104,6 +109,8 @@ export const AddLeadDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showNewOrigin, setShowNewOrigin] = useState(false);
   const [newOriginName, setNewOriginName] = useState('');
+  const [originOpen, setOriginOpen] = useState(false);
+  const [originSearch, setOriginSearch] = useState('');
   const [existingLeadWarning, setExistingLeadWarning] = useState(false);
   const [countryCode, setCountryCode] = useState('55');
   const [formData, setFormData] = useState({
@@ -198,7 +205,7 @@ export const AddLeadDialog = ({
     // Check again before submitting
     const exists = await checkLeadExists(fullPhone);
     if (exists) {
-      toast.error('Este lead já existe no CRM');
+      toast.error('Este contato já existe no CRM');
       return;
     }
 
@@ -217,10 +224,10 @@ export const AddLeadDialog = ({
         origin: formData.origin,
       });
       
-      toast.success('Lead adicionado com sucesso!');
+      toast.success('Contato adicionado com sucesso!');
       onOpenChange(false);
     } catch (error) {
-      toast.error('Erro ao adicionar lead');
+      toast.error('Erro ao adicionar contato');
     } finally {
       setIsLoading(false);
     }
@@ -231,18 +238,22 @@ export const AddLeadDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-hidden w-[95vw] sm:w-full rounded-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-primary" />
-            Adicionar Lead
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Campos obrigatórios: telefone e origem.
-          </p>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] sm:max-h-[85vh] overflow-hidden w-[95vw] sm:w-full rounded-xl p-0 gap-0 flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border text-left">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="text-lg font-semibold">Adicionar contato</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Campos com * são obrigatórios: telefone e origem.
+              </p>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-8rem)] sm:max-h-[calc(85vh-8rem)] -mr-6 pr-6">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
         {isAtLimit && (
           <div className="mb-4 p-4 rounded-lg border border-destructive/40 bg-destructive/10 space-y-3">
             <div className="flex items-start gap-2">
@@ -273,10 +284,10 @@ export const AddLeadDialog = ({
         )}
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Primary Fields - Name and Phone with emphasis */}
-          <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+          <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
             {/* Contact Name - Prominent */}
             <div>
-              <Label htmlFor="contact_name" className="flex items-center gap-2 text-base font-medium mb-2">
+              <Label htmlFor="contact_name" className="flex items-center gap-2 text-sm font-medium mb-2">
                 <User className="w-4 h-4 text-primary" />
                 Nome do Contato
               </Label>
@@ -287,14 +298,14 @@ export const AddLeadDialog = ({
                   value={formData.contact_name}
                   onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
                   placeholder="Nome do contato"
-                  className="pl-10 h-11 text-base"
+                  className="pl-10 h-10"
                 />
               </div>
             </div>
 
             {/* Phone - Prominent */}
             <div>
-              <Label htmlFor="phone" className="flex items-center gap-2 text-base font-medium mb-2">
+              <Label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium mb-2">
                 <Phone className="w-4 h-4 text-primary" />
                 Telefone (WhatsApp) *
               </Label>
@@ -308,7 +319,7 @@ export const AddLeadDialog = ({
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     onBlur={handlePhoneBlur}
                     placeholder="11999999999"
-                    className="pl-10 h-11 text-base"
+                    className="pl-10 h-10"
                     required
                   />
                 </div>
@@ -316,7 +327,7 @@ export const AddLeadDialog = ({
               {existingLeadWarning && (
                 <div className="flex items-center gap-2 mt-2 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-md">
                   <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                  <span className="text-sm text-yellow-600">Este lead já existe no CRM</span>
+                  <span className="text-sm text-yellow-600">Este contato já existe no CRM</span>
                 </div>
               )}
             </div>
@@ -345,22 +356,54 @@ export const AddLeadDialog = ({
               </div>
             ) : (
               <div className="flex gap-2">
-                <Select
-                  value={formData.origin}
-                  onValueChange={(value) => setFormData({ ...formData, origin: value })}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecionar origem" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allOrigins.map((origin) => (
-                      <SelectItem key={origin} value={origin}>
-                        {origin}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" size="icon" variant="outline" onClick={() => setShowNewOrigin(true)}>
+                <Popover open={originOpen} onOpenChange={(o) => { setOriginOpen(o); if (!o) setOriginSearch(''); }}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex h-10 flex-1 items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-sm ring-offset-background hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <span className={formData.origin ? 'truncate text-foreground' : 'truncate text-muted-foreground'}>
+                        {formData.origin || 'Selecionar origem'}
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] min-w-[220px] p-0">
+                    <div className="flex items-center gap-2 border-b border-border px-3">
+                      <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <input
+                        value={originSearch}
+                        onChange={(e) => setOriginSearch(e.target.value)}
+                        placeholder="Pesquisar origem"
+                        className="h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="max-h-56 overflow-y-auto p-1">
+                      {allOrigins.filter((o) => o.toLowerCase().includes(originSearch.trim().toLowerCase())).map((origin) => (
+                        <button
+                          key={origin}
+                          type="button"
+                          onClick={() => { setFormData({ ...formData, origin }); setOriginOpen(false); setOriginSearch(''); }}
+                          className="flex w-full items-center justify-between gap-2 rounded-sm px-2.5 py-2 text-left text-sm hover:bg-muted"
+                        >
+                          <span className="truncate">{origin}</span>
+                          {formData.origin === origin && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                        </button>
+                      ))}
+                      {allOrigins.filter((o) => o.toLowerCase().includes(originSearch.trim().toLowerCase())).length === 0 && (
+                        <button
+                          type="button"
+                          onClick={() => { setNewOriginName(originSearch.trim()); setShowNewOrigin(true); setOriginOpen(false); }}
+                          className="w-full rounded-sm px-2.5 py-2 text-left text-sm text-primary hover:bg-muted"
+                        >
+                          Criar origem “{originSearch.trim()}”
+                        </button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Button type="button" size="icon" variant="outline" className="h-10 w-10 shrink-0" title="Nova origem" aria-label="Nova origem" onClick={() => setShowNewOrigin(true)}>
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -488,13 +531,13 @@ export const AddLeadDialog = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading || existingLeadWarning || isAtLimit}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Adicionar
+              Adicionar contato
             </Button>
           </div>
         </form>

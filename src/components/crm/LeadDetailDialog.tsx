@@ -1027,8 +1027,8 @@ export const LeadDetailDialog = ({
                 ))}
                 <Popover onOpenChange={(o) => { if (o) loadCrmTags(); else setNewTag(''); }}>
                   <PopoverTrigger asChild>
-                    <button type="button" title={localTags.length > 5 ? localTags.slice(5).join(', ') : 'Gerenciar tags'} className="inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-border px-2 text-[11px] font-medium text-muted-foreground hover:bg-background hover:text-foreground shrink-0">
-                      {localTags.length > 5 ? `+${localTags.length - 5}` : <><PlusIconTag className="h-3 w-3" />{localTags.length ? '' : 'Adicionar tag'}</>}
+                    <button type="button" title={localTags.length > 5 ? localTags.slice(5).join(', ') : 'Gerenciar tags'} className="inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-foreground/30 bg-background/70 px-2 text-[11px] font-semibold text-foreground/80 hover:border-primary hover:bg-background hover:text-primary transition-colors shrink-0">
+                      {localTags.length > 5 ? `+${localTags.length - 5}` : <><PlusIconTag className="h-3.5 w-3.5" strokeWidth={2.5} />{localTags.length ? '' : 'Adicionar tag'}</>}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-64 p-2">
