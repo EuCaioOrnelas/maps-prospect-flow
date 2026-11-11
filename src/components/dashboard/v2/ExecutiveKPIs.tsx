@@ -67,7 +67,7 @@ export function ExecutiveKPIs({
       value: `R$ ${fmtCompact(receitaPotencial)}`,
       badge: receitaPotencialGrowth !== 0 ? `${receitaPotencialGrowth > 0 ? '+' : ''}${receitaPotencialGrowth.toFixed(0)}%` : undefined,
       badgeType: receitaPotencialGrowth > 0 ? 'positive' : receitaPotencialGrowth < 0 ? 'negative' : 'neutral',
-      icon: <DollarSign size={22} />,
+      icon: <DollarSign size={20} />,
       description: "Soma total dos valores em negociação de todos os leads no CRM. Crescimento comparado aos últimos 30 dias.",
       showBadge: true,
       empty: receitaPotencial === 0,
@@ -78,7 +78,7 @@ export function ExecutiveKPIs({
       value: String(leadsQuentesHoje),
       badge: hotLeadsChange > 0 ? `+${hotLeadsChange}` : hotLeadsChange < 0 ? String(hotLeadsChange) : undefined,
       badgeType: hotLeadsChange > 0 ? 'positive' : hotLeadsChange < 0 ? 'negative' : 'neutral',
-      icon: <Flame size={22} />,
+      icon: <Flame size={20} />,
       description: "Leads que tiveram um aumento relevante de 150+ pontos no score nas últimas 24 horas. Comparado com o dia anterior.",
       showBadge: true,
       empty: leadsQuentesHoje === 0 && leadsQuentesOntem === 0,
@@ -88,7 +88,7 @@ export function ExecutiveKPIs({
       title: "Gargalo Atual",
       value: healthStatus,
       badgeType: healthBadgeType,
-      icon: <AlertTriangle size={22} />,
+      icon: <AlertTriangle size={20} />,
       description: healthDetail ? `${healthTooltip} — ${healthDetail}` : healthTooltip,
       showBadge: false,
       empty: isInsufficientData,
@@ -99,7 +99,7 @@ export function ExecutiveKPIs({
       value: aiDisplay,
       badge: "automático",
       badgeType: 'positive',
-      icon: <Bot size={22} />,
+      icon: <Bot size={20} />,
       empty: aiMinutesSaved === 0,
       emptyLabel: "Aguardando uso da IA",
       description: "Tempo economizado com respostas IA + fluxos. Calculado com base nos caracteres escritos pela IA (200 chars/min humano) + nós percorridos nos fluxos automatizados (2 min/nó).",
@@ -120,7 +120,7 @@ export function ExecutiveKPIs({
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={cn(
-                    "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center translate-y-[1px]",
+                    "shrink-0 h-11 w-11 rounded-xl flex items-center justify-center",
                     kpi.empty || loading ? "bg-muted/50" : "bg-primary/[0.07] dark:bg-primary/[0.12]"
                   )}
                 >
