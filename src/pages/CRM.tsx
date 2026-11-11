@@ -574,22 +574,21 @@ export default function CRM() {
                 onToggleArchive={async (lead) => {
                   await setLeadArchived(lead.id, !lead.archived_at);
                 }}
-                endSlot={
-                  <CrmCapacityMeter
-                    count={contactCount}
-                    limit={contactLimit}
-                    baseLimit={contactBaseLimit}
-                    extraContacts={extraContacts}
-                    extraPacks={extraPacks}
-                    hasLimit={hasContactLimit}
-                    atLimit={contactsAtLimit}
-                    nearLimit={contactsNearLimit}
-                    onUpgrade={() => navigate('/upgrade')}
-                  />
-                }
               />
             )}
           </div>
+
+          <CrmCapacityMeter
+            count={contactCount}
+            limit={contactLimit}
+            baseLimit={contactBaseLimit}
+            extraContacts={extraContacts}
+            extraPacks={extraPacks}
+            hasLimit={hasContactLimit}
+            atLimit={contactsAtLimit}
+            nearLimit={contactsNearLimit}
+            onUpgrade={() => navigate('/upgrade')}
+          />
         </div>
       </main>
 

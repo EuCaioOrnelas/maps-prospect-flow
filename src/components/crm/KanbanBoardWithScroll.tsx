@@ -32,8 +32,6 @@ interface KanbanBoardWithScrollProps {
   hideValue?: boolean;
   onOpenLeadTab?: (lead: Lead, tab: 'deals' | 'files') => void;
   onToggleArchive?: (lead: Lead) => Promise<void> | void;
-  /** Conteúdo extra renderizado depois da última coluna (ex.: medidor de capacidade). */
-  endSlot?: React.ReactNode;
 }
 
 const KanbanBoardWithScrollComponent = ({
@@ -56,7 +54,6 @@ const KanbanBoardWithScrollComponent = ({
   hideValue,
   onOpenLeadTab,
   onToggleArchive,
-  endSlot,
 }: KanbanBoardWithScrollProps) => {
   const { getScoreForPhone } = useLeadScores();
   const { hidden: phoneHidden } = usePhonePrivacy();
@@ -397,7 +394,6 @@ const KanbanBoardWithScrollComponent = ({
             onToggleArchive={onToggleArchive}
           />
         ))}
-        {!filteredStageId && endSlot}
       </div>
 
       {dragPreview && (() => {
