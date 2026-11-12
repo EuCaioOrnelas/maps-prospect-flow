@@ -370,6 +370,7 @@ export function ContactDetailsPanel({
             <SDRStatusBanner
               phone={conversation.contact_phone}
               accountOwnerId={accountOwnerId}
+              connectionId={conversation.waba_connection_id}
               compact
             />
           </div>
