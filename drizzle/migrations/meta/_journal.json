@@ -379,6 +379,13 @@
       "when": 1793388194598,
       "tag": "0053_wiizepay_update_audience_and_rotation",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1794489519230,
+      "tag": "0054_restrict_suggestion_votes_and_learning_media",
+      "breakpoints": true
     }
   ]
 }
