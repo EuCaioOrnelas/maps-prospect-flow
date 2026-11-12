@@ -452,7 +452,8 @@ Deno.serve(async (req) => {
       await supabase
         .from("sdr_sessions")
         .update({ status: nextAction === "encerrar" ? "closed" : "handoff" })
-        .eq("id", session?.id);
+        .eq("id", session?.id)
+        .in("status", ["active", "follow_up", "won", nextAction === "encerrar" ? "closed" : "handoff"]);
 
       // Vendedores a avisar: handoff usa strategy.handoff_sellers, encerramento usa closing.notify_sellers
       const sellers: any[] =

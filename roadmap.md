@@ -1,8 +1,8 @@
 # Roadmap — Wiize Evolui
 
 ## Auditoria de respostas do SDR Evolution
-- [ ] Corrigir falhas confirmadas na leitura e nas pausas de respostas; testar regressões.
-- [ ] Verificar envio e leitura no Chat com a conta e o vendedor do solicitante (aguarda sessão e vendedor neste ambiente).
+- [x] Corrigir leitura criptografada, status por número, sessões encerradas, prioridade de gatilhos e pausas concorrentes; 15 testes passaram, funções publicadas.
+- [ ] Verificar envio real e leitura no Chat com a conta e o vendedor do solicitante: este ambiente tem zero vendedores e nenhuma sessão disponível do solicitante; requer login na prévia e identificação do ambiente onde o SDR foi criado.
 
 - [x] Etapa 1: Migration do banco (colunas novas em suggestions, votes, groups, cycles, releases, audit log, triggers de votos e notificações) — drizzle/migrations/0042
 - [x] Etapa 2: Página pública /sugestoes (hero, como funciona, formulário preservado + campos progressivos, explorar com votos, releases)
