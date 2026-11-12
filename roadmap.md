@@ -1,5 +1,11 @@
 # Roadmap — Wiize Evolui
 
+## Teste do SDR e botões de templates no Chat
+- [x] Corrigir espera infinita, erros ocultos, repetição e interrupção da simulação; testar envio, resposta e nova tentativa com serviço simulado.
+- [x] Exibir os botões dos templates dentro do balão, sem emojis artificiais; conferir visual isolado no navegador em desktop/mobile.
+- [x] Validar 12 testes e compilação; alterações em SDRTestChatDialog, ChatMessageArea e auxiliares/testes de apresentação e requisição.
+- [ ] Confirmar teste real do vendedor e template em conversa autenticada: bloqueado por ausência de vendedores neste ambiente e conta do solicitante para gerar sessão; requer login na prévia e identificação do ambiente do vendedor.
+
 ## Auditoria de respostas do SDR Evolution
 - [x] Corrigir leitura criptografada, status por número, sessões encerradas, prioridade de gatilhos e pausas concorrentes; 15 testes passaram, funções publicadas.
 - [ ] Verificar envio real e leitura no Chat com a conta e o vendedor do solicitante: este ambiente tem zero vendedores e nenhuma sessão disponível do solicitante; requer login na prévia e identificação do ambiente onde o SDR foi criado.

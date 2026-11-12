@@ -28,6 +28,8 @@ import { useChatPrivacy, PRIVACY_BLUR_CLASS } from "@/hooks/useChatPrivacy";
 import { ChatAppointmentDialog } from "./ChatAppointmentDialog";
 import { ScheduleMessageDialog } from "./ScheduleMessageDialog";
 import { AddToCRMDialog } from "./AddToCRMDialog";
+import { ChatTemplateButtons } from "./ChatTemplateButtons";
+import { getChatTemplatePresentation } from "@/lib/chatTemplatePresentation";
 
 
 
@@ -417,6 +419,18 @@ export function ChatMessageArea({
   const { accountOwnerId } = useAuth();
   const isMobile = useIsMobile();
   const { settings: privacy } = useChatPrivacy();
+  const [templateDefinitions, setTemplateDefinitions] = useState<any[]>([]);
+  const hasTemplates = messages.some(m => m.direction === "outbound" && m.metadata?.template_name);
+
+  useEffect(() => {
+    setTemplateDefinitions([]);
+    if (!hasTemplates || !fetchTemplates) return;
+    let cancelled = false;
+    fetchTemplates().then(templates => {
+      if (!cancelled) setTemplateDefinitions(templates);
+    }).catch(() => { /* Historical labels remain available without the template service. */ });
+    return () => { cancelled = true; };
+  }, [conversation?.waba_connection_id, hasTemplates, fetchTemplates]);
 
   /** Última mensagem recebida — base do cálculo da janela de 24h da Meta. */
   const lastInboundAt = useMemo(() => {
@@ -1138,6 +1152,7 @@ export function ChatMessageArea({
                     const showTail = !isSameAuthorAsPrev;
                     const replyMsg = msg.reply_to_message_id ? messagesMap.get(msg.reply_to_message_id) : undefined;
                     const isForwarded = !!(msg.metadata as any)?.forwarded;
+                    const templatePresentation = getChatTemplatePresentation(msg, templateDefinitions);
 
                     const isSelected = selectedIds.has(msg.id);
                     const rowClickable = selectionMode;
@@ -1237,7 +1252,7 @@ export function ChatMessageArea({
                                  {(msg.content || msg.media_caption) && TEXT_LIKE_TYPES.includes(msg.message_type) && (
                                    <div className="px-[9px] pt-[5px] pb-[2px] pr-[36px]">
                                      <ExpandableText
-                                       text={msg.content || msg.media_caption || ""}
+                                       text={templatePresentation.text || msg.media_caption || ""}
                                       collapseKey={conversation.id}
                                       className="text-[14.2px] wa-text-primary leading-[18px]"
                                     />
@@ -1260,6 +1275,7 @@ export function ChatMessageArea({
                                   </span>
                                   {isOutbound && <MessageStatus status={msg.status} />}
                                 </div>
+                                {!msg.deleted_for_all_at && <ChatTemplateButtons buttons={templatePresentation.buttons} />}
                               </div>
                             </div>
                           </div>
