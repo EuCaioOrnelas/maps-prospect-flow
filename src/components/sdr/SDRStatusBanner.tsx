@@ -8,6 +8,7 @@ import { useSDRContactStatus } from "@/hooks/useSDRContactStatus";
 type Props = {
   phone: string | null | undefined;
   accountOwnerId: string | null | undefined;
+  connectionId: string | null | undefined;
   className?: string;
   compact?: boolean;
 };
@@ -15,8 +16,8 @@ type Props = {
 /**
  * Mostra se o SDR Inteligente está atendendo este contato — e permite pausar/retomar.
  */
-export function SDRStatusBanner({ phone, accountOwnerId, className, compact }: Props) {
-  const { status, saving, setPaused } = useSDRContactStatus(phone, accountOwnerId);
+export function SDRStatusBanner({ phone, accountOwnerId, connectionId, className, compact }: Props) {
+  const { status, saving, setPaused } = useSDRContactStatus(phone, accountOwnerId, connectionId);
   if (!status) return null;
 
   const nextLabel = status.nextAt

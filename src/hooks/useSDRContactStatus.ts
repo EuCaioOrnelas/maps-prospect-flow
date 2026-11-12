@@ -24,13 +24,13 @@ const CLOSED_STATES = ["closed", "abandoned"];
 /**
  * Diz se o SDR Inteligente está atendendo este contato (e por quê não, quando for o caso).
  */
-export function useSDRContactStatus(phone: string | null | undefined, accountOwnerId: string | null | undefined) {
+export function useSDRContactStatus(phone: string | null | undefined, accountOwnerId: string | null | undefined, connectionId: string | null | undefined) {
   const [status, setStatus] = useState<SDRContactStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    if (!phone || !accountOwnerId) {
+    if (!phone || !accountOwnerId || !connectionId) {
       setStatus(null);
       return;
     }
@@ -39,11 +39,13 @@ export function useSDRContactStatus(phone: string | null | undefined, accountOwn
       const digits = String(phone).replace(/\D/g, "");
       const tail = digits.slice(-8);
 
-      const { data: agents } = await supabase
+      const { data: agents, error: agentsError } = await supabase
         .from("sdr_agents")
         .select("id, name, status")
         .eq("owner_user_id", accountOwnerId)
-        .eq("status", "active");
+        .eq("status", "active")
+        .contains("whatsapp_number_ids", [connectionId]);
+      if (agentsError) throw agentsError;
 
       if (!agents?.length) {
         setStatus({ state: "no_agent", agentId: null, agentName: null, sessionId: null, nextAt: null, closedReason: null });
@@ -60,7 +62,8 @@ export function useSDRContactStatus(phone: string | null | undefined, accountOwn
         .limit(1);
 
       const session = sessions?.[0] ?? null;
-      const agent = agents.find((a) => a.id === (session?.agent_id ?? agentIds[0]))!;
+      const agent = agents.find((a) => a.id === (session?.agent_id ?? agentIds[0]));
+      if (!agent) return;
 
       if (!session) {
         setStatus({ state: "active", agentId: agent.id, agentName: agent.name, sessionId: null, nextAt: null, closedReason: null });
@@ -85,7 +88,7 @@ export function useSDRContactStatus(phone: string | null | undefined, accountOwn
     } finally {
       setLoading(false);
     }
-  }, [phone, accountOwnerId]);
+  }, [phone, accountOwnerId, connectionId]);
 
   useEffect(() => {
     load();
@@ -104,12 +107,14 @@ export function useSDRContactStatus(phone: string | null | undefined, accountOwn
                 ? { status: "paused", next_followup_at: null, closed_reason: "manual_pause" }
                 : { status: "active", closed_reason: null },
             )
-            .eq("id", status.sessionId);
+            .eq("id", status.sessionId)
+            .eq("owner_user_id", accountOwnerId);
         } else if (paused && status.agentId) {
           await supabase.from("sdr_sessions").insert({
             agent_id: status.agentId,
             owner_user_id: accountOwnerId,
             phone: String(phone).replace(/\D/g, ""),
+            waba_connection_id: connectionId,
             status: "paused",
             closed_reason: "manual_pause",
           });
@@ -119,7 +124,7 @@ export function useSDRContactStatus(phone: string | null | undefined, accountOwn
         setSaving(false);
       }
     },
-    [status, accountOwnerId, phone, load],
+    [status, accountOwnerId, phone, connectionId, load],
   );
 
   return { status, loading, saving, setPaused, reload: load };

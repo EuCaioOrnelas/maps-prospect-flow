@@ -1112,7 +1112,8 @@ ${historyText}`;
                   : analysis.micro_objetivo ?? "Retomar negociação"
               : null,
           })
-          .eq("id", session.id);
+          .eq("id", session.id)
+          .eq("status", session.status);
 
       }
     }
