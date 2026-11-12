@@ -7,6 +7,7 @@ import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { AppLayout } from "@/components/chatweb/ChatWebShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,7 +101,7 @@ export default function ChatWebSettings() {
     if (cfg.avatar_path) supabase.storage.from("chatweb-avatars").createSignedUrl(cfg.avatar_path, 3600).then(({ data }) => setAvatarPreview(data?.signedUrl || null));
   }, [cfg]);
 
-  const update = async (patch: Record<string, any>, msg = "Salvo!") => {
+  const update = async (patch: Database["public"]["Tables"]["chatweb_configurations"]["Update"], msg = "Salvo!") => {
     const { error } = await supabase.from("chatweb_configurations").update(patch).eq("id", cfg.id);
     if (error) {
       toast.error(error.code === "23505" || error.message.includes("slug_taken") ? "Este endereço já está sendo utilizado. Escolha outro." : error.message.includes("reserved") ? "Este endereço é reservado. Escolha outro." : "Não foi possível salvar.");
