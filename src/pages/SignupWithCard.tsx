@@ -29,7 +29,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
 import { isPasswordAuthError, translateAuthError, PASSWORD_REJECTED_MESSAGE } from "@/lib/passwordPolicy";
-import { cn } from "@/lib/utils";
 
 class PasswordRejectedError extends Error {}
 import { SEO } from "@/components/SEO";
