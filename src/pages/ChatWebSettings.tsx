@@ -138,7 +138,7 @@ export default function ChatWebSettings() {
       const ok = await update({
         display_name: draft.display_name.slice(0, 60) || "Atendimento", description: draft.description.slice(0, 120) || null,
         welcome_message: draft.welcome_message.slice(0, 500) || null, input_placeholder: draft.input_placeholder.slice(0, 80) || null,
-        theme_config: draft.theme, avatar_path,
+        theme_config: { ...draft.theme }, avatar_path,
       }, "Personalização salva!");
       if (ok) setAvatarFile(null);
     } catch { toast.error("Falha ao enviar a foto."); } finally { setSaving(false); }
