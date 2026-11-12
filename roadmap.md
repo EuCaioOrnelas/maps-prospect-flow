@@ -1,5 +1,9 @@
 # Roadmap — Wiize Evolui
 
+## Auditoria de respostas do SDR Evolution
+- [ ] Corrigir falhas confirmadas na leitura e nas pausas de respostas; testar regressões.
+- [ ] Verificar envio e leitura no Chat com a conta e o vendedor do solicitante (aguarda sessão e vendedor neste ambiente).
+
 - [x] Etapa 1: Migration do banco (colunas novas em suggestions, votes, groups, cycles, releases, audit log, triggers de votos e notificações) — drizzle/migrations/0042
 - [x] Etapa 2: Página pública /sugestoes (hero, como funciona, formulário preservado + campos progressivos, explorar com votos, releases)
 - [x] Etapa 3: Edge function suggestions-analyst (análise GPT, agrupamento, pontuação 0-100) — publicada
