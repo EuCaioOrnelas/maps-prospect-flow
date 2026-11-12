@@ -3,6 +3,13 @@ import { cn } from "@/lib/utils";
 
 export type PartnerLevel = "select" | "signature" | "prime";
 
+/** Resolve persisted values before using them as tier/metadata indexes. */
+export function normalizePartnerLevel(level: unknown): PartnerLevel {
+  const value = typeof level === "string" ? level.trim().toLowerCase() : "";
+  if (value === "signature" || value === "prime") return value;
+  return "select";
+}
+
 /**
  * Visual system for partner tiers.
  * Three levels only: Select, Signature, Prime.
@@ -50,8 +57,8 @@ interface Props {
 }
 
 export function LevelBadge({ level, size = "md", showLabel = true, className }: Props) {
-  const key = (String(level || "select").toLowerCase() as PartnerLevel);
-  const meta = LEVEL_META[key] ?? LEVEL_META.select;
+  const key = normalizePartnerLevel(level);
+  const meta = LEVEL_META[key];
   const Icon = meta.icon;
 
   const dims = {

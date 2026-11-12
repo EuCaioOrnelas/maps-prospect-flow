@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { LevelBadge, LEVEL_META, type PartnerLevel } from "@/components/partners/LevelBadge";
+import { LevelBadge, LEVEL_META, normalizePartnerLevel, type PartnerLevel } from "@/components/partners/LevelBadge";
 import { PageHeader } from "@/components/partners/PageHeader";
 import { Sparkles, TrendingUp, Users, DollarSign, Repeat, ArrowRight, Lock, CheckCircle2 } from "lucide-react";
 import { fmtBRL } from "@/lib/partnerFormat";
@@ -72,7 +72,7 @@ export default function PartnerLevels() {
 
   }, [settings]);
 
-  const currentLevel = (partnerData?.level || "select") as PartnerLevel;
+  const currentLevel = normalizePartnerLevel(partnerData?.level);
   const currentIdx = LEVEL_ORDER.indexOf(currentLevel);
   const nextTier = tiers[currentIdx + 1];
   const currentTier = tiers[currentIdx];
