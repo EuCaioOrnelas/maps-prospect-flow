@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { trackSignupComplete, trackSignupStart } from "@/lib/analytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
+import { isPasswordAuthError, PASSWORD_REJECTED_MESSAGE, translateAuthError } from "@/lib/passwordPolicy";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailVerificationDialog } from "@/components/EmailVerificationDialog";
@@ -41,11 +42,8 @@ const getSignupErrorMessage = (error: Error): { title: string; description: stri
     };
   }
 
-  if (msg.includes("password") && (msg.includes("weak") || msg.includes("short") || msg.includes("least"))) {
-    return {
-      title: "Senha muito fraca",
-      description: "A senha precisa ter pelo menos 8 caracteres com letras e números.",
-    };
+  if (isPasswordAuthError(msg)) {
+    return { title: "Escolha outra senha", description: PASSWORD_REJECTED_MESSAGE };
   }
 
   if (msg.includes("network") || msg.includes("fetch") || msg.includes("failed to fetch")) {
@@ -73,7 +71,7 @@ const getSignupErrorMessage = (error: Error): { title: string; description: stri
   console.error("[Signup Error]", error.message);
   return {
     title: "Erro ao criar conta",
-    description: "Algo deu errado. Aguarde alguns segundos e tente novamente. Se o problema persistir, entre em contato com o suporte.",
+    description: translateAuthError(error.message),
   };
 };
 
@@ -118,10 +116,10 @@ const Signup = () => {
       return;
     }
 
-    if (!isPasswordStrong(password)) {
+    if (!isPasswordStrong(password, { email, name })) {
       toast({
-        title: "Senha muito fraca",
-        description: "Sua senha precisa ser média ou forte. Adicione mais caracteres, números ou símbolos especiais.",
+        title: "Ajuste sua senha para continuar",
+        description: "Veja abaixo do campo o que falta e o que evitar.",
         variant: "destructive",
       });
       return;
@@ -246,7 +244,7 @@ const Signup = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
-                    className="h-11 sm:h-12 bg-secondary border-border pr-12 text-foreground text-sm sm:text-base"
+                    className={`h-11 sm:h-12 bg-secondary pr-12 text-foreground text-sm sm:text-base transition-colors ${password.length >= 8 && !isPasswordStrong(password, { email, name }) ? "border-destructive/60" : "border-border"}`}
                   />
                   <button
                     type="button"
@@ -256,7 +254,7 @@ const Signup = () => {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                <PasswordStrength password={password} />
+                <PasswordStrength password={password} email={email} name={name} />
               </div>
 
               <PartnerCodeField bare />

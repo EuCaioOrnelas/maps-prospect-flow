@@ -535,7 +535,7 @@ function SignupWithCardInner() {
     setPasswordServerError(message);
     setPasswordTouched(true);
     setPendingSetup(null);
-    setAuthStage("idle" as typeof authStage);
+    setAuthStage("idle");
     setStep(1);
     toast({ title: "Escolha outra senha", description: "Nenhuma cobrança foi feita. Ajuste a senha e continue.", variant: "destructive" });
     setTimeout(() => {
