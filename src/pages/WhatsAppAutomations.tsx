@@ -32,7 +32,7 @@ import { ptBR } from "date-fns/locale";
 import { getFlowTemplate } from "@/data/flowTemplates";
 import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWebhookGate } from "@/hooks/useWebhookGate";
-import { ShieldAlert, Globe, Settings2, PowerOff } from "lucide-react";
+import { ShieldAlert, Globe, Settings2, PowerOff, Repeat, ShieldCheck } from "lucide-react";
 import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ActivateChatWebDialog } from "@/components/chatweb/ActivateChatWebDialog";
 import { subDays } from "date-fns";
@@ -57,6 +57,18 @@ const flowTemplates = [
   { id: "escola", name: "Escola / Cursos", icon: GraduationCap, description: "Cursos → informações → matrícula", prompt: "Crie um fluxo para escola ou curso online com apresentação dos cursos, detalhes e processo de matrícula." },
   { id: "restaurante", name: "Restaurante / Delivery", icon: Utensils, description: "Cardápio → pedido → entrega", prompt: "Crie um fluxo para restaurante com apresentação do cardápio por categorias, confirmação de pedido e informações de entrega." },
   { id: "automotivo", name: "Automotivo", icon: Car, description: "Veículos → financiamento → agendamento", prompt: "Crie um fluxo para concessionária com seleção de veículos, simulação de financiamento e agendamento de test drive." },
+  { id: "fu_abordagem", name: "Follow-up de Abordagem", icon: Repeat, description: "Abordagem → 3 follow-ups → encerra se responder", prompt: "" },
+  { id: "fu_proposta", name: "Follow-up de Proposta", icon: Repeat, description: "Envia proposta → lembretes → urgência", prompt: "" },
+  { id: "fu_reativacao", name: "Follow-up de Reativação", icon: Repeat, description: "Reengaja clientes inativos com oferta", prompt: "" },
+  { id: "fu_pos_reuniao", name: "Follow-up Pós-Reunião", icon: Repeat, description: "Resumo → próximos passos → nova conversa", prompt: "" },
+  { id: "fu_carrinho", name: "Follow-up de Carrinho Abandonado", icon: Repeat, description: "Lembrete → link do pedido → cupom", prompt: "" },
+  { id: "seg_atendimento", name: "Seguros: Atendimento", icon: ShieldCheck, description: "Menu → cotação, cliente, sinistro", prompt: "" },
+  { id: "seg_auto", name: "Seguros: Cotação Auto", icon: ShieldCheck, description: "Coleta dados do condutor e veículo", prompt: "" },
+  { id: "seg_residencial", name: "Seguros: Cotação Residencial", icon: ShieldCheck, description: "Coleta dados do imóvel e coberturas", prompt: "" },
+  { id: "seg_vida", name: "Seguros: Cotação Vida", icon: ShieldCheck, description: "Coleta perfil, capital e beneficiários", prompt: "" },
+  { id: "seg_empresarial", name: "Seguros: Cotação Empresarial", icon: ShieldCheck, description: "Coleta CNPJ, atividade e tipo de seguro", prompt: "" },
+  { id: "seg_sinistro", name: "Seguros: Aviso de Sinistro", icon: ShieldCheck, description: "Emergência → dados → ocorrência → documentos", prompt: "" },
+  { id: "seg_renovacao", name: "Seguros: Renovação", icon: ShieldCheck, description: "Aviso de vencimento → lembretes → renovar", prompt: "" },
 ];
 
 export default function WhatsAppAutomations() {
