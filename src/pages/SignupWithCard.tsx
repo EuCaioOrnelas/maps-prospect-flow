@@ -28,6 +28,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { PasswordStrength, isPasswordStrong } from "@/components/ui/password-strength";
+import { isPasswordAuthError, translateAuthError, PASSWORD_REJECTED_MESSAGE } from "@/lib/passwordPolicy";
+import { cn } from "@/lib/utils";
+
+class PasswordRejectedError extends Error {}
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { generateFingerprint, getClientIP } from "@/lib/fingerprint";
@@ -172,6 +176,9 @@ function SignupWithCardInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [passwordServerError, setPasswordServerError] = useState<string | null>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -319,11 +326,14 @@ function SignupWithCardInner() {
       toast({ title: "Preencha nome e email", variant: "destructive" });
       return;
     }
-    if (!isPasswordStrong(password)) {
-      toast({ title: "Senha muito fraca", description: "Use letras, números e símbolos.", variant: "destructive" });
+    if (passwordServerError || !isPasswordStrong(password, { email, name })) {
+      setPasswordTouched(true);
+      toast({ title: "Ajuste sua senha para continuar", description: passwordServerError || "Veja abaixo do campo o que falta e o que evitar.", variant: "destructive" });
+      passwordInputRef.current?.focus();
       return;
     }
     if (password !== confirmPassword) {
+      setPasswordTouched(true);
       toast({ title: "As senhas não coincidem", variant: "destructive" });
       return;
     }
@@ -461,7 +471,8 @@ function SignupWithCardInner() {
       if (/already registered|already exists/i.test(m)) {
         throw new Error("Este e-mail já tem cadastro. Faça login ou use \"Esqueci minha senha\". Nenhuma cobrança foi feita.");
       }
-      throw new Error(`Não foi possível criar sua conta: ${m}. Nenhuma cobrança foi feita.`);
+      if (isPasswordAuthError(m)) throw new PasswordRejectedError(PASSWORD_REJECTED_MESSAGE);
+      throw new Error(`Não foi possível criar sua conta. ${translateAuthError(m)} Nenhuma cobrança foi feita.`);
     }
     // Com confirmação de e-mail ligada, um e-mail já cadastrado volta "sem erro",
     // porém sem identidades — nesse caso a conta NÃO foi criada.
@@ -519,6 +530,20 @@ function SignupWithCardInner() {
 
   const [verifyNoticeOpen, setVerifyNoticeOpen] = useState(false);
 
+  /** Servidor recusou a senha: volta para a etapa 1 com o campo destacado. */
+  const handlePasswordRejected = (message: string) => {
+    setPasswordServerError(message);
+    setPasswordTouched(true);
+    setPendingSetup(null);
+    setAuthStage("idle" as typeof authStage);
+    setStep(1);
+    toast({ title: "Escolha outra senha", description: "Nenhuma cobrança foi feita. Ajuste a senha e continue.", variant: "destructive" });
+    setTimeout(() => {
+      passwordInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      passwordInputRef.current?.focus();
+    }, 150);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -539,7 +564,7 @@ function SignupWithCardInner() {
       return;
     }
 
-    if (!password || !isPasswordStrong(password)) {
+    if (!password || !isPasswordStrong(password, { email, name })) {
       toast({
         title: "Confirme sua senha",
         description: "Volte para a etapa anterior e informe a senha da sua conta.",
@@ -555,6 +580,10 @@ function SignupWithCardInner() {
       try {
         await finalizeTrial(pendingSetup);
       } catch (err) {
+      if (err instanceof PasswordRejectedError) {
+        handlePasswordRejected(err.message);
+        return;
+      }
         const msg = err instanceof Error ? err.message : String(err);
         console.error("[SignupWithCard] resume error", err);
         toast({ title: "Erro ao criar conta", description: msg, variant: "destructive" });
@@ -687,6 +716,10 @@ function SignupWithCardInner() {
       // 3) Cartão autenticado → cria a subscription com trial e a conta.
       await finalizeTrial(pending);
     } catch (e) {
+      if (e instanceof PasswordRejectedError) {
+        handlePasswordRejected(e.message);
+        return;
+      }
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[SignupWithCard] error", e);
       toast({ title: "Erro ao criar conta", description: msg, variant: "destructive" });
@@ -695,6 +728,9 @@ function SignupWithCardInner() {
     }
   };
 
+
+  const passwordInvalid = (passwordTouched || !!passwordServerError) && (!!passwordServerError || !isPasswordStrong(password, { email, name }));
+  const confirmInvalid = confirmPassword.length > 0 && (passwordTouched || confirmPassword.length >= password.length) && confirmPassword !== password;
 
   if (!plan) return null;
 
@@ -755,11 +791,14 @@ function SignupWithCardInner() {
                           <div className="relative">
                             <Input
                               type={showPassword ? "text" : "password"}
+                              ref={passwordInputRef}
                               value={password}
-                              onChange={(e) => setPassword(e.target.value)}
+                              onChange={(e) => { setPassword(e.target.value); setPasswordServerError(null); }}
+                              onBlur={() => password && setPasswordTouched(true)}
                               required
                               minLength={8}
-                              className="pr-11"
+                              aria-invalid={passwordInvalid}
+                              className={cn("pr-11 transition-colors", passwordInvalid && "border-destructive/60 focus-visible:ring-destructive/30")}
                             />
                             <button
                               type="button"
@@ -770,7 +809,7 @@ function SignupWithCardInner() {
                               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                           </div>
-                          <PasswordStrength password={password} />
+                          <PasswordStrength password={password} email={email} name={name} serverError={passwordServerError} />
                         </div>
                         <div className="space-y-1.5">
                           <Label>Confirmar senha</Label>
@@ -781,7 +820,8 @@ function SignupWithCardInner() {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               required
                               minLength={8}
-                              className="pr-11"
+                              aria-invalid={confirmInvalid}
+                              className={cn("pr-11 transition-colors", confirmInvalid && "border-destructive/60 focus-visible:ring-destructive/30")}
                             />
                             <button
                               type="button"
@@ -792,6 +832,7 @@ function SignupWithCardInner() {
                               {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                           </div>
+                          {confirmInvalid && <p className="text-xs text-destructive">As senhas ainda não coincidem.</p>}
                         </div>
                       </div>
                     </section>
