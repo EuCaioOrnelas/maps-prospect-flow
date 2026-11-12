@@ -255,20 +255,6 @@ Deno.serve(async (req) => {
       return json({ ok: true, rejected: true, sent: 0 });
     }
 
-    const { data: blockedSession } = await supabase
-      .from("sdr_sessions")
-      .select("id, status")
-      .eq("agent_id", agent.id)
-      .in("status", ["opted_out", "paused"])
-      .ilike("phone", `%${tail}`)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (blockedSession) {
-      console.log(`[sdr-dispatch] ignorado: sessão ${blockedSession.status} para ${contact_phone}`);
-      return json({ skipped: blockedSession.status === "paused" ? "SDR pausado neste contato" : "contato descadastrado" });
-    }
-
     // Bloqueio de concorrência com campanhas de oportunidade que enviam um follow-up
     // gerado por IA depois da resposta ao template. Enquanto esse envio estiver pendente
     // ou agendado, o SDR não responde para não duplicar mensagens no mesmo contato.
@@ -577,7 +563,7 @@ Deno.serve(async (req) => {
       const { data: currentSession, error: currentError } = await supabase
         .from("sdr_sessions").select("status").eq("id", session.id).maybeSingle();
       if (currentError || !currentSession ||
-          !["active", "follow_up", ...(nextAction === "chamar_vendedor" ? ["handoff"] : []), ...(nextAction === "encerrar" ? ["closed"] : [])].includes(currentSession.status)) {
+          !["active", "follow_up", "won", ...(nextAction === "chamar_vendedor" ? ["handoff"] : []), ...(nextAction === "encerrar" ? ["closed"] : [])].includes(currentSession.status)) {
         return json({ skipped: "SDR interrompido durante o processamento", sent });
       }
       const sendResult = await sendText(text);
