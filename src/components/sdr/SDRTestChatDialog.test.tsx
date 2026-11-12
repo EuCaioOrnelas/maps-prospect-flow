@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const { invoke } = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke } } }));
 import { SDRTestChatDialog } from "./SDRTestChatDialog";
+Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: vi.fn() });
 
 afterEach(() => { cleanup(); invoke.mockReset(); });
 describe("SDR test conversation", () => {
