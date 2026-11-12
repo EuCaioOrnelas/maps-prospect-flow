@@ -536,6 +536,7 @@ export type Database = {
       }
       ai_usage_logs: {
         Row: {
+          channel: string | null
           cost_usd: number
           created_at: string
           feature: string
@@ -547,6 +548,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          channel?: string | null
           cost_usd?: number
           created_at?: string
           feature: string
@@ -558,6 +560,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          channel?: string | null
           cost_usd?: number
           created_at?: string
           feature?: string
@@ -2551,6 +2554,7 @@ export type Database = {
           created_by: string
           error: string | null
           id: string
+          is_outreach: boolean
           kind: string
           owner_user_id: string
           scheduled_at: string
@@ -2573,6 +2577,7 @@ export type Database = {
           created_by: string
           error?: string | null
           id?: string
+          is_outreach?: boolean
           kind?: string
           owner_user_id: string
           scheduled_at: string
@@ -2595,6 +2600,7 @@ export type Database = {
           created_by?: string
           error?: string | null
           id?: string
+          is_outreach?: boolean
           kind?: string
           owner_user_id?: string
           scheduled_at?: string
@@ -2613,6 +2619,209 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_configurations: {
+        Row: {
+          allowed_domains: string[]
+          avatar_path: string | null
+          created_at: string
+          description: string | null
+          disable_policy: string
+          display_name: string
+          embed_mode: string
+          enabled: boolean
+          flow_id: string
+          id: string
+          input_placeholder: string | null
+          owner_user_id: string
+          session_ttl_minutes: number
+          slug: string
+          theme_config: Json
+          updated_at: string
+          user_id: string
+          welcome_message: string | null
+          widget_config: Json
+        }
+        Insert: {
+          allowed_domains?: string[]
+          avatar_path?: string | null
+          created_at?: string
+          description?: string | null
+          disable_policy?: string
+          display_name?: string
+          embed_mode?: string
+          enabled?: boolean
+          flow_id: string
+          id?: string
+          input_placeholder?: string | null
+          owner_user_id: string
+          session_ttl_minutes?: number
+          slug: string
+          theme_config?: Json
+          updated_at?: string
+          user_id: string
+          welcome_message?: string | null
+          widget_config?: Json
+        }
+        Update: {
+          allowed_domains?: string[]
+          avatar_path?: string | null
+          created_at?: string
+          description?: string | null
+          disable_policy?: string
+          display_name?: string
+          embed_mode?: string
+          enabled?: boolean
+          flow_id?: string
+          id?: string
+          input_placeholder?: string | null
+          owner_user_id?: string
+          session_ttl_minutes?: number
+          slug?: string
+          theme_config?: Json
+          updated_at?: string
+          user_id?: string
+          welcome_message?: string | null
+          widget_config?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_configurations_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: true
+            referencedRelation: "wa_automation_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          message_type: string
+          metadata: Json
+          owner_user_id: string
+          sender_type: string
+          session_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json
+          owner_user_id: string
+          sender_type: string
+          session_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json
+          owner_user_id?: string
+          sender_type?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chatweb_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_sessions: {
+        Row: {
+          config_id: string
+          context: Json
+          ended_at: string | null
+          execution_id: string | null
+          expires_at: string
+          flow_id: string
+          id: string
+          last_activity_at: string
+          lead_id: string | null
+          origin: string | null
+          owner_user_id: string
+          session_token_hash: string
+          started_at: string
+          status: string
+          visitor_id: string
+        }
+        Insert: {
+          config_id: string
+          context?: Json
+          ended_at?: string | null
+          execution_id?: string | null
+          expires_at: string
+          flow_id: string
+          id?: string
+          last_activity_at?: string
+          lead_id?: string | null
+          origin?: string | null
+          owner_user_id: string
+          session_token_hash: string
+          started_at?: string
+          status?: string
+          visitor_id: string
+        }
+        Update: {
+          config_id?: string
+          context?: Json
+          ended_at?: string | null
+          execution_id?: string | null
+          expires_at?: string
+          flow_id?: string
+          id?: string
+          last_activity_at?: string
+          lead_id?: string | null
+          origin?: string | null
+          owner_user_id?: string
+          session_token_hash?: string
+          started_at?: string
+          status?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_sessions_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "chatweb_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatweb_slug_history: {
+        Row: {
+          config_id: string | null
+          retired_at: string
+          slug: string
+        }
+        Insert: {
+          config_id?: string | null
+          retired_at?: string
+          slug: string
+        }
+        Update: {
+          config_id?: string | null
+          retired_at?: string
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatweb_slug_history_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "chatweb_configurations"
             referencedColumns: ["id"]
           },
         ]
@@ -6705,6 +6914,98 @@ export type Database = {
           },
         ]
       }
+      learning_lessons: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          duration_seconds: number | null
+          id: string
+          is_published: boolean
+          module_id: string
+          slug: string
+          thumbnail_path: string | null
+          title: string
+          updated_at: string
+          youtube_url: string
+          youtube_video_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean
+          module_id: string
+          slug: string
+          thumbnail_path?: string | null
+          title: string
+          updated_at?: string
+          youtube_url: string
+          youtube_video_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          duration_seconds?: number | null
+          id?: string
+          is_published?: boolean
+          module_id?: string
+          slug?: string
+          thumbnail_path?: string | null
+          title?: string
+          updated_at?: string
+          youtube_url?: string
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_modules: {
+        Row: {
+          cover_path: string | null
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          is_published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_path?: string | null
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_path?: string | null
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lifecycle_campaign_steps: {
         Row: {
           audience: string
@@ -10080,19 +10381,69 @@ export type Database = {
         }
         Relationships: []
       }
+      sdr_agent_products: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          owner_user_id: string
+          priority: string
+          product_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          owner_user_id: string
+          priority?: string
+          product_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          owner_user_id?: string
+          priority?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_agent_products_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_agent_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sdr_agents: {
         Row: {
+          activation_mode: string
           ai: Json
+          allowed_origins: string[] | null
           closing: Json
           created_at: string
           created_by: string | null
+          exclude_clients: boolean
+          exclude_crm: boolean
+          exclude_human_owned: boolean
           id: string
           knowledge: Json
           name: string
           objective: string
           objective_custom: string | null
+          offer_strategy: string
+          operation_mode: string
           owner_user_id: string
           personality: Json
+          sales_behavior: Json
           schedule: Json
           situations: Json
           status: string
@@ -10102,17 +10453,25 @@ export type Database = {
           whatsapp_number_ids: string[]
         }
         Insert: {
+          activation_mode?: string
           ai?: Json
+          allowed_origins?: string[] | null
           closing?: Json
           created_at?: string
           created_by?: string | null
+          exclude_clients?: boolean
+          exclude_crm?: boolean
+          exclude_human_owned?: boolean
           id?: string
           knowledge?: Json
           name: string
           objective?: string
           objective_custom?: string | null
+          offer_strategy?: string
+          operation_mode?: string
           owner_user_id: string
           personality?: Json
+          sales_behavior?: Json
           schedule?: Json
           situations?: Json
           status?: string
@@ -10122,17 +10481,25 @@ export type Database = {
           whatsapp_number_ids?: string[]
         }
         Update: {
+          activation_mode?: string
           ai?: Json
+          allowed_origins?: string[] | null
           closing?: Json
           created_at?: string
           created_by?: string | null
+          exclude_clients?: boolean
+          exclude_crm?: boolean
+          exclude_human_owned?: boolean
           id?: string
           knowledge?: Json
           name?: string
           objective?: string
           objective_custom?: string | null
+          offer_strategy?: string
+          operation_mode?: string
           owner_user_id?: string
           personality?: Json
+          sales_behavior?: Json
           schedule?: Json
           situations?: Json
           status?: string
@@ -10140,6 +10507,170 @@ export type Database = {
           triggers?: Json
           updated_at?: string
           whatsapp_number_ids?: string[]
+        }
+        Relationships: []
+      }
+      sdr_eligibility_log: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          details: Json | null
+          eligible: boolean
+          id: string
+          lead_id: string | null
+          owner_user_id: string
+          phone: string | null
+          reason: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          eligible: boolean
+          id?: string
+          lead_id?: string | null
+          owner_user_id: string
+          phone?: string | null
+          reason: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          eligible?: boolean
+          id?: string
+          lead_id?: string | null
+          owner_user_id?: string
+          phone?: string | null
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_eligibility_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sdr_products: {
+        Row: {
+          active: boolean
+          benefits: string | null
+          billing_model: string
+          category: string | null
+          created_at: string
+          delivery_estimate: string | null
+          description: string | null
+          differentials: string | null
+          full_description: string | null
+          hiring_conditions: string | null
+          id: string
+          image_url: string | null
+          installments: string | null
+          max_discount_percent: number | null
+          name: string
+          negotiation_rules: string | null
+          objections: Json | null
+          owner_user_id: string
+          payment_conditions: string | null
+          price_display: string | null
+          price_max: number | null
+          price_min: number | null
+          price_type: string
+          price_value: number | null
+          priority: string
+          priority_segments: string[] | null
+          problems_solved: string | null
+          proposal_file: Json | null
+          qualification_questions: string[] | null
+          requirements: string | null
+          sales_arguments: string | null
+          segments: string[] | null
+          target_audience: string | null
+          updated_at: string
+          user_id: string
+          when_not_to_offer: string | null
+          when_to_offer: string | null
+        }
+        Insert: {
+          active?: boolean
+          benefits?: string | null
+          billing_model?: string
+          category?: string | null
+          created_at?: string
+          delivery_estimate?: string | null
+          description?: string | null
+          differentials?: string | null
+          full_description?: string | null
+          hiring_conditions?: string | null
+          id?: string
+          image_url?: string | null
+          installments?: string | null
+          max_discount_percent?: number | null
+          name: string
+          negotiation_rules?: string | null
+          objections?: Json | null
+          owner_user_id: string
+          payment_conditions?: string | null
+          price_display?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          price_value?: number | null
+          priority?: string
+          priority_segments?: string[] | null
+          problems_solved?: string | null
+          proposal_file?: Json | null
+          qualification_questions?: string[] | null
+          requirements?: string | null
+          sales_arguments?: string | null
+          segments?: string[] | null
+          target_audience?: string | null
+          updated_at?: string
+          user_id: string
+          when_not_to_offer?: string | null
+          when_to_offer?: string | null
+        }
+        Update: {
+          active?: boolean
+          benefits?: string | null
+          billing_model?: string
+          category?: string | null
+          created_at?: string
+          delivery_estimate?: string | null
+          description?: string | null
+          differentials?: string | null
+          full_description?: string | null
+          hiring_conditions?: string | null
+          id?: string
+          image_url?: string | null
+          installments?: string | null
+          max_discount_percent?: number | null
+          name?: string
+          negotiation_rules?: string | null
+          objections?: Json | null
+          owner_user_id?: string
+          payment_conditions?: string | null
+          price_display?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          price_value?: number | null
+          priority?: string
+          priority_segments?: string[] | null
+          problems_solved?: string | null
+          proposal_file?: Json | null
+          qualification_questions?: string[] | null
+          requirements?: string | null
+          sales_arguments?: string | null
+          segments?: string[] | null
+          target_audience?: string | null
+          updated_at?: string
+          user_id?: string
+          when_not_to_offer?: string | null
+          when_to_offer?: string | null
         }
         Relationships: []
       }
@@ -10200,6 +10731,67 @@ export type Database = {
           },
         ]
       }
+      sdr_sales_events: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          lead_id: string | null
+          owner_user_id: string
+          product_id: string | null
+          session_id: string | null
+          value: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          lead_id?: string | null
+          owner_user_id: string
+          product_id?: string | null
+          session_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          lead_id?: string | null
+          owner_user_id?: string
+          product_id?: string | null
+          session_id?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sdr_sales_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_sales_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sdr_sales_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sdr_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sdr_sessions: {
         Row: {
           agent_id: string
@@ -10221,7 +10813,9 @@ export type Database = {
           owner_user_id: string
           phone: string | null
           phone_number_id: string | null
+          potential_value: number | null
           replies_received: number
+          selected_product_id: string | null
           stage: string
           status: string
           updated_at: string
@@ -10248,7 +10842,9 @@ export type Database = {
           owner_user_id: string
           phone?: string | null
           phone_number_id?: string | null
+          potential_value?: number | null
           replies_received?: number
+          selected_product_id?: string | null
           stage?: string
           status?: string
           updated_at?: string
@@ -10275,7 +10871,9 @@ export type Database = {
           owner_user_id?: string
           phone?: string | null
           phone_number_id?: string | null
+          potential_value?: number | null
           replies_received?: number
+          selected_product_id?: string | null
           stage?: string
           status?: string
           updated_at?: string
@@ -13106,6 +13704,7 @@ export type Database = {
           awaiting_node_id: string | null
           channel: string
           channel_account_id: string | null
+          chatweb_session_id: string | null
           collected_data: Json | null
           completed_at: string | null
           contact_ref: string | null
@@ -13137,6 +13736,7 @@ export type Database = {
           awaiting_node_id?: string | null
           channel?: string
           channel_account_id?: string | null
+          chatweb_session_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
           contact_ref?: string | null
@@ -13168,6 +13768,7 @@ export type Database = {
           awaiting_node_id?: string | null
           channel?: string
           channel_account_id?: string | null
+          chatweb_session_id?: string | null
           collected_data?: Json | null
           completed_at?: string | null
           contact_ref?: string | null
@@ -15094,6 +15695,24 @@ export type Database = {
         }
         Returns: Json
       }
+      chatweb_flow_stats: {
+        Args: { _from: string; _owner: string; _to: string }
+        Returns: {
+          abandoned: number
+          avg_seconds: number
+          channel: string
+          completed: number
+          flow_id: string
+          in_progress: number
+          leads: number
+          sessions: number
+        }[]
+      }
+      chatweb_reserved_slug: { Args: { _slug: string }; Returns: boolean }
+      chatweb_slug_available: {
+        Args: { _config_id?: string; _slug: string }
+        Returns: boolean
+      }
       check_and_reset_monthly_searches: {
         Args: { user_id: string }
         Returns: Json
@@ -15131,6 +15750,7 @@ export type Database = {
           created_by: string
           error: string | null
           id: string
+          is_outreach: boolean
           kind: string
           owner_user_id: string
           scheduled_at: string
@@ -15386,6 +16006,10 @@ export type Database = {
       project_due_digest_me: { Args: never; Returns: undefined }
       project_is_manager: { Args: never; Returns: boolean }
       project_recount: { Args: { _project_id: string }; Returns: undefined }
+      project_refresh_notifications: {
+        Args: { _user: string }
+        Returns: undefined
+      }
       project_task_can_access: { Args: { _task_id: string }; Returns: boolean }
       purge_account_data: { Args: { _user_id: string }; Returns: Json }
       purge_operational_logs: { Args: never; Returns: Json }
@@ -15451,6 +16075,27 @@ export type Database = {
       revenue_score_to_bucket: {
         Args: { p_score: number }
         Returns: Database["public"]["Enums"]["revenue_status_bucket"]
+      }
+      schedule_outreach_message: {
+        Args: { _content: string; _conversation_id: string }
+        Returns: Json
+      }
+      sdr_check_eligibility: {
+        Args: { p_agent_id: string; p_phone: string; p_trigger?: string }
+        Returns: Json
+      }
+      sdr_log_sales_event: {
+        Args: {
+          p_agent_id: string
+          p_details?: Json
+          p_event_type: string
+          p_lead_id?: string
+          p_owner_user_id: string
+          p_product_id: string
+          p_session_id: string
+          p_value?: number
+        }
+        Returns: string
       }
       seed_revenue_score_rules: {
         Args: { p_user_id: string }
