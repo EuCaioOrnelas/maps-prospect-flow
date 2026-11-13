@@ -637,7 +637,7 @@ serve(async (req) => {
         .select("id, campaign_id, reply_token, status")
         .eq("prospect_id", prospectId).order("created_at", { ascending: false }).limit(1).maybeSingle();
 
-      let threadRec = lastRec;
+      let threadRec: any = lastRec;
       if (!threadRec) {
         const { data: prospect } = await admin.from("influencer_prospects").select("channel_name").eq("id", prospectId).maybeSingle();
         const { data: directCampaign, error: campaignError } = await admin.from("influencer_campaigns").insert({
@@ -648,7 +648,7 @@ serve(async (req) => {
         const { data: directRecipient, error: recipientError } = await admin.from("influencer_campaign_recipients").insert({
           campaign_id: directCampaign.id, prospect_id: prospectId, email: to, subject,
           body_html: esc(text), status: "enviando", attempts: 1,
-        }).select("id, campaign_id, reply_token").single();
+        }).select("id, campaign_id, reply_token, status").single();
         if (recipientError) {
           await admin.from("influencer_campaigns").delete().eq("id", directCampaign.id);
           return json({ error: recipientError.message }, 400);
