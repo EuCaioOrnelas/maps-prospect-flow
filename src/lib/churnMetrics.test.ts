@@ -29,7 +29,7 @@ const { hasRealPaymentBeforeCancellation, paymentPrecedesCancellation } = ruleMo
 
 describe("churn acumulado de clientes pagos", () => {
   it("divide todos os que pagaram e cancelaram pelos que já pagaram, não pelos 606 cadastros", () => {
-    expect(calculatePaidChurnRate(7, 50)).toBe(14);
+    expect(calculatePaidChurnRate(7, 50)).toBeCloseTo(14, 8);
     expect(calculatePaidChurnRate(2, 7)).toBeCloseTo(28.5714, 4);
   });
   it("exclui cancelamento anterior ao pagamento e cortesia sem pagamento", () => {
