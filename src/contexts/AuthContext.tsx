@@ -33,6 +33,7 @@ interface Profile {
   is_blocked?: boolean;
   admin_assigned_plan?: boolean;
   is_custom_subscription?: boolean;
+  payment_provider?: string;
   terms_accepted_at?: string;
 }
 
@@ -80,6 +81,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Sem aceite dos termos não existe acesso, independentemente de trial/plano.
     if (!profile.terms_accepted_at) return { isExpired: true, daysRemaining: 0, isTrialing: false };
     const willCharge = profile.trial_will_charge_at;
+
+    // Manual access has an exact deadline: no commercial grace period and no
+    // automatic-card trial logic. Keep the local fallback aligned with the RPC.
+    if (profile.payment_provider === 'manual' && profile.subscription_current_period_end) {
+      const remaining = new Date(profile.subscription_current_period_end).getTime() - Date.now();
+      return { isExpired: !Number.isFinite(remaining) || remaining <= 0,
+        daysRemaining: profile.trial_end_at ? Math.max(0, Math.ceil(remaining / 86400000)) : 0,
+        isTrialing: !!profile.trial_end_at && remaining > 0 };
+    }
 
     // Um teste antigo (cancelado/encerrado) não pode travar uma assinatura paga
     // depois: se a vigência paga vai além do fim do teste, vale o plano pago.
