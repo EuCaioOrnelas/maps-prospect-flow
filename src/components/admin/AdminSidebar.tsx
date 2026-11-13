@@ -49,6 +49,7 @@ import {
   HelpCircle,
   Lightbulb,
   Youtube,
+  GraduationCap,
 } from "lucide-react";
 
 interface NavItem {
@@ -148,6 +149,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "FAQs", url: "/admin/suporte/faqs", icon: HelpCircle as any },
       { title: "Inteligência", url: "/admin/suporte/inteligencia", icon: TrendingUp },
       { title: "Central de Sugestões", url: "/admin/sugestoes", icon: Lightbulb },
+      { title: "Gerenciar Aprendizado", url: "/admin/aprendizado", icon: GraduationCap },
     ],
   },
   {

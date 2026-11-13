@@ -1,5 +1,14 @@
-import { Card } from "@/components/ui/card";
-import { DollarSign, Repeat, CheckCircle2, TrendingUp, CalendarClock } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  DollarSign,
+  Repeat,
+  CheckCircle2,
+  TrendingUp,
+  CalendarClock,
+  HelpCircle,
+} from "lucide-react";
+import { MetricSlot } from "@/components/ui/metric-empty";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface SalesKPIsProps {
@@ -22,62 +31,127 @@ export function SalesKPIs({
   nextExpiration,
   compact,
 }: SalesKPIsProps) {
-  const hasData = totalRevenue > 0 || mrr > 0 || activeSales > 0 || projected12mo > 0;
-
   const kpis = [
-    { label: "Receita total", value: fmt(totalRevenue), sub: "acumulado de vendas", icon: DollarSign },
-    { label: "MRR ativo", value: fmt(mrr), sub: "receita recorrente / mês", icon: Repeat },
-    { label: "Vendas ativas", value: String(activeSales), sub: "contratos em vigor", icon: CheckCircle2 },
-    { label: "Projeção 12 meses", value: fmt(projected12mo), sub: "previsto de recorrentes", icon: TrendingUp },
+    {
+      label: "Receita total",
+      value: fmt(totalRevenue),
+      tip: "Soma de tudo que já foi vendido, sem descontar o que ainda vai vencer.",
+      icon: DollarSign,
+      empty: totalRevenue === 0,
+      hint: "Aparece ao registrar a primeira venda.",
+    },
+    {
+      label: "Receita recorrente",
+      value: fmt(mrr),
+      tip: "Quanto entra por mês com as vendas que se repetem todo mês.",
+      icon: Repeat,
+      empty: mrr === 0,
+      hint: "Aparece quando há vendas recorrentes ativas.",
+    },
+    {
+      label: "Vendas ativas",
+      value: String(activeSales),
+      tip: "Quantidade de contratos que ainda estão valendo hoje.",
+      icon: CheckCircle2,
+      empty: activeSales === 0,
+      hint: "Aparece ao registrar uma venda.",
+    },
+    {
+      label: "Projeção 12 meses",
+      value: fmt(projected12mo),
+      tip: "Quanto as vendas recorrentes devem somar nos próximos 12 meses.",
+      icon: TrendingUp,
+      empty: projected12mo === 0,
+      hint: "Aparece quando há vendas recorrentes ativas.",
+    },
   ];
 
   return (
-    <div className={cn("grid gap-3", compact ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2 lg:grid-cols-4")}>
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4",
+        compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-4"
+      )}
+    >
       {kpis.map((k) => (
-        <Card
-          key={k.label}
-          className="group p-4 rounded-2xl border-border/40 bg-card hover:border-primary/20 hover:shadow-sm transition-all"
-        >
-          <div className="flex items-center gap-2.5 min-h-[36px]">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <k.icon className="w-4 h-4" />
+        <Card key={k.label} className="border-border/50 relative overflow-hidden">
+          {/* Green glow */}
+          {!k.empty && (
+            <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-emerald-500/[0.04] dark:bg-emerald-500/[0.07] blur-2xl pointer-events-none" />
+          )}
+          <CardContent className="p-4 relative">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center",
+                  k.empty ? "bg-muted/50" : "bg-primary/[0.07] dark:bg-primary/[0.12]"
+                )}
+              >
+                <k.icon
+                  className={cn("w-[15px] h-[15px]", k.empty ? "text-muted-foreground/40" : "text-primary")}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate">
+                    {k.label}
+                  </p>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`O que significa ${k.label}?`}
+                        className="shrink-0 rounded-full text-muted-foreground/50 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
+                      >
+                        <HelpCircle className="w-3 h-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] text-[11px] leading-snug">
+                      {k.tip}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <MetricSlot
+                  cacheKey={`sales:${k.label}`}
+                  empty={k.empty}
+                  hint={k.hint}
+                  size="sm"
+                  className="min-h-[26px] mt-1.5"
+                >
+                  <p
+                    className="text-[22px] font-bold leading-none"
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {k.value}
+                  </p>
+                </MetricSlot>
+              </div>
             </div>
-            <p className="text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold truncate">
-              {k.label}
-            </p>
-          </div>
-          <p
-            className={cn(
-              "mt-3 tabular-nums leading-none",
-              !hasData
-                ? "text-sm text-muted-foreground/60 font-normal italic"
-                : "text-[22px] font-bold text-foreground tracking-tight"
-            )}
-          >
-            {hasData ? k.value : "Sem dados"}
-          </p>
-          <p className="mt-2 text-[11px] text-muted-foreground/70 truncate">{k.sub}</p>
+          </CardContent>
         </Card>
       ))}
+
       {nextExpiration && !compact && (
-        <Card className="p-4 lg:col-span-4 rounded-2xl border-amber-500/30 bg-amber-500/5">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center">
-              <CalendarClock className="w-4 h-4" />
+        <Card className="lg:col-span-4 border-amber-500/30 relative overflow-hidden">
+          <CardContent className="p-4 relative">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 h-9 w-9 rounded-lg flex items-center justify-center bg-amber-500/10 dark:bg-amber-500/[0.14]">
+                <CalendarClock className="w-[15px] h-[15px] text-amber-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium leading-none truncate">
+                  Próxima expiração
+                </p>
+                <p className="text-[22px] font-bold leading-none mt-1.5">
+                  {new Date(nextExpiration).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-[10.5px] uppercase tracking-[0.08em] text-muted-foreground/80 font-semibold">
-                Próxima expiração
-              </p>
-              <p className="text-sm font-semibold mt-0.5">
-                {new Date(nextExpiration).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-          </div>
+          </CardContent>
         </Card>
       )}
     </div>

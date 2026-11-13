@@ -96,11 +96,12 @@ export function EventDetailsDialog({
     }
   }, [confirm]);
 
+  // Hooks must run on every render, before any early return (React error #310).
+  const navigate = useNavigate();
+
   if (!event) return null;
 
-
   const type = getEventType(event.event_type);
-  const navigate = useNavigate();
   const projectId = (event as any).project_id as string | null | undefined;
   const projectTaskId = (event as any).project_task_id as string | null | undefined;
   const projectLink = projectId ? `/projects/${projectId}${projectTaskId ? `?task=${projectTaskId}` : ""}` : null;

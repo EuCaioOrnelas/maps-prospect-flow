@@ -4,7 +4,7 @@ import { ChatMessageArea } from "@/components/chat/ChatMessageArea";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -35,6 +35,7 @@ import { useAutoScoreTracking } from "@/hooks/useAutoScoreTracking";
 import { useWebhookGate } from "@/hooks/useWebhookGate";
 import { WebhookRequiredDialog } from "@/components/meta/WebhookRequiredDialog";
 import { BackupProgressBanner } from "@/components/chat/BackupProgressBanner";
+import { useManualChatTransition } from "@/components/opportunities/ManualChatTransition";
 
 import { SEO } from "@/components/SEO";
 const Chat = () => {
@@ -42,9 +43,12 @@ const Chat = () => {
   useAutoScoreTracking("chat");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const manualChatTransition = useManualChatTransition();
   const [profile, setProfile] = useState<any>(null);
   const [showApiDialog, setShowApiDialog] = useState(false);
   const [handledLaunchKey, setHandledLaunchKey] = useState("");
+  const launchInFlightRef = useRef("");
+  const [inputDraft, setInputDraft] = useState<{ conversationId: string; text: string; version: number } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [reconnectOpen, setReconnectOpen] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -167,33 +171,110 @@ const Chat = () => {
   const shouldShowDialog = isLoading ? false : hasNoConnection;
 
   useEffect(() => {
-    if (isLoading || shouldShowDialog || !hasConnection) return;
+    if (chat.connectionsLoading || shouldShowDialog || !hasConnection) return;
     const phone = searchParams.get("phone");
     const name = searchParams.get("name") ?? undefined;
     const conversationId = searchParams.get("conversation");
+    const requestedConnectionId = searchParams.get("connection");
+    const wantsManualDraft = searchParams.get("draft") === "manual";
     if (!phone && !conversationId) return;
-    const nextLaunchKey = `${conversationId ?? ""}:${phone ?? ""}:${chat.activeConnectionId ?? ""}`;
-    if (nextLaunchKey === handledLaunchKey) return;
+    const nextLaunchKey = `${searchParams.get("launch") ?? ""}:${conversationId ?? ""}:${phone ?? ""}:${requestedConnectionId ?? chat.activeConnectionId ?? ""}`;
+    if (nextLaunchKey === handledLaunchKey || launchInFlightRef.current === nextLaunchKey) return;
+
+    const finishLaunch = () => {
+      launchInFlightRef.current = "";
+      setHandledLaunchKey(nextLaunchKey);
+      setSearchParams({}, { replace: true });
+    };
+
+    if (requestedConnectionId && requestedConnectionId !== chat.activeConnectionId) {
+      const requestedConnection = chat.connections.find(c => c.id === requestedConnectionId);
+      if (requestedConnection) {
+        chat.setActiveConnectionId(requestedConnectionId);
+        return;
+      }
+      if (wantsManualDraft) {
+        manualChatTransition.cancel();
+        window.sessionStorage.removeItem("wiize:chat:manual-outreach");
+        toast({ title: "Número de atendimento não encontrado", description: "Conecte o número novamente antes de abrir a conversa.", variant: "destructive" });
+        finishLaunch();
+      }
+      return;
+    }
+
+    if (wantsManualDraft) {
+      const connection = chat.connections.find(c => c.id === chat.activeConnectionId);
+      const ready = connection?.provider === "evolution"
+        && connection.status === "active"
+        && connection.evolution_state === "open"
+        && chat.connectionHealth[connection.id] !== false;
+      if (!ready) {
+        manualChatTransition.cancel();
+        window.sessionStorage.removeItem("wiize:chat:manual-outreach");
+        toast({ title: "Número de atendimento desconectado", description: "Reconecte o número para abrir a conversa com o rascunho.", variant: "destructive" });
+        finishLaunch();
+        return;
+      }
+    }
+
     const openRequestedChat = async () => {
+      launchInFlightRef.current = nextLaunchKey;
+      if (wantsManualDraft) manualChatTransition.advance("conversation");
+      let openedConversationId = conversationId;
       if (conversationId) {
         chat.setActiveConversationId(conversationId);
       } else if (phone) {
-        await chat.startNewConversation(phone, name);
+        openedConversationId = await chat.startNewConversation(phone, name);
       }
-      setHandledLaunchKey(nextLaunchKey);
-      setSearchParams({}, { replace: true });
+
+      if (wantsManualDraft && openedConversationId && phone) {
+        manualChatTransition.advance("draft");
+        // Garante que a última etapa seja perceptível mesmo quando o contato já
+        // está em cache e o rascunho é recuperado no mesmo instante.
+        await new Promise<void>(resolve => window.setTimeout(resolve, 180));
+        let recoveredDraft = false;
+        try {
+          const raw = window.sessionStorage.getItem("wiize:chat:manual-outreach");
+          const handoff = raw ? JSON.parse(raw) : null;
+          const valid = handoff
+            && handoff.phone === phone
+            && handoff.connectionId === chat.activeConnectionId
+            && typeof handoff.message === "string"
+            && handoff.message.trim()
+            && typeof handoff.createdAt === "number"
+            && Date.now() - handoff.createdAt < 10 * 60 * 1000;
+          if (valid) {
+            window.localStorage.setItem(`wiize:chat:draft:${openedConversationId}`, handoff.message);
+            setInputDraft({ conversationId: openedConversationId, text: handoff.message, version: Date.now() });
+            recoveredDraft = true;
+          }
+        } catch {
+          toast({ title: "Conversa aberta", description: "Não foi possível recuperar o rascunho. Volte à oportunidade e tente novamente.", variant: "destructive" });
+        } finally {
+          window.sessionStorage.removeItem("wiize:chat:manual-outreach");
+          if (recoveredDraft) manualChatTransition.complete();
+          else manualChatTransition.cancel();
+        }
+      }
+      if (wantsManualDraft && !openedConversationId) manualChatTransition.cancel();
+      finishLaunch();
     };
     void openRequestedChat();
   }, [
     chat.activeConnectionId,
+    chat.connections,
+    chat.connectionHealth,
+    chat.setActiveConnectionId,
     chat.setActiveConversationId,
     chat.startNewConversation,
     handledLaunchKey,
     hasConnection,
-    isLoading,
+    chat.connectionsLoading,
+    manualChatTransition,
     searchParams,
     setSearchParams,
     shouldShowDialog,
+    toast,
   ]);
 
   const showDisconnectedOverlay = !chat.loading && hasConnection && chat.allConnectionsExpired;
@@ -408,6 +489,7 @@ const Chat = () => {
                     onForwardMessages={chat.forwardMessages}
                     onDeleteMessages={chat.deleteMessages}
                     isEvolution={(chat.connections.find(c => c.id === chat.activeConversation?.waba_connection_id) ?? chat.activeConnection)?.provider === "evolution"}
+                    inputDraft={inputDraft}
                   />
                 </div>
               </>

@@ -177,6 +177,27 @@ Deno.serve(async (req) => {
       continue;
     }
 
+    // Rever a elegibilidade antes de cada retomada: as regras de origem e
+    // exclusão podem ter mudado desde a criação da sessão.
+    const { data: followupEligibility } = await backend.rpc("sdr_check_eligibility", {
+      p_agent_id: agent.id,
+      p_phone: session.phone,
+      p_trigger: "followup",
+    });
+    if (followupEligibility?.eligible !== true) {
+      await backend.from("sdr_sessions").update({ next_followup_at: null }).eq("id", session.id);
+      await backend.from("sdr_eligibility_log").insert({
+        owner_user_id: session.owner_user_id,
+        agent_id: agent.id,
+        phone: session.phone,
+        lead_id: session.lead_id ?? null,
+        eligible: false,
+        reason: `followup_${followupEligibility?.reason ?? "denied"}`,
+        details: { trigger_type: "followup" },
+      });
+      continue;
+    }
+
     const stopCriteria: string[] = Array.isArray(agent.closing?.stop_criteria)
       ? agent.closing.stop_criteria
       : [];

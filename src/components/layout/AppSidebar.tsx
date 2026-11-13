@@ -1,4 +1,5 @@
 import { AccountMenu } from "./AccountMenu";
+import { LifeBuoy, Lightbulb } from "lucide-react";
 import { OpportunityUsage } from "./OpportunityUsage";
 import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
@@ -18,7 +19,6 @@ import {
   Users as UsersIcon,
   Flame,
   AlertTriangle,
-  Bell,
   Bot,
   LayoutDashboard,
   DollarSign,
@@ -48,10 +48,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 
-import { useUnreadAnnouncements } from "@/hooks/useUnreadAnnouncements";
-import { useUserNotifications } from "@/hooks/useUserNotifications";
 import { useChatUnreadBadge } from "@/hooks/useChatUnreadBadge";
-import { AnnouncementsDialog } from "@/components/notifications/AnnouncementsDialog";
 import { SidebarNavItem } from "./SidebarNavItem";
 import { SidebarDivider } from "./SidebarDivider";
 import logoIconNew from "@/assets/logo-icon-new.png";
@@ -89,7 +86,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
   const [isCrmOpen, setIsCrmOpen] = useState(false);
   const [isAutomationOpen, setIsAutomationOpen] = useState(false);
   const [isMetaOpen, setIsMetaOpen] = useState(false);
-  const [announcementsOpen, setAnnouncementsOpen] = useState(false);
   const location = useLocation();
   const { signOut, profile: authProfile } = useAuth();
   const { isAdmin } = useAdminCheck();
@@ -102,9 +98,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
     isAdmin ||
     (profileHasFeature(authProfile as any, key) && planHasFeature(authProfile as any, key));
 
-  const { unreadCount: unreadAnnouncementsBase, disconnectedNumbers: disconnectedNumberAlerts, dismissDisconnectionAlert } = useUnreadAnnouncements();
-  const userNotifications = useUserNotifications();
-  const unreadAnnouncements = unreadAnnouncementsBase + userNotifications.unreadCount;
   const expandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isFreePlan = !profile?.plan || profile.plan === 'free';
@@ -562,35 +555,6 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             )}
             
-            {/* Avisos */}
-            <li className="relative">
-              <SidebarNavItem
-                title="Avisos"
-                icon={Bell}
-                onClick={() => setAnnouncementsOpen(true)}
-                isExpanded={isExpanded}
-
-                badge={unreadAnnouncements > 0 ? (
-                  <span className={cn(
-                    "absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full",
-                    "flex items-center justify-center text-[9px] font-bold leading-none tabular-nums text-white",
-                    "ring-2 ring-background shadow-sm",
-                    disconnectedNumberAlerts.length > 0
-                      ? "bg-amber-500"
-                      : "bg-primary dark:text-sidebar-primary-foreground"
-                  )}>
-                    {unreadAnnouncements > 99 ? "+99" : unreadAnnouncements}
-                  </span>
-                ) : undefined}
-                tooltip={disconnectedNumberAlerts.length > 0 ? (
-                  <div>
-                    <p className="font-medium text-amber-500">⚠️ Número Meta desconectado</p>
-                    <p className="text-xs opacity-90">{disconnectedNumberAlerts.length} número(s) Meta precisa(m) reconectar</p>
-                  </div>
-                ) : "Avisos"}
-              />
-            </li>
-
             {/* Usuários — visível apenas para Owner/Admin */}
             {canSeeUsers && (
               <li>
@@ -619,19 +583,35 @@ export const AppSidebar = ({ profile, onWhatsAppClick }: AppSidebarProps) => {
               </li>
             )}
 
+            {/* Sugestões */}
+            <li>
+              <SidebarNavItem
+                title="Sugestões"
+                icon={Lightbulb}
+                url="/sugestoes"
+                isActive={currentPath === "/sugestoes"}
+                isExpanded={isExpanded}
+                tooltip="Sugestões e votação"
+              />
+            </li>
+
+            {/* Central de Ajuda */}
+            <li>
+              <SidebarNavItem
+                title="Central de Ajuda"
+                icon={LifeBuoy}
+                url="/ajuda"
+                isActive={currentPath.startsWith("/ajuda")}
+                isExpanded={isExpanded}
+                tooltip="Central de Ajuda"
+              />
+            </li>
+
             <li><AccountMenu expanded={isExpanded} onOpenChange={(open) => { setPinned(open); if (!open) setIsHovered(false); }}/></li>
           </ul>
         </div>
       </aside>
 
-      {/* Announcements Dialog */}
-      <AnnouncementsDialog 
-        notifications={userNotifications}
-        open={announcementsOpen} 
-        onOpenChange={setAnnouncementsOpen}
-        disconnectedNumbers={disconnectedNumberAlerts}
-        onDismissDisconnection={dismissDisconnectionAlert}
-      />
     </div>
   );
 };

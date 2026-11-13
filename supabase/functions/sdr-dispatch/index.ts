@@ -213,6 +213,33 @@ Deno.serve(async (req) => {
       return json({ skipped: "nenhum SDR ativo para este número" });
     }
 
+    // MOTOR DE ELEGIBILIDADE (backend, fail-closed): valida origem do lead,
+    // exclusões de CRM/clientes/responsável humano e bloqueios de sessão
+    // (pausa, opt-out, handoff, encerramento) antes de qualquer processamento.
+    // A IA nunca participa dessa decisão.
+    const { data: eligibility, error: eligibilityError } = await supabase.rpc("sdr_check_eligibility", {
+      p_agent_id: agent.id,
+      p_phone: contact_phone,
+      p_trigger: trigger_type,
+    });
+    if (eligibilityError) {
+      // Falha na verificação: não responder (fail-closed) e registrar para diagnóstico.
+      console.error("[sdr-dispatch] elegibilidade indisponível:", eligibilityError.message);
+      return json({ skipped: "verificação de elegibilidade indisponível", sent: 0 });
+    }
+    if (eligibility?.eligible !== true) {
+      await supabase.from("sdr_eligibility_log").insert({
+        owner_user_id,
+        agent_id: agent.id,
+        phone: contact_phone,
+        lead_id: eligibility?.lead_id ?? null,
+        eligible: false,
+        reason: String(eligibility?.reason ?? "unknown"),
+        details: { trigger_type, origin: eligibility?.origin ?? null },
+      });
+      console.log(`[sdr-dispatch] contato inelegível: ${eligibility?.reason} (${contact_phone})`);
+      return json({ skipped: `elegibilidade: ${eligibility?.reason}`, sent: 0 });
+    }
 
     const tail = String(contact_phone).replace(/\D/g, "").slice(-8);
     if (trigger_type === "inbound" && isOptOutMessage(inboundMessage)) {

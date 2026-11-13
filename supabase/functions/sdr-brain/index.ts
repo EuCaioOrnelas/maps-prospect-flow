@@ -260,6 +260,128 @@ const OBJECTIVE_PLAYBOOK: Record<string, string> = {
     "OBJETIVO ENVIAR PROPOSTA: antes de enviar qualquer coisa, levante escopo, volume, prazo e quem decide, e construa o desejo. Peça o aceite explícito do lead ('posso te enviar a proposta?'), só então envie e peça confirmação de recebimento, combinando o dia da resposta. Nunca cobre pagamento nem tente fechar a venda pelo chat.",
 };
 
+// ========== MODO VENDA DIRETA ==========
+const SALES_MODE_RULE =
+  "MODO VENDA DIRETA ATIVO: você é um vendedor consultivo autorizado a apresentar preços, condições e propostas do CATÁLOGO OFICIAL. " +
+  "REGRAS INEGOCIÁVEIS: (1) Use SOMENTE produtos, preços, condições, prazos e descontos do catálogo oficial — nunca invente serviço, preço, desconto, prazo, garantia ou condição não cadastrada. " +
+  "(2) Se um produto não tiver preço cadastrado, diga que o investimento é personalizado e que um especialista confirma o valor; nunca estime. " +
+  "(3) O desconto máximo permitido de cada produto está no catálogo; se o lead pedir condição fora do limite, diga que um especialista humano vai avaliar e defina proxima_acao = chamar_vendedor. " +
+  "(4) Se faltar informação para escolher o produto certo, faça perguntas de descoberta ANTES de ofertar. " +
+  "(5) Quando o lead demonstrar intenção clara de contratação, confirme o produto escolhido e os dados, e defina proxima_acao = chamar_vendedor para um humano concluir a contratação — nunca considere a venda concluída sozinho e nunca peça dados de pagamento.";
+
+const SALES_PLAYBOOK =
+  "OBJETIVO VENDA DIRETA: conduza como um vendedor consultivo. Descubra a necessidade real, escolha o produto mais aderente do catálogo (nunca apresente a lista inteira), apresente benefícios e preço cadastrado, trabalhe as objeções com os argumentos oficiais e, diante de intenção de contratação, encaminhe para o humano concluir. Proposta em PDF só após aceite explícito do lead.";
+
+/** Formata o preço de um produto do catálogo para o prompt. */
+function productPriceText(p: any): string {
+  if (p.price_display) return String(p.price_display);
+  const fmt = (v: number) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  const billing = p.billing_model === "mensal" ? "/mês" : p.billing_model === "anual" ? "/ano" : "";
+  if (p.price_type === "range" && p.price_min != null && p.price_max != null)
+    return `${fmt(p.price_min)} a ${fmt(p.price_max)}${billing}`;
+  if (p.price_type === "from" && p.price_value != null) return `a partir de ${fmt(p.price_value)}${billing}`;
+  if (p.price_value != null) return `${fmt(p.price_value)}${billing}`;
+  return "investimento personalizado (NUNCA informe valor; um especialista confirma)";
+}
+
+function catalogBlock(products: any[]): string {
+  return products
+    .map((p: any, i: number) => {
+      const objections = Array.isArray(p.objections)
+        ? p.objections.filter((o: any) => o?.question).map((o: any) => `    - "${o.question}" => ${o.answer || "-"}`).join("\n")
+        : "";
+      return [
+        `PRODUTO ${i + 1}: ${p.name}${p.category ? ` [${p.category}]` : ""} (prioridade: ${p._agent_priority || p.priority || "media"})`,
+        `  Descrição: ${p.description || "-"}`,
+        p.benefits ? `  Benefícios: ${p.benefits}` : null,
+        p.problems_solved ? `  Problemas que resolve: ${p.problems_solved}` : null,
+        p.differentials ? `  Diferenciais: ${p.differentials}` : null,
+        `  PREÇO OFICIAL: ${productPriceText(p)}`,
+        `  Desconto máximo autorizado: ${Number(p.max_discount_percent) || 0}%`,
+        p.installments ? `  Parcelamento: ${p.installments}` : null,
+        p.payment_conditions ? `  Condições de pagamento: ${p.payment_conditions}` : null,
+        p.delivery_estimate ? `  Prazo de entrega: ${p.delivery_estimate}` : null,
+        p.hiring_conditions ? `  Condições de contratação: ${p.hiring_conditions}` : null,
+        (p.segments || []).length ? `  Segmentos recomendados: ${(p.segments || []).join(", ")}` : null,
+        p.when_to_offer ? `  OFERECER QUANDO: ${p.when_to_offer}` : null,
+        p.when_not_to_offer ? `  NÃO OFERECER QUANDO: ${p.when_not_to_offer}` : null,
+        p.sales_arguments ? `  Argumentos de venda: ${p.sales_arguments}` : null,
+        (p.qualification_questions || []).length ? `  Perguntas de qualificação: ${(p.qualification_questions || []).join(" | ")}` : null,
+        p.requirements ? `  Requisitos para contratar: ${p.requirements}` : null,
+        objections ? `  Objeções e respostas oficiais:\n${objections}` : null,
+        p.proposal_file?.path ? `  Possui proposta em PDF pronta para envio após aceite.` : null,
+      ].filter(Boolean).join("\n");
+    })
+    .join("\n\n");
+}
+
+/** Extrai valores monetários citados em um texto (pt-BR). */
+function extractMentionedPrices(text: string): number[] {
+  const found: number[] = [];
+  const patterns = [
+    /R\$\s*(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)/g,
+    /(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?)\s*reais/gi,
+  ];
+  for (const pattern of patterns) {
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(text)) !== null) {
+      const normalized = m[1].replace(/\./g, "").replace(",", ".");
+      const value = Number(normalized);
+      if (Number.isFinite(value) && value > 0) found.push(value);
+    }
+  }
+  return found;
+}
+
+/** Faixas de preço autorizadas: [mínimo com desconto, máximo] por produto. */
+function authorizedPriceRanges(products: any[]): { min: number; max: number }[] {
+  const ranges: { min: number; max: number }[] = [];
+  for (const p of products) {
+    const discount = Math.min(100, Math.max(0, Number(p.max_discount_percent) || 0)) / 100;
+    const values = [p.price_value, p.price_min, p.price_max]
+      .map((v) => (v == null ? null : Number(v)))
+      .filter((v): v is number => v != null && Number.isFinite(v) && v > 0);
+    if (!values.length) continue;
+    const hi = Math.max(...values);
+    const lo = Math.min(...values) * (1 - discount);
+    ranges.push({ min: Math.round(lo * 100) / 100, max: Math.round(hi * 100) / 100 });
+  }
+  return ranges;
+}
+
+/** Valores citados nas mensagens que não existem no catálogo (anti-alucinação). */
+function findUnauthorizedPrices(messages: string[], products: any[]): number[] {
+  const ranges = authorizedPriceRanges(products);
+  const unauthorized = new Set<number>();
+  for (const text of messages) {
+    for (const price of extractMentionedPrices(text)) {
+      const ok = ranges.some((r) => price >= r.min - 0.01 && price <= r.max + 0.01);
+      if (!ok) unauthorized.add(price);
+    }
+  }
+  return Array.from(unauthorized);
+}
+
+/** Valor de referência do produto para potencial de venda. */
+function productReferenceValue(p: any): number | null {
+  const v = p?.price_value ?? p?.price_min ?? p?.price_max;
+  const n = v == null ? null : Number(v);
+  return n != null && Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Localiza no catálogo o produto recomendado pela análise (por nome normalizado). */
+function matchCatalogProduct(products: any[], name: unknown): any | null {
+  if (typeof name !== "string" || !name.trim()) return null;
+  const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const target = norm(name);
+  return (
+    products.find((p) => norm(String(p.name)) === target) ??
+    products.find((p) => norm(String(p.name)).includes(target) || target.includes(norm(String(p.name)))) ??
+    null
+  );
+}
+// ========== FIM MODO VENDA DIRETA ==========
+
 const INSISTENCE_GUIDE: Record<string, string> = {
   pouco: "Insistência baixa: diante de um 'agora não', acolha e recue na primeira negativa.",
   medio: "Insistência média: tente contornar no máximo duas vezes com ângulos diferentes antes de recuar.",
@@ -285,12 +407,18 @@ const PIPELINE_STEPS = `1. conexao — quebrar o gelo e gerar confiança
 4. objecoes — tratar dúvidas e travas
 5. fechamento — conduzir para o objetivo final`;
 
-function agentBrief(agent: any) {
+function agentBrief(agent: any, catalog: any[] = []) {
   const k = agent.knowledge ?? {};
   const p = agent.personality ?? {};
   const s = agent.strategy ?? {};
   const c = agent.closing ?? {};
   const t = agent.triggers ?? {};
+  const isSalesMode = agent.operation_mode === "venda_direta";
+  const salesCatalog = isSalesMode && catalog.length
+    ? `\nCATÁLOGO OFICIAL (única fonte de verdade comercial — se não está aqui, não existe para a conversa):\n${catalogBlock(catalog)}\n`
+    : isSalesMode
+      ? "\nCATÁLOGO OFICIAL: vazio — nenhum produto disponível. Não oferte nada; faça descoberta e informe que um especialista humano apresentará as soluções.\n"
+      : "";
   const products = Array.isArray(k.products_list)
     ? k.products_list
         .filter((x: any) => x?.name)
@@ -316,15 +444,14 @@ function agentBrief(agent: any) {
     .join("\n");
   return `
 NOME DO SDR: ${agent.name}
-  OBJETIVO FINAL: ${normalizeObjective(agent.objective)}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO (válida apenas se não contrariar o limite abaixo): ${agent.objective_custom}` : ""}
-CRITÉRIO DE SUCESSO: ${(c.success_criteria || []).join(", ") || "-"}
-${NO_SALE_RULE}
-
+  OBJETIVO FINAL: ${isSalesMode ? "venda_direta" : normalizeObjective(agent.objective)}${agent.objective_custom ? ` — INSTRUÇÃO PERSONALIZADA DO USUÁRIO (válida apenas se não contrariar o limite abaixo): ${agent.objective_custom}` : ""}
+CRITÉRIO DE SUCESSO: ${isSalesMode ? "Lead com intenção de contratação confirmada e encaminhado ao humano para concluir" : (c.success_criteria || []).join(", ") || "-"}
+${isSalesMode ? SALES_MODE_RULE : NO_SALE_RULE}
+${salesCatalog}
 EMPRESA: ${k.company || "-"}
 NICHO: ${k.niche || "-"} | PÚBLICO-ALVO: ${k.audience || "-"}
 DIFERENCIAIS: ${k.differentials || "-"}
-PRODUTOS:
-${products || k.products || "-"}
+${isSalesMode ? "" : `PRODUTOS:\n${products || k.products || "-"}`}
 CASES: ${k.cases || "-"}
 FAQ (pergunta => resposta oficial):
 ${
@@ -368,11 +495,11 @@ ${p.never_wait_lead === false ? "- É aceitável encerrar a mensagem sem próxim
   - Quando precisar de decisão, prefira UMA pergunta de escolha guiada com DUAS alternativas úteis e concretas (A ou B), em vez de uma pergunta aberta que convide apenas a “não”.
   - Toda pergunta de avanço deve ser fechada e oferecer duas respostas úteis: prioridade A/B, cenário A/B, próximo passo A/B ou horário A/B. Não crie falsa dicotomia e não use alternativas que pressupõem uma compra ainda não consentida.
   - A escolha guiada nunca autoriza pressão: se houver recusa clara, pedido para parar ou desinteresse, acolha, não insista e respeite os critérios de encerramento.
-${(agent.situations ?? {}).preco === "nunca_sem_reuniao" ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
-- ${NO_SALE_RULE}
+${(agent.situations ?? {}).preco === "nunca_sem_reuniao" && !isSalesMode ? "- NUNCA informar preço antes de a reunião estar agendada." : ""}
+- ${isSalesMode ? SALES_MODE_RULE : NO_SALE_RULE}
 
 PLAYBOOK DO OBJETIVO:
-${OBJECTIVE_PLAYBOOK[normalizeObjective(agent.objective)]}
+${isSalesMode ? SALES_PLAYBOOK : OBJECTIVE_PLAYBOOK[normalizeObjective(agent.objective)]}
 
 FUNIL OBRIGATÓRIO (avance um passo por vez, sem pular etapas):
 ${PIPELINE_STEPS}
@@ -501,6 +628,31 @@ Deno.serve(async (req) => {
 
     const aiModel: string = agent.ai?.model || credential.model || DEFAULT_MODEL;
 
+    // ---------- CATÁLOGO COMERCIAL (modo venda direta) ----------
+    const isSalesMode = agent.operation_mode === "venda_direta";
+    let catalogProducts: any[] = [];
+    if (isSalesMode) {
+      const { data: linked } = await supabase
+        .from("sdr_agent_products")
+        .select("priority, product:sdr_products(*)")
+        .eq("agent_id", agentId);
+      const linkedProducts = (linked || [])
+        .map((row: any) => (row?.product ? { ...row.product, _agent_priority: row.priority } : null))
+        .filter((p: any) => p && p.active !== false);
+      if (agent.offer_strategy === "inteligente" && linkedProducts.length === 0) {
+        // Venda inteligente sem seleção: todos os produtos ativos da conta são elegíveis.
+        const { data: all } = await supabase
+          .from("sdr_products")
+          .select("*")
+          .eq("owner_user_id", agent.owner_user_id)
+          .eq("active", true);
+        catalogProducts = all || [];
+      } else {
+        // "especifico" e "selecionados": somente os produtos vinculados ao agente.
+        catalogProducts = linkedProducts;
+      }
+    }
+
     let session: any = null;
     if (sessionId) {
       const { data } = await supabase.from("sdr_sessions").select("*").eq("id", sessionId).maybeSingle();
@@ -578,7 +730,7 @@ REGRAS DE AGENDAMENTO (inegociáveis):
 - Só marque como confirmado quando o lead escolher explicitamente uma das opções.`
       : `AGENDA REAL DO RESPONSÁVEL: não há horários livres nos próximos dias. Não ofereça horários; diga que vai confirmar a disponibilidade e retornar.`;
 
-    const brief = `${agentBrief(agent)}\n\n${agendaBlock}`;
+    const brief = `${agentBrief(agent, catalogProducts)}\n\n${agendaBlock}`;
     const historyText =
       history.map((m) => `${m.role === "assistant" ? "SDR" : "LEAD"}: ${m.content}`).join("\n") ||
       "(sem histórico)";
@@ -624,7 +776,13 @@ REGRAS DE CONTEXTO E DECISOR:
 - Descubra de forma respeitosa se o contato é dono, responsável pela área, influenciador ou intermediário. Para venda B2B, priorize conversar com o dono ou responsável pela decisão.
 - Se o contato não for o decisor ou disser que ele está indisponível, não confronte nem presuma mentira. Peça o nome/cargo do responsável e uma apresentação, encaminhamento ou melhor horário para falar. Ofereça duas alternativas simples de continuidade.
 - Nunca finja conhecer alguém, invente indicação, esconda sua identidade, pressione recepcionistas ou tente contornar controles de acesso. Persistência comercial deve ser transparente e respeitar recusa/opt-out.
-}`;
+}${isSalesMode ? `
+
+REGRAS DO MODO VENDA DIRETA:
+- "produto_recomendado" deve ser EXATAMENTE o nome de um produto do CATÁLOGO OFICIAL, ou null quando ainda não houver evidência suficiente (nesse caso o próximo passo é pergunta de descoberta, nunca oferta).
+- Justifique a escolha em "justificativa_produto" com base em evidências: segmento, dor relatada, contexto pesquisado e compatibilidade com "OFERECER QUANDO".
+- Respeite "NÃO OFERECER QUANDO" e a prioridade comercial de cada produto.
+- Intenção clara de contratação => proxima_acao = chamar_vendedor (um humano conclui a venda).` : ""}`;
     const analysisUser = `CONFIGURAÇÃO DO SDR:
 ${brief}
 
@@ -760,7 +918,8 @@ ${historyText}`;
 
     // Regra fixa: com "nunca falar preço sem reunião", o SDR NUNCA informa valores.
     // Quando a reunião é confirmada o objetivo está concluído e a conversa sai do SDR.
-    if (agent.situations?.preco === "nunca_sem_reuniao") {
+    // (No modo venda direta, preços do catálogo são permitidos — a blindagem abaixo cuida disso.)
+    if (agent.situations?.preco === "nunca_sem_reuniao" && !isSalesMode) {
       const disclosedPrice = messages.some((text) => /(?:R\$\s*\d|\b\d+(?:[.,]\d{2})?\s*(?:reais|por m[eê]s|\/m[eê]s))/i.test(text));
       if (disclosedPrice) {
         console.error("[sdr-brain] blocked price disclosure (nunca_sem_reuniao)");
@@ -768,6 +927,24 @@ ${historyText}`;
         written.proxima_acao = "aguardar";
       }
     }
+
+    // Blindagem determinística de preços (modo venda direta): todo valor citado
+    // precisa existir no catálogo, respeitando o desconto máximo autorizado.
+    // A IA não pode inventar preço — se inventar, a resposta é bloqueada aqui.
+    if (isSalesMode && catalogProducts.length && messages.length) {
+      const unauthorized = findUnauthorizedPrices(messages, catalogProducts);
+      if (unauthorized.length) {
+        console.error("[sdr-brain] blocked unauthorized price disclosure:", unauthorized);
+        messages = [];
+        written.proxima_acao = "aguardar";
+      }
+    }
+
+    // Produto escolhido pela análise, conferido contra o catálogo oficial.
+    const selectedProduct = isSalesMode
+      ? matchCatalogProduct(catalogProducts, analysis?.produto_recomendado)
+      : null;
+    const pricePresented = isSalesMode && messages.some((text) => extractMentionedPrices(text).length > 0);
 
     const detectedObjections = Array.isArray(analysis?.memoria?.objecoes)
       ? analysis.memoria.objecoes.filter((item: unknown) => typeof item === "string" && item.trim())
@@ -992,11 +1169,14 @@ ${historyText}`;
             : new Date(Date.now() + followupHours * 60 * 60 * 1000).toISOString()
           : null;
 
-        // Proposta em PDF enviada ao concluir o objetivo "Enviar proposta".
-        const proposalFile = agent.closing?.proposal_file;
+        // Proposta em PDF: no modo venda direta, usa a proposta do produto
+        // selecionado (cada produto pode ter a sua); caso contrário, a do agente.
+        const productProposal = selectedProduct?.proposal_file;
+        const proposalFile = isSalesMode && productProposal?.path ? productProposal : agent.closing?.proposal_file;
+        const proposalObjective = normalizeObjective(agent.objective) === "proposta" || isSalesMode;
         const proposalAlreadySent = Boolean((session.memory as any)?.proposal_sent);
         if (
-          objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path &&
+          objectiveDone && proposalObjective && proposalFile?.path &&
           !proposalAlreadySent && session.waba_connection_id && session.phone
         ) {
           try {
@@ -1074,6 +1254,12 @@ ${historyText}`;
               : {}),
             stage: analysis.proximo_passo ?? analysis.passo_atual ?? analysis.estagio ?? session.stage,
             current_goal: analysis.micro_objetivo ?? session.current_goal,
+            ...(isSalesMode && selectedProduct
+              ? {
+                  selected_product_id: selectedProduct.id,
+                  potential_value: productReferenceValue(selectedProduct),
+                }
+              : {}),
             memory: {
               ...(session.memory ?? {}),
               fatos: Array.from(new Set([
@@ -1094,7 +1280,7 @@ ${historyText}`;
                   Object.entries(analysis.identidade ?? {}).filter(([, value]) => value !== null && value !== ""),
                 ),
               },
-              ...(objectiveDone && normalizeObjective(agent.objective) === "proposta" && proposalFile?.path
+              ...(objectiveDone && proposalObjective && proposalFile?.path
                 ? { proposal_sent: true }
                 : {}),
             },
@@ -1114,6 +1300,60 @@ ${historyText}`;
           })
           .eq("id", session.id)
           .eq("status", session.status);
+
+        // ---------- Eventos comerciais (rastreabilidade do SDR vendedor) ----------
+        if (isSalesMode) {
+          const nextActionNow = written.proxima_acao ?? analysis.proxima_acao ?? "aguardar";
+          const salesEvents: Record<string, unknown>[] = [];
+          if (selectedProduct && selectedProduct.id !== session.selected_product_id) {
+            salesEvents.push({
+              event_type: "product_selected",
+              product_id: selectedProduct.id,
+              value: productReferenceValue(selectedProduct),
+              details: { justificativa: analysis?.justificativa_produto ?? null },
+            });
+          }
+          if (pricePresented) {
+            salesEvents.push({
+              event_type: "price_presented",
+              product_id: selectedProduct?.id ?? null,
+              value: productReferenceValue(selectedProduct),
+              details: {},
+            });
+          }
+          if (detectedObjections.length) {
+            salesEvents.push({
+              event_type: "objection_detected",
+              product_id: selectedProduct?.id ?? null,
+              details: { objecoes: detectedObjections },
+            });
+          }
+          if (objectiveDone && proposalObjective && proposalFile?.path) {
+            salesEvents.push({
+              event_type: "proposal_sent",
+              product_id: selectedProduct?.id ?? null,
+              value: productReferenceValue(selectedProduct),
+              details: { proposal: proposalFile?.name ?? null },
+            });
+          }
+          if (nextActionNow === "chamar_vendedor") {
+            salesEvents.push({
+              event_type: "handoff",
+              product_id: selectedProduct?.id ?? null,
+              value: productReferenceValue(selectedProduct),
+              details: { motivo: analysis?.estrategia ?? null },
+            });
+          }
+          for (const ev of salesEvents) {
+            await supabase.from("sdr_sales_events").insert({
+              owner_user_id: agent.owner_user_id,
+              agent_id: agentId,
+              session_id: session.id,
+              lead_id: session.lead_id ?? null,
+              ...ev,
+            });
+          }
+        }
 
       }
     }

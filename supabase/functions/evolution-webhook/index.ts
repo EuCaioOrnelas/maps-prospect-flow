@@ -390,6 +390,10 @@ Deno.serve(async (req) => {
               .eq("id", pendingOut.id);
             continue;
           }
+          // Corrida: o envio pode ter gravado o waba_message_id entre a checagem
+          // inicial e a reconciliação. Rechecagem final antes de inserir.
+          const { data: dup2 } = await supabase.from("chat_messages").select("id").eq("waba_message_id", msgId).limit(1).maybeSingle();
+          if (dup2) continue;
         }
 
         const mediaUrl = await storeMedia(ownerId, msgId, parsed);
@@ -554,7 +558,23 @@ Deno.serve(async (req) => {
       for (const d of items) {
         const id = d.id || d.key?.id;
         if (!id) continue;
-        await supabase.from("chat_messages").update({ deleted_for_all_at: new Date().toISOString() }).eq("waba_message_id", id);
+        const { data: delRows } = await supabase.from("chat_messages")
+          .update({ deleted_for_all_at: new Date().toISOString() })
+          .eq("waba_message_id", id)
+          .select("id, conversation_id, direction");
+        // Se a mensagem apagada era a última da conversa, atualiza o preview do sidebar.
+        for (const row of delRows || []) {
+          const { data: last } = await supabase.from("chat_messages")
+            .select("id").eq("conversation_id", row.conversation_id)
+            .order("created_at", { ascending: false }).limit(1).maybeSingle();
+          if (last?.id === row.id) {
+            await supabase.from("chat_conversations").update(await encryptConversationPreview({
+              last_message_text: "🚫 Mensagem apagada",
+              last_message_type: "text",
+              last_message_direction: row.direction,
+            })).eq("id", row.conversation_id);
+          }
+        }
       }
       return ok();
     }

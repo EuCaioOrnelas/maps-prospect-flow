@@ -91,6 +91,7 @@ export const Footer = () => {
               <ul className="space-y-3.5">
                 <li><Link to="/contato" className={linkClass}>Contato</Link></li>
                 <li><Link to="/ajuda" className={linkClass}>Central de ajuda</Link></li>
+                <li><Link to="/aprenda" className={linkClass}>Domine a Wiize</Link></li>
                 <li><Link to="/seguranca-faq" className={linkClass}>Segurança</Link></li>
               </ul>
             </nav>

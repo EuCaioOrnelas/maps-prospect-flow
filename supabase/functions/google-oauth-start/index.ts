@@ -52,7 +52,17 @@ serve(async (req) => {
     const redirectUri = `${supabaseUrl}/functions/v1/google-oauth-callback`;
 
     // State contains user_id for the callback
-    const state = btoa(JSON.stringify({ user_id: user.id }));
+    // Origem do app (para voltar a uma página da própria Wiize ao final)
+    const rawOrigin = req.headers.get("origin") || "";
+    let returnOrigin: string | null = null;
+    try {
+      const o = new URL(rawOrigin);
+      const h = o.hostname;
+      const allowed = h === "localhost" || h.endsWith(".lovable.app") || h.endsWith(".lovableproject.com") ||
+        h === "wiize.com.br" || h.endsWith(".wiize.com.br") || h.endsWith(".vercel.app");
+      if (allowed && (o.protocol === "https:" || h === "localhost")) returnOrigin = o.origin;
+    } catch { /* sem origem válida */ }
+    const state = btoa(JSON.stringify({ user_id: user.id, origin: returnOrigin }));
 
     const params = new URLSearchParams({
       client_id: googleClientId,

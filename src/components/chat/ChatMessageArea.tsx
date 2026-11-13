@@ -6,6 +6,8 @@ import { ContactDetailsPanel } from "./ContactDetailsPanel";
 import { ChatMessage, ChatConversation } from "@/hooks/useChat";
 import { format, parseISO, isSameDay, differenceInHours } from "date-fns";
 import { ChatInput } from "./ChatInput";
+import { OutreachQueueBubbles } from "./OutreachQueueBubbles";
+import { useOutreachQueue } from "@/hooks/useOutreachQueue";
 import { ExpiredWindowBanner } from "./ExpiredWindowBanner";
 import { AddContactDialog } from "./AddContactDialog";
 import { ForwardDialog } from "./ForwardDialog";
@@ -64,6 +66,8 @@ interface ChatMessageAreaProps {
   onDeleteMessages?: (messageIds: string[], mode?: "me" | "all") => Promise<void>;
   /** Número de Atendimento (Evolution): sem janela de 24h nem templates da Meta. */
   isEvolution?: boolean;
+  /** Rascunho recebido de outro módulo; apenas preenche o campo, nunca envia. */
+  inputDraft?: { conversationId: string; text: string; version: number } | null;
 }
 
 
@@ -389,10 +393,12 @@ function MessageActions({
 export function ChatMessageArea({
   conversation, conversations = [], messages, loading, onSendMessage, onSendMedia, messagesEndRef, onReopenConversation, fetchTemplates,
   members = [], canChangeResponsible = false, onTransferResponsible, currentUserId, onBack,
-  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages, isEvolution,
+  onDeleteConversation, onToggleBlock, onSaveContactName, onForwardMessages, onDeleteMessages, isEvolution, inputDraft,
 }: ChatMessageAreaProps) {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // A fila vale para qualquer rascunho de abordagem; não depende do provedor já ter carregado.
+  const outreachQueue = useOutreachQueue(conversation?.id);
   const [showSearch, setShowSearch] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -1363,6 +1369,8 @@ export function ChatMessageArea({
                   );
               }
               return (
+                <>
+                <OutreachQueueBubbles items={outreachQueue.items} onCancel={outreachQueue.cancel} />
                 <ChatInput
                   onSendMessage={onSendMessage}
                   onSendMedia={onSendMedia}
@@ -1372,7 +1380,10 @@ export function ChatMessageArea({
                   onExternalConsumed={() => setDroppedFiles([])}
                   conversation={conversation}
                   conversationId={conversation?.id ?? null}
+                  inputDraft={inputDraft}
+                  onSendOutreach={outreachQueue.enqueue}
                 />
+                </>
 
               );
             })()}

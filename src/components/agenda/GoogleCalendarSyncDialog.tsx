@@ -168,30 +168,52 @@ export function GoogleCalendarSyncDialog({ open, onOpenChange, onSynced }: Props
       const popup = window.open(data.url, "google-oauth", "width=520,height=680,left=200,top=80");
 
       let finished = false;
+      let channel: BroadcastChannel | null = null;
+      const cleanup = () => {
+        window.removeEventListener("message", onMessage);
+        window.removeEventListener("storage", onStorage);
+        window.clearInterval(timer);
+        try { channel?.close(); } catch { /* ok */ }
+      };
       const finish = async (announce: boolean) => {
         if (finished) return;
         finished = true;
-        window.removeEventListener("message", onMessage);
+        cleanup();
         if (announce) toast.success("Conta Google conectada.");
         const state = await loadStatus();
         // Primeira sincronização automática: o usuário não precisa clicar em nada.
         const account = (state?.accounts || [])[0];
         if (account) void autoSyncRef.current?.(state?.settings?.google_token_id || account.id);
-
       };
-
-      const onMessage = (event: MessageEvent) => {
-        if ((event.data as any)?.source !== "wiize-google-oauth") return;
+      const handle = (data: any) => {
+        if (data?.source !== "wiize-google-oauth") return;
+        if (data.ok === false) { finished = true; cleanup(); toast.error("Não foi possível conectar o Google."); return; }
         void finish(true);
       };
+      const onMessage = (event: MessageEvent) => handle(event.data);
+      const onStorage = (event: StorageEvent) => {
+        if (event.key !== "wiize-google-oauth" || !event.newValue) return;
+        try { handle(JSON.parse(event.newValue)); } catch { /* ignora */ }
+      };
       window.addEventListener("message", onMessage);
+      window.addEventListener("storage", onStorage);
+      try {
+        channel = new BroadcastChannel("wiize-google-oauth");
+        channel.onmessage = (e) => handle(e.data);
+      } catch { /* sem suporte */ }
 
-      const timer = window.setInterval(() => {
+      // A janela do Google pode parecer "fechada" cedo por segurança do navegador;
+      // então só conferimos a conexão periodicamente, por até 5 minutos.
+      const startedAt = Date.now();
+      const initialCount = accounts.length;
+      const timer = window.setInterval(async () => {
+        if (finished) return;
+        if (Date.now() - startedAt > 5 * 60 * 1000) { cleanup(); return; }
         if (popup?.closed) {
-          window.clearInterval(timer);
-          void finish(false);
+                    const state = await loadStatus();
+          if ((state?.accounts || []).length > initialCount) void finish(true);
         }
-      }, 1000);
+      }, 2500);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao conectar com o Google.");
     }

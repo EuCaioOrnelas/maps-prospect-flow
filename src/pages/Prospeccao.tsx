@@ -46,6 +46,23 @@ const Prospeccao = () => {
   const [isReady, setIsReady] = useState(false);
   const { trackSignupClick } = useLandingPageTracking("prospeccao");
 
+  // Baixa o vídeo de demonstração em segundo plano para abrir instantâneo ao clicar
+  useEffect(() => {
+    let cancelled = false;
+    import("@/assets/video-vendas-prospeccao.mp4")
+      .then((mod) => {
+        if (cancelled) return;
+        const video = document.createElement("video");
+        video.preload = "auto";
+        video.muted = true;
+        video.src = mod.default;
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     const timeout = setTimeout(() => setIsReady(true), 1500);
     if (document.fonts) {
@@ -128,10 +145,11 @@ const Prospeccao = () => {
           <Navbar onSignupClick={trackSignupClick} />
           <HeroSection
             onSignupClick={trackSignupClick}
+            demoMode="video"
             titleLine1="Encontre empresas"
             titleLine2=""
             titleHighlight="Venda com eficiência"
-            description="Nossa IA encontra empresas, analisa cada oportunidade e gera um diagnóstico comercial com as principais dores, oportunidades e potencial de cada cliente, ajudando sua equipe a vender com mais contexto e eficiência."
+            description="Encontre empresas, identifique oportunidades e gere abordagens personalizadas com IA."
             descriptionClassName="text-sm sm:text-base md:text-[1.05rem] leading-relaxed"
           />
           <TrustedBySection />

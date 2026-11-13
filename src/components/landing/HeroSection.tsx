@@ -3,6 +3,10 @@ import metaIcon from "@/assets/logos/meta-icon.png";
 import gptIcon from "@/assets/logos/gpt-icon.png";
 // O modal de vídeo (e o YouTube) só é baixado quando o visitante abre o vídeo.
 const VideoModal = lazy(() => import("./VideoModal").then((m) => ({ default: m.VideoModal })));
+// Vídeo de vendas local (MP4) — usado apenas na página de Prospecção.
+const ProspeccaoVideoModal = lazy(() =>
+  import("./ProspeccaoVideoModal").then((m) => ({ default: m.ProspeccaoVideoModal })),
+);
 import avatar1 from "@/assets/avatars/avatar1.jpg";
 import avatar2 from "@/assets/avatars/avatar2.jpg";
 import avatar3 from "@/assets/avatars/avatar3.jpg";
@@ -76,6 +80,8 @@ interface HeroSectionProps {
  titleHighlight?: string;
  description?: string;
  descriptionClassName?: string;
+ /** "tour" (padrão) leva ao tour guiado; "video" abre o vídeo de vendas em janela com fundo desfocado. */
+ demoMode?: "tour" | "video";
 }
 
 export const HeroSection = ({
@@ -85,6 +91,7 @@ export const HeroSection = ({
    titleHighlight = "Em um só lugar",
    description = "Infraestrutura comercial para captar, prospectar, atender, gerenciar e vender, com IA e automação conectando toda a operação em uma única plataforma.",
   descriptionClassName,
+  demoMode = "tour",
 }: HeroSectionProps) => {
  // scrollY removido — parallax do Hero desligado por performance.
  const [currentStage, setCurrentStage] = useState(0);
@@ -162,7 +169,7 @@ export const HeroSection = ({
  const stage = stages[currentStage];
 
  return (
- <section ref={sectionRef} className="relative -mt-[72px] sm:-mt-[80px] min-h-[85vh] flex items-center justify-center pt-[104px] sm:pt-[120px] pb-16 sm:pb-20 overflow-x-clip overflow-y-visible w-full">
+ <section ref={sectionRef} className="relative -mt-[72px] sm:-mt-[80px] min-h-[58vh] sm:min-h-[85vh] flex items-center justify-center pt-[104px] sm:pt-[120px] pb-10 sm:pb-20 overflow-x-clip overflow-y-visible w-full">
  {/* Base gradient backdrop (estático — sem parallax) */}
  <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, hsl(158 35% 97.5%) 0%, hsl(210 30% 99%) 60%, hsl(var(--background)) 100%)" }} />
  {/* Dotted texture (estático) */}
@@ -222,15 +229,26 @@ export const HeroSection = ({
    </Button>
    </Link>
   )}
+  {demoMode === "video" ? (
+  <Button
+  variant="ghost"
+  size="lg"
+  onClick={() => { trackDemoClick("hero"); setVideoOpen(true); }}
+  className="demo-shine rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
+   >
+  Ver Demonstração
+  </Button>
+  ) : (
   <Link to="/tour-guiado" className="group shrink-0" onClick={() => trackDemoClick("hero")}>
   <Button
   variant="ghost"
   size="lg"
   className="demo-shine rounded-full text-xs sm:text-sm px-3 sm:px-6 h-10 sm:h-11 border border-border/60 bg-transparent hover:bg-muted/60 hover:border-foreground/20 hover:-translate-y-1 hover:shadow-[0_10px_30px_-10px_hsl(220_15%_20%/0.15)] transition-all duration-300"
-  >
+   >
   Ver Demonstração
   </Button>
   </Link>
+  )}
   </div>
  </div>
 
@@ -308,11 +326,19 @@ export const HeroSection = ({
 
       {videoOpen && (
         <Suspense fallback={null}>
-          <VideoModal
-            open={videoOpen}
-            onOpenChange={setVideoOpen}
-            onSignupClick={onSignupClick}
-          />
+          {demoMode === "video" ? (
+            <ProspeccaoVideoModal
+              open={videoOpen}
+              onOpenChange={setVideoOpen}
+              onSignupClick={onSignupClick}
+            />
+          ) : (
+            <VideoModal
+              open={videoOpen}
+              onOpenChange={setVideoOpen}
+              onSignupClick={onSignupClick}
+            />
+          )}
         </Suspense>
       )}
 

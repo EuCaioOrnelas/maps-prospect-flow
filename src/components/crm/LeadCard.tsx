@@ -293,6 +293,7 @@ const LeadCardComponent = ({
         {quickActions.map(({ key, label, icon: Icon, run, disabled }) => (
           <Tooltip key={key} delayDuration={80} disableHoverableContent>
             <TooltipTrigger asChild>
+              <span className="inline-flex" title={label} onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 aria-label={label}
@@ -300,11 +301,12 @@ const LeadCardComponent = ({
                 onClick={(e) => { e.stopPropagation(); run(); }}
                 className={cn(
                   "p-1.5 rounded-md text-muted-foreground transition-colors duration-100",
-                  disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-muted hover:text-foreground",
+                  disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
               </button>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={6} className="px-2 py-1 text-xs">{label}</TooltipContent>
           </Tooltip>

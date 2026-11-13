@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { buildChurnReasonData, filterChurnByDate, getChurnReasonLabel } from "@/lib/churnMetrics";
 
 interface ChurnRecord {
   id: string;
@@ -29,25 +31,6 @@ interface ChurnRecord {
   plan: string | null;
   name: string | null;
 }
-
-const reasonLabels: Record<string, string> = {
-  expensive: "Custo alto",
-  not_using: "Não estava usando",
-  no_results: "Sem resultado",
-  bug: "Problemas técnicos",
-  competitor: "Migrou para concorrente",
-  missing_feature: "Falta recurso",
-  no_time: "Sem tempo",
-  other: "Outro",
-  falta_pagamento: "Falta de pagamento",
-  "Não entendi como usar": "Não entendeu",
-  "Não tive tempo para implementar": "Sem tempo",
-  "Não vi resultado": "Sem resultado",
-  "Custo / investimento": "Custo alto",
-  "Tive problemas técnicos": "Problemas técnicos",
-  "Não era o que eu esperava": "Expectativa",
-  Outro: "Outro",
-};
 
 const returnLabels: Record<string, string> = {
   yes: "Sim",
@@ -74,23 +57,18 @@ export default function AdminChurn() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Filtro de período: aplicado antes do KPIs e da busca textual
-  const dateFilteredRecords = useMemo(() => {
-    if (!startDate && !endDate) return records;
-    const startTs = startDate ? new Date(`${startDate}T00:00:00`).getTime() : -Infinity;
-    const endTs = endDate ? new Date(`${endDate}T23:59:59.999`).getTime() : Infinity;
-    return records.filter((record) => {
-      const t = new Date(record.cancelled_at).getTime();
-      return t >= startTs && t <= endTs;
-    });
-  }, [records, startDate, endDate]);
+  // O filtro vale para qualquer data do histórico e alimenta KPIs e gráfico.
+  const dateFilteredRecords = useMemo(
+    () => filterChurnByDate(records, startDate, endDate),
+    [records, startDate, endDate],
+  );
 
   const filteredRecords = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return dateFilteredRecords;
     return dateFilteredRecords.filter((record) => {
       const reasonLabel = record.cancellation_reason
-        ? (reasonLabels[record.cancellation_reason] || record.cancellation_reason).toLowerCase()
+        ? getChurnReasonLabel(record.cancellation_reason).toLowerCase()
         : "";
       return (
         (record.name || "").toLowerCase().includes(term) ||
@@ -325,13 +303,8 @@ export default function AdminChurn() {
   const churnRateTotal = rate(totalCount);
 
 
-  const reasonCounts: Record<string, number> = {};
-  kpiBase.forEach((record) => {
-    if (!record.cancellation_reason) return;
-    const key = reasonLabels[record.cancellation_reason] || record.cancellation_reason;
-    reasonCounts[key] = (reasonCounts[key] || 0) + 1;
-  });
-  const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0];
+  const reasonData = buildChurnReasonData(kpiBase);
+  const topReason = reasonData[0];
 
   const returnYes = kpiBase.filter((record) => record.intends_to_return === "yes").length;
   const returnMaybe = kpiBase.filter((record) => record.intends_to_return === "maybe").length;
@@ -345,7 +318,7 @@ export default function AdminChurn() {
     { label: hasDateFilter ? "Churn no período" : "Churns últimos 30 dias", value: `${last30dRate}%`, subtext: `(${last30dCount} de ${totalCount} no histórico)`, icon: Calendar, color: "text-amber-500" },
     { label: hasDateFilter ? "Cancelamentos no período" : "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7dCount} usuários)`, icon: TrendingDown, color: "text-orange-500" },
     { label: "Taxa Churn Total", value: `${churnRateTotal}%`, icon: Percent, color: "text-red-500" },
-    { label: "Principal Motivo", value: topReason ? topReason[0] : "—", icon: AlertTriangle, color: "text-primary", small: true },
+    { label: "Principal Motivo", value: topReason ? topReason.name : "—", icon: AlertTriangle, color: "text-primary", small: true },
     { label: "Pretendem Voltar", value: returnYes + returnMaybe, subtext: `${returnYes} sim · ${returnMaybe} talvez`, icon: Users, color: "text-emerald-500" },
   ];
 
@@ -427,8 +400,77 @@ export default function AdminChurn() {
       </div>
 
       <Card className="border-border/40 bg-card/80">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Motivos dos cancelamentos</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Distribuição dos clientes que pagaram e cancelaram{periodLabel ? " no período selecionado" : " em todo o histórico"}.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {reasonData.length === 0 ? (
+            <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+              Nenhum cancelamento com pagamento confirmado neste período.
+            </div>
+          ) : (
+            <div className="grid items-center gap-6 md:grid-cols-[minmax(280px,1fr)_minmax(260px,1fr)]">
+              <div className="relative h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={reasonData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={68}
+                      outerRadius={94}
+                      paddingAngle={3}
+                      stroke="hsl(var(--card))"
+                      strokeWidth={2}
+                    >
+                      {reasonData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        color: "hsl(var(--foreground))",
+                      }}
+                      formatter={(value: number, name: string) => [
+                        `${value} ${value === 1 ? "cancelamento" : "cancelamentos"}`,
+                        name,
+                      ]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                  <strong className="text-2xl font-bold text-foreground">{kpiBase.length}</strong>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">cancelamentos</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {reasonData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-3">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.fill }} />
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">{item.name}</span>
+                    <span className="text-sm font-semibold text-foreground">{item.value}</span>
+                    <span className="w-12 text-right text-xs text-muted-foreground">
+                      {((item.value / kpiBase.length) * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/40 bg-card/80">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="text-base">Histórico total desde 01/06/2026</CardTitle>
+          <CardTitle className="text-base">Histórico total desde 01/06/2026</CardTitle>
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -484,7 +526,7 @@ export default function AdminChurn() {
                       <TableCell>
                         {record.cancellation_reason ? (
                           <Badge variant="secondary" className="text-[10px]">
-                            {reasonLabels[record.cancellation_reason] || record.cancellation_reason}
+                            {getChurnReasonLabel(record.cancellation_reason)}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">Sem feedback</span>
@@ -567,7 +609,7 @@ export default function AdminChurn() {
                     <span className="text-xs text-muted-foreground">Motivo</span>
                     <Badge variant="secondary" className="text-[10px]">
                       {selectedRecord.cancellation_reason
-                        ? reasonLabels[selectedRecord.cancellation_reason] || selectedRecord.cancellation_reason
+                        ? getChurnReasonLabel(selectedRecord.cancellation_reason)
                         : "Não informado"}
                     </Badge>
                   </div>

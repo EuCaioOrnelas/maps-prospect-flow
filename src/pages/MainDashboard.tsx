@@ -9,6 +9,7 @@ import { useCockpitForecast } from "@/hooks/useCockpitForecast";
 import { useDashboardKPIs } from "@/hooks/useDashboardKPIs";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { NotificationsBell } from "@/components/notifications/NotificationsBell";
 import { BackgroundGlow } from "@/components/layout/BackgroundGlow";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SEO } from "@/components/SEO";
@@ -155,7 +156,7 @@ export default function MainDashboard() {
                     {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
-                <div className="flex items-center gap-2"><Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleTheme} title={resolvedTheme === "light" ? "Ativar tema escuro" : "Ativar tema claro"} aria-label={resolvedTheme === "light" ? "Ativar tema escuro" : "Ativar tema claro"}>{resolvedTheme === "light" ? <Sun className="h-4 w-4"/> : <Moon className="h-4 w-4"/>}</Button><Select value={period} onValueChange={setPeriod}>
+                <div className="flex items-center gap-2"><NotificationsBell /><Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleTheme} title={resolvedTheme === "light" ? "Ativar tema escuro" : "Ativar tema claro"} aria-label={resolvedTheme === "light" ? "Ativar tema escuro" : "Ativar tema claro"}>{resolvedTheme === "light" ? <Sun className="h-4 w-4"/> : <Moon className="h-4 w-4"/>}</Button><Select value={period} onValueChange={setPeriod}>
                   <SelectTrigger className="w-[170px] h-9 text-xs border-border/50">
                     <Calendar size={13} className="mr-1.5" />
                     <SelectValue />
