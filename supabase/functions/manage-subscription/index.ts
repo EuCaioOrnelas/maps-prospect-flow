@@ -97,6 +97,25 @@ serve(async (req) => {
     const email = profile.email || userEmail;
     const paymentProvider = profile.payment_provider || "";
 
+    // Valida prova de feedback da sessão atual antes de qualquer chamada que cancela.
+    // Não aceita motivo antigo nem feedback pertencente a outro usuário.
+    if (action === "cancel-subscription") {
+      const feedbackId = body.feedbackId;
+      if (typeof feedbackId !== "string" || !/^[0-9a-f-]{36}$/i.test(feedbackId)) {
+        return new Response(JSON.stringify({ error: "Informe e salve o motivo antes de cancelar." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: feedback, error: feedbackError } = await supabaseClient.from("cancellation_feedback")
+        .select("id, cancellation_reason, created_at, provider")
+        .eq("id", feedbackId).eq("user_id", userId).maybeSingle();
+      const age = feedback ? Date.now() - new Date(feedback.created_at).getTime() : Infinity;
+      if (feedbackError || !feedback?.cancellation_reason?.trim() || !Number.isFinite(age) || age < 0 || age > 30 * 60 * 1000 ||
+        (feedback.provider && feedback.provider !== paymentProvider)) {
+        return new Response(JSON.stringify({ error: "Informe e salve novamente o motivo para confirmar o cancelamento." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     // Contratos administrados manualmente nunca podem cair no fallback Asaas.
     // O cancelamento/desfazimento é feito pelo admin para manter MRR e churn coerentes.
     if (profile.is_custom_subscription || profile.admin_assigned_plan || paymentProvider === "manual") {

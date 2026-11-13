@@ -189,20 +189,15 @@ export default function ManageSubscription() {
     }
   };
 
-  const handleCancel = async (subId?: string) => {
+  const handleCancel = async (feedbackId: string, subId?: string) => {
     setCancelling(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-subscription", {
-        body: { action: "cancel-subscription", subscriptionId: subId },
+        body: { action: "cancel-subscription", subscriptionId: subId, feedbackId },
       });
       if (error) throw error;
-
-      if (provider === "stripe" && stripePortalUrl) {
-        toast.success("Redirecionando...", { description: "Você será levado ao portal de pagamentos." });
-        window.open(stripePortalUrl, "_blank");
-      } else {
-        toast.success("Renovação cancelada", { description: data.message });
-      }
+      if (data?.error || !data?.success) throw new Error(data?.error || "Não foi possível confirmar o cancelamento.");
+      toast.success("Renovação cancelada", { description: data.message });
 
       if (data.cancellationDetails) {
         setCancellationDetails(data.cancellationDetails);
@@ -211,6 +206,7 @@ export default function ManageSubscription() {
       await fetchInfo();
     } catch (err: any) {
       toast.error("Erro ao cancelar", { description: err.message });
+      throw new Error("Não foi possível concluir o cancelamento. Tente novamente ou fale com o suporte.");
     } finally {
       setCancelling(false);
     }
@@ -718,7 +714,7 @@ export default function ManageSubscription() {
                     <Info className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Sua assinatura é gerenciada pelo <strong className="text-foreground">Stripe</strong>. Para cancelar a renovação automática, você será redirecionado ao portal seguro de pagamentos onde poderá gerenciar sua assinatura.
+                        Sua assinatura é gerenciada pelo <strong className="text-foreground">Stripe</strong>. Informe o motivo e confirme aqui para cancelar a renovação automática.
                       </p>
                     </div>
                   </div>
@@ -730,11 +726,11 @@ export default function ManageSubscription() {
                     <ol className="space-y-2 text-sm text-muted-foreground">
                       <li className="flex gap-3 items-start">
                         <span className="h-6 w-6 rounded-[7px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">1</span>
-                        <p className="pt-0.5">Clique no botão abaixo para abrir o <strong className="text-foreground">portal de pagamentos</strong></p>
+                        <p className="pt-0.5">Clique no botão abaixo para <strong className="text-foreground">cancelar a renovação</strong></p>
                       </li>
                       <li className="flex gap-3 items-start">
                         <span className="h-6 w-6 rounded-[7px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">2</span>
-                        <p className="pt-0.5">No portal, clique em <strong className="text-foreground">"Cancelar plano"</strong></p>
+                        <p className="pt-0.5">Informe o <strong className="text-foreground">motivo e confirme o cancelamento</strong></p>
                       </li>
                       <li className="flex gap-3 items-start">
                         <span className="h-6 w-6 rounded-[7px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-500 shrink-0">3</span>
@@ -742,14 +738,15 @@ export default function ManageSubscription() {
                       </li>
                     </ol>
                   </div>
-                  {stripePortalUrl ? (
+                  {hasActiveSub ? (
                     <Button
-                      onClick={() => window.open(stripePortalUrl, "_blank")}
+                      disabled={cancelling}
+                      onClick={() => setShowFeedbackDialog(true)}
                       variant="outline"
                       className="w-full border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Abrir portal de pagamentos (Stripe)
+                      Cancelar renovação automática
                     </Button>
                   ) : (
                     <div className="bg-amber-500/[0.06] border border-amber-500/15 rounded-lg p-3 flex gap-2.5 items-center">
@@ -843,14 +840,6 @@ export default function ManageSubscription() {
                       {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <XCircle className="h-4 w-4 mr-2" />}
                       Cancelar renovação automática
                     </Button>
-                    <CancellationFeedbackDialog
-                      open={showFeedbackDialog}
-                      onOpenChange={setShowFeedbackDialog}
-                      onConfirm={() => handleCancel(activeSubscriptions[0]?.id)}
-                      userId={user?.id}
-                      email={user?.email}
-                      provider={provider}
-                    />
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -863,6 +852,14 @@ export default function ManageSubscription() {
         </motion.div>
 
         {/* Footer */}
+        <CancellationFeedbackDialog
+          open={showFeedbackDialog}
+          onOpenChange={setShowFeedbackDialog}
+          onConfirm={(feedbackId) => handleCancel(feedbackId, isStripe ? undefined : activeSubscriptions[0]?.id)}
+          userId={user?.id}
+          email={user?.email}
+          provider={provider}
+        />
         <motion.div {...fadeUp(0.25)} className="text-center pb-10 space-y-3">
           <div className="flex items-center justify-center gap-2 text-muted-foreground/60">
             <Shield className="h-3.5 w-3.5" />

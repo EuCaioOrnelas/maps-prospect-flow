@@ -34,28 +34,34 @@ export default function CancellationFeedback() {
   const [comments, setComments] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const canAdvance = step === 1 ? !!reason : step === 2 ? !!usageLevel : true;
 
   const handleSubmit = async () => {
+    if (!user?.id || !reason || !usageLevel || loading) return;
     setLoading(true);
+    setErrorMessage("");
     try {
-      await supabase.from("cancellation_feedback").insert({
-        user_id: user?.id || "00000000-0000-0000-0000-000000000000",
+      const { error } = await supabase.from("cancellation_feedback").insert({
+        user_id: user.id,
         email: user?.email || null,
         cancellation_reason: reason,
         usage_level: usageLevel || null,
         additional_comments: comments || null,
       });
+      if (error) throw error;
       setSubmitted(true);
     } catch (err) {
       console.error(err);
+      setErrorMessage("Não foi possível salvar seu motivo. Tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
   const next = () => {
+    if (!canAdvance || loading) return;
     if (step < 3) setStep(step + 1);
     else handleSubmit();
   };
@@ -207,6 +213,7 @@ export default function CancellationFeedback() {
           </AnimatePresence>
 
           {/* Navigation */}
+          {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
           <div className="flex items-center justify-between mt-8 gap-4">
             {step > 1 ? (
               <Button variant="ghost" onClick={back} className="gap-1">
