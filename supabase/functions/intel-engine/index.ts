@@ -1106,15 +1106,15 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "compute_profile":
-        return json(await computeProfile(sb, owner, body.phone_e164, { force: !!body.force }));
+        return json(await computeProfile(sb, owner as string, body.phone_e164, { force: !!body.force }));
       case "record_outcome":
         return json(await recordOutcome(sb, { ...body, owner_user_id: owner }));
       case "recompute_patterns":
-        return json(await recomputePatterns(sb, owner));
+        return json(await recomputePatterns(sb, owner as string));
       case "backfill_outcomes":
-        return json(await backfillOutcomes(sb, owner));
+        return json(await backfillOutcomes(sb, owner as string));
       case "get_context":
-        return json(await getContext(sb, owner, body.limit || 10, body.phone_e164));
+        return json(await getContext(sb, owner as string, body.limit || 10, body.phone_e164));
       case "recompute_account": {
         const { data: rls } = await sb
           .from("revenue_leads").select("phone_e164, last_activity_at")
