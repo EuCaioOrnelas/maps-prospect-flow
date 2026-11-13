@@ -9,5 +9,5 @@
 - [x] Testar cálculos e conferir a auditoria e as telas com sessão administrativa; o banco acessível tem 2 perfis, não os 606 da produção informada.
 
 # Motivo obrigatório no cancelamento
-- [ ] Bloquear avanço e cancelamento se o motivo não for salvo.
-- [ ] Exibir no churn o motivo informado pelo usuário e validar os bloqueios.
+- [x] Bloquear avanço e cancelamento se o motivo não for salvo; validado na tela por testes e na função autenticada sem cancelar assinatura real.
+- [x] Enriquecer o churn com feedback salvo independentemente do filtro de pagamento; histórico antigo sem resposta não é inventado, e o caso INNFOMASTER não está no banco acessível.
