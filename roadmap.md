@@ -11,3 +11,6 @@
 # Motivo obrigatório no cancelamento
 - [x] Bloquear avanço e cancelamento se o motivo não for salvo; validado na tela por testes e na função autenticada sem cancelar assinatura real.
 - [x] Enriquecer o churn com feedback salvo independentemente do filtro de pagamento; histórico antigo sem resposta não é inventado, e o caso INNFOMASTER não está no banco acessível.
+
+# Churn involuntário
+- [ ] Incluir falta de pagamento para renovações em atraso de clientes já pagos e validar os resultados.

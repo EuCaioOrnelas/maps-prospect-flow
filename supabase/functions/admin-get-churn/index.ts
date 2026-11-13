@@ -35,6 +35,11 @@ export function paymentPrecedesCancellation(paidAt: number | undefined, canceled
   return paidAt !== undefined && Number.isFinite(paidAt) && Number.isFinite(cancellation) && paidAt <= cancellation;
 }
 
+/** Só inadimplência atual de quem já pagou é churn por falta de pagamento. */
+export function isUnpaidChurn(status: string, invoices: StripeInvoicePayment[], failedAt: number): boolean {
+  return ["past_due", "unpaid"].includes(status) && hasRealPaymentBeforeCancellation(invoices, failedAt);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -232,13 +237,17 @@ serve(async (req) => {
           const res: any = await stripe.subscriptions.list({
             status: "all",
             limit: 100,
+            expand: ["data.latest_invoice"],
             ...(startingAfter ? { starting_after: startingAfter } : {}),
           });
           for (const sub of res.data) {
             // MRR exclui cancelamento agendado imediatamente; churn deve registrar
             // a mesma decisão de não renovar, ainda que o período pago esteja aberto.
-            if (sub.status !== "canceled" && !sub.cancel_at_period_end) continue;
-            const canceledAt = sub.canceled_at;
+            const isUnpaid = ["past_due", "unpaid"].includes(sub.status);
+            if (sub.status !== "canceled" && !sub.cancel_at_period_end && !isUnpaid) continue;
+            const latestInvoice = typeof sub.latest_invoice === "object" ? sub.latest_invoice : null;
+            // Não usar period_end: na falha de renovação ele já pode apontar para o mês seguinte.
+            const canceledAt = isUnpaid ? latestInvoice?.due_date || latestInvoice?.created : sub.canceled_at;
             if (!canceledAt || canceledAt < CHURN_CUTOFF_UNIX) continue;
 
             // A única regra é pagamento real anterior ao cancelamento. Não usar
@@ -251,7 +260,10 @@ serve(async (req) => {
                 status: "paid",
                 limit: 100,
               });
-              if (!hasRealPaymentBeforeCancellation(invoices.data || [], canceledAt)) {
+              const hasEvidence = isUnpaid
+                ? isUnpaidChurn(sub.status, invoices.data || [], canceledAt)
+                : hasRealPaymentBeforeCancellation(invoices.data || [], canceledAt);
+              if (!hasEvidence) {
                 logStep("Skipping trial/unpaid cancellation", { id: sub.id });
                 continue;
               }
@@ -280,11 +292,11 @@ serve(async (req) => {
               stripe_subscription_id: sub.id,
               email,
               provider: "stripe",
-              cancelled_at: new Date(sub.canceled_at * 1000).toISOString(),
+              cancelled_at: new Date(canceledAt * 1000).toISOString(),
               active_until: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
               billing_type: "Cartão",
-              notes: "Cancelamento direto no Stripe (fora do fluxo interno)",
-              cancellation_reason: sub.cancellation_details?.reason || null,
+              notes: isUnpaid ? "Renovação não paga — assinatura em atraso; não é cancelamento voluntário." : "Cancelamento direto no Stripe (fora do fluxo interno)",
+              cancellation_reason: isUnpaid ? "falta_pagamento" : sub.cancellation_details?.reason || null,
               additional_comments: sub.cancellation_details?.comment || null,
             });
           }
@@ -339,9 +351,11 @@ serve(async (req) => {
 
     const metricRows = [
       ...filteredCancellations.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
-      ...filteredEvents.map((row: any) => ({ ...row, occurred_at: row.created_at })),
+      ...filteredEvents.map((row: any) => ({ ...row, occurred_at: row.created_at,
+        cancellation_reason: ["pix_not_renewed", "subscription_expired", "subscription_not_renewed"].includes(row.event_type) ? "falta_pagamento" : row.cancellation_reason,
+      })),
       ...filteredFeedbacks.map((row: any) => ({ ...row, occurred_at: row.created_at })),
-      ...expiredProfiles.map((row: any) => ({ ...row, user_id: row.id, occurred_at: row.subscription_current_period_end })),
+      ...expiredProfiles.map((row: any) => ({ ...row, user_id: row.id, occurred_at: row.subscription_current_period_end, cancellation_reason: "falta_pagamento" })),
       ...stripeChurns.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
       ...manualChurns.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
     ].sort((a: any, b: any) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
@@ -360,7 +374,7 @@ serve(async (req) => {
         return difference >= -30 * 24 * 60 * 60 * 1000 && difference <= 24 * 60 * 60 * 1000;
       });
       return { ...row,
-        cancellation_reason: feedback?.cancellation_reason || row.cancellation_reason || null,
+        cancellation_reason: row.cancellation_reason === "falta_pagamento" ? "falta_pagamento" : feedback?.cancellation_reason || row.cancellation_reason || null,
         usage_level: feedback?.usage_level || row.usage_level || null,
         additional_comments: feedback?.additional_comments || row.additional_comments || null,
         details: feedback?.details || row.details || null,
