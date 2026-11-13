@@ -17,7 +17,7 @@ import {
 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LevelBadge, LEVEL_META, type PartnerLevel } from "@/components/partners/LevelBadge";
+import { LevelBadge, LEVEL_META, normalizePartnerLevel, type PartnerLevel } from "@/components/partners/LevelBadge";
 import wiizeLogo from "@/assets/logo-icon-new.png";
 
 const LEVEL_ORDER: PartnerLevel[] = ["select", "signature", "prime"];
@@ -63,7 +63,7 @@ export default function PartnerLayout() {
     if (!partner || !settings) {
       return { currentCommission: 0, nextTier: null as any, progressPct: 0, clientsRemaining: 0 };
     }
-    const lvl = (partner.level || "select") as PartnerLevel;
+    const lvl = normalizePartnerLevel(partner.level);
     const tiers = [
       { key: "select" as PartnerLevel, threshold: 0, percent: Number(settings.select_commission_percent) },
       { key: "signature" as PartnerLevel, threshold: settings.signature_threshold_clients, percent: Number(settings.signature_commission_percent) },
@@ -101,7 +101,7 @@ export default function PartnerLayout() {
     { to: "/partners/materiais", label: "Materiais", icon: Megaphone },
   ];
 
-  const currentMeta = LEVEL_META[(partner.level || "select") as PartnerLevel] ?? LEVEL_META.select;
+  const currentMeta = LEVEL_META[normalizePartnerLevel(partner.level)];
   const initial = (partner.full_name || "?").trim().charAt(0).toUpperCase();
 
   return (

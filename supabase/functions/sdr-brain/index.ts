@@ -1298,7 +1298,8 @@ ${historyText}`;
                   : analysis.micro_objetivo ?? "Retomar negociação"
               : null,
           })
-          .eq("id", session.id);
+          .eq("id", session.id)
+          .eq("status", session.status);
 
         // ---------- Eventos comerciais (rastreabilidade do SDR vendedor) ----------
         if (isSalesMode) {

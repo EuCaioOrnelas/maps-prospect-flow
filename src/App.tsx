@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SEO } from "./components/SEO";
 const ActivationChecklist = lazyWithRetry(() => import("@/components/dashboard/ActivationChecklist").then((m) => ({ default: m.ActivationChecklist })), "ActivationChecklist");
 import { GuidedTourProvider } from "@/hooks/useGuidedTour";
-import { ManualChatTransitionProvider } from "@/components/opportunities/ManualChatTransition";
 const GuidedTour = lazyWithRetry(() => import("@/components/onboarding/GuidedTour").then((m) => ({ default: m.GuidedTour })), "GuidedTour");
 import LightThemeWrapper from "@/components/LightThemeWrapper";
 import { DashboardThemeProvider } from "@/contexts/ThemeContext";
@@ -49,10 +48,6 @@ const MainDashboard = lazyWithRetry(() => import("./pages/MainDashboard"), "Main
 const Admin = lazyWithRetry(() => import("./pages/Admin"), "Admin");
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"), "AdminDashboard");
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/AdminAnnouncements"), "AdminAnnouncements");
-const AprendaHome = lazyWithRetry(() => import("./pages/aprendizado/AprendaHome"), "AprendaHome");
-const AprendaModule = lazyWithRetry(() => import("./pages/aprendizado/AprendaModule"), "AprendaModule");
-const AprendaLesson = lazyWithRetry(() => import("./pages/aprendizado/AprendaLesson"), "AprendaLesson");
-const AdminAprendizado = lazyWithRetry(() => import("./pages/aprendizado/AdminAprendizado"), "AdminAprendizado");
 const Prospeccao = lazyWithRetry(() => import("./pages/Prospeccao"), "Prospeccao");
 const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"), "ForgotPassword");
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"), "ResetPassword");
@@ -105,7 +100,6 @@ const SDRWizardPage = lazyWithRetry(() => import("./pages/SDRWizardPage"), "SDRW
 const Chat = lazyWithRetry(() => import("./pages/Chat"), "Chat");
 const ChatComingSoonGate = lazyWithRetry(() => import("./components/chat/ChatComingSoonGate").then((m) => ({ default: m.ChatComingSoonGate })), "ChatComingSoonGate");
 const ChatWebSettings = lazyWithRetry(() => import("./pages/ChatWebSettings"), "ChatWebSettings");
-const GoogleOAuthDone = lazyWithRetry(() => import("./pages/GoogleOAuthDone"), "GoogleOAuthDone");
 const ChatWebPublic = lazyWithRetry(() => import("./pages/ChatWebPublic"), "ChatWebPublic");
 const WhatsAppAutomations = lazyWithRetry(() => import("./pages/WhatsAppAutomations"), "WhatsAppAutomations");
 const WhatsAppFlowEditor = lazyWithRetry(() => import("./pages/WhatsAppFlowEditor"), "WhatsAppFlowEditor");
@@ -318,7 +312,6 @@ const App = () => (
           <TabTitleManager />
 
           <AuthProvider>
-            <ManualChatTransitionProvider>
             <MetricStateCacheProvider>
             <GuidedTourProvider>
             <Suspense fallback={<PageLoader />}>
@@ -350,15 +343,11 @@ const App = () => (
                 <Route path="/refund-policy" element={<LightThemeWrapper><RefundPolicy /></LightThemeWrapper>} />
                 <Route path="/seguranca-faq" element={<LightThemeWrapper><SecurityFAQ /></LightThemeWrapper>} />
                 <Route path="/diretrizes-de-envio" element={<LightThemeWrapper><SendingGuidelines /></LightThemeWrapper>} />
-                <Route path="/google-conectado" element={<Suspense fallback={<PageLoader />}><GoogleOAuthDone /></Suspense>} />
                 <Route path="/c/:slug" element={<Suspense fallback={<PageLoader />}><ChatWebPublic /></Suspense>} />
                 <Route path="/form/:slug" element={<LightThemeWrapper><PublicForm /></LightThemeWrapper>} />
                 <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
-                <Route path="/aprenda" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><AprendaHome /></Suspense></LightThemeWrapper>} />
-                <Route path="/aprenda/:moduleSlug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><AprendaModule /></Suspense></LightThemeWrapper>} />
-                <Route path="/aprenda/:moduleSlug/:lessonSlug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><AprendaLesson /></Suspense></LightThemeWrapper>} />
                 <Route path="/tour-completo" element={<LightThemeWrapper><TourCompleto /></LightThemeWrapper>} />
                 <Route path="/tour-guiado" element={<DashboardThemeProvider><Suspense fallback={<PageLoader />}><TourGuiado /></Suspense></DashboardThemeProvider>} />
                 <Route path="/upgrade" element={<LightThemeWrapper><Upgrade /></LightThemeWrapper>} />
@@ -483,7 +472,6 @@ const App = () => (
                   
                   {/* Admin */}
                   <Route path="announcements" element={<AdminAnnouncements />} />
-                  <Route path="aprendizado" element={<AdminAprendizado />} />
                   <Route path="termos" element={<AdminTermos />} />
                   <Route path="tags" element={<AdminTracking />} />
                   <Route path="auditoria" element={<AdminAuditoria />} />
@@ -613,7 +601,6 @@ const App = () => (
 
             </GuidedTourProvider>
             </MetricStateCacheProvider>
-            </ManualChatTransitionProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

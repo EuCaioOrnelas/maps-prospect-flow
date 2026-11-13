@@ -1,65 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { decryptMessageFields, encryptMessageFields, encryptConversationPreview } from "./messageCrypto.ts";
+import { canResumeSession, firstContactOnly } from "./sessionPolicy.ts";
 
 const META_API_VERSION = Deno.env.get("META_API_VERSION") ?? "v25.0";
-const MESSAGE_PREFIX = "enc:v1:";
-const messageEncoder = new TextEncoder();
-let messageKeyPromise: Promise<CryptoKey> | null = null;
-function messageBytesToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(binary);
-}
-function messageEncryptionKey(): Promise<CryptoKey> {
-  if (messageKeyPromise) return messageKeyPromise;
-  const secret = Deno.env.get("WIIZE_MESSAGE_ENCRYPTION_KEY");
-  if (!secret || secret.length < 32) throw new Error("Message encryption is unavailable");
-  messageKeyPromise = crypto.subtle.digest("SHA-256", messageEncoder.encode(secret)).then((raw) =>
-    crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"])
-  );
-  return messageKeyPromise;
-}
-async function encryptMessageValue(value: unknown): Promise<string | null> {
-  if (typeof value !== "string" || value.length === 0) return null;
-  if (value.startsWith(MESSAGE_PREFIX)) return value;
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await messageEncryptionKey(), messageEncoder.encode(value));
-  return `${MESSAGE_PREFIX}${messageBytesToBase64(iv)}:${messageBytesToBase64(new Uint8Array(ciphertext))}`;
-}
-async function encryptMessageFields<T extends Record<string, unknown>>(row: T): Promise<T> {
-  return { ...row, content: await encryptMessageValue(row.content), media_caption: await encryptMessageValue(row.media_caption) };
-}
-async function encryptConversationPreview<T extends Record<string, unknown>>(row: T): Promise<T> {
-  return "last_message_text" in row ? { ...row, last_message_text: await encryptMessageValue(row.last_message_text) } : row;
-}
-function messageBase64ToBuffer(value: string): ArrayBuffer {
-  const binary = atob(value);
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  const copy = new Uint8Array(bytes.byteLength);
-  copy.set(bytes);
-  return copy.buffer;
-}
-async function decryptMessageValue(value: unknown): Promise<string | null> {
-  if (typeof value !== "string") return null;
-  if (!value.startsWith(MESSAGE_PREFIX)) return value;
-  const parts = value.slice(MESSAGE_PREFIX.length).split(":");
-  if (parts.length !== 2) throw new Error("Invalid encrypted message format");
-  try {
-    const plaintext = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: messageBase64ToBuffer(parts[0]) },
-      await messageEncryptionKey(), messageBase64ToBuffer(parts[1]),
-    );
-    return messageDecoder.decode(plaintext);
-  } catch {
-    throw new Error("Encrypted message could not be authenticated");
-  }
-}
-async function decryptMessageFields<T extends Record<string, unknown>>(row: T): Promise<T> {
-  return { ...row, content: await decryptMessageValue(row.content), media_caption: await decryptMessageValue(row.media_caption) };
-}
-async function decryptConversationPreview<T extends Record<string, unknown>>(row: T): Promise<T> {
-  return { ...row, last_message_text: await decryptMessageValue(row.last_message_text) };
-}
-
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -254,11 +197,13 @@ Deno.serve(async (req) => {
     }
 
     // 1) Encontrar SDR ativo responsável por este número
-    const { data: agents } = await supabase
+    const { data: agents, error: agentsError } = await supabase
       .from("sdr_agents")
       .select("*")
       .eq("owner_user_id", owner_user_id)
       .eq("status", "active");
+
+    if (agentsError) throw new Error(`Não foi possível consultar o SDR: ${agentsError.message}`);
 
     const agent = (agents || []).find((a: any) =>
       (a.whatsapp_number_ids || []).includes(waba_connection_id)
@@ -337,20 +282,6 @@ Deno.serve(async (req) => {
       return json({ ok: true, rejected: true, sent: 0 });
     }
 
-    const { data: blockedSession } = await supabase
-      .from("sdr_sessions")
-      .select("id, status")
-      .eq("agent_id", agent.id)
-      .in("status", ["opted_out", "paused"])
-      .ilike("phone", `%${tail}`)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (blockedSession) {
-      console.log(`[sdr-dispatch] ignorado: sessão ${blockedSession.status} para ${contact_phone}`);
-      return json({ skipped: blockedSession.status === "paused" ? "SDR pausado neste contato" : "contato descadastrado" });
-    }
-
     // Bloqueio de concorrência com campanhas de oportunidade que enviam um follow-up
     // gerado por IA depois da resposta ao template. Enquanto esse envio estiver pendente
     // ou agendado, o SDR não responde para não duplicar mensagens no mesmo contato.
@@ -394,13 +325,23 @@ Deno.serve(async (req) => {
       .select("*")
       .eq("agent_id", agent.id)
       .ilike("phone", `%${tail}`)
-      .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
+    if (session && !canResumeSession(session, agent.objective)) {
+      return json({ skipped: "sessão encerrada ou sob atendimento humano", sent: 0 });
+    }
+
+    if (session && session.status !== "active") {
+      const { error } = await supabase.from("sdr_sessions")
+        .update({ status: "active", closed_reason: null }).eq("id", session.id);
+      if (error) throw error;
+      session.status = "active";
+    }
+
     if (!session) {
-      const { data: created } = await supabase
+      const { data: created, error: sessionError } = await supabase
         .from("sdr_sessions")
         .insert({
           agent_id: agent.id,
@@ -415,6 +356,7 @@ Deno.serve(async (req) => {
         })
         .select("*")
         .maybeSingle();
+      if (sessionError || !created) throw new Error("Não foi possível iniciar a sessão do SDR");
       session = created;
     } else {
       const { data: updated } = await supabase
@@ -448,27 +390,9 @@ Deno.serve(async (req) => {
     }
 
 
-    if (trigger_type === "inbound" && activation.includes("first_only") && (session?.replies_received ?? 0) > 0) {
+    if (trigger_type === "inbound" && firstContactOnly(activation, session?.replies_received ?? 0)) {
       return json({ skipped: "gatilho configurado apenas para o primeiro contato" });
     }
-
-    // Interrompe se o lead pediu para parar, se o objetivo já foi concluído ou se já foi encerrado.
-    // Exceção: SDR de recuperação pode reabrir conversas encerradas sem recusa explícita.
-    if (session?.status && session.status !== "active") {
-      const reactivable =
-        agent?.objective === "recuperacao" &&
-        session.status === "closed" &&
-        !["explicit_rejection", "lead_refused"].includes(String(session.closed_reason ?? ""));
-      if (!reactivable) {
-        return json({ skipped: "sessão encerrada" });
-      }
-      await supabase
-        .from("sdr_sessions")
-        .update({ status: "active", closed_reason: null })
-        .eq("id", session.id);
-      session.status = "active";
-    }
-
 
     // 3) Histórico da conversa
     let history: { role: string; content: string }[] = [];
@@ -555,7 +479,8 @@ Deno.serve(async (req) => {
       await supabase
         .from("sdr_sessions")
         .update({ status: nextAction === "encerrar" ? "closed" : "handoff" })
-        .eq("id", session?.id);
+        .eq("id", session?.id)
+        .in("status", ["active", "follow_up", "won", nextAction === "encerrar" ? "closed" : "handoff"]);
 
       // Vendedores a avisar: handoff usa strategy.handoff_sellers, encerramento usa closing.notify_sellers
       const sellers: any[] =
@@ -662,6 +587,13 @@ Deno.serve(async (req) => {
       // pausa curta entre mensagens para soar humano
       if (sent > 0) await new Promise((r) => setTimeout(r, 1800));
 
+      // Revalidar após a espera: uma pausa humana pode ter ocorrido enquanto a IA escrevia.
+      const { data: currentSession, error: currentError } = await supabase
+        .from("sdr_sessions").select("status").eq("id", session.id).maybeSingle();
+      if (currentError || !currentSession ||
+          !["active", "follow_up", "won", ...(nextAction === "chamar_vendedor" ? ["handoff"] : []), ...(nextAction === "encerrar" ? ["closed"] : [])].includes(currentSession.status)) {
+        return json({ skipped: "SDR interrompido durante o processamento", sent });
+      }
       const sendResult = await sendText(text);
       const metaJson = sendResult.raw;
       if (!sendResult.ok) {

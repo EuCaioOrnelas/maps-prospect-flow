@@ -802,7 +802,7 @@ export default function WhatsAppFlowEditor() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="wa-flow-editor h-screen flex flex-col bg-background">
       {/* Top bar */}
       <div className="h-14 border-b border-border bg-card flex items-center px-4 gap-2 shrink-0">
         <Button variant="ghost" size="icon" onClick={handleBackNavigation} className="h-9 w-9">

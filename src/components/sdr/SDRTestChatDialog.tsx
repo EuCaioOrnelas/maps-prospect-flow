@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Bot, RotateCcw, Send, Sparkles, User, Loader2, Play, Mic, Square } from "lucide-react";
+import { requestSdrTest } from "@/lib/sdrTestRequest";
 
 type ChatItem =
   | { kind: "lead"; text: string }
@@ -46,9 +47,17 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
   const timerRef = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+  const lastTurnRef = useRef<{ message: string; triggerType: "inbound" | "outbound" } | null>(null);
 
 
   const reset = () => {
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setSending(false);
+    setTestError(null);
+    lastTurnRef.current = null;
     setItems([]);
     setInput("");
     setMemory({});
@@ -58,8 +67,12 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
   useEffect(() => {
     if (open) {
       reset();
-      setTimeout(() => inputRef.current?.focus(), 120);
+      const focusTimer = setTimeout(() => inputRef.current?.focus(), 120);
+      return () => { clearTimeout(focusTimer); requestRef.current?.abort(); requestRef.current = null; };
     }
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setSending(false);
   }, [open, agent?.id]);
 
   useEffect(() => {
@@ -100,15 +113,18 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
   };
 
   const runTurn = async (message: string, triggerType: "inbound" | "outbound") => {
-    if (!agent) return;
+    if (!agent || requestRef.current) return;
+    const controller = new AbortController();
+    requestRef.current = controller;
+    lastTurnRef.current = { message, triggerType };
+    setTestError(null);
     setSending(true);
     try {
       const history = items
         .filter((i) => i.kind !== "insight")
         .map((i) => ({ role: i.kind === "sdr" ? "assistant" : "user", content: (i as any).text }));
 
-      const { data, error } = await supabase.functions.invoke("sdr-brain", {
-        body: {
+      const data = await requestSdrTest((name, options) => supabase.functions.invoke(name, options), {
           agentId: agent.id,
           message,
           triggerType,
@@ -119,10 +135,8 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
             contact_name: "Lead de Teste",
             memoria_acumulada: memory,
           },
-        },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      }, controller.signal);
+      if (controller.signal.aborted || requestRef.current !== controller) return;
 
       const msgs: string[] = Array.isArray((data as any)?.messages) ? (data as any).messages : [];
       const analysis = (data as any)?.analysis ?? {};
@@ -146,10 +160,15 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
         ]);
       }
     } catch (e: any) {
-      toast.error(e?.message || "Não foi possível falar com o SDR");
+      if (controller.signal.aborted || requestRef.current !== controller) return;
+      setTestError(e?.message || "Não foi possível falar com o SDR. Tente novamente.");
     } finally {
-      setSending(false);
-      setTimeout(() => inputRef.current?.focus(), 80);
+      if (requestRef.current === controller) {
+        requestRef.current = null;
+        controller.abort();
+        setSending(false);
+        setTimeout(() => inputRef.current?.focus(), 80);
+      }
     }
   };
 
@@ -233,7 +252,7 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
             <span className="min-w-0">
               <span className="block truncate">Testar {agent?.name ?? "SDR"}</span>
               <span className="block text-xs font-normal text-muted-foreground">
-                Simulação idêntica ao WhatsApp — nada é salvo nem enviado
+                Conversa de teste — nada é enviado ao WhatsApp
               </span>
             </span>
           </DialogTitle>
@@ -316,6 +335,15 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
           )}
         </div>
 
+        {testError && (
+          <div role="alert" className="mx-3 mb-3 rounded-lg border border-destructive/25 bg-destructive/5 p-3">
+            <p className="text-sm text-foreground">{testError}</p>
+            <Button variant="outline" size="sm" className="mt-2 gap-2" disabled={sending} onClick={() => {
+              const turn = lastTurnRef.current;
+              if (turn) void runTurn(turn.message, turn.triggerType);
+            }}><RotateCcw size={14} /> Tentar novamente</Button>
+          </div>
+        )}
         <div className="border-t border-border p-3 flex items-end gap-2">
           {recording ? (
             <div className="flex-1 h-11 rounded-xl bg-destructive/10 border border-destructive/30 flex items-center gap-3 px-3">
@@ -367,6 +395,7 @@ export function SDRTestChatDialog({ agent, open, onOpenChange }: Props) {
               className="h-11 w-11 shrink-0"
               onClick={() => void handleSend()}
               disabled={sending || !input.trim()}
+              aria-label="Enviar mensagem de teste"
             >
               {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             </Button>

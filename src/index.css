@@ -2267,3 +2267,21 @@ html body[data-scroll-locked] {
   margin-right: 0 !important;
   margin-left: 0 !important;
 }
+
+/* Canvas de fluxos: cursores nativos de alto contraste (a "mãozinha" branca
+   padrão do grab/grabbing some no fundo claro do canvas) */
+.wa-flow-editor .react-flow__pane {
+  cursor: default;
+}
+.wa-flow-editor .react-flow__pane.dragging {
+  cursor: move;
+}
+.wa-flow-editor .react-flow__node.draggable {
+  cursor: pointer;
+}
+.wa-flow-editor .react-flow__node.draggable.dragging {
+  cursor: move;
+}
+.wa-flow-editor .react-flow__nodesselection-rect {
+  cursor: default;
+}

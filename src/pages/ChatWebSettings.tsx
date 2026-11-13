@@ -7,6 +7,7 @@ import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { AppLayout } from "@/components/chatweb/ChatWebShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,7 +101,7 @@ export default function ChatWebSettings() {
     if (cfg.avatar_path) supabase.storage.from("chatweb-avatars").createSignedUrl(cfg.avatar_path, 3600).then(({ data }) => setAvatarPreview(data?.signedUrl || null));
   }, [cfg]);
 
-  const update = async (patch: Record<string, any>, msg = "Salvo!") => {
+  const update = async (patch: Database["public"]["Tables"]["chatweb_configurations"]["Update"], msg = "Salvo!") => {
     const { error } = await supabase.from("chatweb_configurations").update(patch).eq("id", cfg.id);
     if (error) {
       toast.error(error.code === "23505" || error.message.includes("slug_taken") ? "Este endereço já está sendo utilizado. Escolha outro." : error.message.includes("reserved") ? "Este endereço é reservado. Escolha outro." : "Não foi possível salvar.");
@@ -137,7 +138,7 @@ export default function ChatWebSettings() {
       const ok = await update({
         display_name: draft.display_name.slice(0, 60) || "Atendimento", description: draft.description.slice(0, 120) || null,
         welcome_message: draft.welcome_message.slice(0, 500) || null, input_placeholder: draft.input_placeholder.slice(0, 80) || null,
-        theme_config: draft.theme, avatar_path,
+        theme_config: { ...draft.theme }, avatar_path,
       }, "Personalização salva!");
       if (ok) setAvatarFile(null);
     } catch { toast.error("Falha ao enviar a foto."); } finally { setSaving(false); }
