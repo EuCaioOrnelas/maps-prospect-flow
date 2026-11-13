@@ -175,7 +175,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setServerAccess(data === true);
     };
     check();
-    return () => { cancelled = true; };
+    const manualEnd = profile?.payment_provider === 'manual' && profile?.subscription_current_period_end
+      ? new Date(profile.subscription_current_period_end).getTime() : NaN;
+    const remaining = manualEnd - Date.now();
+    const expiryTimer = Number.isFinite(remaining) && remaining > 0 && remaining < 2147483647
+      ? window.setTimeout(check, remaining + 20) : undefined;
+    return () => { cancelled = true; window.clearTimeout(expiryTimer); };
   }, [user?.id, profile?.plan, profile?.subscription_current_period_end, profile?.terms_accepted_at, profile?.trial_will_charge_at, profile?.trial_end_at, publicDemo]);
 
   const trialStatus = calculateTrialStatus(profile);
@@ -208,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const inheritedKeys = [
           'plan', 'is_blocked', 'trial_start_at', 'trial_end_at',
           'trial_will_charge_at', 'subscription_status', 'subscription_id',
-          'subscription_provider', 'subscription_current_period_end',
+          'subscription_provider', 'payment_provider', 'subscription_current_period_end',
           'subscription_cancel_at', 'subscription_canceled_at',
           'stripe_customer_id', 'asaas_customer_id', 'features',
           'plan_features', 'custom_features', 'billing_cycle',

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getProviderLabel } from "@/lib/paymentProviderLabel";
 import { CustomSubscriptionTab } from "./customSubscription/CustomSubscriptionTab";
+import { ManualUserAccessDialog } from "./ManualUserAccessDialog";
 
 interface Props {
   userId: string;
@@ -190,6 +191,7 @@ export const AdminUserInfoDialog = ({ userId, open, onOpenChange }: Props) => {
                   <h3 className="font-semibold">{profile.name || "Sem nome"}</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">{profile.email}</p>
+                <ManualUserAccessDialog profile={profile} onSaved={loadAll} />
                 {profile.phone && <p className="text-sm text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> {profile.phone}</p>}
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary" className="text-xs">
