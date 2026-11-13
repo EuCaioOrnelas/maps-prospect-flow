@@ -21,11 +21,23 @@ const ruleModule = { exports: {} as {
     canceledAtUnix: number,
   ) => boolean;
   paymentPrecedesCancellation: (paidAt: number | undefined, canceledAt: string) => boolean;
+  isUnpaidChurn: (status: string, invoices: Array<{ paid: boolean; amount_paid: number; created: number }>, failedAt: number) => boolean;
 } };
 runInNewContext(ts.transpileModule(edgeSource.slice(ruleStart, ruleEnd), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, { exports: ruleModule.exports });
-const { hasRealPaymentBeforeCancellation, paymentPrecedesCancellation } = ruleModule.exports;
+const { hasRealPaymentBeforeCancellation, paymentPrecedesCancellation, isUnpaidChurn } = ruleModule.exports;
+
+describe("churn por falta de pagamento", () => {
+  it("inclui renovação em atraso após pagamento real de R$396", () => {
+    expect(isUnpaidChurn("past_due", [{ paid: true, amount_paid: 39600, created: 1000 }], 2000)).toBe(true);
+    expect(isUnpaidChurn("unpaid", [{ paid: true, amount_paid: 39600, created: 1000 }], 2000)).toBe(true);
+  });
+  it("exclui trial nunca pago e assinatura que já voltou a ativa", () => {
+    expect(isUnpaidChurn("past_due", [{ paid: true, amount_paid: 0, created: 1000 }], 2000)).toBe(false);
+    expect(isUnpaidChurn("active", [{ paid: true, amount_paid: 39600, created: 1000 }], 2000)).toBe(false);
+  });
+});
 
 describe("churn acumulado de clientes pagos", () => {
   it("divide todos os que pagaram e cancelaram pelos que já pagaram, não pelos 606 cadastros", () => {
