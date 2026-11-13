@@ -65,6 +65,7 @@ const formatOnboardingValue = (v: any): string | null => {
 import { toast } from "sonner";
 import { acquisitionLabel } from "@/lib/acquisitionSources";
 import { ImpersonateUserButton } from "@/components/admin/ImpersonateUserButton";
+import { ManualUserAccessDialog } from "@/components/admin/ManualUserAccessDialog";
 
 interface ProfileLite {
   id: string;
@@ -445,9 +446,10 @@ export default function AdminUserDetail() {
             </div>
           )}
         </div>
-        {profile?.email && (
-          <ImpersonateUserButton userId={profile.id} userEmail={profile.email} />
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {profile && <ManualUserAccessDialog profile={profile} onSaved={loadProfile} />}
+          {profile?.email && <ImpersonateUserButton userId={profile.id} userEmail={profile.email} />}
+        </div>
       </div>
 
 

@@ -103,7 +103,9 @@ Deno.serve(async (req) => {
           canceled_at: sub.ends_at || now,
           cancel_reason: "contract_expired_after_paid_period",
         })
-        .eq("id", sub.id);
+        .eq("id", sub.id)
+        .eq("status", "active")
+        .eq("ends_at", sub.ends_at);
 
       // 2) Bloquear usuário e remover do MRR (zera o valor mas preserva o vínculo)
       const { data: profile } = await admin
@@ -118,7 +120,9 @@ Deno.serve(async (req) => {
           is_blocked: true,
           subscription_price_cents: 0,
         })
-        .eq("id", sub.user_id);
+        .eq("id", sub.user_id)
+        .eq("custom_subscription_id", sub.id)
+        .eq("subscription_current_period_end", sub.ends_at);
 
       await logDowngrade(admin, {
         userId: sub.user_id,

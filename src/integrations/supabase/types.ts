@@ -15666,6 +15666,10 @@ export type Database = {
         Args: { _from: string; _to: string; _user_id: string }
         Returns: Json
       }
+      admin_manage_user_access: {
+        Args: { _payload: Json; _user_id: string }
+        Returns: Json
+      }
       admin_update_searches_limit: {
         Args: { p_new_limit: number; p_user_email: string }
         Returns: undefined
