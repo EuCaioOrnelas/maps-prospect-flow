@@ -257,11 +257,8 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Skip if no actual charge was made
-      if (!invoice.charge) {
-        console.log(`[GET-STRIPE-MRR] Skipping invoice ${invoice.id}: no charge associated`);
-        continue;
-      }
+      // amount_paid > 0, paid=true e saldo zero são prova de recebimento,
+      // inclusive quando a Stripe não devolve o campo charge.
 
       // Check if refunded
       const chargeId = invoice.charge;
@@ -359,13 +356,12 @@ Deno.serve(async (req) => {
 
 
       const CHURN_CUTOFF_UNIX = Math.floor(new Date("2026-06-01T00:00:00Z").getTime() / 1000);
-      const canceledDuringTrial =
-        sub.status === "canceled" && sub.trial_end && sub.canceled_at && sub.canceled_at <= sub.trial_end;
+      const paidBeforeCancellation = (invoicesBySubId[sub.id] || []).some((invoice) =>
+        sub.canceled_at && (invoice.status_transitions?.paid_at || invoice.created) <= sub.canceled_at);
 
       if (
-        sub.status === "canceled" &&
-        hadAnyPayment &&
-        !canceledDuringTrial &&
+        (sub.status === "canceled" || sub.cancel_at_period_end) &&
+        paidBeforeCancellation &&
         sub.canceled_at &&
         sub.canceled_at >= CHURN_CUTOFF_UNIX
       ) {

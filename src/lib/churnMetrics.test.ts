@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
-import { buildChurnReasonData, filterChurnByDate } from "./churnMetrics";
+import { buildChurnReasonData, calculatePaidChurnRate, filterChurnByDate } from "./churnMetrics";
 
 // Testa a regra real do index.ts sem iniciar o servidor Deno nem copiar a lógica.
 const edgeSource = readFileSync("supabase/functions/admin-get-churn/index.ts", "utf8");
@@ -20,11 +20,24 @@ const ruleModule = { exports: {} as {
     }>,
     canceledAtUnix: number,
   ) => boolean;
+  paymentPrecedesCancellation: (paidAt: number | undefined, canceledAt: string) => boolean;
 } };
 runInNewContext(ts.transpileModule(edgeSource.slice(ruleStart, ruleEnd), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText, { exports: ruleModule.exports });
-const { hasRealPaymentBeforeCancellation } = ruleModule.exports;
+const { hasRealPaymentBeforeCancellation, paymentPrecedesCancellation } = ruleModule.exports;
+
+describe("churn acumulado de clientes pagos", () => {
+  it("divide todos os que pagaram e cancelaram pelos que já pagaram, não pelos 606 cadastros", () => {
+    expect(calculatePaidChurnRate(7, 50)).toBe(14);
+    expect(calculatePaidChurnRate(2, 7)).toBeCloseTo(28.5714, 4);
+  });
+  it("exclui cancelamento anterior ao pagamento e cortesia sem pagamento", () => {
+    expect(paymentPrecedesCancellation(Date.parse("2026-11-13"), "2026-11-12")).toBe(false);
+    expect(paymentPrecedesCancellation(undefined, "2026-11-12")).toBe(false);
+    expect(paymentPrecedesCancellation(Date.parse("2026-11-01"), "2026-11-12")).toBe(true);
+  });
+});
 
 describe("prova de pagamento para churn", () => {
   it("conta quem pagou R$ 129 antes de cancelar, mesmo durante a data do trial", () => {

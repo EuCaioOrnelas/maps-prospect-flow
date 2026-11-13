@@ -30,6 +30,11 @@ export function hasRealPaymentBeforeCancellation(
   });
 }
 
+export function paymentPrecedesCancellation(paidAt: number | undefined, canceledAt: string): boolean {
+  const cancellation = new Date(canceledAt).getTime();
+  return paidAt !== undefined && Number.isFinite(paidAt) && Number.isFinite(cancellation) && paidAt <= cancellation;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -93,7 +98,7 @@ serve(async (req) => {
 
     const now = Date.now();
 
-    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, paidSalesRes, paidInvoicesRes, customPaymentsRes] = await Promise.all([
+    const [cancellationsRes, feedbacksRes, eventsRes, profilesRes, paidSalesRes, paidInvoicesRes, customPaymentsRes, customSubsRes] = await Promise.all([
       adminClient.from("subscription_cancellations").select("*").order("cancelled_at", { ascending: false }),
       adminClient.from("cancellation_feedback").select("*").order("created_at", { ascending: false }),
       adminClient
@@ -117,50 +122,50 @@ serve(async (req) => {
       // é prova de pagamento porque também é criado ao iniciar um trial.
       adminClient
         .from("partner_sales")
-        .select("customer_user_id")
+        .select("customer_user_id, paid_at, created_at, amount_cents")
+        .gt("amount_cents", 0)
         .not("customer_user_id", "is", null),
       // Faturas PIX pagas (renovação confirmada)
       adminClient
         .from("pix_invoices")
-        .select("user_id")
-        .eq("status", "paid")
+        .select("user_id, paid_at, created_at, amount_cents")
+        .in("status", ["paid", "RECEIVED", "CONFIRMED", "received", "confirmed"])
+        .gt("amount_cents", 0)
         .not("user_id", "is", null),
       adminClient
         .from("custom_subscription_payments")
-        .select("user_id, amount_cents")
+        .select("user_id, amount_cents, paid_at, custom_subscription_id")
         .gt("amount_cents", 0)
         .not("paid_at", "is", null),
+      adminClient.from("custom_subscriptions")
+        .select("id, user_id, status, canceled_at, ends_at, cancel_reason, renewed_into_id, payment_method")
+        .in("status", ["canceled", "expired"]),
     ]);
 
     if (cancellationsRes.error) throw cancellationsRes.error;
     if (feedbacksRes.error) throw feedbacksRes.error;
     if (eventsRes.error) throw eventsRes.error;
     if (profilesRes.error) throw profilesRes.error;
+    for (const result of [paidSalesRes, paidInvoicesRes, customPaymentsRes, customSubsRes]) {
+      if (result.error) throw result.error;
+    }
 
     // Conjunto de user_ids que tiveram pelo menos um pagamento real confirmado.
     // Usado para descartar cancelamentos durante o trial (nunca cobrado de fato).
     const usersWithRealPayment = new Set<string>();
-    (paidSalesRes.data || []).forEach((row: any) => row.customer_user_id && usersWithRealPayment.add(row.customer_user_id));
-    (paidInvoicesRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
-    (customPaymentsRes.data || []).forEach((row: any) => row.user_id && usersWithRealPayment.add(row.user_id));
+    const firstPaymentByUser = new Map<string, number>();
+    const rememberPayment = (userId: string, date: string) => {
+      const timestamp = new Date(date).getTime();
+      if (!userId || !Number.isFinite(timestamp)) return;
+      usersWithRealPayment.add(userId);
+      firstPaymentByUser.set(userId, Math.min(firstPaymentByUser.get(userId) ?? Infinity, timestamp));
+    };
+    (paidSalesRes.data || []).forEach((row: any) => rememberPayment(row.customer_user_id, row.paid_at || row.created_at));
+    (paidInvoicesRes.data || []).forEach((row: any) => rememberPayment(row.user_id, row.paid_at || row.created_at));
+    (customPaymentsRes.data || []).forEach((row: any) => rememberPayment(row.user_id, row.paid_at));
     const profiles = profilesRes.data || [];
     // first_paid_at é gravado pelo webhook do cartão no 1º pagamento com valor > 0.
-    profiles.forEach((p: any) => { if (p.first_paid_at) usersWithRealPayment.add(p.id); });
-
-    // Clientes LEGADOS (assinaram antes do first_paid_at existir): a prova é o
-    // período pago ir muito além da janela de trial de 7 dias. Sem isso, quem
-    // pagava desde o plano antigo nunca entrava no churn (churn travado em zero).
-    const TRIAL_WINDOW_MS = 40 * 24 * 60 * 60 * 1000;
-    profiles.forEach((p: any) => {
-      if (usersWithRealPayment.has(p.id)) return;
-      if (p.admin_assigned_plan) return;
-      if (!(p.subscription_price_cents > 0) || !p.subscription_current_period_end) return;
-      const end = new Date(p.subscription_current_period_end).getTime();
-      const base = new Date(p.created_at || 0).getTime();
-      if (Number.isFinite(end) && Number.isFinite(base) && end - base > TRIAL_WINDOW_MS) {
-        usersWithRealPayment.add(p.id);
-      }
-    });
+    profiles.forEach((p: any) => { if (p.first_paid_at) rememberPayment(p.id, p.first_paid_at); });
 
     const profilesByEmail = new Map(
       profiles
@@ -206,15 +211,7 @@ serve(async (req) => {
               payingEmails.add(normalizedEmail);
               const paidProfile = profilesByEmail.get(normalizedEmail);
               if (paidProfile?.id) {
-                usersWithRealPayment.add(paidProfile.id);
-                // Persiste a prova de pagamento para o guarda do banco (anti falso churn)
-                if (!paidProfile.first_paid_at) {
-                  const paidAtIso = new Date(
-                    (inv.status_transitions?.paid_at || inv.created) * 1000
-                  ).toISOString();
-                  paidProfile.first_paid_at = paidAtIso;
-                  await adminClient.from("profiles").update({ first_paid_at: paidAtIso }).eq("id", paidProfile.id);
-                }
+                rememberPayment(paidProfile.id, new Date((inv.status_transitions?.paid_at || inv.created) * 1000).toISOString());
               }
             }
           }
@@ -233,12 +230,16 @@ serve(async (req) => {
         let startingAfter: string | undefined;
         while (hasMore) {
           const res: any = await stripe.subscriptions.list({
-            status: "canceled",
+            status: "all",
             limit: 100,
             ...(startingAfter ? { starting_after: startingAfter } : {}),
           });
           for (const sub of res.data) {
-            if (!sub.canceled_at || sub.canceled_at < CHURN_CUTOFF_UNIX) continue;
+            // MRR exclui cancelamento agendado imediatamente; churn deve registrar
+            // a mesma decisão de não renovar, ainda que o período pago esteja aberto.
+            if (sub.status !== "canceled" && !sub.cancel_at_period_end) continue;
+            const canceledAt = sub.canceled_at;
+            if (!canceledAt || canceledAt < CHURN_CUTOFF_UNIX) continue;
 
             // A única regra é pagamento real anterior ao cancelamento. Não usar
             // trial_end como atalho: quem pagou antecipadamente também é churn.
@@ -250,7 +251,7 @@ serve(async (req) => {
                 status: "paid",
                 limit: 100,
               });
-              if (!hasRealPaymentBeforeCancellation(invoices.data || [], sub.canceled_at)) {
+              if (!hasRealPaymentBeforeCancellation(invoices.data || [], canceledAt)) {
                 logStep("Skipping trial/unpaid cancellation", { id: sub.id });
                 continue;
               }
@@ -300,7 +301,7 @@ serve(async (req) => {
       if (!["asaas", "stripe", "manual", "pix", "abacate_pay"].includes(profile.payment_provider || "")) return false;
       // Quem não renovou é rebaixado para "free" pelo cron de expiração. Exigir
       // plano pago aqui escondia justamente o churn por não renovação.
-      if (!usersWithRealPayment.has(profile.id)) return false;
+      if (!paymentPrecedesCancellation(firstPaymentByUser.get(profile.id), profile.subscription_current_period_end)) return false;
       const periodEnd = new Date(profile.subscription_current_period_end).getTime();
       return Number.isFinite(periodEnd) && periodEnd >= CHURN_CUTOFF_MS && periodEnd < now;
     });
@@ -310,18 +311,31 @@ serve(async (req) => {
     const filteredCancellations = (cancellationsRes.data || []).filter((c: any) =>
       Boolean(c.user_id) &&
       new Date(c.cancelled_at).getTime() >= CHURN_CUTOFF_MS &&
-      usersWithRealPayment.has(c.user_id)
+      paymentPrecedesCancellation(firstPaymentByUser.get(c.user_id), c.cancelled_at)
     );
     const filteredEvents = (eventsRes.data || []).filter((e: any) =>
       Boolean(e.user_id) &&
       new Date(e.created_at).getTime() >= CHURN_CUTOFF_MS &&
-      usersWithRealPayment.has(e.user_id)
+      paymentPrecedesCancellation(firstPaymentByUser.get(e.user_id), e.created_at)
     );
     const filteredFeedbacks = (feedbacksRes.data || []).filter((f: any) =>
       Boolean(f.user_id) &&
       new Date(f.created_at).getTime() >= CHURN_CUTOFF_MS &&
-      usersWithRealPayment.has(f.user_id)
+      paymentPrecedesCancellation(firstPaymentByUser.get(f.user_id), f.created_at)
     );
+
+    const manualChurns = (customSubsRes.data || []).filter((sub: any) => {
+      if (sub.cancel_reason === "voided_by_admin" || sub.renewed_into_id) return false;
+      const cancelledAt = sub.canceled_at || sub.ends_at;
+      if (!cancelledAt || new Date(cancelledAt).getTime() < CHURN_CUTOFF_MS || new Date(cancelledAt).getTime() > now) return false;
+      return (customPaymentsRes.data || []).some((payment: any) =>
+        payment.custom_subscription_id === sub.id &&
+        paymentPrecedesCancellation(new Date(payment.paid_at).getTime(), cancelledAt));
+    }).map((sub: any) => ({
+      id: `manual-${sub.id}`, user_id: sub.user_id, provider: "manual",
+      cancelled_at: sub.canceled_at || sub.ends_at, active_until: sub.ends_at,
+      cancellation_reason: sub.cancel_reason || "falta_pagamento", billing_type: sub.payment_method,
+    }));
 
     const metricRows = [
       ...filteredCancellations.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
@@ -329,6 +343,7 @@ serve(async (req) => {
       ...filteredFeedbacks.map((row: any) => ({ ...row, occurred_at: row.created_at })),
       ...expiredProfiles.map((row: any) => ({ ...row, user_id: row.id, occurred_at: row.subscription_current_period_end })),
       ...stripeChurns.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
+      ...manualChurns.map((row: any) => ({ ...row, occurred_at: row.cancelled_at })),
     ].sort((a: any, b: any) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
     const uniqueChurns = new Map<string, any>();
     for (const row of metricRows) {
@@ -369,6 +384,7 @@ serve(async (req) => {
         profiles,
         expiredProfiles,
         stripeChurns,
+        churnRows: uniqueRows,
         // Base "paying" usada para cálculo correto de churn rate (não inclui trial-only)
         payingUsersCount,
         churnMetrics,
