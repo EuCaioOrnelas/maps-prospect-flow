@@ -4,6 +4,6 @@
 - [x] Validar regras, permissões, vencimento e fluxo pela tela.
 
 # Receita e churn do Admin
-- [ ] Alinhar a perda de assinantes com os cancelamentos pagos, incluindo manuais e agendados.
-- [ ] Mostrar churn acumulado de clientes que pagaram e cancelaram, preservando o corte histórico.
-- [ ] Testar cálculos e conferir a auditoria; identificar limites de acesso aos dados de produção.
+- [x] Alinhar cancelamentos pagos manuais e agendados; atraso não é cancelamento confirmado.
+- [x] Mostrar churn acumulado de clientes que pagaram e cancelaram, preservando o corte histórico.
+- [x] Testar cálculos e conferir a auditoria e as telas com sessão administrativa; o banco acessível tem 2 perfis, não os 606 da produção informada.
