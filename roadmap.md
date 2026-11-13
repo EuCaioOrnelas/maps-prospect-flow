@@ -13,4 +13,4 @@
 - [x] Enriquecer o churn com feedback salvo independentemente do filtro de pagamento; histórico antigo sem resposta não é inventado, e o caso INNFOMASTER não está no banco acessível.
 
 # Churn involuntário
-- [ ] Incluir falta de pagamento para renovações em atraso de clientes já pagos e validar os resultados.
+- [x] Incluir falta de pagamento para renovações em atraso de clientes já pagos; 12 testes passaram e a tela mostrou 2 inadimplentes, 9 churns de 50 pagantes (18%).
