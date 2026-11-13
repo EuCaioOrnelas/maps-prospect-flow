@@ -10,7 +10,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { PLAN_DEFAULTS, PAYMENT_METHODS } from "./customSubscription/customSubConfig";
 
-type Profile = { id: string; name: string | null; phone?: string | null; plan: string | null; payment_provider?: string | null; subscription_current_period_end?: string | null; trial_end_at?: string | null };
+type Profile = { id: string; name: string | null; phone?: string | null; plan: string | null; payment_provider?: string | null; subscription_current_period_end?: string | null; trial_end_at?: string | null; terms_accepted_at?: string | null };
 type Action = "edit" | "trial" | "activate" | "renew" | "expiry";
 
 export function ManualUserAccessDialog({ profile, onSaved }: { profile: Profile; onSaved: () => void }) {
@@ -80,6 +80,7 @@ export function ManualUserAccessDialog({ profile, onSaved }: { profile: Profile;
           <SelectItem value="expiry" disabled={external}>Alterar data de expiração</SelectItem>
         </SelectContent></Select></div>
         {external && <p className="text-sm text-muted-foreground">Esta conta possui cobrança externa. Gerencie a assinatura atual antes de trocar para pagamento manual; editar os dados não altera cobranças.</p>}
+        {profile.terms_accepted_at === null && <p className="text-sm text-muted-foreground">O usuário ainda precisa aceitar os termos para acessar a plataforma. Esta alteração não aceita os termos por ele.</p>}
         {action === "edit" ? <>
           <div className="space-y-2"><Label htmlFor="access-name">Nome</Label><Input id="access-name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={255} /></div>
           <div className="space-y-2"><Label htmlFor="access-phone">Telefone</Label><Input id="access-phone" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={30} /></div>
