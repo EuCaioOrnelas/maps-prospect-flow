@@ -285,11 +285,11 @@ export default function AdminChurn() {
           name: profile?.name || row.email || null,
           plan: profile?.plan || row.plan || null,
           cancelled_at: row.occurred_at,
-          cancellation_reason: feedback?.cancellation_reason || row.cancellation_reason || null,
-          usage_level: feedback?.usage_level || null,
-          additional_comments: feedback?.additional_comments || row.additional_comments || null,
-          intends_to_return: feedback?.intends_to_return || null,
-          details: feedback?.details || null,
+          cancellation_reason: row.cancellation_reason || null,
+          usage_level: row.usage_level || null,
+          additional_comments: row.additional_comments || null,
+          intends_to_return: row.intends_to_return || null,
+          details: row.details || null,
           feedback_provider: feedback?.provider || row.provider || null,
         };
       }) : filtered);

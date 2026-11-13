@@ -7,3 +7,7 @@
 - [x] Alinhar cancelamentos pagos manuais e agendados; atraso não é cancelamento confirmado.
 - [x] Mostrar churn acumulado de clientes que pagaram e cancelaram, preservando o corte histórico.
 - [x] Testar cálculos e conferir a auditoria e as telas com sessão administrativa; o banco acessível tem 2 perfis, não os 606 da produção informada.
+
+# Motivo obrigatório no cancelamento
+- [x] Bloquear avanço e cancelamento se o motivo não for salvo; validado na tela por testes e na função autenticada sem cancelar assinatura real.
+- [x] Enriquecer o churn com feedback salvo independentemente do filtro de pagamento; histórico antigo sem resposta não é inventado, e o caso INNFOMASTER não está no banco acessível.

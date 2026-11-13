@@ -350,7 +350,23 @@ serve(async (req) => {
       const key = row.user_id || (row.email ? `email:${String(row.email).toLowerCase()}` : `row:${row.id}`);
       if (!uniqueChurns.has(key)) uniqueChurns.set(key, row);
     }
-    const uniqueRows = Array.from(uniqueChurns.values());
+    // Feedback é complemento do cancelamento: não descartá-lo por filtros de
+    // pagamento/data do evento nem substituir a resposta por um motivo genérico Stripe.
+    const uniqueRows = Array.from(uniqueChurns.values()).map((row: any) => {
+      const cancellationMs = new Date(row.occurred_at).getTime();
+      const feedback = (feedbacksRes.data || []).find((f: any) => {
+        if (!row.user_id || f.user_id !== row.user_id || !f.cancellation_reason?.trim()) return false;
+        const difference = new Date(f.created_at).getTime() - cancellationMs;
+        return difference >= -30 * 24 * 60 * 60 * 1000 && difference <= 24 * 60 * 60 * 1000;
+      });
+      return { ...row,
+        cancellation_reason: feedback?.cancellation_reason || row.cancellation_reason || null,
+        usage_level: feedback?.usage_level || row.usage_level || null,
+        additional_comments: feedback?.additional_comments || row.additional_comments || null,
+        details: feedback?.details || row.details || null,
+        intends_to_return: feedback?.intends_to_return || row.intends_to_return || null,
+      };
+    });
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
     const payingUsersCount = Math.max(payingEmails.size, usersWithRealPayment.size);

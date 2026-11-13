@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,7 @@ const RETURN_OPTIONS = [
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: (feedbackId: string) => Promise<void>;
   userId?: string;
   email?: string;
   provider?: string;
@@ -40,18 +40,30 @@ export function CancellationFeedbackDialog({ open, onOpenChange, onConfirm, user
   const [details, setDetails] = useState("");
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(1);
+  const [errorMessage, setErrorMessage] = useState("");
+  useEffect(() => {
+    if (open) { setReason(""); setIntendsToReturn(""); setDetails(""); setStep(1); setErrorMessage(""); }
+  }, [open]);
 
   const handleSubmitAndCancel = async () => {
+    if (saving || !reason || !intendsToReturn || !userId) {
+      setErrorMessage("Informe o motivo e se pretende voltar antes de confirmar.");
+      return;
+    }
     setSaving(true);
+    setErrorMessage("");
     try {
-      await supabase.from("cancellation_feedback").insert({
-        user_id: userId || "00000000-0000-0000-0000-000000000000",
+      const { data, error } = await supabase.from("cancellation_feedback").insert({
+        user_id: userId,
         email: email || null,
         cancellation_reason: reason,
         intends_to_return: intendsToReturn || null,
         details: details || null,
         provider: provider || null,
-      } as any);
+      } as any).select("id").single();
+      if (error || !data?.id) throw new Error("Não foi possível salvar seu motivo. Tente novamente; sua assinatura não foi cancelada.");
+      await onConfirm(data.id);
+      onOpenChange(false);
 
       // Penaliza o score do usuário ao confirmar o cancelamento
       if (userId) {
@@ -76,17 +88,16 @@ export function CancellationFeedbackDialog({ open, onOpenChange, onConfirm, user
       }
     } catch (err) {
       console.error("Error saving feedback:", err);
+      setErrorMessage(err instanceof Error ? err.message : "Não foi possível concluir o cancelamento. Tente novamente.");
     } finally {
       setSaving(false);
-      onConfirm();
-      onOpenChange(false);
     }
   };
 
   const canProceed = step === 1 ? !!reason : step === 2 ? !!intendsToReturn : true;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(value) => { if (!saving) onOpenChange(value); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base">
@@ -173,9 +184,10 @@ export function CancellationFeedbackDialog({ open, onOpenChange, onConfirm, user
           </div>
         )}
 
+        {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
         <div className="flex items-center justify-between pt-2">
           {step > 1 ? (
-            <Button variant="ghost" size="sm" onClick={() => setStep(step - 1)}>
+            <Button variant="ghost" size="sm" disabled={saving} onClick={() => setStep(step - 1)}>
               Voltar
             </Button>
           ) : (
@@ -192,7 +204,7 @@ export function CancellationFeedbackDialog({ open, onOpenChange, onConfirm, user
               size="sm"
               variant="destructive"
               onClick={handleSubmitAndCancel}
-              disabled={saving}
+              disabled={saving || !reason || !intendsToReturn || !userId}
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : null}
               Confirmar cancelamento
