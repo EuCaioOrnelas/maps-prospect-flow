@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AdminUserInfoDialog } from "@/components/admin/AdminUserInfoDialog";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { buildChurnReasonData, filterChurnByDate, getChurnReasonLabel } from "@/lib/churnMetrics";
+import { buildChurnReasonData, calculatePaidChurnRate, filterChurnByDate, getChurnReasonLabel } from "@/lib/churnMetrics";
 
 interface ChurnRecord {
   id: string;
@@ -97,6 +97,7 @@ export default function AdminChurn() {
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       const cancellations = data?.cancellations || [];
       const feedbacks = data?.feedbacks || [];
@@ -272,7 +273,26 @@ export default function AdminChurn() {
       );
 
       filtered.sort((a, b) => new Date(b.cancelled_at).getTime() - new Date(a.cancelled_at).getTime());
-      setRecords(filtered);
+      // Totais, datas, tabela e pizza usam a mesma linha consolidada por cliente.
+      // O servidor escolhe o cancelamento mais recente, não a primeira fonte lida.
+      const canonical = Array.isArray(data?.churnRows) ? data.churnRows : null;
+      setRecords(canonical ? canonical.map((row: any) => {
+        const profile = profileMap.get(row.user_id);
+        const feedback = feedbackMap.get(row.user_id);
+        return {
+          ...row,
+          email: row.email || profile?.email || null,
+          name: profile?.name || row.email || null,
+          plan: profile?.plan || row.plan || null,
+          cancelled_at: row.occurred_at,
+          cancellation_reason: feedback?.cancellation_reason || row.cancellation_reason || null,
+          usage_level: feedback?.usage_level || null,
+          additional_comments: feedback?.additional_comments || row.additional_comments || null,
+          intends_to_return: feedback?.intends_to_return || null,
+          details: feedback?.details || null,
+          feedback_provider: feedback?.provider || row.provider || null,
+        };
+      }) : filtered);
     } catch (err) {
       console.error("Error loading churn data:", err);
       setRecords([]);
@@ -294,7 +314,7 @@ export default function AdminChurn() {
   // A base é o total de usuários que já pagaram pelo menos uma vez (inclui os que
   // cancelaram), então a taxa nunca pode passar de 100%.
   const rate = (count: number) =>
-    totalUsers > 0 ? Math.min(100, (count / totalUsers) * 100).toFixed(1) : "0";
+    calculatePaidChurnRate(count, totalUsers).toFixed(1);
   const totalCount = !hasDateFilter && serverMetrics ? serverMetrics.total : kpiBase.length;
   const last30dCount = !hasDateFilter && serverMetrics ? serverMetrics.last30d : last30d.length;
   const last7dCount = !hasDateFilter && serverMetrics ? serverMetrics.last7d : last7d.length;
@@ -315,7 +335,7 @@ export default function AdminChurn() {
 
   const kpis = [
     { label: "Total Cancelamentos", value: totalCount, subtext: `${churnRateTotal}% da base`, icon: UserX, color: "text-red-500" },
-    { label: hasDateFilter ? "Churn no período" : "Churns últimos 30 dias", value: `${last30dRate}%`, subtext: `(${last30dCount} de ${totalCount} no histórico)`, icon: Calendar, color: "text-amber-500" },
+    { label: hasDateFilter ? "Churn no período" : "Cancelamentos em 30 dias", value: last30dCount, subtext: `${last30dRate}% dos ${totalUsers} clientes que já pagaram`, icon: Calendar, color: "text-amber-500" },
     { label: hasDateFilter ? "Cancelamentos no período" : "Churns 7 dias", value: `${last7dRate}%`, subtext: `(${last7dCount} usuários)`, icon: TrendingDown, color: "text-orange-500" },
     { label: "Taxa Churn Total", value: `${churnRateTotal}%`, icon: Percent, color: "text-red-500" },
     { label: "Principal Motivo", value: topReason ? topReason.name : "—", icon: AlertTriangle, color: "text-primary", small: true },

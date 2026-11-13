@@ -35,6 +35,13 @@ export function getChurnReasonLabel(reason?: string | null): string {
   return CHURN_REASON_LABELS[reason] || reason;
 }
 
+/** Churn acumulado: clientes pagos que cancelaram / clientes que já pagaram. */
+export function calculatePaidChurnRate(canceledCustomers: number, paidCustomers: number): number {
+  if (!Number.isFinite(paidCustomers) || paidCustomers <= 0) return 0;
+  if (!Number.isFinite(canceledCustomers) || canceledCustomers < 0) return 0;
+  return Math.min(100, (canceledCustomers / paidCustomers) * 100);
+}
+
 export type ChurnReasonDatum = {
   name: string;
   value: number;

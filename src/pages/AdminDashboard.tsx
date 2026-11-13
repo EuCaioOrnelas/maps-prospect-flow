@@ -76,6 +76,9 @@ export default function AdminDashboard() {
     totalMRR,
     totalSubscribers,
     churnRate,
+    churnAvailable,
+    churnTotal,
+    churnPayingBase,
     averageTicket,
     ltvData,
     alerts,
@@ -318,8 +321,9 @@ export default function AdminDashboard() {
         />
         <KPICard label="Assinantes" value={totalSubscribers.toString()} icon={CreditCard} />
         <KPICard
-          label="Churn"
-          value={`${churnRate.toFixed(1)}%`}
+          label="Churn acumulado"
+          value={churnAvailable ? `${churnRate.toFixed(1)}%` : "—"}
+          sub={churnAvailable ? `${churnTotal} cancelaram · ${churnPayingBase} já pagaram` : "Não foi possível consultar os cancelamentos"}
           icon={TrendingDown}
           status={churnRate > 8 ? "danger" : churnRate > 5 ? "warning" : "healthy"}
         />
