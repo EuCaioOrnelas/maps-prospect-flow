@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
       const isTrialing = sub.status === "trialing";
       const latestInvoice = typeof sub.latest_invoice === "object" ? sub.latest_invoice as Stripe.Invoice : null;
       const hasReceivedPayment = !!latestInvoice && latestInvoice.status === "paid" && (latestInvoice.amount_paid || 0) > 0;
-      const countsForMrr = ["active", "past_due"].includes(sub.status) && !sub.cancel_at_period_end && hasReceivedPayment;
+      const countsForMrr = sub.status === "active" && !sub.cancel_at_period_end && hasReceivedPayment;
 
       let countedInMrr = false;
       let countedAsTrial = false;
@@ -229,6 +229,8 @@ Deno.serve(async (req) => {
         reason = `Excluído: status Stripe = ${sub.status} (pagamento inicial não confirmado)`;
       } else if (sub.status === "unpaid") {
         reason = "Excluído: status Stripe = unpaid (faturas vencidas em aberto)";
+      } else if (sub.status === "past_due") {
+        reason = "Excluído: cobrança em atraso; não é cancelamento confirmado";
       } else if (sub.cancel_at_period_end) {
         reason = "Excluído: cancel_at_period_end = true (não renovará)";
       } else if (["active", "past_due"].includes(sub.status) && !hasReceivedPayment) {
