@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 // Message protection and session rules stay in this deployable entrypoint.
