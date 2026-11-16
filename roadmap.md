@@ -14,3 +14,7 @@
 
 # Churn involuntário
 - [x] Incluir falta de pagamento para renovações em atraso de clientes já pagos; 12 testes passaram e a tela mostrou 2 inadimplentes, 9 churns de 50 pagantes (18%).
+
+# Organização do SDR
+- [x] Reunir criptografia e regras de sessão no index do sdr-dispatch, removendo arquivos auxiliares e mantendo testes fora da pasta da função.
+- [x] Executar testes de regressão e publicar somente sdr-dispatch: 11 testes aprovados, envio simulado e interrupção por pausa conferidos; função publicada rejeitou chamada não autorizada (401), sem envio real de WhatsApp.
