@@ -65,6 +65,10 @@ const SecurityFAQ = lazyWithRetry(() => import("./pages/SecurityFAQ"), "Security
 const SendingGuidelines = lazyWithRetry(() => import("./pages/SendingGuidelines"), "SendingGuidelines");
 const HelpCenter = lazyWithRetry(() => import("./pages/HelpCenter"), "HelpCenter");
 const HelpCenterFAQ = lazyWithRetry(() => import("./pages/HelpCenterFAQ"), "HelpCenterFAQ");
+const AprendaHome = lazyWithRetry(() => import("./pages/aprendizado/AprendaHome"), "AprendaHome");
+const AprendaModule = lazyWithRetry(() => import("./pages/aprendizado/AprendaModule"), "AprendaModule");
+const AprendaLesson = lazyWithRetry(() => import("./pages/aprendizado/AprendaLesson"), "AprendaLesson");
+const AdminAprendizado = lazyWithRetry(() => import("./pages/aprendizado/AdminAprendizado"), "AdminAprendizado");
 const TourCompleto = lazyWithRetry(() => import("./pages/TourCompleto"), "TourCompleto");
 const TourGuiado = lazyWithRetry(() => import("./pages/TourGuiado"), "TourGuiado");
 const CheckoutSuccess = lazyWithRetry(() => import("./pages/CheckoutSuccess"), "CheckoutSuccess");
@@ -348,6 +352,9 @@ const App = () => (
                 <Route path="/r/:slug" element={<LightThemeWrapper><Suspense fallback={<PageLoader />}><TrackedLinkRedirect /></Suspense></LightThemeWrapper>} />
                 <Route path="/ajuda" element={<LightThemeWrapper><HelpCenter /></LightThemeWrapper>} />
                 <Route path="/ajuda/faq" element={<LightThemeWrapper><HelpCenterFAQ /></LightThemeWrapper>} />
+                <Route path="/aprenda" element={<LightThemeWrapper><AprendaHome /></LightThemeWrapper>} />
+                <Route path="/aprenda/:moduleSlug" element={<LightThemeWrapper><AprendaModule /></LightThemeWrapper>} />
+                <Route path="/aprenda/:moduleSlug/:lessonSlug" element={<LightThemeWrapper><AprendaLesson /></LightThemeWrapper>} />
                 <Route path="/tour-completo" element={<LightThemeWrapper><TourCompleto /></LightThemeWrapper>} />
                 <Route path="/tour-guiado" element={<DashboardThemeProvider><Suspense fallback={<PageLoader />}><TourGuiado /></Suspense></DashboardThemeProvider>} />
                 <Route path="/upgrade" element={<LightThemeWrapper><Upgrade /></LightThemeWrapper>} />
@@ -472,6 +479,7 @@ const App = () => (
                   
                   {/* Admin */}
                   <Route path="announcements" element={<AdminAnnouncements />} />
+                  <Route path="aprendizado" element={<AdminAprendizado />} />
                   <Route path="termos" element={<AdminTermos />} />
                   <Route path="tags" element={<AdminTracking />} />
                   <Route path="auditoria" element={<AdminAuditoria />} />
