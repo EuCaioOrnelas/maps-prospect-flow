@@ -17,4 +17,4 @@
 
 # Organização do SDR
 - [x] Reunir criptografia e regras de sessão no index do sdr-dispatch, removendo arquivos auxiliares e mantendo testes fora da pasta da função.
-- [ ] Executar testes de regressão e publicar somente sdr-dispatch.
+- [x] Executar testes de regressão e publicar somente sdr-dispatch: 11 testes aprovados, envio simulado e interrupção por pausa conferidos; função publicada rejeitou chamada não autorizada (401), sem envio real de WhatsApp.
